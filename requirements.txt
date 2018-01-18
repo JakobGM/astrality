@@ -8,13 +8,16 @@ astral==1.4
 attrs==17.4.0             # via pytest
 click==6.7                # via pip-tools
 first==2.0.1              # via pip-tools
+freezegun==0.3.9          # via pytest-freezegun
 mypy==0.560
 pip-tools==1.11.0
 pluggy==0.6.0             # via pytest
 psutil==5.4.3             # via mypy
 py==1.5.2                 # via pytest
+pytest-freezegun==0.2.0
 pytest==3.3.2
+python-dateutil==2.6.1    # via freezegun
 pytz==2017.3              # via astral, tzlocal
-six==1.11.0               # via pip-tools, pytest
+six==1.11.0               # via freezegun, pip-tools, pytest, python-dateutil
 typed-ast==1.1.0          # via mypy
 tzlocal==1.5.1

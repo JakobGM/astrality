@@ -4,6 +4,9 @@ pip-tools
 # Testing framework
 pytest
 
+# For setting time in pytest
+pytest-freezegun
+
 # For typing
 mypy
 
