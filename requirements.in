@@ -1,0 +1,14 @@
+# For the use of pip-sync and pip-compile
+pip-tools
+
+# Testing framework
+pytest
+
+# For typing
+mypy
+
+# Needed in order to get the time of dawn, noon, sunset, and dusk
+astral
+
+# Needed in order to get the local time zone
+tzlocal
