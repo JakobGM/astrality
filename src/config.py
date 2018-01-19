@@ -5,10 +5,10 @@ from typing import Any, Dict, Optional
 from astral import Location
 from tzlocal import get_localzone
 
+from conky import create_conky_temp_files
 from time_of_day import PERIODS
 
 Config = Dict['str', Any]
-
 FONT_CATEGORIES = ('primary', 'secondary',)
 
 
@@ -66,10 +66,17 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
         in config_parser['conky']['modules'].split()
     }
 
+    conky_module_templates = {
+        module: path + '/template.conf'
+        for module, path
+        in config_module_paths.items()
+    }
+
     config.update({
         'config-directory': config_dir,
         'config-file': config_file,
         'conky-module-paths': config_module_paths,
+        'conky-module-templates': conky_module_templates,
         'wallpaper-theme-directory': \
             config_dir + '/wallpaper_themes/' + config['wallpaper']['theme'],
     })
@@ -90,6 +97,10 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
 
     # Import the colorscheme specified by the users wallpaper theme
     config['colors'] = import_colors(config['wallpaper-theme-directory'])
+
+    # Create temporary conky files used by conky, but files are overwritten
+    # when the time of day changes
+    config['conky-temp-files'] = create_conky_temp_files(config)
 
     return config
 
@@ -145,9 +156,9 @@ def import_colors(wallpaper_theme_directory: str):
     print(f'Using color config from "{color_config_path}"')
 
     colors = {}
-    for font_category in FONT_CATEGORIES:
-        colors[font_category] = {}
+    for color_category in FONT_CATEGORIES:
+        colors[color_category] = {}
         for period in PERIODS:
-            colors[font_category][period] = color_config_parser[font_category][period]
+            colors[color_category][period] = color_config_parser[color_category][period]
 
     return colors

@@ -1,6 +1,7 @@
 import time
 
 from config import user_configuration
+from conky import update_conky
 from time_of_day import is_new_time_of_day
 from wallpaper import update_wallpaper
 
@@ -18,4 +19,4 @@ if __name__ == '__main__':
             # image
             update_wallpaper(config, period)
 
-        time.sleep(config['refresh_period'])
+        time.sleep(int(config['behaviour']['refresh-period']))
