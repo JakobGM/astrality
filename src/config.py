@@ -1,4 +1,4 @@
-from configparser import ConfigParser
+from configparser import ConfigParser, ExtendedInterpolation
 import os
 from typing import Any, Dict, Optional
 
@@ -8,6 +8,8 @@ from tzlocal import get_localzone
 from time_of_day import PERIODS
 
 Config = Dict['str', Any]
+
+FONT_CATEGORIES = ('primary', 'secondary',)
 
 
 def user_configuration(config_directory_path: Optional[str] = None) -> Config:
@@ -49,7 +51,7 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
 
     # Populate the config dictionary with items from the `solarity.conf`
     # configuration file
-    config_parser = ConfigParser()
+    config_parser = ConfigParser(interpolation=ExtendedInterpolation())
     config_parser.read(config_file)
     config = {
         category: dict(items)
@@ -68,20 +70,26 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
         'config-directory': config_dir,
         'config-file': config_file,
         'conky-module-paths': config_module_paths,
+        'wallpaper-theme-directory': \
+            config_dir + '/wallpaper_themes/' + config['wallpaper']['theme'],
     })
 
     # Populate rest of config based on a partially filled config
+    # Initialize astral Location() object from user configuration
     config['location']['astral'] = astral_location(
         latitude=float(config['location']['latitude']),
         longitude=float(config['location']['longitude']),
         elevation=float(config['location']['elevation']),
     )
 
+    # Find wallpaper paths corresponding to the wallpaper theme set by the user
     config['wallpaper-paths'] = wallpaper_paths(
         config_path=config['config-directory'],
         wallpaper_theme=config['wallpaper']['theme'],
     )
 
+    # Import the colorscheme specified by the users wallpaper theme
+    config['colors'] = import_colors(config['wallpaper-theme-directory'])
 
     return config
 
@@ -129,3 +137,17 @@ def wallpaper_paths(
         in PERIODS
     }
     return paths
+
+def import_colors(wallpaper_theme_directory: str):
+    color_config_parser = ConfigParser(interpolation=ExtendedInterpolation())
+    color_config_path = wallpaper_theme_directory + '/colors.conf'
+    color_config_parser.read(color_config_path)
+    print(f'Using color config from "{color_config_path}"')
+
+    colors = {}
+    for font_category in FONT_CATEGORIES:
+        colors[font_category] = {}
+        for period in PERIODS:
+            colors[font_category][period] = color_config_parser[font_category][period]
+
+    return colors

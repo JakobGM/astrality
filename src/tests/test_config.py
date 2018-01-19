@@ -35,3 +35,21 @@ def test_wallpaper_paths(conf, conf_path):
         'sunset': base_path + 'sunset.jpg',
         'night': base_path + 'night.jpg',
     }
+
+def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf):
+    assert conf['colors'] == {
+        'primary': {
+            'afternoon': '#FC6F42',
+            'morning': '#5BA276',
+            'night': '#CACCFD',
+            'sunrise': '#FC6F42',
+            'sunset': '#FEE676',
+        },
+        'secondary': {
+            'afternoon': '#DB4E38',
+            'morning': '#76B087',
+            'night': '#3F72E8',
+            'sunrise': '#DB4E38',
+            'sunset': '#9B3A1A',
+        }
+    }
