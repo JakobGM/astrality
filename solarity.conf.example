@@ -8,13 +8,16 @@ longitude = 10.421906
 elevation = 0
 
 
-[appearance]
+[wallpaper]
 ; Available wallpaper themes can be shown by running `ls wallpaper_themes`
-wallpaper-theme = default
+theme = default
 
+[conky]
 ; Available Conky modules can be shown by running `ls conky_themes`
-conky-modules = performance time
+modules = performance time
 
+[font]
+main = FuraCode Nerd Font
 
 [behaviour]
 ; How often to check if we have entered a new time of day, in seconds

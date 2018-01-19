@@ -10,10 +10,10 @@ if __name__ == '__main__':
     changed = False
     period = 'not_set_yet'
     while True:
-        changed, period = is_new_time_of_day(period, config['location'])
+        changed, period = is_new_time_of_day(period, config['location']['astral'])
 
         if changed:
-            print('New time of day detected: ' + daytime)
+            print('New time of day detected: ' + period)
             # We are in a new time of day, and we can change the background
             # image
             update_wallpaper(config, period)
