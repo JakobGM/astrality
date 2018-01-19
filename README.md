@@ -63,6 +63,12 @@ exec --no-startup-id "$WORKON_HOME/solarity/bin/python $XDG_CONFIG_HOME/solarity
 ```
 
 ## Configuration
+The configuration directory for solarity is determined in the following way:
+
+* If `$SOLARITY_CONFIG_HOME` is set, use that folder as the configuration directory, else...
+* If `$XDG_CONFIG_HOME` is set, use `$XDG_CONFIG_HOME/solarity`, else...
+* Use `~/.config/solarity`.
+
 The configuration file for solarity should be placed in `$XDG_CONFIG_HOME/solarity/solarity.conf` and an example configuration can be found [here](https://github.com/JakobGM/solarity/blob/master/solarity.conf.example).
 
 You can also copy the example configuration file from this repository:

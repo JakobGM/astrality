@@ -25,7 +25,9 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
     - config['config-file']
     - config['conky-module-paths']
     """
-    # Determine configuration files
+    # Determine configuration folder path
+    config_directory_path=os.environ.get('SOLARITY_CONFIG_HOME', None)
+
     if config_directory_path:
         # The testing framework might inject its own config file, or the user
         # has specified $SOLARITY_CONFIG_HOME environment variable, which has
@@ -36,7 +38,14 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
         config_dir = os.getenv('XDG_CONFIG_HOME', '~/.config') + '/solarity'
 
     config_file = config_dir + '/solarity.conf'
-    print(f'Using configuration file "{config_file}"')
+
+    if not os.path.isfile(config_file):
+        raise RuntimeError(
+            'Configuration file not found in its expected path ' \
+            f'"{config_file}".'
+        )
+    else:
+        print(f'Using configuration file "{config_file}"')
 
     # Populate the config dictionary with items from the `solarity.conf`
     # configuration file
