@@ -14,7 +14,7 @@ theme = default
 
 [conky]
 ; Available Conky modules can be shown by running `ls conky_themes`
-modules = performance time
+modules = performance-1920x1080 time-1920x1080
 
 [font]
 main = FuraCode Nerd Font

@@ -1,4 +1,6 @@
 from collections import namedtuple
+from stat import S_IRUSR,S_IWUSR,S_IRGRP,S_IWGRP,S_IROTH,S_IWOTH
+import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any, Dict, Tuple
 import re
@@ -15,20 +17,16 @@ def update_conky(
     period: str,
 ) -> None:
     replacements = generate_replacements(config, period)
+    replace = generate_replacer(replacements)
+
     tempfiles = config['conky-temp-files']
     templates = config['conky-module-templates']
 
-    for module, template_path in templates:
+    for module, template_path in templates.items():
         with open(template_path, 'r') as template:
-            with open(tempfiles[module], 'w') as target:
+            with open(tempfiles[module].name, 'w') as target:
                 for line in template:
-                    target.write(line.replace(replacements))
-
-
-    if period == 'night':
-        os.system('sed -i "s/282828/CBCDFF/g" $XDG_CONFIG_HOME/conky/*.conf')
-    else:
-        os.system('sed -i "s/CBCDFF/282828/g" $XDG_CONFIG_HOME/conky/*.conf')
+                    target.write(replace(line))
 
 
 def generate_replacements(
@@ -43,7 +41,7 @@ def generate_replacements(
     templates = config['conky-module-templates']
 
     replacements = {
-        '${solarity:color:' + color_category + '}': period_colors[period]
+        '${solarity:colors:' + color_category + '}': period_colors[period]
         for color_category, period_colors
         in config['colors'].items()
     }
@@ -82,3 +80,13 @@ def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
         )
 
     return temp_files
+
+def initialize_conky(config: Config) -> None:
+    conky_temp_files = config['conky-temp-files']
+    for module_path, file in conky_temp_files.items():
+        print(f'Initializing conky module "{module_path}"')
+        print(f'    Tempory file placed at "{file.name}"')
+        subprocess.Popen(['conky', '-c', file.name])
+
+def exit_conky() -> None:
+    os.system('killall conky')

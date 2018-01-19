@@ -9,8 +9,8 @@ def test_name_of_config_file(conf):
 def test_conky_module_paths(conf, conf_path):
     conky_module_paths = conf['conky-module-paths']
     assert conky_module_paths == {
-        'performance': conf_path + '/conky_themes/performance',
-        'time': conf_path + '/conky_themes/time',
+        'performance-1920x1080': conf_path + '/conky_themes/performance-1920x1080',
+        'time-1920x1080': conf_path + '/conky_themes/time-1920x1080',
     }
 
 def test_loation(conf):
