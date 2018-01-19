@@ -10,10 +10,16 @@ It is relatively easy to add new themes to your own liking. Pull requests with n
 ## How to install
 
 ### System requirements
-Solarity requires the following system packages: `feh` and `sed`. An example installation on ArchLinux would be:
+Solarity requires the following system packages: [`conky`](https://wiki.archlinux.org/index.php/Conky),  [`feh`](https://wiki.archlinux.org/index.php/feh), `python 3.6`, and `sed`. An example installation on ArchLinux would be:
 
 ```bash
-sudo pacman -S feh sed
+sudo pacman -Syu conky feh python sed 
+```
+
+The default configuration uses the [Nerd Font](https://github.com/ryanoasis/nerd-fonts) "FuraCode Nerd Font". Install it if you don't change the font in your configuration. On ArchLinux, it can be installed with the `nerd-fonts-complete` AUR package:
+
+```bash
+yaourt -S nerd-fonts-complete
 ```
 
 ### Python requirements
@@ -28,7 +34,7 @@ git clone https://github.com/jakobgm/solarity /path/to/solarity
 The script can be run as a background job in the following way:
 
 ```bash
-python /path/to/solarity/main.py &
+python /path/to/solarity/src/main.py &
 ```
 
 Your wallpaper should now be automatically changed during the different times of day.
@@ -47,13 +53,13 @@ deactivate
 Add the following line to `$XDG_CONFIG_HOME/i3/config`:
 
 ```config
-exec --no-startup-id "/path/to/python/with/installed/dependencies /path/to/solarity/main.py &"
+exec --no-startup-id "/path/to/python/with/installed/dependencies /path/to/solarity/src/main.py &"
 ```
 
 Or more specifically, if you have used the virtualenvwrapper method of installing solarity:
 
 ```config
-exec --no-startup-id "$WORKON_HOME/solarity/bin/python $XDG_CONFIG_HOME/solarity/main.py &"
+exec --no-startup-id "$WORKON_HOME/solarity/bin/python $XDG_CONFIG_HOME/solarity/src/main.py &"
 ```
 
 ## Configuration
@@ -66,6 +72,19 @@ cp /path/to/solarity/solarity.conf.example $XDG_CONFIG_HOME/solarity/solarity.co
 ```
 
 Edit the configuration file in order to add your current location, given by your GPS coordinates (longitude, latitude, and elevation). These coordinates can be obtained from [this website](https://www.latlong.net/).
+
+### Compton
+If you are using the [compton](https://github.com/chjj/compton) compositor, you should disable any shadows and dims which could be applied to the conky wallpaper modules. Here is an example configuration from `$XDG_CONFIG_HOME/compton/compton.conf`:
+
+```conf
+inactive-dim = 0.1;
+shadow = true;
+shadow-exclude = [
+    "! name~=''",
+    "class_g = 'Conky'"
+    ]
+mark-ovredir-focused = true;
+```
 
 ## How to add new wallpaper theme
 Say you would want to create a new wallpaper theme called `nature`. First create a new subdirectory in `$XDG_CONFIG_HOME/wallpaper_themes` named `nature`:
@@ -104,11 +123,11 @@ WallpaperTheme = nature
 
 Restart the solarity process in order to see the change of the wallpaper theme.
 
-I would appreciate any pull requests containing new themes!
+Pull requests containing new themes are very welcome!
 
 ## Inspirations for themes
-Themes have been made by the help of several posts on the [/unixporn](https://reddit.com/r/unixporn) subreddit. Here are some of them:
+Themes have been made by the help of several posts on the [/r/unixporn](https://reddit.com/r/unixporn) subreddit. Here are some of them:
 
 * Default: Still on the lookout for where I got this theme originally
-* Tower: Reddit user [/u/saors](https://reddit.com/u/soars): [/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49phkc/firewatch_chrono_first_theme_includes_parallax/?st=jcktppsn&sh=792fe302)
-* Tower: Reddit user [/u/TheFawxyOne](https://reddit.com/u/soars): [/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49fpwz/ocupdate_firewatch_parallax_theme_v150_read/?st=jcktryl8&sh=4022418b)
+* Tower: Reddit user [/u/saors](https://reddit.com/u/soars): [/r/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49phkc/firewatch_chrono_first_theme_includes_parallax/?st=jcktppsn&sh=792fe302)
+* Tower: Reddit user [/u/TheFawxyOne](https://reddit.com/u/soars): [/r/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49fpwz/ocupdate_firewatch_parallax_theme_v150_read/?st=jcktryl8&sh=4022418b)
