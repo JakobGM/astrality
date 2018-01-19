@@ -26,19 +26,19 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
     config_module_paths = {
         module: config_dir + '/conky_themes/' + module
         for module
-        in config_parser['Appearance']['ConkyModules'].split()
+        in config_parser['appearance']['conky-modules'].split()
     }
 
     config = {
         'config_directory': config_dir,
         'config_file': config_file,
         'conky_module_paths': config_module_paths,
-        'longitude': config_parser['Location']['Longitude'],
-        'latitude': config_parser['Location']['Latitude'],
-        'elevation': config_parser['Location']['Elevation'],
-        'wallpaper_theme': config_parser['Appearance']['WallpaperTheme'],
+        'longitude': config_parser['location']['longitude'],
+        'latitude': config_parser['location']['latitude'],
+        'elevation': config_parser['location']['elevation'],
+        'wallpaper_theme': config_parser['appearance']['wallpaper-theme'],
         'refresh_period': int(
-            config_parser['Behaviour'].get('RefreshPeriod', '60')
+            config_parser['behaviour'].get('refresh-period', '60')
         ),
     }
 

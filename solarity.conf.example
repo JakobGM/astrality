@@ -1,24 +1,24 @@
-[Location]
-# Your current location, easily obtained from here: https://www.latlong.net/
-# Used by solarity for automatic wallpaper rotation based on time of day
-Latitude = 63.446827
-Longitude = 10.421906
+[location]
+; Your current location, easily obtained from here: https://www.latlong.net/
+; Used by solarity for automatic wallpaper rotation based on time of day
+latitude = 63.446827
+longitude = 10.421906
 
-# Height above sea level
-Elevation = 0
-
-
-[Appearance]
-# Available wallpaper themes can be shown by running `ls wallpaper_themes`
-WallpaperTheme = default
-
-# Available Conky modules can be shown by running `ls conky_themes`
-ConkyModules = performance time
+; Height above sea level
+elevation = 0
 
 
-[Behaviour]
-# How often to check if we have entered a new time of day, in seconds
-RefreshPeriod = 60
+[appearance]
+; Available wallpaper themes can be shown by running `ls wallpaper_themes`
+wallpaper-theme = default
+
+; Available Conky modules can be shown by running `ls conky_themes`
+conky-modules = performance time
 
 
-# vim:filetype=dosini
+[behaviour]
+; How often to check if we have entered a new time of day, in seconds
+refresh-period = 60
+
+
+; vim:filetype=dosini
