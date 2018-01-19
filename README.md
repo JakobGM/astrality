@@ -73,6 +73,19 @@ cp /path/to/solarity/solarity.conf.example $XDG_CONFIG_HOME/solarity/solarity.co
 
 Edit the configuration file in order to add your current location, given by your GPS coordinates (longitude, latitude, and elevation). These coordinates can be obtained from [this website](https://www.latlong.net/).
 
+The configuration file is parsed by the python module `[configparser](https://docs.python.org/3/library/configparser.html)`, and supports references to other configuration variables when setting new ones. Example:
+
+```dosini
+[filesystem]
+username =  jakobgm
+home-dir = /home/${username}
+
+[configs]
+vimrc = $[filesystem:home-dir]/.vimrc
+```
+
+More information about value interpolation can be found [here](https://docs.python.org/3/library/configparser.html#interpolation-of-values).
+
 ### Compton
 If you are using the [compton](https://github.com/chjj/compton) compositor, you should disable any shadows and dims which could be applied to the conky wallpaper modules. Here is an example configuration from `$XDG_CONFIG_HOME/compton/compton.conf`:
 
