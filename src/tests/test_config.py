@@ -13,6 +13,7 @@ def test_conky_module_paths(conf, conf_path):
         'time-1920x1080': conf_path + '/conky_themes/time-1920x1080',
     }
 
+
 def test_loation(conf):
     location = conf['location']['astral']
     assert str(location) == 'CityNotImportant/RegionIsNotImportantEither, tz=Europe/Oslo, lat=63.45, lon=10.42'
@@ -29,27 +30,27 @@ def test_wallpaper_theme(conf):
 def test_wallpaper_paths(conf, conf_path):
     base_path = conf_path + '/wallpaper_themes/default/'
     assert conf['wallpaper-paths'] == {
-        'sunrise': base_path + 'sunrise.jpg',
-        'morning': base_path + 'morning.jpg',
-        'afternoon': base_path + 'afternoon.jpg',
-        'sunset': base_path + 'sunset.jpg',
-        'night': base_path + 'night.jpg',
+        'sunrise': base_path + 'sunrise',
+        'morning': base_path + 'morning',
+        'afternoon': base_path + 'afternoon',
+        'sunset': base_path + 'sunset',
+        'night': base_path + 'night',
     }
 
 def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf):
     assert conf['colors'] == {
         'primary': {
-            'afternoon': '#FC6F42',
-            'morning': '#5BA276',
-            'night': '#CACCFD',
-            'sunrise': '#FC6F42',
-            'sunset': '#FEE676',
+            'afternoon': 'FC6F42',
+            'morning': '5BA276',
+            'night': 'CACCFD',
+            'sunrise': 'FC6F42',
+            'sunset': 'FEE676',
         },
         'secondary': {
-            'afternoon': '#DB4E38',
-            'morning': '#76B087',
-            'night': '#3F72E8',
-            'sunrise': '#DB4E38',
-            'sunset': '#9B3A1A',
+            'afternoon': 'DB4E38',
+            'morning': '76B087',
+            'night': '3F72E8',
+            'sunrise': 'DB4E38',
+            'sunset': '9B3A1A',
         }
     }

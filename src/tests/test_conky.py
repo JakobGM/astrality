@@ -6,11 +6,11 @@ def test_invocation_of_compile_conky_templates(conf):
 def test_generation_of_replacements(conf):
     replacements = generate_replacements(conf, 'night')
     assert replacements == {
-        '${solarity:color:primary}': '#CACCFD',
-        '${solarity:color:secondary}': '#3F72E8',
+        '${solarity:colors:primary}': 'CACCFD',
+        '${solarity:colors:secondary}': '3F72E8',
     }
 
 def test_use_of_replacer(conf):
     replacements = generate_replacements(conf, 'night')
     replace = generate_replacer(replacements)
-    assert replace('${solarity:color:primary}') == '#CACCFD'
+    assert replace('${solarity:colors:primary}') == 'CACCFD'
