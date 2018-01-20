@@ -72,14 +72,20 @@ def generate_replacer(replacements: Dict[str, str]):
 
 
 def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
-    temp_files = {}
-    for conky_module_path in config['conky-module-paths']:
-        temp_files[conky_module_path] = NamedTemporaryFile(
-            prefix=conky_module_path,
-            dir='/tmp/solarity'
-        )
+    # NB: These temporary files/directories need to be persisted during the
+    # entirity of the scripts runtime, since the files are deleted when they
+    # go out of scope
+    temp_dir = TemporaryDirectory(prefix='solarity-')
+    config['temp-dir'] = temp_dir
 
-    return temp_files
+    return {
+        module: NamedTemporaryFile(
+            prefix=module + '-',
+            dir=temp_dir.name
+        )
+        for module, path
+        in config['conky-module-paths'].items()
+    }
 
 def initialize_conky(config: Config) -> None:
     conky_temp_files = config['conky-temp-files']
