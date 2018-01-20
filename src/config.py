@@ -87,6 +87,7 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
         latitude=float(config['location']['latitude']),
         longitude=float(config['location']['longitude']),
         elevation=float(config['location']['elevation']),
+        config=config,
     )
 
     # Find wallpaper paths corresponding to the wallpaper theme set by the user
@@ -109,6 +110,7 @@ def astral_location(
     latitude: float,
     longitude: float,
     elevation: float,
+    config: Config,
 ) -> Location:
     # Initialize a custom location for astral, as it doesn't necessarily include
     # your current city of residence
@@ -123,8 +125,14 @@ def astral_location(
     location.longitude = longitude
     location.elevation = elevation
 
-    # We can get the timezone from the system
-    location.timezone = str(get_localzone())
+    if 'timezone' in config['location']:
+        timezone = config['location']['timezone']
+        print(f'You have manually set your timezone to "{timezone}"')
+        location.timezone = timezone
+    else:
+        timezone = str(get_localzone())
+        print(f'Your timezone is inferred to be "{timezone}"')
+        location.timezone = timezone
 
     return location
 

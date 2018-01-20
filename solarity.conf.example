@@ -7,6 +7,11 @@ longitude = 10.421906
 ; Height above sea level
 elevation = 0
 
+; You are not required to set the timezone, as solarity tries to infer your
+; timezone from your system, but you can set it manually if you experience
+; that solarity detects the wrong timezone
+; timezone = Europe/Oslo
+
 
 [wallpaper]
 ; Available wallpaper themes can be shown by running `ls wallpaper_themes`
