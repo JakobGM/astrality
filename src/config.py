@@ -1,5 +1,6 @@
 from configparser import ConfigParser, ExtendedInterpolation
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from astral import Location
@@ -12,7 +13,7 @@ Config = Dict['str', Any]
 FONT_CATEGORIES = ('primary', 'secondary',)
 
 
-def user_configuration(config_directory_path: Optional[str] = None) -> Config:
+def user_configuration(config_directory: Optional[str] = None) -> Config:
     """
     Creates a configuration dictionary which should directly reflect the
     hierarchy of a typical `solarity.conf` file. Users should be able to insert
@@ -27,25 +28,23 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
     - config['config-file']
     - config['conky-module-paths']
     """
-    # Determine configuration folder path
-    config_directory_path=os.environ.get('SOLARITY_CONFIG_HOME', None)
-
-    if config_directory_path:
-        # The testing framework might inject its own config file, or the user
-        # has specified $SOLARITY_CONFIG_HOME environment variable, which has
-        # been injected by main.py
-        config_dir = config_directory_path
+    if not config_directory:
+        # The testing framework has injected its own config file
+        config_directory=os.environ.get('SOLARITY_CONFIG_HOME', None)
     else:
         # Follow the XDG directory standard
-        config_dir = os.getenv('XDG_CONFIG_HOME', '~/.config') + '/solarity'
+        config_directory = os.getenv('XDG_CONFIG_HOME', '~/.config') + '/solarity'
 
-    config_file = config_dir + '/solarity.conf'
+    config_file = config_directory + '/solarity.conf'
 
     if not os.path.isfile(config_file):
-        raise RuntimeError(
+        print(
             'Configuration file not found in its expected path ' \
             f'"{config_file}".'
         )
+        config_directory = str(Path(__file__).parents[1])
+        config_file = config_directory + '/solarity.conf.example'
+        print(f'Using example configuration instead: "{config_file}"')
     else:
         print(f'Using configuration file "{config_file}"')
 
@@ -59,9 +58,9 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
         in config_parser.items()
     }
 
-    # Insert infered paths from config_dir
+    # Insert infered paths from config_directory
     config_module_paths = {
-        module: config_dir + '/conky_themes/' + module
+        module: config_directory + '/conky_themes/' + module
         for module
         in config_parser['conky']['modules'].split()
     }
@@ -73,12 +72,14 @@ def user_configuration(config_directory_path: Optional[str] = None) -> Config:
     }
 
     config.update({
-        'config-directory': config_dir,
+        'config-directory': config_directory,
         'config-file': config_file,
         'conky-module-paths': config_module_paths,
         'conky-module-templates': conky_module_templates,
         'wallpaper-theme-directory': \
-            config_dir + '/wallpaper_themes/' + config['wallpaper']['theme'],
+            config_directory + \
+            '/wallpaper_themes/' + \
+            config['wallpaper']['theme'],
     })
 
     # Populate rest of config based on a partially filled config

@@ -3,7 +3,7 @@ def test_config_directory_name(conf):
 
 
 def test_name_of_config_file(conf):
-    assert conf['config-file'][-14:] == '/solarity.conf'
+    assert '/solarity.conf' in conf['config-file']
 
 
 def test_conky_module_paths(conf, conf_path):

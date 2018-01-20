@@ -13,13 +13,13 @@ def dawn(conf):
 
 @pytest.fixture
 def before_dawn(dawn):
-    delta = timedelta(hours=1, minutes=-2)
+    delta = timedelta(minutes=-2)
     return dawn + delta
 
 
 @pytest.fixture
 def after_dawn(dawn):
-    delta = timedelta(hours=1, minutes=2)
+    delta = timedelta(minutes=2)
     return dawn + delta
 
 
@@ -65,13 +65,13 @@ def dusk(conf):
 
 @pytest.fixture
 def before_dusk(dusk):
-    delta = timedelta(hours=1, minutes=-2)
+    delta = timedelta(minutes=-2)
     return dusk + delta
 
 
 @pytest.fixture
 def after_dusk(dusk):
-    delta = timedelta(hours=1, minutes=2)
+    delta = timedelta(minutes=2)
     return dusk + delta
 
 

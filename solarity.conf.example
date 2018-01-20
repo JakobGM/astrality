@@ -9,8 +9,9 @@ elevation = 0
 
 ; You are not required to set the timezone, as solarity tries to infer your
 ; timezone from your system, but you can set it manually if you experience
-; that solarity detects the wrong timezone
-; timezone = Europe/Oslo
+; that solarity detects the wrong timezone, just comment out this line if you
+; want to use the inference based method
+timezone = Europe/Oslo
 
 
 [wallpaper]
@@ -18,10 +19,10 @@ elevation = 0
 theme = default
 
 ; Option passed to `feh` when setting the wallpaper. Available options are:
-; --bg-tile FILE
-; --bg-center FILE
-; --bg-max FILE
-; --bg-fill FILE
+; --bg-tile
+; --bg-center
+; --bg-max
+; --bg-fill
 feh-option = --bg-fill
 
 [conky]
