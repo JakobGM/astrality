@@ -115,14 +115,14 @@ mkdir -p $XDG_CONFIG_HOME/solarity/wallpaper_themes/nature
 Then place pictures [supported by feh](http://search.cpan.org/~kryde/Image-Base-Imlib2-1/lib/Image/Base/Imlib2.pm#DESCRIPTION) in the newly created directory. You **have** to use the following filenames:
 
 ```
-sunrise.format
-morning.format
-afternoon.format
-sunset.format
-night.format
+sunrise.*
+morning.*
+afternoon.*
+sunset.*
+night.*
 ```
 
-Where the `format` suffixes would be any combination of `png`, `jpeg`, `jpg`, `tiff`, `pnm`, and `bmp`.
+Where the `*` suffixes can be any combination of file types supported by feh.
 
 The images are not required to be different, in case if you do not have enough fitting wallpapers to choose from. You can use identical copies for some or all of the time periods, or even better, create a symbolic links. For example:
 

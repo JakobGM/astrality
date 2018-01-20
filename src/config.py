@@ -143,7 +143,7 @@ def wallpaper_paths(
     wallpaper_directory = config_path + '/wallpaper_themes/' + wallpaper_theme
 
     paths = {
-        period: wallpaper_directory + '/' + period + '.jpg'
+        period: wallpaper_directory + '/' + period
         for period
         in PERIODS
     }
