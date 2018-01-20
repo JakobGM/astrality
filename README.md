@@ -152,3 +152,5 @@ Themes have been made by the help of several posts on the [/r/unixporn](https://
 * Default: Still on the lookout for where I got this theme originally
 * Tower: Reddit user [/u/saors](https://reddit.com/u/soars): [/r/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49phkc/firewatch_chrono_first_theme_includes_parallax/?st=jcktppsn&sh=792fe302)
 * Tower: Reddit user [/u/TheFawxyOne](https://reddit.com/u/soars): [/r/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49fpwz/ocupdate_firewatch_parallax_theme_v150_read/?st=jcktryl8&sh=4022418b)
+
+In addition, the solarity logo is a modified version of a logo designed by [miscellaneous](https://www.shareicon.net/author/miscellaneous) from Flaticon.
