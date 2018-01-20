@@ -13,7 +13,7 @@ import massedit
 Config = Dict['str', Any]
 
 
-def update_conky(
+def compile_conky_templates(
     config: Config,
     period: str,
 ) -> None:
@@ -88,7 +88,7 @@ def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
         in config['conky-module-paths'].items()
     }
 
-def initialize_conky(config: Config) -> None:
+def start_conky_process(config: Config) -> None:
     conky_temp_files = config['conky-temp-files']
     for module_path, file in conky_temp_files.items():
         print(f'Initializing conky module "{module_path}"')

@@ -13,6 +13,12 @@ elevation = 0
 theme = default
 
 [conky]
+; You might run into issues if you are automatically rearranging displays
+; at startup, since conky might render its modules to a screen which does
+; not exist anymore after starting conky. You can prevent this issue by
+; delaying the start of the conky process
+startup-delay = 0
+
 ; Available Conky modules can be shown by running `ls conky_themes`
 modules = performance-1920x1080 time-1920x1080
 

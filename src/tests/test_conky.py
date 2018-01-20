@@ -1,7 +1,7 @@
-from conky import generate_replacements, generate_replacer, update_conky
+from conky import generate_replacements, generate_replacer, compile_conky_templates
 
-def test_invocation_of_update_conky(conf):
-    update_conky(conf, 'night')
+def test_invocation_of_compile_conky_templates(conf):
+    compile_conky_templates(conf, 'night')
 
 def test_generation_of_replacements(conf):
     replacements = generate_replacements(conf, 'night')
