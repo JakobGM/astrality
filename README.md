@@ -26,17 +26,17 @@ yaourt -S nerd-fonts-complete
 
 ### Python requirements
 
-Create a new virtualenv for python (or use your system python if you prefer). Install the following requirements:
+Create a new virtualenv for python 3.6 (or use your system python 3.6 if you prefer). Install the following requirements:
 
 ```bash
-pip install astral tzlocal
+pip3 install astral tzlocal
 git clone https://github.com/jakobgm/solarity /path/to/solarity
 ```
 
 The script can be run as a background job in the following way:
 
 ```bash
-python /path/to/solarity/src/main.py &
+python3.6 /path/to/solarity/src/main.py &
 ```
 
 Your wallpaper should now be automatically changed during the different times of day.
@@ -55,7 +55,7 @@ deactivate
 Add the following line to `$XDG_CONFIG_HOME/i3/config`:
 
 ```config
-exec --no-startup-id "/path/to/python/with/installed/dependencies /path/to/solarity/src/main.py &"
+exec --no-startup-id "/path/to/python/with/installed/dependencies/python /path/to/solarity/src/main.py &"
 ```
 
 Or more specifically, if you have used the virtualenvwrapper method of installing solarity:
