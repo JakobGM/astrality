@@ -1,14 +1,10 @@
 from collections import namedtuple
-import shutil
-from stat import S_IRUSR,S_IWUSR,S_IRGRP,S_IWGRP,S_IROTH,S_IWOTH
 import subprocess
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile
+from typing import Set
 from typing import Any, Dict, Tuple
 import re
 import os
-
-import massedit
-
 
 Config = Dict['str', Any]
 
@@ -17,17 +13,22 @@ def compile_conky_templates(
     config: Config,
     period: str,
 ) -> None:
-    replacements = generate_replacements(config, period)
-    replace = generate_replacer(replacements)
-
     tempfiles = config['conky-temp-files']
     templates = config['conky-module-templates']
+
+    replacements = generate_replacements(config, period)
+    replace = generate_replacer(replacements, period, config)
 
     for module, template_path in templates.items():
         with open(template_path, 'r') as template:
             with open(tempfiles[module].name, 'w') as target:
                 for line in template:
                     target.write(replace(line))
+
+
+def find_placeholders(string: str) -> set:
+    placeholder_pattern = re.compile(r'\$\{solarity:[\w|\-^:]+:[\w|\-^:]+\}')
+    return set(placeholder_pattern.findall(string))
 
 
 def generate_replacements(
@@ -40,36 +41,50 @@ def generate_replacements(
     respective replacements fitting for the time of day
     """
     templates = config['conky-module-templates']
+    placeholders: Set[str] = set()
+    for template_path in templates.values():
+        with open(template_path, 'r') as template:
+            for line in template:
+                placeholders = placeholders | find_placeholders(line)
 
-    replacements = {
-        '${solarity:colors:' + color_category + '}': period_colors[period]
-        for color_category, period_colors
-        in config['colors'].items()
-    }
+    replacements = {}
+    for placeholder in placeholders:
+        category, key = placeholder[11:-1].split(':')
+        value = config[category][key]
+        if category == 'colors':
+            replacements[placeholder] = value[period]
+        elif isinstance(value, str):
+            replacements[placeholder] = value
+        else:
+            raise RuntimeError(f'Invalid template tag "{placeholder}"')
 
     return replacements
 
-def generate_replacer(replacements: Dict[str, str]):
+
+def generate_replacer(replacements: Dict[str, str], period: str, config: Config):
     """
     Given a set of replacements returned from generate_replacements() we can
     create a regex replacer which will replace these placeholders in string
     types
     """
-    # We have to escape the placeholder pattern in case of use of reserved
-    # characters
-    replacements = {
-        re.escape(placeholder): replacement
-        for placeholder, replacement in replacements.items()
-    }
+    # We have to escape the placeholder patterns in case of use of reserved
+    # regex characters
+    escaped_placeholders = (
+        re.escape(placeholder)
+        for placeholder in replacements.keys()
+    )
 
-    # Create a regex pattern from the placeholders
-    pattern = re.compile("|".join(replacements.keys()))
+    # Compile all the placeholders which are present in our file into on single
+    # pattern
+    pattern = re.compile("|".join(escaped_placeholders))
 
-    def replacer(text):
-        # Source: https://stackoverflow.com/a/6117124
-        return pattern.sub(lambda m: replacements[re.escape(m.group(0))], text)
+    def replace(template: str):
+        return pattern.sub(
+            lambda match: replacements[match.group(0)],
+            template,
+        )
 
-    return replacer
+    return replace
 
 
 def create_conky_temp_files(config: Config) -> Tuple[str, ...]:

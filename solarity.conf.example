@@ -34,8 +34,8 @@ startup-delay = 0
 ; Available Conky modules can be shown by running `ls conky_themes`
 modules = performance-1920x1080 time-1920x1080
 
-[font]
-main = FuraCode Nerd Font
+[fonts]
+primary = FuraCode Nerd Font
 
 [behaviour]
 ; How often to check if we have entered a new time of day, in seconds
