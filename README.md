@@ -12,10 +12,10 @@ It is relatively easy to add new themes to your own liking. Pull requests with n
 ## How to install
 
 ### System requirements
-Solarity requires the following system packages: [`conky`](https://wiki.archlinux.org/index.php/Conky),  [`feh`](https://wiki.archlinux.org/index.php/feh), `python 3.6`, and `sed`. An example installation on ArchLinux would be:
+Solarity requires the following system packages: [`conky`](https://wiki.archlinux.org/index.php/Conky),  [`feh`](https://wiki.archlinux.org/index.php/feh), and `python 3.6`. An example installation on ArchLinux would be:
 
 ```bash
-sudo pacman -Syu conky feh python sed 
+sudo pacman -Syu conky feh python
 ```
 
 The default configuration uses the [Nerd Font](https://github.com/ryanoasis/nerd-fonts) "FuraCode Nerd Font". Install it if you don't change the font in your configuration. On ArchLinux, it can be installed with the `nerd-fonts-complete` AUR package:
@@ -71,7 +71,7 @@ The configuration directory for solarity is determined in the following way:
 * If `$XDG_CONFIG_HOME` is set, use `$XDG_CONFIG_HOME/solarity`, else...
 * Use `~/.config/solarity`.
 
-The configuration file for solarity should be placed in `$XDG_CONFIG_HOME/solarity/solarity.conf` and an example configuration can be found [here](https://github.com/JakobGM/solarity/blob/master/solarity.conf.example).
+The configuration file for solarity should be placed at the root of the solarity configuration directory and an example configuration can be found [here](https://github.com/JakobGM/solarity/blob/master/solarity.conf.example).
 
 You can also copy the example configuration file from this repository:
 
@@ -89,7 +89,7 @@ username =  jakobgm
 home-dir = /home/${username}
 
 [configs]
-vimrc = $[filesystem:home-dir]/.vimrc
+vimrc = ${filesystem:home-dir}/.vimrc
 ```
 
 More information about value interpolation can be found [here](https://docs.python.org/3/library/configparser.html#interpolation-of-values).
@@ -108,7 +108,7 @@ mark-ovredir-focused = true;
 ```
 
 ## How to add new wallpaper theme
-Say you would want to create a new wallpaper theme called `nature`. First create a new subdirectory in `$XDG_CONFIG_HOME/wallpaper_themes` named `nature`:
+Say you would want to create a new wallpaper theme called `nature`. First create a new subdirectory in `$XDG_CONFIG_HOME/solarity/wallpaper_themes` named `nature`:
 
 ```
 mkdir -p $XDG_CONFIG_HOME/solarity/wallpaper_themes/nature
