@@ -1,4 +1,3 @@
-import atexit
 import os
 import signal
 import shutil
@@ -10,15 +9,11 @@ from conky import exit_conky, start_conky_process, compile_conky_templates
 from time_of_day import is_new_time_of_day, period_of_day
 from wallpaper import exit_feh, update_wallpaper
 
-atexit.register(exit_conky)
-atexit.register(exit_feh)
-
-
 def exit_handler(signal=None, frame=None):
     print('Solarity was interrupted')
     print('Cleaning up temporary files before exiting...')
     exit_conky(config)
-    exit_feh()
+    exit_feh(config)
 
     # Delete all temporary files manually, because if we delete the
     # temp directory, the TemporaryFile closer will raise an error

@@ -12,6 +12,13 @@ elevation = 0
 ; Available wallpaper themes can be shown by running `ls wallpaper_themes`
 theme = default
 
+; Option passed to `feh` when setting the wallpaper. Available options are:
+; --bg-tile FILE
+; --bg-center FILE
+; --bg-max FILE
+; --bg-fill FILE
+feh-option = --bg-fill
+
 [conky]
 ; You might run into issues if you are automatically rearranging displays
 ; at startup, since conky might render its modules to a screen which does
