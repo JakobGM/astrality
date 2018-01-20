@@ -1,4 +1,5 @@
 from collections import namedtuple
+import shutil
 from stat import S_IRUSR,S_IWUSR,S_IRGRP,S_IWGRP,S_IROTH,S_IWOTH
 import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -76,7 +77,7 @@ def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
     # entirity of the scripts runtime, since the files are deleted when they
     # go out of scope
     temp_dir = TemporaryDirectory(prefix='solarity-')
-    config['temp-dir'] = temp_dir
+    config['temp-directory'] = temp_dir
 
     return {
         module: NamedTemporaryFile(
@@ -94,5 +95,6 @@ def initialize_conky(config: Config) -> None:
         print(f'    Tempory file placed at "{file.name}"')
         subprocess.Popen(['conky', '-c', file.name])
 
-def exit_conky() -> None:
+def exit_conky(config: Config) -> None:
     os.system('killall conky')
+    shutil.rmtree(config['temp-directory'].name)
