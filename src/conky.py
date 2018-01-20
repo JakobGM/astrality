@@ -76,13 +76,15 @@ def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
     # NB: These temporary files/directories need to be persisted during the
     # entirity of the scripts runtime, since the files are deleted when they
     # go out of scope
-    temp_dir = TemporaryDirectory(prefix='solarity-')
-    config['temp-directory'] = temp_dir
+    temp_dir_path = os.environ.get('TMPDIR', '/tmp') + '/solarity'
+    config['temp-directory'] = temp_dir_path
+    if not os.path.isdir(temp_dir_path):
+        os.mkdir(temp_dir_path)
 
     return {
         module: NamedTemporaryFile(
             prefix=module + '-',
-            dir=temp_dir.name
+            dir=temp_dir_path
         )
         for module, path
         in config['conky-module-paths'].items()
@@ -97,4 +99,3 @@ def start_conky_process(config: Config) -> None:
 
 def exit_conky(config: Config) -> None:
     os.system('killall conky')
-    shutil.rmtree(config['temp-directory'].name)

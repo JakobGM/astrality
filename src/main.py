@@ -1,6 +1,7 @@
 import atexit
 import os
 import signal
+import shutil
 import sys
 import time
 
@@ -18,6 +19,16 @@ def exit_handler(signal=None, frame=None):
     print('Cleaning up temporary files before exiting...')
     exit_conky(config)
     exit_feh()
+
+    # Delete all temporary files manually, because if we delete the
+    # temp directory, the TemporaryFile closer will raise an error
+    # when it tries to delete itself when it goes out of scope
+    for file in config['conky-temp-files'].values():
+        file.close()
+
+    # Now we can safely delete the temporary directory
+    shutil.rmtree(config['temp-directory'])
+
     try:
         sys.exit(0)
     except SystemExit:
