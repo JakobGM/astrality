@@ -1,8 +1,14 @@
+from configparser import ConfigParser, ExtendedInterpolation
 from glob import glob
 import os
 import subprocess
+from typing import Any, Dict
 
-from config import Config
+from time_of_day import PERIODS
+
+
+Config = Dict['str', Any]
+FONT_CATEGORIES = ('primary', 'secondary',)
 
 
 def update_wallpaper(config: Config, period: str) -> None:
@@ -15,6 +21,46 @@ def update_wallpaper(config: Config, period: str) -> None:
         config['wallpaper'].get('feh-option', '--bg-scale'),
         wallpaper_path,
     ])
+
+def import_colors(wallpaper_theme_directory: str):
+    color_config_parser = ConfigParser(interpolation=ExtendedInterpolation())
+    color_config_path = os.path.join(wallpaper_theme_directory, 'colors.conf')
+    color_config_parser.read(color_config_path)
+    print(f'Using color config from "{color_config_path}"')
+
+    colors = {}
+    for color_category in FONT_CATEGORIES:
+        colors[color_category] = {}
+        for period in PERIODS:
+            colors[color_category][period] = color_config_parser[color_category][period]
+
+    return colors
+
+
+def wallpaper_paths(
+    config_path: str,
+    wallpaper_theme: str,
+) -> Dict[str, str]:
+    """
+    Given the configuration directory and wallpaper theme, this function
+    returns a dictionary containing:
+
+    {..., 'period': 'full_wallpaper_path', ...}
+
+    """
+    wallpaper_directory = os.path.join(
+        config_path,
+        'wallpaper_themes',
+        wallpaper_theme
+    )
+
+    paths = {
+        period: os.path.join(wallpaper_directory, period)
+        for period
+        in PERIODS
+    }
+    return paths
+
 
 def exit_feh(config) -> None:
     this_file = os.path.realpath(__file__)

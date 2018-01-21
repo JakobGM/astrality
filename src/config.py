@@ -3,13 +3,11 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from astral import Location
-
 from conky import create_conky_temp_files
-from time_of_day import PERIODS
+from time_of_day import astral_location, PERIODS
+from wallpaper import import_colors, wallpaper_paths
 
 Config = Dict['str', Any]
-FONT_CATEGORIES = ('primary', 'secondary',)
 
 
 def infer_config_location(
@@ -128,64 +126,3 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     config['conky_temp_files'] = create_conky_temp_files(config)
 
     return config
-
-
-def astral_location(
-    latitude: float,
-    longitude: float,
-    elevation: float,
-) -> Location:
-    # Initialize a custom location for astral, as it doesn't necessarily include
-    # your current city of residence
-    location = Location()
-
-    # These two doesn't really matter
-    location.name = 'CityNotImportant'
-    location.region = 'RegionIsNotImportantEither'
-
-    # But these are important, and should be provided by the user
-    location.latitude = latitude
-    location.longitude = longitude
-    location.elevation = elevation
-    location.timezone = 'UTC'
-
-    return location
-
-
-def wallpaper_paths(
-    config_path: str,
-    wallpaper_theme: str,
-) -> Dict[str, str]:
-    """
-    Given the configuration directory and wallpaper theme, this function
-    returns a dictionary containing:
-
-    {..., 'period': 'full_wallpaper_path', ...}
-
-    """
-    wallpaper_directory = os.path.join(
-        config_path,
-        'wallpaper_themes',
-        wallpaper_theme
-    )
-
-    paths = {
-        period: os.path.join(wallpaper_directory, period)
-        for period
-        in PERIODS
-    }
-    return paths
-
-def import_colors(wallpaper_theme_directory: str):
-    color_config_parser = ConfigParser(interpolation=ExtendedInterpolation())
-    color_config_path = os.path.join(wallpaper_theme_directory, 'colors.conf')
-    color_config_parser.read(color_config_path)
-    print(f'Using color config from "{color_config_path}"')
-
-    colors = {}
-    for color_category in FONT_CATEGORIES:
-        colors[color_category] = {}
-        for period in PERIODS:
-            colors[color_category][period] = color_config_parser[color_category][period]
-
-    return colors

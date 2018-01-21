@@ -12,6 +12,7 @@ def is_new_time_of_day(period: str, location: Location) -> Tuple[bool, str]:
     new_period = period_of_day(location)
     return new_period != period, new_period
 
+
 def period_of_day(location: Location) -> str:
     timezone = pytz.timezone(location.timezone)
     now = timezone.localize(datetime.datetime.utcnow())
@@ -30,3 +31,25 @@ def period_of_day(location: Location) -> str:
         period = 'night'
 
     return period
+
+
+def astral_location(
+    latitude: float,
+    longitude: float,
+    elevation: float,
+) -> Location:
+    # Initialize a custom location for astral, as it doesn't necessarily include
+    # your current city of residence
+    location = Location()
+
+    # These two doesn't really matter
+    location.name = 'CityNotImportant'
+    location.region = 'RegionIsNotImportantEither'
+
+    # But these are important, and should be provided by the user
+    location.latitude = latitude
+    location.longitude = longitude
+    location.elevation = elevation
+    location.timezone = 'UTC'
+
+    return location
