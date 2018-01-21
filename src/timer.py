@@ -11,7 +11,7 @@ Config = Dict[str, Any]
 class Timer(abc.ABC):
     """Class which defines different periods."""
 
-    periods = Tuple[str]
+    periods: Tuple[str]
 
     @abc.abstractmethod
     def __init__(self, config: Config) -> None:
@@ -22,6 +22,16 @@ class Timer(abc.ABC):
     def period(self) -> str:
         """Return the current determined period."""
         pass
+
+    @abc.abstractmethod
+    def time_until_next_period(self) -> datetime.timedelta:
+        """Return the time remaining until the next period in seconds."""
+        pass
+
+    def now(self) -> int:
+        """Return the current UTC time"""
+        timezone = pytz.timezone('UTC')
+        return timezone.localize(datetime.datetime.utcnow())
 
 
 class Solar(Timer):
@@ -37,8 +47,7 @@ class Solar(Timer):
         self.location = self.construct_astral_location()
 
     def period(self) -> str:
-        timezone = pytz.timezone(self.location.timezone)
-        now = timezone.localize(datetime.datetime.utcnow())
+        now = self.now()
 
         if now < self.location.sun()['dawn']:
             period = 'night'
@@ -54,6 +63,31 @@ class Solar(Timer):
             period = 'night'
 
         return period
+
+    def time_until_next_period(self) -> datetime.timedelta:
+        now = self.now()
+        try:
+            next_period = min(
+                utc_time
+                for utc_time
+                in self.location.sun().values()
+                if now < utc_time
+            )
+        except ValueError as exception:
+            if str(exception) == 'min() arg is an empty sequence':
+                # None of the solar periods this current day are in the future,
+                # so we need to compare with solar periods tomorrow instead.
+                tomorrow = now + datetime.timedelta(days=1, seconds=-1)
+                next_period = min(
+                    utc_time
+                    for utc_time
+                    in self.location.sun(tomorrow).values()
+                    if now < utc_time
+                )
+            else:
+                raise RuntimeError('Could not find the time of the next period')
+
+        return (next_period - now).seconds
 
     def construct_astral_location(
         self,

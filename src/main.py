@@ -40,18 +40,18 @@ if __name__ == '__main__':
 
     try:
         config = user_configuration()
-        solar = Solar(config)
-        old_period = solar.period()
-        update_wallpaper(config, solar.period())
+        timer = Solar(config)
+        old_period = timer.period()
+        update_wallpaper(config, timer.period())
 
         # We might need to wait some time before starting conky, as startup
         # scripts may alter screen layouts and interfer with conky
         time.sleep(int(config['conky'].get('startup_delay', '0')))
-        compile_conky_templates(config, solar.period())
+        compile_conky_templates(config, timer.period())
         start_conky_process(config)
 
         while True:
-            new_period = solar.period()
+            new_period = timer.period()
             changed = new_period != old_period
 
             if changed:
@@ -62,7 +62,10 @@ if __name__ == '__main__':
                 compile_conky_templates(config, new_period)
                 old_period = new_period
 
-            time.sleep(int(config['behaviour']['refresh_period']))
+                time_until_next_period = timer.time_until_next_period()
+                print(f'Configuration updated.')
+                print(f'Waiting {time_until_next_period} seconds until next update.')
+                time.sleep(time_until_next_period)
 
     except KeyboardInterrupt:
         exit_handler()
