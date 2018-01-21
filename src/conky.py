@@ -1,4 +1,5 @@
 from collections import namedtuple
+from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
 from typing import Set
@@ -16,14 +17,28 @@ def compile_conky_templates(
     tempfiles = config['conky_temp_files']
     templates = config['conky_module_templates']
 
+    for module, template_path in templates.items():
+        compile_template(
+            template=Path(template_path),
+            target=Path(tempfiles[module].name),
+            period=period,
+            config=config,
+        )
+
+
+def compile_template(
+    template: Path,
+    target: Path,
+    period: str,
+    config: Config,
+) -> None:
     replacements = generate_replacements(config, period)
     replace = generate_replacer(replacements, period, config)
 
-    for module, template_path in templates.items():
-        with open(template_path, 'r') as template:
-            with open(tempfiles[module].name, 'w') as target:
-                for line in template:
-                    target.write(replace(line))
+    with open(template, 'r') as template_file:
+        with open(target, 'w') as target_file:
+            for line in template_file:
+                target_file.write(replace(line))
 
 
 def find_placeholders(string: str) -> set:
