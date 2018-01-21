@@ -17,7 +17,6 @@ py==1.5.2                 # via pytest
 pytest-freezegun==0.2.0
 pytest==3.3.2
 python-dateutil==2.6.1    # via freezegun
-pytz==2017.3              # via astral, tzlocal
+pytz==2017.3              # via astral
 six==1.11.0               # via freezegun, pip-tools, pytest, python-dateutil
 typed-ast==1.1.0          # via mypy
-tzlocal==1.5.1

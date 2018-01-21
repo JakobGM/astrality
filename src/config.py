@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from astral import Location
-from tzlocal import get_localzone
 
 from conky import create_conky_temp_files
 from time_of_day import PERIODS
@@ -28,9 +27,9 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     - config['config-file']
     - config['conky-module-paths']
     """
-    if not config_directory:
+    if not config_directory and 'SOLARITY_CONFIG_HOME' in os.environ:
         # The testing framework has injected its own config file
-        config_directory=os.environ.get('SOLARITY_CONFIG_HOME', None)
+        config_directory = os.environ['SOLARITY_CONFIG_HOME']
     else:
         # Follow the XDG directory standard
         config_directory = os.getenv('XDG_CONFIG_HOME', '~/.config') + '/solarity'
@@ -88,7 +87,6 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
         latitude=float(config['location']['latitude']),
         longitude=float(config['location']['longitude']),
         elevation=float(config['location']['elevation']),
-        config=config,
     )
 
     # Find wallpaper paths corresponding to the wallpaper theme set by the user
@@ -111,7 +109,6 @@ def astral_location(
     latitude: float,
     longitude: float,
     elevation: float,
-    config: Config,
 ) -> Location:
     # Initialize a custom location for astral, as it doesn't necessarily include
     # your current city of residence
@@ -125,15 +122,7 @@ def astral_location(
     location.latitude = latitude
     location.longitude = longitude
     location.elevation = elevation
-
-    if 'timezone' in config['location']:
-        timezone = config['location']['timezone']
-        print(f'You have manually set your timezone to "{timezone}"')
-        location.timezone = timezone
-    else:
-        timezone = str(get_localzone())
-        print(f'Your timezone is inferred to be "{timezone}"')
-        location.timezone = timezone
+    location.timezone = 'UTC'
 
     return location
 

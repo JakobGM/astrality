@@ -29,7 +29,7 @@ yaourt -S nerd-fonts-complete
 Create a new virtualenv for python 3.6 (or use your system python 3.6 if you prefer). Install the following requirements:
 
 ```bash
-pip3 install astral tzlocal
+pip3 install astral
 git clone https://github.com/jakobgm/solarity /path/to/solarity
 ```
 
@@ -47,7 +47,7 @@ Here is how I would install this tool using virtualenvwrapper
 ```bash
 git clone https://github.com/jakobgm/solarity $XDG_CONFIG_HOME
 mkvirtualenv -p python3.6 -a $XDG_CONFIG_HOME/solarity solarity
-pip install astral tzlocal
+pip install astral
 deactivate
 ```
 
