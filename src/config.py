@@ -26,9 +26,12 @@ def infer_config_location(
             config_directory = os.environ['SOLARITY_CONFIG_HOME']
         else:
             # Follow the XDG directory standard
-            config_directory = os.getenv('XDG_CONFIG_HOME', '~/.config') + '/solarity'
+            config_directory = os.path.join(
+                os.getenv('XDG_CONFIG_HOME', '~/.config'),
+                'solarity',
+            )
 
-    config_file = config_directory + '/solarity.conf'
+    config_file = os.path.join(config_directory, 'solarity.conf')
 
     if not os.path.isfile(config_file):
         print(
@@ -36,7 +39,7 @@ def infer_config_location(
             f'"{config_file}".'
         )
         config_directory = str(Path(__file__).parents[1])
-        config_file = config_directory + '/solarity.conf.example'
+        config_file = os.path.join(config_directory, 'solarity.conf.example')
         print(f'Using example configuration instead: "{config_file}"')
     else:
         print(f'Using configuration file "{config_file}"')
@@ -44,7 +47,9 @@ def infer_config_location(
     return config_directory, config_file
 
 
-def populate_config_from_file(config_file: str, config: Config = {}) -> Config:
+def populate_config_from_file(config_directory: Optional[str] = None, config: Config = {}) -> Config:
+    config_directory, config_file = infer_config_location(config_directory)
+
     # Populate the config dictionary with items from the `solarity.conf`
     # configuration file
     config_parser = ConfigParser(interpolation=ExtendedInterpolation())
@@ -53,26 +58,30 @@ def populate_config_from_file(config_file: str, config: Config = {}) -> Config:
         config[category] = dict(items)
 
     # Insert infered paths from config_directory
-    config_directory = str(Path(config_file).parents[0])
     config_module_paths = {
-        module: config_directory + '/conky_themes/' + module
+        module: os.path.join(config_directory, 'conky_themes', module)
         for module
         in config_parser['conky']['modules'].split()
     }
 
     conky_module_templates = {
-        module: path + '/template.conf'
+        module: os.path.join(path, 'template.conf')
         for module, path
         in config_module_paths.items()
     }
 
+    wallpaper_theme_directory = os.path.join(
+        config_directory,
+        'wallpaper_themes',
+        config['wallpaper']['theme'],
+    )
+
     config.update({
+        'config_directory': config_directory,
+        'config_file': config_file,
         'conky_module_paths': config_module_paths,
         'conky_module_templates': conky_module_templates,
-        'wallpaper_theme_directory': \
-            config_directory + \
-            '/wallpaper_themes/' + \
-            config['wallpaper']['theme'],
+        'wallpaper_theme_directory': wallpaper_theme_directory,
     })
 
     return config
@@ -84,7 +93,7 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     elements from their configuration directly into conky module templates. The
     mapping should be:
 
-    ${solarity:conky:main-font} -> config['conky']['main-font']
+    ${solarity:conky:main_font} -> config['conky']['main_font']
 
     Some additional configurations are automatically added to the root level of
     the dictionary such as:
@@ -92,16 +101,9 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     - config['config_file']
     - config['conky_module_paths']
     """
-    config_directory, config_file = infer_config_location(config_directory)
-    config = populate_config_from_file(config_file)
+    config = populate_config_from_file(config_directory)
 
     config.update({
-        'config_directory': config_directory,
-        'config_file': config_file,
-        'wallpaper_theme_directory': \
-            config_directory + \
-            '/wallpaper_themes/' + \
-            config['wallpaper']['theme'],
     })
 
     # Populate rest of config based on a partially filled config
@@ -161,10 +163,14 @@ def wallpaper_paths(
     {..., 'period': 'full_wallpaper_path', ...}
 
     """
-    wallpaper_directory = config_path + '/wallpaper_themes/' + wallpaper_theme
+    wallpaper_directory = os.path.join(
+        config_path,
+        'wallpaper_themes',
+        wallpaper_theme
+    )
 
     paths = {
-        period: wallpaper_directory + '/' + period
+        period: os.path.join(wallpaper_directory, period)
         for period
         in PERIODS
     }
@@ -172,7 +178,7 @@ def wallpaper_paths(
 
 def import_colors(wallpaper_theme_directory: str):
     color_config_parser = ConfigParser(interpolation=ExtendedInterpolation())
-    color_config_path = wallpaper_theme_directory + '/colors.conf'
+    color_config_path = os.path.join(wallpaper_theme_directory, 'colors.conf')
     color_config_parser.read(color_config_path)
     print(f'Using color config from "{color_config_path}"')
 
