@@ -6,7 +6,7 @@ from config import Config
 
 
 def update_wallpaper(config: Config, period: str) -> None:
-    wallpaper_path = config['wallpaper-paths'][period]
+    wallpaper_path = config['wallpaper_paths'][period]
     wallpaper_path = glob(wallpaper_path + '.*')[0]
 
     print('Setting new wallpaper: ' + wallpaper_path)

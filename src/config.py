@@ -44,34 +44,16 @@ def infer_config_location(
     return config_directory, config_file
 
 
-def user_configuration(config_directory: Optional[str] = None) -> Config:
-    """
-    Create a configuration dictionary which should directly reflect the
-    hierarchy of a typical `solarity.conf` file. Users should be able to insert
-    elements from their configuration directly into conky module templates. The
-    mapping should be:
-
-    ${solarity:conky:main-font} -> config['conky']['main-font']
-
-    Some additional configurations are automatically added to the root level of
-    the dictionary such as:
-    - config['config-dir']
-    - config['config-file']
-    - config['conky-module-paths']
-    """
-    config_directory, config_file = infer_config_location(config_directory)
-
+def populate_config_from_file(config_file: str, config: Config = {}) -> Config:
     # Populate the config dictionary with items from the `solarity.conf`
     # configuration file
     config_parser = ConfigParser(interpolation=ExtendedInterpolation())
     config_parser.read(config_file)
-    config = {
-        category: dict(items)
-        for category, items
-        in config_parser.items()
-    }
+    for category, items in config_parser.items():
+        config[category] = dict(items)
 
     # Insert infered paths from config_directory
+    config_directory = str(Path(config_file).parents[0])
     config_module_paths = {
         module: config_directory + '/conky_themes/' + module
         for module
@@ -85,11 +67,38 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     }
 
     config.update({
-        'config-directory': config_directory,
-        'config-file': config_file,
-        'conky-module-paths': config_module_paths,
-        'conky-module-templates': conky_module_templates,
-        'wallpaper-theme-directory': \
+        'conky_module_paths': config_module_paths,
+        'conky_module_templates': conky_module_templates,
+        'wallpaper_theme_directory': \
+            config_directory + \
+            '/wallpaper_themes/' + \
+            config['wallpaper']['theme'],
+    })
+
+    return config
+
+def user_configuration(config_directory: Optional[str] = None) -> Config:
+    """
+    Create a configuration dictionary which should directly reflect the
+    hierarchy of a typical `solarity.conf` file. Users should be able to insert
+    elements from their configuration directly into conky module templates. The
+    mapping should be:
+
+    ${solarity:conky:main-font} -> config['conky']['main-font']
+
+    Some additional configurations are automatically added to the root level of
+    the dictionary such as:
+    - config['config_directory']
+    - config['config_file']
+    - config['conky_module_paths']
+    """
+    config_directory, config_file = infer_config_location(config_directory)
+    config = populate_config_from_file(config_file)
+
+    config.update({
+        'config_directory': config_directory,
+        'config_file': config_file,
+        'wallpaper_theme_directory': \
             config_directory + \
             '/wallpaper_themes/' + \
             config['wallpaper']['theme'],
@@ -104,17 +113,17 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     )
 
     # Find wallpaper paths corresponding to the wallpaper theme set by the user
-    config['wallpaper-paths'] = wallpaper_paths(
-        config_path=config['config-directory'],
+    config['wallpaper_paths'] = wallpaper_paths(
+        config_path=config['config_directory'],
         wallpaper_theme=config['wallpaper']['theme'],
     )
 
     # Import the colorscheme specified by the users wallpaper theme
-    config['colors'] = import_colors(config['wallpaper-theme-directory'])
+    config['colors'] = import_colors(config['wallpaper_theme_directory'])
 
     # Create temporary conky files used by conky, but files are overwritten
     # when the time of day changes
-    config['conky-temp-files'] = create_conky_temp_files(config)
+    config['conky_temp_files'] = create_conky_temp_files(config)
 
     return config
 

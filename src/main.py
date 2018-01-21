@@ -18,11 +18,11 @@ def exit_handler(signal=None, frame=None):
     # Delete all temporary files manually, because if we delete the
     # temp directory, the TemporaryFile closer will raise an error
     # when it tries to delete itself when it goes out of scope
-    for file in config['conky-temp-files'].values():
+    for file in config['conky_temp_files'].values():
         file.close()
 
     # Now we can safely delete the temporary directory
-    shutil.rmtree(config['temp-directory'])
+    shutil.rmtree(config['temp_directory'])
 
     try:
         sys.exit(0)
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
         # We might need to wait some time before starting conky, as startup
         # scripts may alter screen layouts and interfer with conky
-        time.sleep(int(config['conky'].get('startup-delay', '0')))
+        time.sleep(int(config['conky'].get('startup_delay', '0')))
         compile_conky_templates(config, period)
         start_conky_process(config)
 
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 update_wallpaper(config, period)
                 compile_conky_templates(config, period)
 
-            time.sleep(int(config['behaviour']['refresh-period']))
+            time.sleep(int(config['behaviour']['refresh_period']))
 
     except KeyboardInterrupt:
         exit_handler()

@@ -13,8 +13,8 @@ def compile_conky_templates(
     config: Config,
     period: str,
 ) -> None:
-    tempfiles = config['conky-temp-files']
-    templates = config['conky-module-templates']
+    tempfiles = config['conky_temp_files']
+    templates = config['conky_module_templates']
 
     replacements = generate_replacements(config, period)
     replace = generate_replacer(replacements, period, config)
@@ -40,7 +40,7 @@ def generate_replacements(
     placeholders that could be present in the conky module templates and their
     respective replacements fitting for the time of day
     """
-    templates = config['conky-module-templates']
+    templates = config['conky_module_templates']
     placeholders: Set[str] = set()
     for template_path in templates.values():
         with open(template_path, 'r') as template:
@@ -92,7 +92,7 @@ def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
     # entirity of the scripts runtime, since the files are deleted when they
     # go out of scope
     temp_dir_path = os.environ.get('TMPDIR', '/tmp') + '/solarity'
-    config['temp-directory'] = temp_dir_path
+    config['temp_directory'] = temp_dir_path
     if not os.path.isdir(temp_dir_path):
         os.mkdir(temp_dir_path)
 
@@ -102,11 +102,11 @@ def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
             dir=temp_dir_path
         )
         for module, path
-        in config['conky-module-paths'].items()
+        in config['conky_module_paths'].items()
     }
 
 def start_conky_process(config: Config) -> None:
-    conky_temp_files = config['conky-temp-files']
+    conky_temp_files = config['conky_temp_files']
     for module_path, file in conky_temp_files.items():
         print(f'Initializing conky module "{module_path}"')
         print(f'    Tempory file placed at "{file.name}"')

@@ -1,13 +1,13 @@
 def test_config_directory_name(conf):
-    assert conf['config-directory'][-9:] == '/solarity'
+    assert conf['config_directory'][-9:] == '/solarity'
 
 
 def test_name_of_config_file(conf):
-    assert '/solarity.conf' in conf['config-file']
+    assert '/solarity.conf' in conf['config_file']
 
 
 def test_conky_module_paths(conf, conf_path):
-    conky_module_paths = conf['conky-module-paths']
+    conky_module_paths = conf['conky_module_paths']
     assert conky_module_paths == {
         'performance-1920x1080': conf_path + '/conky_themes/performance-1920x1080',
         'time-1920x1080': conf_path + '/conky_themes/time-1920x1080',
@@ -20,7 +20,7 @@ def test_loation(conf):
 
 
 def test_refresh_period(conf):
-    assert conf['behaviour']['refresh-period'] == '60'
+    assert conf['behaviour']['refresh_period'] == '60'
 
 
 def test_wallpaper_theme(conf):
@@ -29,7 +29,7 @@ def test_wallpaper_theme(conf):
 
 def test_wallpaper_paths(conf, conf_path):
     base_path = conf_path + '/wallpaper_themes/default/'
-    assert conf['wallpaper-paths'] == {
+    assert conf['wallpaper_paths'] == {
         'sunrise': base_path + 'sunrise',
         'morning': base_path + 'morning',
         'afternoon': base_path + 'afternoon',
