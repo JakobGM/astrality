@@ -1,4 +1,4 @@
-# Solarity - A wallpaper theme manager which uses the suns position in the sky
+# Solarity - A wallpaper theme manager which uses the suns position in the sky [![Build Status](https://travis-ci.org/JakobGM/solarity.svg?branch=master)](https://travis-ci.org/JakobGM/solarity) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/solarity/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/solarity?branch=master)
 
 <img align="left" src="solarity_logo.png">
 
