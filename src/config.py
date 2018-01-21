@@ -1,7 +1,7 @@
 from configparser import ConfigParser, ExtendedInterpolation
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from astral import Location
 
@@ -12,27 +12,21 @@ Config = Dict['str', Any]
 FONT_CATEGORIES = ('primary', 'secondary',)
 
 
-def user_configuration(config_directory: Optional[str] = None) -> Config:
+def infer_config_location(
+    config_directory: Optional[str] = None,
+) -> Tuple[str, str]:
     """
-    Creates a configuration dictionary which should directly reflect the
-    hierarchy of a typical `solarity.conf` file. Users should be able to insert
-    elements from their configuration directly into conky module templates. The
-    mapping should be:
-
-    ${solarity:conky:main-font} -> config['conky']['main-font']
-
-    Some additional configurations are automatically added to the root level of
-    the dictionary such as:
-    - config['config-dir']
-    - config['config-file']
-    - config['conky-module-paths']
+    Try to find the configuration directory for solarity, based on filesystem
+    or specific environment variables if they are present several places to put
+    it. See README.md
     """
-    if not config_directory and 'SOLARITY_CONFIG_HOME' in os.environ:
-        # The testing framework has injected its own config file
-        config_directory = os.environ['SOLARITY_CONFIG_HOME']
-    else:
-        # Follow the XDG directory standard
-        config_directory = os.getenv('XDG_CONFIG_HOME', '~/.config') + '/solarity'
+    if not config_directory:
+        if 'SOLARITY_CONFIG_HOME' in os.environ:
+            # The user has set a custom config directory for solarity
+            config_directory = os.environ['SOLARITY_CONFIG_HOME']
+        else:
+            # Follow the XDG directory standard
+            config_directory = os.getenv('XDG_CONFIG_HOME', '~/.config') + '/solarity'
 
     config_file = config_directory + '/solarity.conf'
 
@@ -46,6 +40,26 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
         print(f'Using example configuration instead: "{config_file}"')
     else:
         print(f'Using configuration file "{config_file}"')
+
+    return config_directory, config_file
+
+
+def user_configuration(config_directory: Optional[str] = None) -> Config:
+    """
+    Create a configuration dictionary which should directly reflect the
+    hierarchy of a typical `solarity.conf` file. Users should be able to insert
+    elements from their configuration directly into conky module templates. The
+    mapping should be:
+
+    ${solarity:conky:main-font} -> config['conky']['main-font']
+
+    Some additional configurations are automatically added to the root level of
+    the dictionary such as:
+    - config['config-dir']
+    - config['config-file']
+    - config['conky-module-paths']
+    """
+    config_directory, config_file = infer_config_location(config_directory)
 
     # Populate the config dictionary with items from the `solarity.conf`
     # configuration file
