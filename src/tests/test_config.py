@@ -14,11 +14,6 @@ def test_conky_module_paths(conf, conf_path):
     }
 
 
-def test_loation(conf):
-    location = conf['location']['astral']
-    assert str(location) == 'CityNotImportant/RegionIsNotImportantEither, tz=UTC, lat=63.45, lon=10.42'
-
-
 def test_refresh_period(conf):
     assert conf['behaviour']['refresh_period'] == '60'
 

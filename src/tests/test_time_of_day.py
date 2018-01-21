@@ -2,13 +2,17 @@ from datetime import timedelta
 
 import pytest
 
-from time_of_day import is_new_time_of_day, period_of_day
+from timer import Solar
 
+
+@pytest.fixture
+def solar(conf):
+    return Solar(conf)
 
 # --- Times around dawn ---
 @pytest.fixture
-def dawn(conf):
-    return conf['location']['astral'].sun()['dawn']
+def dawn(solar):
+    return solar.construct_astral_location().sun()['dawn']
 
 
 @pytest.fixture
@@ -23,44 +27,22 @@ def after_dawn(dawn):
     return dawn + delta
 
 
-def test_that_night_is_correctly_identified(before_dawn, conf, freezer):
+def test_that_night_is_correctly_identified(solar, before_dawn, freezer):
     freezer.move_to(before_dawn)
-    period = period_of_day(conf['location']['astral'])
+    period = solar.period()
     assert period == 'night'
 
 
-def test_that_sunrise_is_correctly_identified(after_dawn, conf, freezer):
+def test_that_sunrise_is_correctly_identified(solar, after_dawn, freezer):
     freezer.move_to(after_dawn)
-    period = period_of_day(conf['location']['astral'])
+    period = solar.period()
     assert period == 'sunrise'
-
-
-@pytest.mark.freeze_time
-def test_right_before_dawn(before_dawn, dawn, conf, freezer):
-    freezer.move_to(before_dawn)
-    changed, period = is_new_time_of_day('night', conf['location']['astral'])
-    assert changed == False
-    assert period == 'night'
-
-    for period in ('sunrise', 'morning', 'afternoon', 'sunset',):
-        assert is_new_time_of_day(period, conf['location']['astral'])[0] == True
-
-
-@pytest.mark.freeze_time
-def test_right_after_dawn(after_dawn, dawn, conf, freezer):
-    freezer.move_to(after_dawn)
-    changed, period = is_new_time_of_day('sunrise', conf['location']['astral'])
-    assert changed == False
-    assert period == 'sunrise'
-
-    for period in ('morning', 'afternoon', 'sunset', 'night',):
-        assert is_new_time_of_day(period, conf['location']['astral'])[0] == True
 
 
 # --- Times around dusk ---
 @pytest.fixture
-def dusk(conf):
-    return conf['location']['astral'].sun()['dusk']
+def dusk(solar):
+    return solar.construct_astral_location().sun()['dusk']
 
 
 @pytest.fixture
@@ -75,35 +57,18 @@ def after_dusk(dusk):
     return dusk + delta
 
 
-def test_that_night_is_correctly_identified_after_dusk(after_dusk, conf, freezer):
+def test_that_night_is_correctly_identified_after_dusk(solar, after_dusk, freezer):
     freezer.move_to(after_dusk)
-    period = period_of_day(conf['location']['astral'])
+    period = solar.period()
     assert period == 'night'
 
 
-def test_that_sunset_is_correctly_identified_before_dusk(before_dusk, conf, freezer):
+def test_that_sunset_is_correctly_identified_before_dusk(solar, before_dusk, freezer):
     freezer.move_to(before_dusk)
-    period = period_of_day(conf['location']['astral'])
+    period = solar.period()
     assert period == 'sunset'
 
 
-@pytest.mark.freeze_time
-def test_right_before_dusk(before_dusk, dusk, conf, freezer):
-    freezer.move_to(before_dusk)
-    changed, period = is_new_time_of_day('sunset', conf['location']['astral'])
-    assert changed == False
-    assert period == 'sunset'
-
-    for period in ('sunrise', 'morning', 'afternoon', 'night',):
-        assert is_new_time_of_day(period, conf['location']['astral'])[0] == True
-
-
-@pytest.mark.freeze_time
-def test_right_after_dusk(after_dusk, dusk, conf, freezer):
-    freezer.move_to(after_dusk)
-    changed, period = is_new_time_of_day('night', conf['location']['astral'])
-    assert changed == False
-    assert period == 'night'
-
-    for period in ('sunrise', 'morning', 'afternoon', 'sunset',):
-        assert is_new_time_of_day(period, conf['location']['astral'])[0] == True
+def test_loation(solar):
+    location = solar.construct_astral_location()
+    assert str(location) == 'CityNotImportant/RegionIsNotImportantEither, tz=UTC, lat=63.45, lon=10.42'

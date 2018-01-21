@@ -6,7 +6,7 @@ import time
 
 from config import Config, user_configuration
 from conky import exit_conky, start_conky_process, compile_conky_templates
-from time_of_day import is_new_time_of_day, period_of_day
+from timer import Solar
 from wallpaper import exit_feh, update_wallpaper
 
 def exit_handler(signal=None, frame=None):
@@ -40,27 +40,27 @@ if __name__ == '__main__':
 
     try:
         config = user_configuration()
-        period = period_of_day(config['location']['astral'])
-        update_wallpaper(config, period)
+        solar = Solar(config)
+        old_period = solar.period()
+        update_wallpaper(config, solar.period())
 
         # We might need to wait some time before starting conky, as startup
         # scripts may alter screen layouts and interfer with conky
         time.sleep(int(config['conky'].get('startup_delay', '0')))
-        compile_conky_templates(config, period)
+        compile_conky_templates(config, solar.period())
         start_conky_process(config)
 
         while True:
-            changed, period = is_new_time_of_day(
-                period,
-                config['location']['astral'],
-            )
+            new_period = solar.period()
+            changed = new_period != old_period
 
             if changed:
                 print('New time of day detected: ' + period)
                 # We are in a new time of day, and we can change the background
                 # image
-                update_wallpaper(config, period)
-                compile_conky_templates(config, period)
+                update_wallpaper(config, new_period)
+                compile_conky_templates(config, new_period)
+                old_period = new_period
 
             time.sleep(int(config['behaviour']['refresh_period']))
 

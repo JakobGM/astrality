@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from conky import create_conky_temp_files
-from time_of_day import astral_location, PERIODS
+from timer import Solar
 from wallpaper import import_colors, wallpaper_paths
 
 Config = Dict['str', Any]
@@ -100,26 +100,13 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     - config['conky_module_paths']
     """
     config = populate_config_from_file(config_directory)
-
-    config.update({
-    })
-
-    # Populate rest of config based on a partially filled config
-    # Initialize astral Location() object from user configuration
-    config['location']['astral'] = astral_location(
-        latitude=float(config['location']['latitude']),
-        longitude=float(config['location']['longitude']),
-        elevation=float(config['location']['elevation']),
-    )
+    config['periods'] = Solar.periods
 
     # Find wallpaper paths corresponding to the wallpaper theme set by the user
-    config['wallpaper_paths'] = wallpaper_paths(
-        config_path=config['config_directory'],
-        wallpaper_theme=config['wallpaper']['theme'],
-    )
+    config['wallpaper_paths'] = wallpaper_paths(config=config)
 
     # Import the colorscheme specified by the users wallpaper theme
-    config['colors'] = import_colors(config['wallpaper_theme_directory'])
+    config['colors'] = import_colors(config)
 
     # Create temporary conky files used by conky, but files are overwritten
     # when the time of day changes

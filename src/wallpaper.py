@@ -1,11 +1,8 @@
-from configparser import ConfigParser, ExtendedInterpolation
-from glob import glob
 import os
 import subprocess
+from configparser import ConfigParser, ExtendedInterpolation
+from glob import glob
 from typing import Any, Dict
-
-from time_of_day import PERIODS
-
 
 Config = Dict['str', Any]
 FONT_CATEGORIES = ('primary', 'secondary',)
@@ -22,7 +19,8 @@ def update_wallpaper(config: Config, period: str) -> None:
         wallpaper_path,
     ])
 
-def import_colors(wallpaper_theme_directory: str):
+def import_colors(config: Config):
+    wallpaper_theme_directory = config['wallpaper_theme_directory']
     color_config_parser = ConfigParser(interpolation=ExtendedInterpolation())
     color_config_path = os.path.join(wallpaper_theme_directory, 'colors.conf')
     color_config_parser.read(color_config_path)
@@ -31,33 +29,30 @@ def import_colors(wallpaper_theme_directory: str):
     colors = {}
     for color_category in FONT_CATEGORIES:
         colors[color_category] = {}
-        for period in PERIODS:
+        for period in config['periods']:
             colors[color_category][period] = color_config_parser[color_category][period]
 
     return colors
 
 
-def wallpaper_paths(
-    config_path: str,
-    wallpaper_theme: str,
-) -> Dict[str, str]:
+def wallpaper_paths(config: Config) -> Dict[str, str]:
     """
     Given the configuration directory and wallpaper theme, this function
-    returns a dictionary containing:
+    returns a dictionary containing.
 
     {..., 'period': 'full_wallpaper_path', ...}
 
     """
     wallpaper_directory = os.path.join(
-        config_path,
+        config['config_directory'],
         'wallpaper_themes',
-        wallpaper_theme
+        config['wallpaper']['theme']
     )
 
     paths = {
         period: os.path.join(wallpaper_directory, period)
         for period
-        in PERIODS
+        in config['periods']
     }
     return paths
 
