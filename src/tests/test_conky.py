@@ -12,14 +12,14 @@ def test_invocation_of_compile_conky_templates(conf):
 def test_generation_of_replacements(conf):
     replacements = generate_replacements(conf, 'night')
     assert replacements == {
-        '${solarity:colors:primary}': 'CACCFD',
-        '${solarity:fonts:primary}': 'FuraCode Nerd Font',
+        '${solarity:colors:1}': 'CACCFD',
+        '${solarity:fonts:1}': 'FuraCode Nerd Font',
     }
 
 def test_use_of_replacer(conf):
     replacements = generate_replacements(conf, 'night')
     replace = generate_replacer(replacements, 'night', conf)
-    assert replace('${solarity:colors:primary}') == 'CACCFD'
+    assert replace('${solarity:colors:1}') == 'CACCFD'
 
 def test_find_placeholders():
     template = """

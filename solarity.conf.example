@@ -22,15 +22,15 @@ feh_option = --bg-fill
 [conky]
 ; You might run into issues if you are automatically rearranging displays
 ; at startup, since conky might render its modules to a screen which does
-; not exist anymore after starting conky. You can prevent this issue by
-; delaying the start of the conky process
+; not exist anymore shortly after starting conky. You can prevent this 
+; by delaying the start of the conky process
 startup_delay = 0
 
 ; Available Conky modules can be shown by running `ls conky_themes`
 modules = performance-1920x1080 time-1920x1080
 
 [fonts]
-primary = FuraCode Nerd Font
+1 = FuraCode Nerd Font
 
 [behaviour]
 ; How often to check if we have entered a new time of day, in seconds

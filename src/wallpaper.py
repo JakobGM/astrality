@@ -3,6 +3,7 @@ import subprocess
 from configparser import ConfigParser, ExtendedInterpolation
 from glob import glob
 from pathlib import Path
+from pprint import pprint
 from typing import Any, Dict
 
 Config = Dict['str', Any]
@@ -23,11 +24,15 @@ def import_colors(config: Config):
     print(f'Using color config from "{color_config_path}"')
 
     colors = {}
-    for color_category in FONT_CATEGORIES:
+    for color_category in color_config_parser.keys():
+        if color_category == 'DEFAULT':
+            continue
         colors[color_category] = {}
         for period in config['periods']:
             colors[color_category][period] = color_config_parser[color_category][period]
 
+    print('Using the following color theme')
+    pprint(colors)
     return colors
 
 
