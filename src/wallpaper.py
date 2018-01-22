@@ -2,6 +2,7 @@ import os
 import subprocess
 from configparser import ConfigParser, ExtendedInterpolation
 from glob import glob
+from pathlib import Path
 from typing import Any, Dict
 
 Config = Dict['str', Any]
@@ -11,13 +12,8 @@ FONT_CATEGORIES = ('primary', 'secondary',)
 def update_wallpaper(config: Config, period: str) -> None:
     wallpaper_path = config['wallpaper_paths'][period]
     wallpaper_path = glob(wallpaper_path + '.*')[0]
+    set_feh_wallpaper(wallpaper_path, config)
 
-    print('Setting new wallpaper: ' + wallpaper_path)
-    subprocess.Popen([
-        'feh',
-        config['wallpaper'].get('feh-option', '--bg-scale'),
-        wallpaper_path,
-    ])
 
 def import_colors(config: Config):
     wallpaper_theme_directory = config['wallpaper_theme_directory']
@@ -58,17 +54,21 @@ def wallpaper_paths(config: Config) -> Dict[str, str]:
 
 
 def exit_feh(config) -> None:
-    this_file = os.path.realpath(__file__)
-    parent_dir = os.path.join(*this_file.split('/')[:-1])
-    feh_process = subprocess.Popen([
+    parent_dir = Path(__file__).parent
+    fallback_wallpaper_path = os.path.join(
+        config['wallpaper'].get('feh_option', '--bg-scale'),
+        parent_dir,
+        'solid_black_background.jpeg',
+    )
+    set_feh_wallpaper(fallback_wallpaper_path, config)
+
+
+def set_feh_wallpaper(wallpaper_path: Path, config: Config) -> None:
+    feh_option = config['wallpaper'].get('feh_option', '--bg-scale')
+
+    print('Setting new wallpaper: ' + wallpaper_path)
+    subprocess.Popen([
         'feh',
-        config['wallpaper'].get('feh-option', '--bg-scale'),
-        '/' + parent_dir + '/solid_black_background.jpeg',
+        feh_option,
+        str(wallpaper_path),
     ])
-    try:
-        exit_code = feh_process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        print('feh is using unusually long time to set the background image.')
-    finally:
-        if exit_code != 0:
-            print(f'feh exited with error code: {exit_code}.')

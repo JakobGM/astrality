@@ -61,11 +61,10 @@ if __name__ == '__main__':
                 update_wallpaper(config, new_period)
                 compile_conky_templates(config, new_period)
                 old_period = new_period
-
-                time_until_next_period = timer.time_until_next_period()
                 print(f'Configuration updated.')
-                print(f'Waiting {time_until_next_period} seconds until next update.')
-                time.sleep(time_until_next_period)
+
+            print(f'Waiting {timer.time_until_next_period()} seconds until next update.')
+            time.sleep(timer.time_until_next_period())
 
     except KeyboardInterrupt:
         exit_handler()

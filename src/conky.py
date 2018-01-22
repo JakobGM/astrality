@@ -35,6 +35,8 @@ def compile_template(
     replacements = generate_replacements(config, period)
     replace = generate_replacer(replacements, period, config)
 
+    print(f'[Compiling] Template: "{template}" -> Target: "{target}"')
+
     with open(template, 'r') as template_file:
         with open(target, 'w') as target_file:
             for line in template_file:
