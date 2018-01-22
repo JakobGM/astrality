@@ -1,16 +1,14 @@
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Tuple
+from typing import Tuple
 import os
 
 from compiler import compile_template
 
-Config = Dict['str', Any]
-
 
 def compile_conky_templates(
-    config: Config,
+    config: 'Config',
     period: str,
 ) -> None:
     tempfiles = config['conky_temp_files']
@@ -24,7 +22,7 @@ def compile_conky_templates(
             config=config,
         )
 
-def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
+def create_conky_temp_files(config: 'Config') -> Tuple[str, ...]:
     # NB: These temporary files/directories need to be persisted during the
     # entirity of the scripts runtime, since the files are deleted when they
     # go out of scope
@@ -42,12 +40,12 @@ def create_conky_temp_files(config: Config) -> Tuple[str, ...]:
         in config['conky_module_paths'].items()
     }
 
-def start_conky_process(config: Config) -> None:
+def start_conky_process(config: 'Config') -> None:
     conky_temp_files = config['conky_temp_files']
     for module_path, file in conky_temp_files.items():
         print(f'Initializing conky module "{module_path}"')
         print(f'    Tempory file placed at "{file.name}"')
         subprocess.Popen(['conky', '-c', file.name])
 
-def exit_conky(config: Config) -> None:
+def exit_conky(config: 'Config') -> None:
     os.system('killall conky')

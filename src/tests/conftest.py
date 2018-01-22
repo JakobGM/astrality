@@ -13,6 +13,9 @@ def conf_path():
     conf_path = Path(this_test_file).parents[2]
     return str(conf_path)
 
+@pytest.fixture
+def conf_file_path(conf_path):
+    return os.path.join(conf_path, 'solarity.conf.example')
 
 @pytest.yield_fixture(scope='session', autouse=True)
 def conf():

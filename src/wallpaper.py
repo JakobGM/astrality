@@ -31,7 +31,7 @@ def import_colors(config: Config):
         for period in config['periods']:
             colors[color_category][period] = color_config_parser[color_category][period]
 
-    print('Using the following color theme')
+    print('Using the following color theme:')
     pprint(colors)
     return colors
 

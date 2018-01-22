@@ -11,7 +11,7 @@ Config = Dict[str, Any]
 class Timer(abc.ABC):
     """Class which defines different periods."""
 
-    periods: Tuple[str]
+    periods: Tuple[str, ...]
 
     @abc.abstractmethod
     def __init__(self, config: Config) -> None:
@@ -29,7 +29,7 @@ class Timer(abc.ABC):
         pass
 
     def now(self) -> int:
-        """Return the current UTC time"""
+        """Return the current UTC time."""
         timezone = pytz.timezone('UTC')
         return timezone.localize(datetime.datetime.utcnow())
 
