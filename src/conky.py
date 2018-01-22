@@ -67,13 +67,18 @@ def generate_replacements(
     replacements = {}
     for placeholder in placeholders:
         category, key = placeholder[11:-1].split(':')
-        value = config[category][key]
-        if category == 'colors':
-            replacements[placeholder] = value[period]
-        elif isinstance(value, str):
-            replacements[placeholder] = value
-        else:
-            raise RuntimeError(f'Invalid template tag "{placeholder}"')
+        try:
+            value = config[category][key]
+            if category == 'colors':
+                replacements[placeholder] = value[period]
+            elif isinstance(value, str):
+                replacements[placeholder] = value
+        except KeyError:
+            print('\033[91m')
+            print(f'Invalid template tag "{placeholder}"')
+            print('Replacing it with an empty string instead')
+            replacements[placeholder] = ''
+            print('\033[0m')
 
     return replacements
 
