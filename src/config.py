@@ -179,7 +179,7 @@ class Config:
                 for key, value in section.items():
                     self._dict[section_name][key] = value
 
-        elif isinstance(other, dict):
+        elif isinstance(other, (ConfigParser, dict,)):
             # Populate internal data structure from dictionary
             if not hasattr(self, '_dict'):
                 self._dict = Config()
