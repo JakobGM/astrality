@@ -72,8 +72,9 @@ def set_feh_wallpaper(wallpaper_path: Path, config: Config) -> None:
     feh_option = config['wallpaper'].get('feh_option', '--bg-scale')
 
     print('Setting new wallpaper: ' + wallpaper_path)
-    subprocess.Popen([
+    p = subprocess.Popen([
         'feh',
         feh_option,
         str(wallpaper_path),
     ])
+    p.wait()

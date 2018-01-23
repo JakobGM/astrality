@@ -1,13 +1,19 @@
+#/usr/bin/env python3
+
+"""The module meant to be run in order to start Solarity."""
+
 import os
 import signal
-import shutil
+from typing import Set
+import subprocess
 import sys
 import time
 
-from config import Config, user_configuration
+from config import user_configuration
 from conky import exit_conky, start_conky_process, compile_conky_templates
 from timer import Solar
 from wallpaper import exit_feh, update_wallpaper
+
 
 def exit_handler(signal=None, frame=None):
     print('Solarity was interrupted')
@@ -21,8 +27,11 @@ def exit_handler(signal=None, frame=None):
     for file in config['conky_temp_files'].values():
         file.close()
 
-    # Now we can safely delete the temporary directory
-    shutil.rmtree(config['temp_directory'])
+    # The temp directory is left alone, for two reasons:
+    # 1: An empty directory uses neglible disk space
+    # 2: If this process is interrupted by another Solarity instance,
+    #    we might experience race conditions when the exit handler deletes
+    #    the temporary directory *after* the new Solarity instance creates it
 
     try:
         sys.exit(0)
@@ -30,7 +39,44 @@ def exit_handler(signal=None, frame=None):
         os._exit(0)
 
 
+def other_solarity_pids() -> Set[int]:
+    """Return the process ids (PIDs) of any other Solarity instances."""
+
+    # Get all processes instanciated from this file
+    result = subprocess.Popen(
+        ['pgrep', '-f', __file__],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
+    pids = set(int(pid.strip()) for pid in result.stdout)
+
+    # Return all the PIDs except for the PID of this process
+    this_process_pid = os.getpid()
+    return pids - set((this_process_pid,))
+
+
+def kill_old_solarity_process() -> None:
+    """Kill all other instances of this script, to prevent duplicates."""
+
+    pids = other_solarity_pids()
+    failed_exits = 0
+    for pid in pids:
+        try:
+            print(f'Killing duplicate Solarity process with pid {pid}.')
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            print(f'Could not kill old instance of solarity with pid {pid}.')
+            print('Continuing anyway...')
+            failed_exits += 1
+
+    while len(other_solarity_pids()) > failed_exits:
+        # Wait for all the processes to exit properly
+        time.sleep(0.2)
+
+
 if __name__ == '__main__':
+    kill_old_solarity_process()
+
     # Some SIGINT signals are not properly interupted by python and converted
     # into KeyboardInterrupts, so we have to register a signal handler to
     # safeguard against such cases. This seems to be the case when conky is
