@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     try:
         config = user_configuration()
-        timer = Solar(config)
+        timer = config['timer_class'](config)
         old_period = timer.period()
         update_wallpaper(config, timer.period())
 

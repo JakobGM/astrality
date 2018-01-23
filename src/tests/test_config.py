@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from config import Config
+from timer import Solar
 
 
 def test_config_directory_name(conf):
@@ -75,6 +76,7 @@ def solarity_conf_dict(conf):
             'latitude': '63.446827',
             'longitude': '10.421906',
         },
+        'timer': {'type': 'solar'},
         'wallpaper': {'feh_option': '--bg-fill', 'theme': 'default'},
     }
 
@@ -149,6 +151,8 @@ def fully_processed_conf_dict(conf):
         },
         'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
         'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'solarity')),
+        'timer': {'type': 'solar'},
+        'timer_class': Solar,
         'wallpaper': {'feh_option': '--bg-fill', 'theme': 'default'},
         'wallpaper_paths': {
             'afternoon': str(path.join(

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
 from conky import create_conky_temp_files
-from timer import Solar, Timer
+from timer import TIMERS
 from wallpaper import import_colors, wallpaper_paths
 
 
@@ -286,7 +286,8 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     - config['conky_module_paths']
     """
     config = populate_config_from_file(config_directory)
-    config['periods'] = Solar.periods
+    config['timer_class'] = TIMERS[config['timer']['type']]
+    config['periods'] = config['timer_class'].periods
 
     # Find wallpaper paths corresponding to the wallpaper theme set by the user
     config['wallpaper_paths'] = wallpaper_paths(config=config)

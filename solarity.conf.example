@@ -1,3 +1,7 @@
+[timer]
+type = solar
+
+
 [location]
 ; Your current location, easily obtained from here: https://www.latlong.net/
 ; Used by solarity for automatic wallpaper rotation based on time of day
@@ -19,6 +23,7 @@ theme = default
 ; --bg-fill
 feh_option = --bg-fill
 
+
 [conky]
 ; You might run into issues if you are automatically rearranging displays
 ; at startup, since conky might render its modules to a screen which does
@@ -29,8 +34,10 @@ startup_delay = 0
 ; Available Conky modules can be shown by running `ls conky_themes`
 modules = performance-1920x1080 time-1920x1080
 
+
 [fonts]
 1 = FuraCode Nerd Font
+
 
 [behaviour]
 ; How often to check if we have entered a new time of day, in seconds

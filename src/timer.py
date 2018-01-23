@@ -5,6 +5,7 @@ from typing import Any, Dict, Tuple
 import pytz
 from astral import Location
 
+
 Config = Dict[str, Any]
 
 
@@ -107,3 +108,8 @@ class Solar(Timer):
         location.timezone = 'UTC'
 
         return location
+
+
+TIMERS = {
+        'solar': Solar,
+}
