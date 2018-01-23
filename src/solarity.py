@@ -38,6 +38,9 @@ if __name__ == '__main__':
     # signal and not python.
     signal.signal(signal.SIGINT, exit_handler)
 
+    # Also catch kill-signkal from OS, e.g. `kill $(pgrep -f "python solarity.py")`
+    signal.signal(signal.SIGTERM, exit_handler)
+
     try:
         config = user_configuration()
         timer = Solar(config)
