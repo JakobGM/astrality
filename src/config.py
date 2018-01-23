@@ -179,7 +179,7 @@ class Config:
                 for key, value in section.items():
                     self._dict[section_name][key] = value
 
-        elif isinstance(other, (ConfigParser, dict,)):
+        elif isinstance(other, (Config, ConfigParser, dict,)):
             # Populate internal data structure from dictionary
             if not hasattr(self, '_dict'):
                 self._dict = Config()
@@ -229,23 +229,26 @@ def infer_config_location(
     return config_directory, config_file
 
 
-def populate_config_from_file(
-    config_directory: Optional[str] = None,
-    config: Config = Config(),
+def populate_config_from_config_file(
+    config_file: Optional[str],
 ) -> Config:
-    config_directory, config_file = infer_config_location(config_directory)
-
-    # Populate the config dictionary with items from the `solarity.conf`
-    # configuration file
+    """Return a Config object reflecting the content of `solarity.conf`"""
     config_parser = ConfigParser(interpolation=ExtendedInterpolation())
     config_parser.read(config_file)
-    config.update(config_parser)
+    return Config(config_parser)
+
+
+def infer_paths_from_config(
+    config_directory: str,
+    config_file: str,
+    config: Config,
+) -> Config:
 
     # Insert infered paths from config_directory
     config_module_paths = {
         module: os.path.join(config_directory, 'conky_themes', module)
         for module
-        in config_parser['conky']['modules'].split()
+        in config['conky']['modules'].split()
     }
 
     conky_module_templates = {
@@ -260,7 +263,7 @@ def populate_config_from_file(
         config['wallpaper']['theme'],
     )
 
-    config.update({
+    return Config({
         'config_directory': config_directory,
         'config_file': config_file,
         'conky_module_paths': config_module_paths,
@@ -268,7 +271,6 @@ def populate_config_from_file(
         'wallpaper_theme_directory': wallpaper_theme_directory,
     })
 
-    return config
 
 def user_configuration(config_directory: Optional[str] = None) -> Config:
     """
@@ -285,7 +287,11 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     - config['config_file']
     - config['conky_module_paths']
     """
-    config = populate_config_from_file(config_directory)
+    config_directory, config_file = infer_config_location(config_directory)
+
+    config = populate_config_from_config_file(config_file)
+    config.update(infer_paths_from_config(config_directory, config_file, config))
+
     config['timer_class'] = TIMERS[config['timer']['type']]
     config['periods'] = config['timer_class'].periods
 
@@ -299,5 +305,4 @@ def user_configuration(config_directory: Optional[str] = None) -> Config:
     # when the time of day changes
     config['conky_temp_files'] = create_conky_temp_files(config)
 
-    from pprint import pprint; pprint(config)
     return config

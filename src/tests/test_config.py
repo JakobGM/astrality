@@ -63,7 +63,7 @@ def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf):
     }
 
 @pytest.fixture
-def solarity_conf_dict(conf):
+def solarity_conf_file_dict(conf):
     config_directory = Path(__file__).parents[2]
     return {
         'DEFAULT': {},
@@ -81,7 +81,7 @@ def solarity_conf_dict(conf):
     }
 
 @pytest.fixture
-def default_wallpaper_dict(conf):
+def wallpaper_conf_file_dict(conf):
     config_directory = Path(__file__).parents[2]
     return {
         'colors': {'1': {'afternoon': 'FC6F42',
@@ -94,6 +94,91 @@ def default_wallpaper_dict(conf):
                          'night': '3F72E8',
                          'sunrise': 'DB4E38',
                          'sunset': '9B3A1A'}},
+    }
+
+@pytest.fixture
+def infered_conf_dict(conf):
+    config_directory = Path(__file__).parents[2]
+    return {
+        'config_directory': str(config_directory),
+        'config_file': str(path.join(
+            config_directory,
+            'solarity.conf.example',
+        )),
+        'conky': {'modules': 'performance-1920x1080 time-1920x1080',
+                  'startup_delay': '0'},
+        'conky_module_paths': {
+            'performance-1920x1080': str(path.join(
+                config_directory,
+                'conky_themes',
+                'performance-1920x1080',
+            )),
+            'time-1920x1080': str(path.join(config_directory, 'conky_themes', 'time-1920x1080')),
+        },
+        'conky_module_templates': {
+            'performance-1920x1080': str(path.join(
+                config_directory,
+                'conky_themes',
+                'performance-1920x1080',
+                'template.conf',
+            )),
+            'time-1920x1080': str(path.join(
+                config_directory,
+                'conky_themes',
+                'time-1920x1080',
+                'template.conf',
+            ))},
+        'conky_temp_files': {
+            'performance-1920x1080': conf['conky_temp_files']['performance-1920x1080'],
+            'time-1920x1080': conf['conky_temp_files']['time-1920x1080']},
+        'fonts': {'1': 'FuraCode Nerd Font'},
+        'location': {
+            'elevation': '0',
+            'latitude': '63.446827',
+            'longitude': '10.421906',
+        },
+        'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
+        'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'solarity')),
+        'timer': {'type': 'solar'},
+        'timer_class': Solar,
+        'wallpaper': {'feh_option': '--bg-fill', 'theme': 'default'},
+        'wallpaper_paths': {
+            'afternoon': str(path.join(
+                config_directory,
+                'wallpaper_themes',
+                'default',
+                'afternoon',
+            )),
+            'morning': str(path.join(
+                config_directory,
+                'wallpaper_themes',
+                'default',
+                'morning',
+            )),
+            'night': str(path.join(
+                config_directory,
+                'wallpaper_themes',
+                'default',
+                'night',
+            )),
+            'sunrise': str(path.join(
+                config_directory,
+                'wallpaper_themes',
+                'default',
+                'sunrise',
+            )),
+            'sunset': str(path.join(
+                config_directory,
+                'wallpaper_themes',
+                'default',
+                'sunset',
+            )),
+        },
+        'wallpaper_theme_directory': str(path.join(
+            config_directory,
+            'wallpaper_themes',
+            'default',
+        )),
     }
 
 @pytest.fixture
@@ -199,11 +284,12 @@ def config_parser(conf_file_path):
     config_parser.read(conf_file_path)
     return config_parser
 
-
-class TestConfigClass:
+class TestFixtures:
     def test_config_fixture_correctnes(self, conf, fully_processed_conf_dict):
         assert conf == fully_processed_conf_dict
 
+
+class TestConfigClass:
     def test_initialization_of_config_class_with_no_config_parser(self):
         Config()
 
@@ -222,13 +308,13 @@ class TestConfigClass:
         config = Config(conf_dict)
         assert config == conf_dict
 
-    def test_equality_operator_on_config_class(self, config_parser, solarity_conf_dict):
+    def test_equality_operator_on_config_class(self, config_parser, solarity_conf_file_dict):
         config = Config(config_parser)
-        assert solarity_conf_dict == config
+        assert solarity_conf_file_dict == config
 
-    def test_right_equality_operator_on_config_class(self, config_parser, solarity_conf_dict):
+    def test_right_equality_operator_on_config_class(self, config_parser, solarity_conf_file_dict):
         config = Config(config_parser)
-        assert config == solarity_conf_dict
+        assert config == solarity_conf_file_dict
 
     def test_values_for_max_key_property(self):
         config = Config()
@@ -362,7 +448,7 @@ class TestConfigClass:
         config.update(another_conf_dict)
         assert config == merged_conf_dicts
 
-    def test_update_with_config_parser(self, solarity_conf_dict, conf_file_path):
+    def test_update_with_config_parser(self, solarity_conf_file_dict, conf_file_path):
         config_parser = ConfigParser()
         config_parser.read(conf_file_path)
 
@@ -370,8 +456,8 @@ class TestConfigClass:
         config = Config(conf_dict)
         config.update(config_parser)
 
-        solarity_conf_dict.update(conf_dict)
-        assert config == solarity_conf_dict
+        solarity_conf_file_dict.update(conf_dict)
+        assert config == solarity_conf_file_dict
 
     @pytest.mark.skip()
     def test_use_of_replacement_resolver(conf):
