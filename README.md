@@ -1,6 +1,6 @@
 # Solarity - A wallpaper theme manager which uses the suns position in the sky [![Build Status](https://travis-ci.org/JakobGM/solarity.svg?branch=master)](https://travis-ci.org/JakobGM/solarity) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/solarity/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/solarity?branch=master)
 
-<img align="left" src="solarity_logo.png">
+<img align="left" src="src/doc/solarity_logo.png">
 
 ## What does it do?
 Solarity is a Linux tool which automatically changes the wallpaper when your specific location (given by latitude and longitude) experiences dawn, noon, sunset, and dusk. It adapts to the length of day through the year.
