@@ -11,7 +11,6 @@ import time
 
 from config import user_configuration
 from conky import exit_conky, start_conky_process, compile_conky_templates
-from timer import Solar
 from wallpaper import exit_feh, update_wallpaper
 
 
@@ -28,10 +27,10 @@ def exit_handler(signal=None, frame=None):
         file.close()
 
     # The temp directory is left alone, for two reasons:
-    # 1: An empty directory uses neglible disk space
+    # 1: An empty directory uses neglible disk space.
     # 2: If this process is interrupted by another Solarity instance,
     #    we might experience race conditions when the exit handler deletes
-    #    the temporary directory *after* the new Solarity instance creates it
+    #    the temporary directory *after* the new Solarity instance creates it.
 
     try:
         sys.exit(0)
