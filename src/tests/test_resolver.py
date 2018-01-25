@@ -12,7 +12,6 @@ from timer import Solar
 
 @pytest.fixture
 def astrality_conf_file_dict(conf):
-    config_directory = Path(__file__).parents[2]
     return {
         'DEFAULT': {},
         'behaviour': {'refresh_period': '60'},
@@ -30,7 +29,6 @@ def astrality_conf_file_dict(conf):
 
 @pytest.fixture
 def wallpaper_conf_file_dict(conf):
-    config_directory = Path(__file__).parents[2]
     return {
         'colors': {'1': {'afternoon': 'FC6F42',
                          'morning': '5BA276',
@@ -48,85 +46,77 @@ def wallpaper_conf_file_dict(conf):
 def infered_conf_dict(conf):
     config_directory = Path(__file__).parents[2]
     return {
-        'config_directory': str(config_directory),
-        'config_file': str(path.join(
-            config_directory,
-            'astrality.conf.example',
-        )),
-        'conky': {'modules': 'performance-1920x1080 time-1920x1080',
-                  'startup_delay': '0'},
-        'conky_module_paths': {
-            'performance-1920x1080': str(path.join(
+        '_runtime': {
+            'config_directory': str(config_directory),
+            'config_file': Path(
                 config_directory,
-                'conky_themes',
-                'performance-1920x1080',
-            )),
-            'time-1920x1080': str(path.join(config_directory, 'conky_themes', 'time-1920x1080')),
-        },
-        'conky_module_templates': {
-            'performance-1920x1080': str(path.join(
-                config_directory,
-                'conky_themes',
-                'performance-1920x1080',
-                'template.conf',
-            )),
-            'time-1920x1080': str(path.join(
-                config_directory,
-                'conky_themes',
-                'time-1920x1080',
-                'template.conf',
-            ))},
-        'conky_temp_files': {
-            'performance-1920x1080': conf['conky_temp_files']['performance-1920x1080'],
-            'time-1920x1080': conf['conky_temp_files']['time-1920x1080']},
-        'fonts': {'1': 'FuraCode Nerd Font'},
-        'location': {
-            'elevation': '0',
-            'latitude': '63.446827',
-            'longitude': '10.421906',
-        },
-        'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
-        'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'astrality')),
-        'timer': {'type': 'solar'},
-        'timer_class': Solar,
-        'wallpaper': {'feh_option': '--bg-fill', 'theme': 'default'},
-        'wallpaper_paths': {
-            'afternoon': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'afternoon',
-            )),
-            'morning': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'morning',
-            )),
-            'night': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'night',
-            )),
-            'sunrise': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'sunrise',
-            )),
-            'sunset': str(path.join(
+                'astrality.conf.example',
+            ),
+            'conky_module_paths': {
+                'performance-1920x1080': Path(
+                    config_directory,
+                    'conky_themes',
+                    'performance-1920x1080',
+                ),
+                'time-1920x1080': Path(config_directory, 'conky_themes', 'time-1920x1080'),
+            },
+            'conky_module_templates': {
+                'performance-1920x1080': Path(
+                    config_directory,
+                    'conky_themes',
+                    'performance-1920x1080',
+                    'template.conf',
+                ),
+                'time-1920x1080': Path(
+                    config_directory,
+                    'conky_themes',
+                    'time-1920x1080',
+                    'template.conf',
+                )},
+            'conky_temp_files': {
+                'performance-1920x1080': conf['_runtime']['conky_temp_files']['performance-1920x1080'],
+                'time-1920x1080': conf['_runtime']['conky_temp_files']['time-1920x1080']},
+            'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
+            'temp_directory': Path(os.environ.get('TMPDIR', '/tmp'), 'astrality'),
+            'timer_class': Solar,
+            'wallpaper_paths': {
+                'afternoon': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'afternoon',
+                ),
+                'morning': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'morning',
+                ),
+                'night': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'night',
+                ),
+                'sunrise': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'sunrise',
+                ),
+                'sunset': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'sunset',
+                ),
+            },
+            'wallpaper_theme_directory': Path(
                 config_directory,
                 'wallpaper_themes',
                 'default',
-                'sunset',
-            )),
-        },
-        'wallpaper_theme_directory': str(path.join(
-            config_directory,
-            'wallpaper_themes',
-            'default',
-        )),
+            ),
+        }
     }
 
 @pytest.fixture
@@ -134,6 +124,77 @@ def fully_processed_conf_dict(conf):
     config_directory = Path(__file__).parents[2]
     return {
         'DEFAULT': {},
+        '_runtime': {
+            'config_directory': config_directory,
+            'config_file': Path(
+                config_directory,
+                'astrality.conf.example',
+            ),
+            'conky_module_paths': {
+                'performance-1920x1080': Path(
+                    config_directory,
+                    'conky_themes',
+                    'performance-1920x1080',
+                ),
+                'time-1920x1080': Path(config_directory, 'conky_themes', 'time-1920x1080'),
+            },
+            'conky_module_templates': {
+                'performance-1920x1080': Path(
+                    config_directory,
+                    'conky_themes',
+                    'performance-1920x1080',
+                    'template.conf',
+                ),
+                'time-1920x1080': Path(
+                    config_directory,
+                    'conky_themes',
+                    'time-1920x1080',
+                    'template.conf',
+                )},
+            'conky_temp_files': {
+                'performance-1920x1080': conf['_runtime']['conky_temp_files']['performance-1920x1080'],
+                'time-1920x1080': conf['_runtime']['conky_temp_files']['time-1920x1080']},
+            'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
+            'temp_directory': Path(os.environ.get('TMPDIR', '/tmp'), 'astrality'),
+            'wallpaper_paths': {
+                'afternoon': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'afternoon.jpg',
+                ),
+                'morning': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'morning.jpg',
+                ),
+                'night': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'night.jpg',
+                ),
+                'sunrise': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'sunrise.jpg',
+                ),
+                'sunset': Path(
+                    config_directory,
+                    'wallpaper_themes',
+                    'default',
+                    'sunset.jpg',
+                ),
+            },
+            'wallpaper_theme_directory': Path(
+                config_directory,
+                'wallpaper_themes',
+                'default',
+            ),
+            'timer_class': Solar,
+        },
         'behaviour': {'refresh_period': '60'},
         'colors': {'1': {'afternoon': 'FC6F42',
                          'morning': '5BA276',
@@ -145,85 +206,16 @@ def fully_processed_conf_dict(conf):
                          'night': '3F72E8',
                          'sunrise': 'DB4E38',
                          'sunset': '9B3A1A'}},
-        'config_directory': str(config_directory),
-        'config_file': str(path.join(
-            config_directory,
-            'astrality.conf.example',
-        )),
         'conky': {'modules': 'performance-1920x1080 time-1920x1080',
                   'startup_delay': '0'},
-        'conky_module_paths': {
-            'performance-1920x1080': str(path.join(
-                config_directory,
-                'conky_themes',
-                'performance-1920x1080',
-            )),
-            'time-1920x1080': str(path.join(config_directory, 'conky_themes', 'time-1920x1080')),
-        },
-        'conky_module_templates': {
-            'performance-1920x1080': str(path.join(
-                config_directory,
-                'conky_themes',
-                'performance-1920x1080',
-                'template.conf',
-            )),
-            'time-1920x1080': str(path.join(
-                config_directory,
-                'conky_themes',
-                'time-1920x1080',
-                'template.conf',
-            ))},
-        'conky_temp_files': {
-            'performance-1920x1080': conf['conky_temp_files']['performance-1920x1080'],
-            'time-1920x1080': conf['conky_temp_files']['time-1920x1080']},
         'fonts': {'1': 'FuraCode Nerd Font'},
         'location': {
             'elevation': '0',
             'latitude': '63.446827',
             'longitude': '10.421906',
         },
-        'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
-        'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'astrality')),
         'timer': {'type': 'solar'},
-        'timer_class': Solar,
         'wallpaper': {'feh_option': '--bg-fill', 'theme': 'default'},
-        'wallpaper_paths': {
-            'afternoon': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'afternoon',
-            )),
-            'morning': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'morning',
-            )),
-            'night': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'night',
-            )),
-            'sunrise': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'sunrise',
-            )),
-            'sunset': str(path.join(
-                config_directory,
-                'wallpaper_themes',
-                'default',
-                'sunset',
-            )),
-        },
-        'wallpaper_theme_directory': str(path.join(
-            config_directory,
-            'wallpaper_themes',
-            'default',
-        )),
     }
 
 @pytest.fixture
@@ -234,7 +226,13 @@ def config_parser(conf_file_path):
 
 class TestFixtures:
     def test_config_fixture_correctnes(self, conf, fully_processed_conf_dict):
-        assert conf == fully_processed_conf_dict
+        for key, value in fully_processed_conf_dict.items():
+            if isinstance(value, dict):
+                for new_key, new_value in value.items():
+                    assert new_value == conf[key][new_key]
+
+            else:
+                assert value == conf[key]
 
 
 class TestResolverClass:

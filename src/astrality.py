@@ -14,7 +14,7 @@ from conky import exit_conky, start_conky_process, compile_conky_templates
 from wallpaper import exit_feh, update_wallpaper
 
 
-def exit_handler(signal=None, frame=None):
+def exit_handler(signal=None, frame=None) -> None:
     print('Astrality was interrupted')
     print('Cleaning up temporary files before exiting...')
     exit_conky(config)
@@ -23,7 +23,7 @@ def exit_handler(signal=None, frame=None):
     # Delete all temporary files manually, because if we delete the
     # temp directory, the TemporaryFile closer will raise an error
     # when it tries to delete itself when it goes out of scope
-    for file in config['conky_temp_files'].values():
+    for file in config['_runtime']['conky_temp_files'].values():
         file.close()
 
     # The temp directory is left alone, for two reasons:
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     try:
         config = user_configuration()
-        timer = config['timer_class'](config)
+        timer = config['_runtime']['timer_class'](config)
         old_period = timer.period()
         update_wallpaper(config, timer.period())
 

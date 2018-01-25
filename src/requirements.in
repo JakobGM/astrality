@@ -4,7 +4,7 @@ pip-tools
 # Testing framework
 pytest
 
-# For setting time in pytest
+# For monkey patching all calls to datetime related function in pytest
 pytest-freezegun
 
 # For typing

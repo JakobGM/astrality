@@ -11,18 +11,18 @@ from timer import Solar
 
 
 def test_config_directory_name(conf):
-    assert conf['config_directory'][-10:] == '/astrality'
+    assert str(conf['_runtime']['config_directory'])[-10:] == '/astrality'
 
 
 def test_name_of_config_file(conf):
-    assert '/astrality.conf' in conf['config_file']
+    assert '/astrality.conf' in str(conf['_runtime']['config_file'])
 
 
 def test_conky_module_paths(conf, conf_path):
-    conky_module_paths = conf['conky_module_paths']
+    conky_module_paths = conf['_runtime']['conky_module_paths']
     assert conky_module_paths == {
-        'performance-1920x1080': conf_path + '/conky_themes/performance-1920x1080',
-        'time-1920x1080': conf_path + '/conky_themes/time-1920x1080',
+        'performance-1920x1080': Path(conf_path, 'conky_themes', 'performance-1920x1080'),
+        'time-1920x1080': Path(conf_path, 'conky_themes', 'time-1920x1080'),
     }
 
 
@@ -35,13 +35,13 @@ def test_wallpaper_theme(conf):
 
 
 def test_wallpaper_paths(conf, conf_path):
-    base_path = conf_path + '/wallpaper_themes/default/'
-    assert conf['wallpaper_paths'] == {
-        'sunrise': base_path + 'sunrise',
-        'morning': base_path + 'morning',
-        'afternoon': base_path + 'afternoon',
-        'sunset': base_path + 'sunset',
-        'night': base_path + 'night',
+    base_path = Path(conf_path, 'wallpaper_themes', 'default/')
+    assert conf['_runtime']['wallpaper_paths'] == {
+        'sunrise': Path(base_path, 'sunrise.jpg'),
+        'morning': Path(base_path, 'morning.jpg'),
+        'afternoon': Path(base_path, 'afternoon.jpg'),
+        'sunset': Path(base_path, 'sunset.jpg'),
+        'night': Path(base_path, 'night.jpg'),
     }
 
 def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf):

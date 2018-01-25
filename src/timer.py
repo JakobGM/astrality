@@ -5,8 +5,7 @@ from typing import Any, Dict, Tuple
 import pytz
 from astral import Location
 
-
-Config = Dict[str, Any]
+from resolver import Resolver
 
 
 class Timer(abc.ABC):
@@ -15,7 +14,7 @@ class Timer(abc.ABC):
     periods: Tuple[str, ...]
 
     @abc.abstractmethod
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Resolver) -> None:
         """Initialize a period timer based on the configuration of the user."""
         pass
 
@@ -29,7 +28,7 @@ class Timer(abc.ABC):
         """Return the time remaining until the next period in seconds."""
         pass
 
-    def now(self) -> int:
+    def now(self) -> datetime.datetime:
         """Return the current UTC time."""
         timezone = pytz.timezone('UTC')
         return timezone.localize(datetime.datetime.utcnow())
@@ -43,7 +42,7 @@ class Solar(Timer):
     """
     periods = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Resolver) -> None:
         self.config = config
         self.location = self.construct_astral_location()
 

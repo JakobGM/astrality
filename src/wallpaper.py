@@ -11,51 +11,28 @@ FONT_CATEGORIES = ('primary', 'secondary',)
 
 
 def update_wallpaper(config: Config, period: str) -> None:
-    wallpaper_path = config['wallpaper_paths'][period]
-    wallpaper_path = glob(wallpaper_path + '.*')[0]
+    wallpaper_path = config['_runtime']['wallpaper_paths'][period]
     set_feh_wallpaper(wallpaper_path, config)
 
 
 def import_colors(config: Config):
-    wallpaper_theme_directory = config['wallpaper_theme_directory']
+    wallpaper_theme_directory = config['_runtime']['wallpaper_theme_directory']
     color_config_parser = ConfigParser(interpolation=ExtendedInterpolation())
-    color_config_path = os.path.join(wallpaper_theme_directory, 'colors.conf')
+    color_config_path = Path(wallpaper_theme_directory, 'colors.conf')
     color_config_parser.read(color_config_path)
     print(f'Using color config from "{color_config_path}"')
 
-    colors = {}
+    colors: Dict[str, Dict[str, str]] = {}
     for color_category in color_config_parser.keys():
         if color_category == 'DEFAULT':
             continue
         colors[color_category] = {}
-        for period in config['periods']:
+        for period in config['_runtime']['periods']:
             colors[color_category][period] = color_config_parser[color_category][period]
 
     print('Using the following color theme:')
     pprint(colors)
-    return colors
-
-
-def wallpaper_paths(config: Config) -> Dict[str, str]:
-    """
-    Given the configuration directory and wallpaper theme, this function
-    returns a dictionary containing.
-
-    {..., 'period': 'full_wallpaper_path', ...}
-
-    """
-    wallpaper_directory = os.path.join(
-        config['config_directory'],
-        'wallpaper_themes',
-        config['wallpaper']['theme']
-    )
-
-    paths = {
-        period: os.path.join(wallpaper_directory, period)
-        for period
-        in config['periods']
-    }
-    return paths
+    return {'colors': colors}
 
 
 def exit_feh(config) -> None:
@@ -71,7 +48,7 @@ def exit_feh(config) -> None:
 def set_feh_wallpaper(wallpaper_path: Path, config: Config) -> None:
     feh_option = config['wallpaper'].get('feh_option', '--bg-scale')
 
-    print('Setting new wallpaper: ' + wallpaper_path)
+    print('Setting new wallpaper: ' + str(wallpaper_path))
     p = subprocess.Popen([
         'feh',
         feh_option,

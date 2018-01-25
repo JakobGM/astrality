@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 from math import inf
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 
 class Resolver:
@@ -63,7 +63,7 @@ class Resolver:
     def __setitem__(self, key: str, value: str) -> None:
         """Insert `value` into the `key` index."""
         if not hasattr(self, '_dict'):
-            self._dict = {}
+            self._dict: Dict[str, Union[str, dict]] = {}
 
         try:
             self._max_key = max(int(key), self._max_key)

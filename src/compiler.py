@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Callable, Dict, Match, Set
 import re
 
-Config = Dict['str', Any]
+from resolver import Resolver
 
 
-def find_placeholders(string: str) -> set:
+def find_placeholders(string: str) -> Set[Match]:
     placeholder_pattern = re.compile(r'\$\{astrality:[\w|\-^:]+:[\w|\-^:]+\}')
     return set(placeholder_pattern.findall(string))
 
@@ -14,7 +14,7 @@ def compile_template(
     template: Path,
     target: Path,
     period: str,
-    config: Config,
+    config: Resolver,
 ) -> None:
     replacements = generate_replacements(config, period)
     replace = generate_replacer(replacements, period, config)
@@ -28,7 +28,7 @@ def compile_template(
 
 
 def generate_replacements(
-    config: Config,
+    config: Resolver,
     period: str,
 ) -> Dict[str, str]:
     """
@@ -36,7 +36,7 @@ def generate_replacements(
     placeholders that could be present in the conky module templates and their
     respective replacements fitting for the time of day
     """
-    templates = config['conky_module_templates']
+    templates = config['_runtime']['conky_module_templates']
     placeholders: Set[str] = set()
     for template_path in templates.values():
         with open(template_path, 'r') as template:
@@ -62,7 +62,11 @@ def generate_replacements(
     return replacements
 
 
-def generate_replacer(replacements: Dict[str, str], period: str, config: Config):
+def generate_replacer(
+    replacements: Dict[str, str],
+    period: str,
+    config: Resolver,
+) -> Callable[[str], str]:
     """
     Given a set of replacements returned from generate_replacements() we can
     create a regex replacer which will replace these placeholders in string
