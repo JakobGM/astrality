@@ -4,7 +4,7 @@ type = solar
 
 [location]
 ; Your current location, easily obtained from here: https://www.latlong.net/
-; Used by solarity for automatic wallpaper rotation based on time of day
+; Used by astrality for automatic wallpaper rotation based on time of day
 latitude = 63.446827
 longitude = 10.421906
 

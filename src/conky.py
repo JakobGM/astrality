@@ -26,7 +26,7 @@ def create_conky_temp_files(config: 'Config') -> Tuple[str, ...]:
     # NB: These temporary files/directories need to be persisted during the
     # entirity of the scripts runtime, since the files are deleted when they
     # go out of scope
-    temp_dir_path = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'solarity')
+    temp_dir_path = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'astrality')
     config['temp_directory'] = temp_dir_path
     if not os.path.isdir(temp_dir_path):
         os.mkdir(temp_dir_path)

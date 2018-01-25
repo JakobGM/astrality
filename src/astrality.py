@@ -1,6 +1,6 @@
 #/usr/bin/env python3
 
-"""The module meant to be run in order to start Solarity."""
+"""The module meant to be run in order to start Astrality."""
 
 import os
 import signal
@@ -15,7 +15,7 @@ from wallpaper import exit_feh, update_wallpaper
 
 
 def exit_handler(signal=None, frame=None):
-    print('Solarity was interrupted')
+    print('Astrality was interrupted')
     print('Cleaning up temporary files before exiting...')
     exit_conky(config)
     exit_feh(config)
@@ -28,9 +28,9 @@ def exit_handler(signal=None, frame=None):
 
     # The temp directory is left alone, for two reasons:
     # 1: An empty directory uses neglible disk space.
-    # 2: If this process is interrupted by another Solarity instance,
+    # 2: If this process is interrupted by another Astrality instance,
     #    we might experience race conditions when the exit handler deletes
-    #    the temporary directory *after* the new Solarity instance creates it.
+    #    the temporary directory *after* the new Astrality instance creates it.
 
     try:
         sys.exit(0)
@@ -38,8 +38,8 @@ def exit_handler(signal=None, frame=None):
         os._exit(0)
 
 
-def other_solarity_pids() -> Set[int]:
-    """Return the process ids (PIDs) of any other Solarity instances."""
+def other_astrality_pids() -> Set[int]:
+    """Return the process ids (PIDs) of any other Astrality instances."""
 
     # Get all processes instanciated from this file
     result = subprocess.Popen(
@@ -54,27 +54,27 @@ def other_solarity_pids() -> Set[int]:
     return pids - set((this_process_pid,))
 
 
-def kill_old_solarity_process() -> None:
+def kill_old_astrality_process() -> None:
     """Kill all other instances of this script, to prevent duplicates."""
 
-    pids = other_solarity_pids()
+    pids = other_astrality_pids()
     failed_exits = 0
     for pid in pids:
         try:
-            print(f'Killing duplicate Solarity process with pid {pid}.')
+            print(f'Killing duplicate Astrality process with pid {pid}.')
             os.kill(pid, signal.SIGTERM)
         except OSError:
-            print(f'Could not kill old instance of solarity with pid {pid}.')
+            print(f'Could not kill old instance of astrality with pid {pid}.')
             print('Continuing anyway...')
             failed_exits += 1
 
-    while len(other_solarity_pids()) > failed_exits:
+    while len(other_astrality_pids()) > failed_exits:
         # Wait for all the processes to exit properly
         time.sleep(0.2)
 
 
 if __name__ == '__main__':
-    kill_old_solarity_process()
+    kill_old_astrality_process()
 
     # Some SIGINT signals are not properly interupted by python and converted
     # into KeyboardInterrupts, so we have to register a signal handler to
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     # signal and not python.
     signal.signal(signal.SIGINT, exit_handler)
 
-    # Also catch kill-signkal from OS, e.g. `kill $(pgrep -f "python solarity.py")`
+    # Also catch kill-signkal from OS, e.g. `kill $(pgrep -f "python astrality.py")`
     signal.signal(signal.SIGTERM, exit_handler)
 
     try:

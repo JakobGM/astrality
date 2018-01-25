@@ -6,7 +6,7 @@ Config = Dict['str', Any]
 
 
 def find_placeholders(string: str) -> set:
-    placeholder_pattern = re.compile(r'\$\{solarity:[\w|\-^:]+:[\w|\-^:]+\}')
+    placeholder_pattern = re.compile(r'\$\{astrality:[\w|\-^:]+:[\w|\-^:]+\}')
     return set(placeholder_pattern.findall(string))
 
 
@@ -45,7 +45,7 @@ def generate_replacements(
 
     replacements = {}
     for placeholder in placeholders:
-        category, key = placeholder[11:-1].split(':')
+        category, key = placeholder[12:-1].split(':')
         try:
             value = config[category][key]
             if category == 'colors':

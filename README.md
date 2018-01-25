@@ -1,9 +1,9 @@
-# Solarity - A wallpaper theme manager which uses the suns position in the sky [![Build Status](https://travis-ci.org/JakobGM/solarity.svg?branch=master)](https://travis-ci.org/JakobGM/solarity) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/solarity/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/solarity?branch=master)
+# Astrality - A wallpaper theme manager which uses the suns position in the sky [![Build Status](https://travis-ci.org/JakobGM/astrality.svg?branch=master)](https://travis-ci.org/JakobGM/astrality) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/astrality?branch=master)
 
-<img align="left" src="src/doc/solarity_logo.png">
+<img align="left" src="src/doc/astrality_logo.png">
 
 ## What does it do?
-Solarity is a Linux tool which automatically changes the wallpaper when your specific location (given by latitude and longitude) experiences dawn, noon, sunset, and dusk. It adapts to the length of day through the year.
+Astrality is a Linux tool which automatically changes the wallpaper when your specific location (given by latitude and longitude) experiences dawn, noon, sunset, and dusk. It adapts to the length of day through the year.
 
 Conky modules are also supported, where the font color can change during the different times of the day.
 
@@ -12,7 +12,7 @@ It is relatively easy to add new themes to your own liking. Pull requests with n
 ## How to install
 
 ### System requirements
-Solarity requires the following system packages: [`conky`](https://wiki.archlinux.org/index.php/Conky),  [`feh`](https://wiki.archlinux.org/index.php/feh), and `python 3.6`. An example installation on ArchLinux would be:
+Astrality requires the following system packages: [`conky`](https://wiki.archlinux.org/index.php/Conky),  [`feh`](https://wiki.archlinux.org/index.php/feh), and `python 3.6`. An example installation on ArchLinux would be:
 
 ```bash
 sudo pacman -Syu conky feh python
@@ -30,13 +30,13 @@ Create a new virtualenv for python 3.6 (or use your system python 3.6 if you pre
 
 ```bash
 pip3 install astral
-git clone https://github.com/jakobgm/solarity /path/to/solarity
+git clone https://github.com/jakobgm/astrality /path/to/astrality
 ```
 
 The script can be run as a background job in the following way:
 
 ```bash
-python3.6 /path/to/solarity/src/main.py &
+python3.6 /path/to/astrality/src/main.py &
 ```
 
 Your wallpaper should now be automatically changed during the different times of day.
@@ -45,8 +45,8 @@ Your wallpaper should now be automatically changed during the different times of
 Here is how I would install this tool using virtualenvwrapper
 
 ```bash
-git clone https://github.com/jakobgm/solarity $XDG_CONFIG_HOME
-mkvirtualenv -p python3.6 -a $XDG_CONFIG_HOME/solarity solarity
+git clone https://github.com/jakobgm/astrality $XDG_CONFIG_HOME
+mkvirtualenv -p python3.6 -a $XDG_CONFIG_HOME/astrality astrality
 pip install astral
 deactivate
 ```
@@ -55,28 +55,28 @@ deactivate
 Add the following line to `$XDG_CONFIG_HOME/i3/config`:
 
 ```config
-exec --no-startup-id "/path/to/python/with/installed/dependencies/python /path/to/solarity/src/main.py &"
+exec --no-startup-id "/path/to/python/with/installed/dependencies/python /path/to/astrality/src/main.py &"
 ```
 
-Or more specifically, if you have used the virtualenvwrapper method of installing solarity:
+Or more specifically, if you have used the virtualenvwrapper method of installing astrality:
 
 ```config
-exec --no-startup-id "$WORKON_HOME/solarity/bin/python $XDG_CONFIG_HOME/solarity/src/main.py &"
+exec --no-startup-id "$WORKON_HOME/astrality/bin/python $XDG_CONFIG_HOME/astrality/src/main.py &"
 ```
 
 ## Configuration
-The configuration directory for solarity is determined in the following way:
+The configuration directory for astrality is determined in the following way:
 
-* If `$SOLARITY_CONFIG_HOME` is set, use that folder as the configuration directory, else...
-* If `$XDG_CONFIG_HOME` is set, use `$XDG_CONFIG_HOME/solarity`, else...
-* Use `~/.config/solarity`.
+* If `$ASTRALITY_CONFIG_HOME` is set, use that folder as the configuration directory, else...
+* If `$XDG_CONFIG_HOME` is set, use `$XDG_CONFIG_HOME/astrality`, else...
+* Use `~/.config/astrality`.
 
-The configuration file for solarity should be placed at the root of the solarity configuration directory and an example configuration can be found [here](https://github.com/JakobGM/solarity/blob/master/solarity.conf.example).
+The configuration file for astrality should be placed at the root of the astrality configuration directory and an example configuration can be found [here](https://github.com/JakobGM/astrality/blob/master/astrality.conf.example).
 
 You can also copy the example configuration file from this repository:
 
 ```bash
-cp /path/to/solarity/solarity.conf.example $XDG_CONFIG_HOME/solarity/solarity.conf
+cp /path/to/astrality/astrality.conf.example $XDG_CONFIG_HOME/astrality/astrality.conf
 ```
 
 Edit the configuration file in order to add your current location, given by your GPS coordinates (longitude, latitude, and elevation). These coordinates can be obtained from [this website](https://www.latlong.net/).
@@ -108,10 +108,10 @@ mark-ovredir-focused = true;
 ```
 
 ## How to add new wallpaper theme
-Say you would want to create a new wallpaper theme called `nature`. First create a new subdirectory in `$XDG_CONFIG_HOME/solarity/wallpaper_themes` named `nature`:
+Say you would want to create a new wallpaper theme called `nature`. First create a new subdirectory in `$XDG_CONFIG_HOME/astrality/wallpaper_themes` named `nature`:
 
 ```
-mkdir -p $XDG_CONFIG_HOME/solarity/wallpaper_themes/nature
+mkdir -p $XDG_CONFIG_HOME/astrality/wallpaper_themes/nature
 ```
 
 Then place pictures [supported by feh](http://search.cpan.org/~kryde/Image-Base-Imlib2-1/lib/Image/Base/Imlib2.pm#DESCRIPTION) in the newly created directory. You **have** to use the following filenames:
@@ -133,7 +133,7 @@ The images are not required to be different, in case if you do not have enough f
 ln -s sunrise.jpg sunrise.jpg
 ```
 
-Then you have to add the following line to the `[Appearance]` section of `solarity.conf`:
+Then you have to add the following line to the `[Appearance]` section of `astrality.conf`:
 
 ```dosini
 [Appearance]
@@ -142,7 +142,7 @@ WallpaperTheme = nature
 ...
 ```
 
-Restart the solarity process in order to see the change of the wallpaper theme.
+Restart the astrality process in order to see the change of the wallpaper theme.
 
 Pull requests containing new themes are very welcome!
 
@@ -153,4 +153,4 @@ Themes have been made by the help of several posts on the [/r/unixporn](https://
 * Tower: Reddit user [/u/saors](https://reddit.com/u/soars): [/r/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49phkc/firewatch_chrono_first_theme_includes_parallax/?st=jcktppsn&sh=792fe302)
 * Tower: Reddit user [/u/TheFawxyOne](https://reddit.com/u/soars): [/r/unixporn post](https://www.reddit.com/r/Rainmeter/comments/49fpwz/ocupdate_firewatch_parallax_theme_v150_read/?st=jcktryl8&sh=4022418b)
 
-In addition, the solarity logo is a modified version of a logo designed by [miscellaneous](https://www.shareicon.net/author/miscellaneous) from Flaticon.
+In addition, the astrality logo is a modified version of a logo designed by [miscellaneous](https://www.shareicon.net/author/miscellaneous) from Flaticon.

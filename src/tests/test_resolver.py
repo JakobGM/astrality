@@ -11,7 +11,7 @@ from timer import Solar
 
 
 @pytest.fixture
-def solarity_conf_file_dict(conf):
+def astrality_conf_file_dict(conf):
     config_directory = Path(__file__).parents[2]
     return {
         'DEFAULT': {},
@@ -51,7 +51,7 @@ def infered_conf_dict(conf):
         'config_directory': str(config_directory),
         'config_file': str(path.join(
             config_directory,
-            'solarity.conf.example',
+            'astrality.conf.example',
         )),
         'conky': {'modules': 'performance-1920x1080 time-1920x1080',
                   'startup_delay': '0'},
@@ -86,7 +86,7 @@ def infered_conf_dict(conf):
             'longitude': '10.421906',
         },
         'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
-        'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'solarity')),
+        'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'astrality')),
         'timer': {'type': 'solar'},
         'timer_class': Solar,
         'wallpaper': {'feh_option': '--bg-fill', 'theme': 'default'},
@@ -148,7 +148,7 @@ def fully_processed_conf_dict(conf):
         'config_directory': str(config_directory),
         'config_file': str(path.join(
             config_directory,
-            'solarity.conf.example',
+            'astrality.conf.example',
         )),
         'conky': {'modules': 'performance-1920x1080 time-1920x1080',
                   'startup_delay': '0'},
@@ -183,7 +183,7 @@ def fully_processed_conf_dict(conf):
             'longitude': '10.421906',
         },
         'periods': ('sunrise', 'morning', 'afternoon', 'sunset', 'night'),
-        'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'solarity')),
+        'temp_directory': str(path.join(os.environ.get('TMPDIR', '/tmp'), 'astrality')),
         'timer': {'type': 'solar'},
         'timer_class': Solar,
         'wallpaper': {'feh_option': '--bg-fill', 'theme': 'default'},
@@ -256,13 +256,13 @@ class TestResolverClass:
         config = Resolver(conf_dict)
         assert config == conf_dict
 
-    def test_equality_operator_on_config_class(self, config_parser, solarity_conf_file_dict):
+    def test_equality_operator_on_config_class(self, config_parser, astrality_conf_file_dict):
         config = Resolver(config_parser)
-        assert solarity_conf_file_dict == config
+        assert astrality_conf_file_dict == config
 
-    def test_right_equality_operator_on_config_class(self, config_parser, solarity_conf_file_dict):
+    def test_right_equality_operator_on_config_class(self, config_parser, astrality_conf_file_dict):
         config = Resolver(config_parser)
-        assert config == solarity_conf_file_dict
+        assert config == astrality_conf_file_dict
 
     def test_values_for_max_key_property(self):
         config = Resolver()
@@ -396,7 +396,7 @@ class TestResolverClass:
         config.update(another_conf_dict)
         assert config == merged_conf_dicts
 
-    def test_update_with_config_parser(self, solarity_conf_file_dict, conf_file_path):
+    def test_update_with_config_parser(self, astrality_conf_file_dict, conf_file_path):
         config_parser = ConfigParser()
         config_parser.read(conf_file_path)
 
@@ -404,14 +404,14 @@ class TestResolverClass:
         config = Resolver(conf_dict)
         config.update(config_parser)
 
-        solarity_conf_file_dict.update(conf_dict)
-        assert config == solarity_conf_file_dict
+        astrality_conf_file_dict.update(conf_dict)
+        assert config == astrality_conf_file_dict
 
     @pytest.mark.skip()
     def test_use_of_replacement_resolver(conf):
         replacements = generate_replacements(conf, 'night')
         replace = generate_replacer(replacements, 'night', conf)
-        assert replace('${solarity:colors:2}') == 'CACCFD'
+        assert replace('${astrality:colors:2}') == 'CACCFD'
 
     @pytest.mark.skip()
     def test_resolver_class():

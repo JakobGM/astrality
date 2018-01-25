@@ -1,5 +1,5 @@
 # Config files which are meant to be changed by each individual user can be safely ignored by git
-solarity.conf
+astrality.conf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

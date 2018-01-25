@@ -15,7 +15,7 @@ def conf_path():
 
 @pytest.fixture
 def conf_file_path(conf_path):
-    return os.path.join(conf_path, 'solarity.conf.example')
+    return os.path.join(conf_path, 'astrality.conf.example')
 
 @pytest.yield_fixture(scope='session', autouse=True)
 def conf():

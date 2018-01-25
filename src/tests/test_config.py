@@ -11,11 +11,11 @@ from timer import Solar
 
 
 def test_config_directory_name(conf):
-    assert conf['config_directory'][-9:] == '/solarity'
+    assert conf['config_directory'][-10:] == '/astrality'
 
 
 def test_name_of_config_file(conf):
-    assert '/solarity.conf' in conf['config_file']
+    assert '/astrality.conf' in conf['config_file']
 
 
 def test_conky_module_paths(conf, conf_path):

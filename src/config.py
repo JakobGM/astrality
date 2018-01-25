@@ -16,22 +16,22 @@ def infer_config_location(
     config_directory: Optional[str] = None,
 ) -> Tuple[str, str]:
     """
-    Try to find the configuration directory for solarity, based on filesystem
+    Try to find the configuration directory for astrality, based on filesystem
     or specific environment variables if they are present several places to put
     it. See README.md.
     """
     if not config_directory:
-        if 'SOLARITY_CONFIG_HOME' in os.environ:
-            # The user has set a custom config directory for solarity
-            config_directory = os.environ['SOLARITY_CONFIG_HOME']
+        if 'ASTRALITY_CONFIG_HOME' in os.environ:
+            # The user has set a custom config directory for astrality
+            config_directory = os.environ['ASTRALITY_CONFIG_HOME']
         else:
             # Follow the XDG directory standard
             config_directory = os.path.join(
                 os.getenv('XDG_CONFIG_HOME', '~/.config'),
-                'solarity',
+                'astrality',
             )
 
-    config_file = os.path.join(config_directory, 'solarity.conf')
+    config_file = os.path.join(config_directory, 'astrality.conf')
 
     if not os.path.isfile(config_file):
         print(
@@ -40,7 +40,7 @@ def infer_config_location(
             '.'
         )
         config_directory = str(Path(__file__).parents[1])
-        config_file = os.path.join(config_directory, 'solarity.conf.example')
+        config_file = os.path.join(config_directory, 'astrality.conf.example')
         print(f'Using example configuration instead: "{config_file}"')
     else:
         print(f'Using configuration file "{config_file}"')
@@ -51,7 +51,7 @@ def infer_config_location(
 def populate_config_from_config_file(
     config_file: Optional[str],
 ) -> Resolver:
-    """Return a Resolver object reflecting the content of `solarity.conf`"""
+    """Return a Resolver object reflecting the content of `astrality.conf`"""
     config_parser = ConfigParser(interpolation=ExtendedInterpolation())
     config_parser.read(config_file)
     return Resolver(config_parser)
@@ -94,11 +94,11 @@ def infer_paths_from_config(
 def user_configuration(config_directory: Optional[str] = None) -> Resolver:
     """
     Create a configuration dictionary which should directly reflect the
-    hierarchy of a typical `solarity.conf` file. Users should be able to insert
+    hierarchy of a typical `astrality.conf` file. Users should be able to insert
     elements from their configuration directly into conky module templates. The
     mapping should be:
 
-    ${solarity:conky:main_font} -> config['conky']['main_font']
+    ${astrality:conky:main_font} -> config['conky']['main_font']
 
     Some additional configurations are automatically added to the root level of
     the dictionary such as:
