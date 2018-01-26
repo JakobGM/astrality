@@ -405,14 +405,7 @@ class TestResolverClass:
         astrality_conf_file_dict.update(conf_dict)
         assert config == astrality_conf_file_dict
 
-    @pytest.mark.skip()
-    def test_use_of_replacement_resolver(conf):
-        replacements = generate_replacements(conf, 'night')
-        replace = generate_replacer(replacements, 'night', conf)
-        assert replace('${astrality:colors:2}') == 'CACCFD'
-
-    @pytest.mark.skip()
-    def test_resolver_class():
+    def test_resolver_class(self):
         resolver = Resolver()
         resolver['1'] = 'firs_value'
         resolver['2'] = 'second_value'
@@ -422,10 +415,3 @@ class TestResolverClass:
         assert resolver['2'] == 'second_value'
         assert resolver['3'] == 'second_value'
         assert resolver['string_key'] == 'string_value'
-
-    @pytest.mark.skip()
-    def test_resolver_class():
-        resolver = Resolver()
-        resolver['1'] = 'FuraCode Nerd Font'
-
-        assert resolver['1'] == 'FuraCode Nerd Font'

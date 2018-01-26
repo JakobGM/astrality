@@ -92,7 +92,7 @@ def dict_from_config_file(
 
     # Convert ConfigParser into a dictionary, performing all variable
     # interpolations at the same time
-    conf_dict = {}
+    conf_dict: Dict[str, Dict[str, str]] = {}
     for section_name, section in config_parser.items():
         conf_dict[section_name] = {}
         for option, value in section.items():

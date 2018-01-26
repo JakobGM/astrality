@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Dict, Tuple
+from typing import Dict, IO
 import os
 
 from compiler import compile_template
@@ -30,13 +30,13 @@ def compile_conky_templates(
 def create_conky_temp_files(
     temp_directory: Path,
     conky_module_templates: Dict[str, Path],
-) -> Dict[str, NamedTemporaryFile]:
+) -> Dict[str, IO]:
     # NB: These temporary files/directories need to be persisted during the
     # entirity of the scripts runtime, since the files are deleted when they
     # go out of scope
 
     return {
-        module: NamedTemporaryFile(
+        module: NamedTemporaryFile( # type: ignore
             prefix=module + '-',
             dir=temp_directory
         )

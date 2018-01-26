@@ -5,17 +5,18 @@ from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
 from typing import Any, Dict
 
+from resolver import Resolver
+
 logger = logging.getLogger('astrality')
-Config = Dict['str', Any]
 FONT_CATEGORIES = ('primary', 'secondary',)
 
 
-def update_wallpaper(config: Config, period: str) -> None:
+def update_wallpaper(config: Resolver, period: str) -> None:
     wallpaper_path = config['_runtime']['wallpaper_paths'][period]
     set_feh_wallpaper(wallpaper_path, config)
 
 
-def import_colors(config: Config):
+def import_colors(config: Resolver):
     wallpaper_theme_directory = config['_runtime']['wallpaper_theme_directory']
     color_config_parser = ConfigParser(interpolation=ExtendedInterpolation())
     color_config_path = Path(wallpaper_theme_directory, 'colors.conf')
@@ -35,7 +36,7 @@ def import_colors(config: Config):
     return {'colors': colors}
 
 
-def exit_feh(config) -> None:
+def exit_feh(config: Resolver) -> None:
     parent_dir = Path(__file__).parent
     fallback_wallpaper_path = os.path.join(
         config['wallpaper'].get('feh_option', '--bg-scale'),
@@ -45,7 +46,7 @@ def exit_feh(config) -> None:
     set_feh_wallpaper(fallback_wallpaper_path, config)
 
 
-def set_feh_wallpaper(wallpaper_path: Path, config: Config) -> None:
+def set_feh_wallpaper(wallpaper_path: Path, config: Resolver) -> None:
     feh_option = config['wallpaper'].get('feh_option', '--bg-scale')
 
     logger.info('Setting new wallpaper: ' + str(wallpaper_path))

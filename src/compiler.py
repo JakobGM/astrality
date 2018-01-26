@@ -1,6 +1,6 @@
 from pathlib import Path
 import logging
-from typing import Any, Callable, Dict, Match, Set
+from typing import Any, Callable, Dict, List, Match, Set
 import re
 
 from resolver import Resolver
@@ -8,7 +8,7 @@ from resolver import Resolver
 logger = logging.getLogger('astrality')
 
 
-def find_placeholders(string: str) -> Set[Match]:
+def find_placeholders(string: str) -> Set[str]:
     placeholder_pattern = re.compile(r'\$\{astrality:[\w|\-^:]+:[\w|\-^:]+\}')
     return set(placeholder_pattern.findall(string))
 
@@ -46,7 +46,7 @@ def generate_replacements(
             for line in template:
                 placeholders = placeholders | find_placeholders(line)
 
-    replacements = {}
+    replacements: Dict[str, str] = {}
     for placeholder in placeholders:
         category, key = placeholder[12:-1].split(':')
         try:

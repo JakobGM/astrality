@@ -1,6 +1,16 @@
 from configparser import ConfigParser
 from math import inf
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    ItemsView,
+    KeysView,
+    ValuesView,
+    Optional,
+    Tuple,
+    Union,
+)
+
 
 
 class Resolver:
@@ -21,6 +31,7 @@ class Resolver:
     replacements['3']
     >>> 'BACBEB'
     """
+    _dict: Union['Resolver', Dict[str, Any]]
 
     def __init__(
         self,
@@ -60,7 +71,7 @@ class Resolver:
         """Right side comparison, see self.__eq__()."""
         return self.__eq__(other)
 
-    def __setitem__(self, key: str, value: str) -> None:
+    def __setitem__(self, key: str, value: Union[str, dict, 'Resolver']) -> None:
         """Insert `value` into the `key` index."""
         if not hasattr(self, '_dict'):
             self._dict: Dict[str, Union[str, dict]] = {}
@@ -78,7 +89,7 @@ class Resolver:
         else:
             self._dict[key] = value
 
-    def __getitem__(self, key: Any) -> Any:
+    def __getitem__(self, key: str) -> Any:
         """
         Get item inserted into `key` index, with integer index resolution.
 
@@ -138,27 +149,27 @@ class Resolver:
         else:
             return {}.__str__()
 
-    def items(self):
+    def items(self) -> ItemsView[str, Any]:
         if hasattr(self, '_dict'):
             return self._dict.items()
         else:
             return {}.items()
 
-    def keys(self) -> Tuple[str]:
+    def keys(self) -> KeysView[str]:
         """Return all keys which have been inserted into the Resolver object."""
         if hasattr(self, '_dict'):
             return self._dict.keys()
         else:
             return {}.keys()
 
-    def values(self):
+    def values(self) -> ValuesView[Any]:
         """Return all values inserted into the Resolver object."""
         if hasattr(self, '_dict'):
             return self._dict.values()
         else:
             return {}.values()
 
-    def update(self, other: Union[ConfigParser, dict]) -> None:
+    def update(self, other: Union['Resolver', ConfigParser, dict]) -> None:
         """Overwrite all items from other onto the Resolver object."""
 
         if isinstance(other, ConfigParser):

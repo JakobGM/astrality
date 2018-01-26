@@ -10,6 +10,9 @@ pytest-freezegun
 # For setting environment variables during testing
 pytest-env
 
+# For running mypy static type analysis as part of pytest with --mypy flag
+pytest-mypy
+
 # For typing
 mypy
 
