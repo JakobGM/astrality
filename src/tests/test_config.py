@@ -6,8 +6,39 @@ from pathlib import Path
 
 import pytest
 
+from config import dict_from_config_file
 from resolver import Resolver
 from timer import Solar
+
+
+@pytest.fixture
+def dummy_config():
+    test_conf = Path(Path(__file__).parent, 'test.conf')
+    return Resolver(dict_from_config_file(test_conf))
+
+class TestAllConfigFeaturesFromDummyConfig:
+    def test_normal_variable(self, dummy_config):
+        assert dummy_config['section1']['var1'] == 'value1'
+
+    def test_variable_interpolation(self, dummy_config):
+        assert dummy_config['section1']['var2'] == 'value1/value2'
+        assert dummy_config['section2']['var3'] == 'value1'
+
+    def test_empty_string_variable(self, dummy_config):
+        assert dummy_config['section2']['empty_string_var'] == ''
+
+    def test_non_existing_variable(self, dummy_config):
+        with pytest.raises(KeyError):
+            assert dummy_config['section2']['not_existing_option'] is None
+
+    def test_environment_variable_interpolation(self, dummy_config):
+        assert dummy_config['section3']['env_variable'] == 'test_value, hello'
+
+    def test_integer_index_resolution(self, dummy_config):
+        assert dummy_config['section4']['1'] == 'primary_value'
+        assert dummy_config['section4']['0'] == 'primary_value'
+        assert dummy_config['section4']['2'] == 'primary_value'
+
 
 
 def test_config_directory_name(conf):

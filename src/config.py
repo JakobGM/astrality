@@ -3,7 +3,7 @@
 import os
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from conky import create_conky_temp_files
 from timer import TIMERS
@@ -48,13 +48,48 @@ def infer_config_location(
     return config_directory, config_file
 
 
-def populate_config_from_config_file(
-    config_file: Optional[Path],
-) -> Resolver:
-    """Return a Resolver object reflecting the content of `astrality.conf`"""
+def dict_from_config_file(
+    config_file: Path,
+    with_env: Optional[bool] = True,
+) -> Dict[str, Dict[str, str]]:
+    """
+    Return a dictionary that reflects the contents of `config_file`.
+
+    If with_env=True, an 'env' section is inserted into the dictionary
+    containing all the environment variables. This makes it possible to use
+    variable interpolation in order to expand environment variables like this:
+
+    ${env:NAME_OF_ENV_VARIABLE}
+    """
+
+    if not config_file.is_file():
+        raise RuntimeError(f'Could not load config file "{config_file}".')
+
     config_parser = ConfigParser(interpolation=ExtendedInterpolation())
     config_parser.read(config_file)
-    return Resolver(config_parser)
+
+    if with_env:
+        # Insert new 'env' section into the contents of of ConfigParser before
+        # using __get__() on it. This enables variable interpolation of
+        # environment variables.
+        env = {
+            key: os.path.expandvars(value)
+            for key, value
+            in os.environ.items()
+        }
+        config_parser['env'] = env
+
+    # Convert ConfigParser into a dictionary, performing all variable
+    # interpolations at the same time
+    return {
+        section_name: {
+            option: value
+            for option, value
+            in section.items()
+        }
+        for section_name, section
+        in config_parser.items()
+    }
 
 
 def infer_runtime_variables_from_config(
@@ -131,7 +166,10 @@ def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
     """
     config_directory, config_file = infer_config_location(config_directory)
 
-    config = populate_config_from_config_file(config_file)
+    config = Resolver(dict_from_config_file(
+        config_file,
+        with_env=True,
+    ))
     config.update(infer_runtime_variables_from_config(config_directory, config_file, config))
 
     # Import the colorscheme specified by the users wallpaper theme

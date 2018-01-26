@@ -14,6 +14,7 @@ pip-tools==1.11.0
 pluggy==0.6.0             # via pytest
 psutil==5.4.3             # via mypy
 py==1.5.2                 # via pytest
+pytest-env==0.6.2
 pytest-freezegun==0.2.0
 pytest==3.3.2
 python-dateutil==2.6.1    # via freezegun

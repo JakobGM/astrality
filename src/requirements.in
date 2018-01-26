@@ -7,6 +7,9 @@ pytest
 # For monkey patching all calls to datetime related function in pytest
 pytest-freezegun
 
+# For setting environment variables during testing
+pytest-env
+
 # For typing
 mypy
 
