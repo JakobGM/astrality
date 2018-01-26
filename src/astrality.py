@@ -2,6 +2,7 @@
 
 """The module meant to be run in order to start Astrality."""
 
+import logging
 import os
 import signal
 from typing import Set
@@ -13,6 +14,8 @@ from config import user_configuration
 from conky import exit_conky, start_conky_process, compile_conky_templates
 from wallpaper import exit_feh, update_wallpaper
 
+logger = logging.getLogger('astrality')
+logging.basicConfig(level=os.environ.get('ASTRALITY_LOGGING_LEVEL', 'WARNING'))
 
 def main():
     """Run the main process for Astrality."""
@@ -22,8 +25,8 @@ def main():
 
     # How to quit this process
     def exit_handler(signal=None, frame=None) -> None:
-        print('Astrality was interrupted')
-        print('Cleaning up temporary files before exiting...')
+        logger.critical('Astrality was interrupted')
+        logger.info('Cleaning up temporary files before exiting...')
         exit_conky(config)
         exit_feh(config)
 
@@ -71,15 +74,15 @@ def main():
             changed = new_period != old_period
 
             if changed:
-                print('New time of day detected: ' + period)
+                logger.info('New time of day detected: ' + period)
                 # We are in a new time of day, and we can change the background
                 # image
                 update_wallpaper(config, new_period)
                 compile_conky_templates(config, new_period)
                 old_period = new_period
-                print(f'Configuration updated.')
+                logger.info(f'Configuration updated.')
 
-            print(f'Waiting {timer.time_until_next_period()} seconds until next update.')
+            logger.info(f'Waiting {timer.time_until_next_period()} seconds until next update.')
             time.sleep(timer.time_until_next_period())
 
     except KeyboardInterrupt:
@@ -108,11 +111,11 @@ def kill_old_astrality_process() -> None:
     failed_exits = 0
     for pid in pids:
         try:
-            print(f'Killing duplicate Astrality process with pid {pid}.')
+            logger.info(f'Killing duplicate Astrality process with pid {pid}.')
             os.kill(pid, signal.SIGTERM)
         except OSError:
-            print(f'Could not kill old instance of astrality with pid {pid}.')
-            print('Continuing anyway...')
+            logger.error(f'Could not kill old instance of astrality with pid {pid}.')
+            logger.error('Continuing anyway...')
             failed_exits += 1
 
     while len(other_astrality_pids()) > failed_exits:

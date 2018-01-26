@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
@@ -6,6 +7,9 @@ import os
 
 from compiler import compile_template
 from resolver import Resolver
+
+
+logger = logging.getLogger('astrality')
 
 
 def compile_conky_templates(
@@ -43,8 +47,8 @@ def create_conky_temp_files(
 def start_conky_process(config: Resolver) -> None:
     conky_temp_files = config['_runtime']['conky_temp_files']
     for module_path, file in conky_temp_files.items():
-        print(f'Initializing conky module "{module_path}"')
-        print(f'    Tempory file placed at "{file.name}"')
+        logger.info(f'Initializing conky module "{module_path}"')
+        logger.info(f'    Tempory file placed at "{file.name}"')
         subprocess.Popen(['conky', '-c', file.name])
 
 def exit_conky(config: Resolver) -> None:

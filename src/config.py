@@ -1,5 +1,6 @@
 """Specifies everything related to application spanning configuration."""
 
+import logging
 import os
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
@@ -10,6 +11,8 @@ from timer import TIMERS
 from wallpaper import import_colors
 
 from resolver import Resolver
+
+logger = logging.getLogger('astrality')
 
 
 def infer_config_location(
@@ -34,16 +37,16 @@ def infer_config_location(
     config_file = Path(config_directory, 'astrality.conf')
 
     if not config_file.is_file():
-        print(
+        logger.warning(
             'Configuration file not found in its expected path '
             + str(config_file) +
             '.'
         )
         config_directory = Path(__file__).parents[1]
         config_file = Path(config_directory, 'astrality.conf.example')
-        print(f'Using example configuration instead: "{config_file}"')
+        logger.warning(f'Using example configuration instead: "{config_file}"')
     else:
-        print(f'Using configuration file "{config_file}"')
+        logging.info(f'Using configuration file "{config_file}"')
 
     return config_directory, config_file
 
@@ -78,7 +81,7 @@ def dict_from_config_file(
                 config_parser['env'][name] = os.path.expandvars(value)
             except ValueError as e:
                 if 'invalid interpolation syntax' in str(e):
-                    print(f'''
+                    logger.warning(f'''
                     Could not use environment variable {name}={value}.
                     It is too complex for expansion.
                     Skipping...'
@@ -97,7 +100,7 @@ def dict_from_config_file(
                 conf_dict[section_name][option] = value
             except ValueError as e:
                 if 'invalid interpolation syntax' in str(e):
-                    print(f'''
+                    logger.warning(f'''
                     Error: In section [{section_name}]:
                     Could not interpolate {option}={value}. Skipping...'
                     ''')

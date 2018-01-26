@@ -1,8 +1,11 @@
 from pathlib import Path
+import logging
 from typing import Any, Callable, Dict, Match, Set
 import re
 
 from resolver import Resolver
+
+logger = logging.getLogger('astrality')
 
 
 def find_placeholders(string: str) -> Set[Match]:
@@ -19,7 +22,7 @@ def compile_template(
     replacements = generate_replacements(config, period)
     replace = generate_replacer(replacements, period, config)
 
-    print(f'[Compiling] Template: "{template}" -> Target: "{target}"')
+    logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')
 
     with open(template, 'r') as template_file:
         with open(target, 'w') as target_file:
@@ -53,11 +56,9 @@ def generate_replacements(
             elif isinstance(value, str):
                 replacements[placeholder] = value
         except KeyError:
-            print('\033[91m')
-            print(f'Invalid template tag "{placeholder}"')
-            print('Replacing it with an empty string instead')
+            logger.error(f'Invalid template tag "{placeholder}"'
+                          'Replacing it with an empty string instead')
             replacements[placeholder] = ''
-            print('\033[0m')
 
     return replacements
 
