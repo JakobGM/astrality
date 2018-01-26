@@ -14,67 +14,35 @@ from conky import exit_conky, start_conky_process, compile_conky_templates
 from wallpaper import exit_feh, update_wallpaper
 
 
-def exit_handler(signal=None, frame=None) -> None:
-    print('Astrality was interrupted')
-    print('Cleaning up temporary files before exiting...')
-    exit_conky(config)
-    exit_feh(config)
+def main():
+    """Run the main process for Astrality."""
 
-    # Delete all temporary files manually, because if we delete the
-    # temp directory, the TemporaryFile closer will raise an error
-    # when it tries to delete itself when it goes out of scope
-    for file in config['_runtime']['conky_temp_files'].values():
-        file.close()
-
-    # The temp directory is left alone, for two reasons:
-    # 1: An empty directory uses neglible disk space.
-    # 2: If this process is interrupted by another Astrality instance,
-    #    we might experience race conditions when the exit handler deletes
-    #    the temporary directory *after* the new Astrality instance creates it.
-
-    try:
-        sys.exit(0)
-    except SystemExit:
-        os._exit(0)
-
-
-def other_astrality_pids() -> Set[int]:
-    """Return the process ids (PIDs) of any other Astrality instances."""
-
-    # Get all processes instanciated from this file
-    result = subprocess.Popen(
-        ['pgrep', '-f', __file__],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
-    )
-    pids = set(int(pid.strip()) for pid in result.stdout)
-
-    # Return all the PIDs except for the PID of this process
-    this_process_pid = os.getpid()
-    return pids - set((this_process_pid,))
-
-
-def kill_old_astrality_process() -> None:
-    """Kill all other instances of this script, to prevent duplicates."""
-
-    pids = other_astrality_pids()
-    failed_exits = 0
-    for pid in pids:
-        try:
-            print(f'Killing duplicate Astrality process with pid {pid}.')
-            os.kill(pid, signal.SIGTERM)
-        except OSError:
-            print(f'Could not kill old instance of astrality with pid {pid}.')
-            print('Continuing anyway...')
-            failed_exits += 1
-
-    while len(other_astrality_pids()) > failed_exits:
-        # Wait for all the processes to exit properly
-        time.sleep(0.2)
-
-
-if __name__ == '__main__':
+    # Quit old astrality instances
     kill_old_astrality_process()
+
+    # How to quit this process
+    def exit_handler(signal=None, frame=None) -> None:
+        print('Astrality was interrupted')
+        print('Cleaning up temporary files before exiting...')
+        exit_conky(config)
+        exit_feh(config)
+
+        # Delete all temporary files manually, because if we delete the
+        # temp directory, the TemporaryFile closer will raise an error
+        # when it tries to delete itself when it goes out of scope
+        for file in config['_runtime']['conky_temp_files'].values():
+            file.close()
+
+        # The temp directory is left alone, for two reasons:
+        # 1: An empty directory uses neglible disk space.
+        # 2: If this process is interrupted by another Astrality instance,
+        #    we might experience race conditions when the exit handler deletes
+        #    the temporary directory *after* the new Astrality instance creates it.
+
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
 
     # Some SIGINT signals are not properly interupted by python and converted
     # into KeyboardInterrupts, so we have to register a signal handler to
@@ -116,3 +84,41 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         exit_handler()
+
+def other_astrality_pids() -> Set[int]:
+    """Return the process ids (PIDs) of any other Astrality instances."""
+
+    # Get all processes instanciated from this file
+    result = subprocess.Popen(
+        ['pgrep', '-f', __file__],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
+    pids = set(int(pid.strip()) for pid in result.stdout)
+
+    # Return all the PIDs except for the PID of this process
+    this_process_pid = os.getpid()
+    return pids - set((this_process_pid,))
+
+
+def kill_old_astrality_process() -> None:
+    """Kill all other instances of this script, to prevent duplicates."""
+
+    pids = other_astrality_pids()
+    failed_exits = 0
+    for pid in pids:
+        try:
+            print(f'Killing duplicate Astrality process with pid {pid}.')
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            print(f'Could not kill old instance of astrality with pid {pid}.')
+            print('Continuing anyway...')
+            failed_exits += 1
+
+    while len(other_astrality_pids()) > failed_exits:
+        # Wait for all the processes to exit properly
+        time.sleep(0.2)
+
+
+if __name__ == '__main__':
+    main()

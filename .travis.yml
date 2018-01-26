@@ -2,6 +2,9 @@ language: python
 cache: pip
 python:
   - 3.6
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y feh conky
 install:
   - pip install -r src/requirements.txt
   - pip install coveralls
