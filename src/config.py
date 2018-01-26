@@ -72,24 +72,40 @@ def dict_from_config_file(
         # Insert new 'env' section into the contents of of ConfigParser before
         # using __get__() on it. This enables variable interpolation of
         # environment variables.
-        env = {
-            key: os.path.expandvars(value)
-            for key, value
-            in os.environ.items()
-        }
-        config_parser['env'] = env
+        config_parser['env'] = {}
+        for name, value in os.environ.items():
+            try:
+                config_parser['env'][name] = os.path.expandvars(value)
+            except ValueError as e:
+                if 'invalid interpolation syntax' in str(e):
+                    print(f'''
+                    Could not use environment variable {name}={value}.
+                    It is too complex for expansion.
+                    Skipping...'
+                    ''')
+                    continue
+                else:
+                    raise
 
     # Convert ConfigParser into a dictionary, performing all variable
     # interpolations at the same time
-    return {
-        section_name: {
-            option: value
-            for option, value
-            in section.items()
-        }
-        for section_name, section
-        in config_parser.items()
-    }
+    conf_dict = {}
+    for section_name, section in config_parser.items():
+        conf_dict[section_name] = {}
+        for option, value in section.items():
+            try:
+                conf_dict[section_name][option] = value
+            except ValueError as e:
+                if 'invalid interpolation syntax' in str(e):
+                    print(f'''
+                    Error: In section [{section_name}]:
+                    Could not interpolate {option}={value}. Skipping...'
+                    ''')
+                    continue
+                else:
+                    raise
+
+    return conf_dict
 
 
 def infer_runtime_variables_from_config(
