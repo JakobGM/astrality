@@ -1,5 +1,5 @@
 import abc
-import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple
 
 import pytz
@@ -24,14 +24,9 @@ class Timer(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def time_until_next_period(self) -> datetime.timedelta:
+    def time_until_next_period(self) -> timedelta:
         """Return the time remaining until the next period in seconds."""
         pass
-
-    def now(self) -> datetime.datetime:
-        """Return the current UTC time."""
-        timezone = pytz.timezone('UTC')
-        return timezone.localize(datetime.datetime.utcnow())
 
 
 class Solar(Timer):
@@ -64,7 +59,7 @@ class Solar(Timer):
 
         return period
 
-    def time_until_next_period(self) -> datetime.timedelta:
+    def time_until_next_period(self) -> timedelta:
         now = self.now()
         try:
             next_period = min(
@@ -77,7 +72,7 @@ class Solar(Timer):
             if str(exception) == 'min() arg is an empty sequence':
                 # None of the solar periods this current day are in the future,
                 # so we need to compare with solar periods tomorrow instead.
-                tomorrow = now + datetime.timedelta(days=1, seconds=-1)
+                tomorrow = now + timedelta(days=1, seconds=-1)
                 next_period = min(
                     utc_time
                     for utc_time
@@ -88,6 +83,11 @@ class Solar(Timer):
                 raise RuntimeError('Could not find the time of the next period')
 
         return (next_period - now).seconds
+
+    def now(self) -> datetime:
+        """Return the current UTC time."""
+        timezone = pytz.timezone('UTC')
+        return timezone.localize(datetime.utcnow())
 
     def construct_astral_location(
         self,
@@ -109,6 +109,37 @@ class Solar(Timer):
         return location
 
 
+class Weekday(Timer):
+    """Timer subclass which keeps track of the weekdays."""
+
+    periods = (
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+        'sunday',
+    )
+
+    weekdays = dict(zip(range(0,7), periods))
+
+    def __init__(self, config: Resolver) -> None:
+        """Initialize a weekday tracker independent of user configuration."""
+        pass
+
+    def period(self) -> str:
+        """Return the current determined period."""
+        return self.weekdays[datetime.today().weekday()]
+
+    def time_until_next_period(self) -> timedelta:
+        """Return the time remaining until the next period in seconds."""
+        tomorrow = datetime.today() + timedelta(days=1)
+        tomorrow = tomorrow.replace(hour=0, minute=0)
+        return tomorrow - datetime.now()
+
+
 TIMERS = {
         'solar': Solar,
+        'weekday': Weekday,
 }
