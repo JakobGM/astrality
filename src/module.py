@@ -87,6 +87,8 @@ class Module:
         self.compiled_template: Optional[Path] = self.config.get('compiled_template')
         if self.compiled_template:
             self.compiled_template = self.expand_path(Path(self.compiled_template))
+        else:
+            self.compiled_template = self.create_temp_file()
 
     def create_temp_file(self) -> Path:
         """Create a temp file used as a compilation target, returning its path."""
@@ -121,6 +123,8 @@ class Module:
         return path
 
     def startup(self) -> None:
+        """Commands to be run on Module instance startup."""
+
         if self.startup_command:
             logger.info(f'[module/{self.name}] Running startup command.')
             self.run_shell(command=self.startup_command)
@@ -128,6 +132,8 @@ class Module:
             logger.debug(f'[module/{self.name}] No startup command specified.')
 
     def period_change(self) -> None:
+        """Commands to be run when self.timer period changes."""
+
         if self.period_change_command:
             logger.info(f'[module/{self.name}] Running period change command.')
             self.run_shell(command=self.period_change_command)
@@ -135,6 +141,8 @@ class Module:
             logger.debug(f'[module/{self.name}] No period change command specified.')
 
     def exit(self) -> None:
+        """Commands to be run on Module instance shutdown."""
+
         if self.exit_command:
             logger.info(f'[module/{self.name}] Running exit command.')
             self.run_shell(command=self.exit_command)
@@ -150,7 +158,10 @@ class Module:
         pass
 
     def run_shell(self, command) -> None:
-        command = command.format(period=self.timer.period())
+        command = command.format(
+            period=self.timer.period(),
+            compiled_template=self.compiled_template,
+        )
         logger.info(f'[module/{self.name}] Running command "{command}".')
         process = subprocess.Popen(
             command,

@@ -66,7 +66,7 @@ class TestModuleClass:
         assert isinstance(module.timer, timer.Weekday)
 
     @freeze_time('2018-01-27')
-    def test_run_shell_command_with_special_expansion(self, module, caplog):
+    def test_run_shell_command_with_special_expansions(self, module, caplog):
         module.run_shell('echo {period}')
         assert caplog.record_tuples == [
             (
@@ -78,6 +78,22 @@ class TestModuleClass:
                 'astrality',
                 logging.INFO,
                 'saturday\n',
+            )
+        ]
+
+        caplog.clear()
+        module.run_shell('echo {compiled_template}')
+        compilation_target = str(module.compiled_template)
+        assert caplog.record_tuples == [
+            (
+                'astrality',
+                logging.INFO,
+                f'[module/test_module] Running command "echo {compilation_target}".',
+            ),
+            (
+                'astrality',
+                logging.INFO,
+                compilation_target + '\n',
             )
         ]
 
@@ -272,6 +288,16 @@ class TestModuleClass:
         temp_file = module.create_temp_file()
         module.exit()
         assert not temp_file.is_file()
+
+    def test_creation_of_temporary_file_when_compiled_template_is_not_defined(
+        self,
+        valid_module_section,
+        conf,
+    ):
+        valid_module_section['module/test_module'].pop('compiled_template')
+        module = Module(valid_module_section, conf)
+        assert Path(module.temp_file.name).is_file()
+        assert Path(module.temp_file.name) == module.compiled_template
 
     @pytest.mark.skip
     def test_compilation_of_template(self, module):
