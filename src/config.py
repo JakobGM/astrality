@@ -2,7 +2,7 @@
 
 import logging
 import os
-from configparser import ConfigParser, ExtendedInterpolation
+from configparser import ConfigParser, ExtendedInterpolation, InterpolationMissingOptionError
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -83,10 +83,15 @@ def dict_from_config_file(
                 if 'invalid interpolation syntax' in str(e):
                     logger.warning(f'''
                     Could not use environment variable {name}={value}.
-                    It is too complex for expansion.
-                    Skipping...'
+                    It is too complex for expansion, using unexpanded value
+                    instead...
                     ''')
-                    continue
+                    try:
+                        config_parser['env'][name] = value
+                    except ValueError:
+                        # Troubles with recursive env variables.
+                        # Example: ${debian_chroot:+($debian_chroot)}
+                        logger.warning('Unsuccessful, skipping env variable.')
                 else:
                     raise
 
@@ -95,14 +100,22 @@ def dict_from_config_file(
     conf_dict: Dict[str, Dict[str, str]] = {}
     for section_name, section in config_parser.items():
         conf_dict[section_name] = {}
-        for option, value in section.items():
+        for option in section.keys():
             try:
+                # Here we must be very careful when `get`ing values, as several
+                # things can go wrong. See the exception handling below.
+                value = section[option]
                 conf_dict[section_name][option] = value
-            except ValueError as e:
-                if 'invalid interpolation syntax' in str(e):
+            except (ValueError, InterpolationMissingOptionError) as e:
+                if 'invalid interpolation syntax' in str(e) or \
+                   'Bad value substitution' in str(e):
+                    raw_value = config_parser.get(section_name, option, raw=True)
+                    conf_dict[section_name][option] = raw_value
+
                     logger.warning(f'''
                     Error: In section [{section_name}]:
-                    Could not interpolate {option}={value}. Skipping...'
+                    Could not interpolate {option}={raw_value}.
+                    Using raw value instead.
                     ''')
                     continue
                 else:

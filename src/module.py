@@ -49,6 +49,7 @@ class Module:
         self.config = module_config[section]
         self.timer = TIMERS[self.config['timer']](application_config)  # type: ignore
 
+        # Commands to run at specified times
         self.startup_command = self.config.get('on_startup')
         self.period_change_command = self.config.get('on_period_change')
         self.exit_command = self.config.get('on_exit')
