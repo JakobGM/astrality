@@ -66,13 +66,7 @@ class Module:
         self.template_file: Union[None, Path] = self.config.get('template_file')
 
         if self.template_file:
-            self.template_file = Path.expanduser(Path(self.template_file))
-
-            if not self.template_file.is_absolute():
-                self.template_file = Path(
-                    self.application_config['_runtime']['config_directory'],
-                    self.template_file,
-                )
+            self.template_file = self.expand_path(Path(self.template_file))
 
             if not self.template_file.is_file():
                 logger.error(\
@@ -87,6 +81,24 @@ class Module:
         self.compilation_target: Union[None, Path] = None
         if self.template_file:
             self.compilation_target = self.config.get('compilation_target')
+
+    def expand_path(self, path: Path) -> Path:
+        """
+        Return an absolute path from a (possibly) relative path.
+
+        Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
+        expanded to the home directory of $USER.
+        """
+
+        path = Path.expanduser(path)
+
+        if not path.is_absolute():
+            path = Path(
+                self.application_config['_runtime']['config_directory'],
+                path,
+            )
+
+        return path
 
     def startup(self) -> None:
         if self.startup_command:

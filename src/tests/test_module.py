@@ -253,6 +253,15 @@ class TestModuleClass:
             ),
         ]
 
+    def test_expand_path_method(self, module, conf):
+        absolute_path = Path('/tmp/ast')
+        tilde_path = Path('~/dir')
+        relative_path = Path('test')
+        assert module.expand_path(absolute_path) == absolute_path
+        assert module.expand_path(tilde_path) == Path.home() / 'dir'
+        assert module.expand_path(relative_path) == \
+            conf['_runtime']['config_directory'] / 'test'
+
     @pytest.mark.skip
     def test_compilation_of_template(self, module):
         compiled_template = 'some text\n' + os.environ['USER'] + '\nsolar\n'
