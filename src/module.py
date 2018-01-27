@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 import subprocess
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 from compiler import compile_template
 from resolver import Resolver
@@ -58,12 +58,12 @@ class Module:
 
         # Find and prepare templates and compiation targets
         self._prepare_templates()
-        self._prepare_compilation_targets()
+        self._prepare_compiled_templates()
 
     def _prepare_templates(self) -> None:
         """Determine template sources and compilation targets."""
 
-        self.template_file: Union[None, Path] = self.config.get('template_file')
+        self.template_file: Optional[Path] = self.config.get('template_file')
 
         if self.template_file:
             self.template_file = self.expand_path(Path(self.template_file))
@@ -75,12 +75,17 @@ class Module:
                 )
                 self.template_file = None
 
-    def _prepare_compilation_targets(self) -> None:
+    def _prepare_compiled_templates(self) -> None:
         """Find compilation targets, and possibly create temporary target files."""
 
-        self.compilation_target: Union[None, Path] = None
-        if self.template_file:
-            self.compilation_target = self.config.get('compilation_target')
+        self.compiled_template: Optional[Path] = None
+        if not self.template_file:
+            # We do not need a compilation target if no template has been set.
+            return
+
+        self.compiled_template: Optional[Path] = self.config.get('compiled_template')
+        if self.compiled_template:
+            self.compiled_template = self.expand_path(Path(self.compiled_template))
 
     def expand_path(self, path: Path) -> Path:
         """

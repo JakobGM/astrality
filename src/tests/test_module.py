@@ -16,7 +16,7 @@ def valid_module_section():
             'enabled': 'true',
             'timer': 'weekday',
             'template_file': 'src/tests/test_template.conf',
-            'compilation_target': '/tmp/compiled_result',
+            'compiled_template': '/tmp/compiled_result',
             'on_startup': 'echo startup',
             'on_period_change': 'echo period_change',
             'on_exit': 'echo exit',
@@ -221,6 +221,7 @@ class TestModuleClass:
 
     def test_location_of_template_file_defined_relatively(self, module):
         assert module.template_file == Path(__file__).parent / 'test_template.conf'
+        assert module.compiled_template == Path('/tmp/compiled_result')
 
     def test_location_of_template_file_defined_absolutely(
         self,
@@ -244,6 +245,7 @@ class TestModuleClass:
 
         module = Module(valid_module_section, conf)
         assert module.template_file == None
+        assert module.compiled_template == None
         assert caplog.record_tuples == [
             (
                 'astrality',
