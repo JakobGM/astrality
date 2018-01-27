@@ -3,6 +3,7 @@
 import logging
 from pathlib import Path
 import subprocess
+from tempfile import NamedTemporaryFile
 from typing import Dict, Optional, Union
 
 from compiler import compile_template
@@ -87,6 +88,20 @@ class Module:
         if self.compiled_template:
             self.compiled_template = self.expand_path(Path(self.compiled_template))
 
+    def create_temp_file(self) -> Path:
+        """Create a temp file used as a compilation target, returning its path."""
+
+        # NB: These temporary files/directories need to be persisted during the
+        # entirity of the scripts runtime, since the files are deleted when they
+        # go out of scope
+
+        self.temp_file = NamedTemporaryFile(  # type: ignore
+            prefix=self.name + '-',
+            dir=self.application_config['_runtime']['temp_directory'],
+        )
+
+        return Path(self.temp_file.name)
+
     def expand_path(self, path: Path) -> Path:
         """
         Return an absolute path from a (possibly) relative path.
@@ -125,6 +140,11 @@ class Module:
             self.run_shell(command=self.exit_command)
         else:
             logger.debug(f'[module/{self.name}] No exit command specified.')
+
+        if hasattr(self, 'temp_file'):
+            # A temporary file has been created for this module and it should
+            # be deleted.
+            self.temp_file.close()
 
     def compile_template(self) -> None:
         pass

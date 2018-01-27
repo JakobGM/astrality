@@ -264,6 +264,15 @@ class TestModuleClass:
         assert module.expand_path(relative_path) == \
             conf['_runtime']['config_directory'] / 'test'
 
+    def test_create_temp_file_method(self, module):
+        temp_file = module.create_temp_file()
+        assert temp_file.is_file()
+
+    def test_cleanup_of_tempfile_on_exit(self, module):
+        temp_file = module.create_temp_file()
+        module.exit()
+        assert not temp_file.is_file()
+
     @pytest.mark.skip
     def test_compilation_of_template(self, module):
         compiled_template = 'some text\n' + os.environ['USER'] + '\nsolar\n'
