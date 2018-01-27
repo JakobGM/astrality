@@ -299,11 +299,25 @@ class TestModuleClass:
         assert Path(module.temp_file.name).is_file()
         assert Path(module.temp_file.name) == module.compiled_template
 
-    @pytest.mark.skip
-    def test_compilation_of_template(self, module):
+    def test_compilation_of_template(
+        self,
+        valid_module_section,
+        conf,
+        caplog,
+    ):
+        valid_module_section['module/test_module']['timer'] = 'solar'
         compiled_template = 'some text\n' + os.environ['USER'] + '\nsolar\n'
+        module = Module(valid_module_section, conf)
+        module.compile_template()
 
         with open('/tmp/compiled_result', 'r') as file:
             compiled_result = file.read()
 
         assert compiled_template == compiled_result
+        assert caplog.record_tuples == [
+            (
+                'astrality',
+                logging.INFO,
+                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"'
+            ),
+        ]

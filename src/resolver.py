@@ -73,6 +73,10 @@ class Resolver:
 
     def __setitem__(self, key: str, value: Union[str, dict, 'Resolver']) -> None:
         """Insert `value` into the `key` index."""
+
+        # Keys are case insensitive
+        key = key.lower()
+
         if not hasattr(self, '_dict'):
             self._dict: Dict[str, Union[str, dict]] = {}
 
@@ -97,6 +101,10 @@ class Resolver:
         non-existent "string integer" index '2', it will retrieve the greatest
         "string integer" available instead.
         """
+
+        # Keys are case insensitive
+        key = key.lower()
+
         if not hasattr(self, '_dict'):
             raise KeyError('Tried to access key from empty Resolver section')
 
@@ -178,9 +186,9 @@ class Resolver:
                 self._dict = {}
 
             for section_name, section in other.items():
-                self._dict[section_name] = Resolver()
+                self._dict[section_name.lower()] = Resolver()
                 for key, value in section.items():
-                    self._dict[section_name][key] = value
+                    self._dict[section_name.lower()][key.lower()] = value
 
         elif isinstance(other, (Resolver, ConfigParser, dict,)):
             # Populate internal data structure from dictionary
@@ -188,7 +196,7 @@ class Resolver:
                 self._dict = Resolver()
 
             for key, value in other.items():
-                self._dict[key] = value
+                self._dict[key.lower()] = value
 
         else:
             raise NotImplementedError(

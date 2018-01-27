@@ -5,14 +5,22 @@ from compiler import (
 )
 
 def test_generation_of_replacements(conf):
-    replacements = generate_replacements(conf, 'night')
+    replacements = generate_replacements(
+        conf['_runtime']['conky_module_templates']['time-1920x1080'],
+        conf,
+        'night',
+    )
     assert replacements == {
         '${ast:colors:1}': 'CACCFD',
         '${ast:fonts:1}': 'FuraCode Nerd Font',
     }
 
 def test_use_of_replacer(conf):
-    replacements = generate_replacements(conf, 'night')
+    replacements = generate_replacements(
+        conf['_runtime']['conky_module_templates']['time-1920x1080'],
+        conf,
+        'night',
+    )
     replace = generate_replacer(replacements, 'night', conf)
     assert replace('${ast:colors:1}') == 'CACCFD'
 

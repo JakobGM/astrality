@@ -13,7 +13,7 @@ from timer import Solar
 @pytest.fixture
 def astrality_conf_file_dict(conf):
     return {
-        'DEFAULT': {},
+        'default': {},
         'behaviour': {'refresh_period': '60'},
         'conky': {'modules': 'performance-1920x1080 time-1920x1080',
                   'startup_delay': '0'},
@@ -356,22 +356,22 @@ class TestResolverClass:
         config = Resolver()
         config['4'] = 'test'
         config['font'] = 'Comic Sans'
-        config[5] = 8
-        assert list(config.items()) == [('4', 'test',), ('font', 'Comic Sans',), (5, 8,)]
+        config['5'] = '8'
+        assert list(config.items()) == [('4', 'test',), ('font', 'Comic Sans',), ('5', '8',)]
 
     def test_keys(self):
         config = Resolver()
         config['4'] = 'test'
         config['font'] = 'Comic Sans'
-        config[5] = 8
-        assert list(config.keys()) == ['4', 'font', 5]
+        config['5'] = '8'
+        assert list(config.keys()) == ['4', 'font', '5']
 
     def test_values(self):
         config = Resolver()
         config['4'] = 'test'
         config['font'] = 'Comic Sans'
-        config[5] = 8
-        assert list(config.values()) == ['test', 'Comic Sans', 8]
+        config['5'] = '8'
+        assert list(config.values()) == ['test', 'Comic Sans', '8']
 
     def test_update(self):
         one_conf_dict = {

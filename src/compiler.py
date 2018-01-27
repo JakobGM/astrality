@@ -19,7 +19,9 @@ def compile_template(
     period: str,
     config: Resolver,
 ) -> None:
-    replacements = generate_replacements(config, period)
+    """Compile template based on contents of config and the given period."""
+
+    replacements = generate_replacements(template, config, period)
     replace = generate_replacer(replacements, period, config)
 
     logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')
@@ -31,6 +33,7 @@ def compile_template(
 
 
 def generate_replacements(
+    template: Path,
     config: Resolver,
     period: str,
 ) -> Dict[str, str]:
@@ -39,12 +42,10 @@ def generate_replacements(
     placeholders that could be present in the conky module templates and their
     respective replacements fitting for the time of day
     """
-    templates = config['_runtime']['conky_module_templates']
     placeholders: Set[str] = set()
-    for template_path in templates.values():
-        with open(template_path, 'r') as template:
-            for line in template:
-                placeholders = placeholders | find_placeholders(line)
+    with open(template, 'r') as template_file:
+        for line in template_file:
+            placeholders = placeholders | find_placeholders(line)
 
     replacements: Dict[str, str] = {}
     for placeholder in placeholders:

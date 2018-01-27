@@ -6,7 +6,7 @@ import subprocess
 from tempfile import NamedTemporaryFile
 from typing import Dict, Optional, Union
 
-from compiler import compile_template
+import compiler
 from resolver import Resolver
 from timer import TIMERS
 
@@ -155,7 +155,23 @@ class Module:
             self.temp_file.close()
 
     def compile_template(self) -> None:
-        pass
+        """Compile the module template specified by `template_file`."""
+
+        if not self.template_file or not self.compiled_template:
+            error_msg = f'''[module/{self.name}] Tried to module template with
+                            template_file = "{self.template_file}"
+                            compiled_template = "{self.compiled_template}"'''
+
+            logger.critical(error_msg)
+            raise RuntimeError(error_msg)
+
+        else:
+            compiler.compile_template(  # type: ignore
+                template=self.template_file,
+                target=self.compiled_template,
+                period=self.timer.period(),
+                config=self.application_config,
+            )
 
     def run_shell(self, command) -> None:
         command = command.format(
