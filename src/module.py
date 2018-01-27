@@ -1,9 +1,11 @@
 """Module implementing user configured custom functionality."""
 
 import logging
+from pathlib import Path
 import subprocess
 from typing import Dict, Union
 
+from compiler import compile_template
 from resolver import Resolver
 from timer import TIMERS
 
@@ -53,6 +55,38 @@ class Module:
         self.startup_command = self.config.get('on_startup')
         self.period_change_command = self.config.get('on_period_change')
         self.exit_command = self.config.get('on_exit')
+
+        # Find and prepare templates and compiation targets
+        self._prepare_templates()
+        self._prepare_compilation_targets()
+
+    def _prepare_templates(self) -> None:
+        """Determine template sources and compilation targets."""
+
+        self.template_file: Union[None, Path] = self.config.get('template_file')
+
+        if self.template_file:
+            self.template_file = Path.expanduser(Path(self.template_file))
+
+            if not self.template_file.is_absolute():
+                self.template_file = Path(
+                    self.application_config['_runtime']['config_directory'],
+                    self.template_file,
+                )
+
+            if not self.template_file.is_file():
+                logger.error(\
+                    f'[module/{self.name}] Template file "{self.template_file}"'
+                    ' does not exist. Skipping compilation of this file.'
+                )
+                self.template_file = None
+
+    def _prepare_compilation_targets(self) -> None:
+        """Find compilation targets, and possibly create temporary target files."""
+
+        self.compilation_target: Union[None, Path] = None
+        if self.template_file:
+            self.compilation_target = self.config.get('compilation_target')
 
     def startup(self) -> None:
         if self.startup_command:

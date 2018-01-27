@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 from freezegun import freeze_time
 import pytest
@@ -14,7 +15,8 @@ def valid_module_section():
         'module/test_module': {
             'enabled': 'true',
             'timer': 'weekday',
-            'template_file': '',
+            'template_file': 'src/tests/test_template.conf',
+            'compilation_target': '/tmp/compiled_result',
             'on_startup': 'echo startup',
             'on_period_change': 'echo period_change',
             'on_exit': 'echo exit',
@@ -216,3 +218,46 @@ class TestModuleClass:
                 '[module/test_module] No exit command specified.',
             ),
         ]
+
+    def test_location_of_template_file_defined_relatively(self, module):
+        assert module.template_file == Path(__file__).parent / 'test_template.conf'
+
+    def test_location_of_template_file_defined_absolutely(
+        self,
+        valid_module_section,
+        conf,
+    ):
+        absolute_path = Path(__file__).parent / 'test_template.conf'
+        valid_module_section['module/test_module']['template_file'] = absolute_path
+
+        module = Module(valid_module_section, conf)
+        assert module.template_file == absolute_path
+
+    def test_missing_template_file(
+        self,
+        valid_module_section,
+        conf,
+        caplog,
+    ):
+        valid_module_section['module/test_module']['template_file'] = \
+            '/not/existing'
+
+        module = Module(valid_module_section, conf)
+        assert module.template_file == None
+        assert caplog.record_tuples == [
+            (
+                'astrality',
+                logging.ERROR,
+                '[module/test_module] Template file "/not/existing" does'
+                ' not exist. Skipping compilation of this file.'
+            ),
+        ]
+
+    @pytest.mark.skip
+    def test_compilation_of_template(self, module):
+        compiled_template = 'some text\n' + os.environ['USER'] + '\nsolar\n'
+
+        with open('/tmp/compiled_result', 'r') as file:
+            compiled_result = file.read()
+
+        assert compiled_template == compiled_result
