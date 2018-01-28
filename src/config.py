@@ -113,6 +113,8 @@ def dict_from_config_file(
     if with_env:
         conf_dict['env'] = expanded_env_dict
 
+    conf_dict.pop('DEFAULT')
+
     return conf_dict
 
 

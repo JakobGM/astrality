@@ -22,7 +22,7 @@ def conf():
     this_test_file = os.path.abspath(__file__)
     conf_path = Path(this_test_file).parents[2]
 
-    config = user_configuration(str(conf_path))
+    config = user_configuration(conf_path)
     yield config
 
     # Delete temporary files created by the test suite

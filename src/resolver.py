@@ -1,4 +1,3 @@
-from configparser import ConfigParser
 from math import inf
 from typing import (
     Any,
@@ -35,17 +34,16 @@ class Resolver:
 
     def __init__(
         self,
-        content: Optional[Union[ConfigParser, dict]] = None,
+        content: Optional[Union['Resolver', dict]] = None,
     ) -> None:
         """
         Initialize a configuration file from source object.
 
-        The source object can either be a ConfigParser object which has already
-        .read() a configuration file, a dictionary, or if not given an
-        argument, an empty Resolver object is initialized.
+        The source object can either be a dictionary or another Resolver object.
+        If not given an argument, an empty Resolver object is initialized.
         """
 
-        if isinstance(content, (ConfigParser, dict,)):
+        if isinstance(content, (Resolver, dict,)):
             self.update(content)
         elif content is not None:
             raise ValueError('Resolver initialized with wrong argument type.')
@@ -74,9 +72,6 @@ class Resolver:
     def __setitem__(self, key: str, value: Union[str, dict, 'Resolver']) -> None:
         """Insert `value` into the `key` index."""
 
-        # Keys are case insensitive
-        key = key.lower()
-
         if not hasattr(self, '_dict'):
             self._dict: Dict[str, Union[str, dict]] = {}
 
@@ -101,9 +96,6 @@ class Resolver:
         non-existent "string integer" index '2', it will retrieve the greatest
         "string integer" available instead.
         """
-
-        # Keys are case insensitive
-        key = key.lower()
 
         if not hasattr(self, '_dict'):
             raise KeyError('Tried to access key from empty Resolver section')
@@ -177,26 +169,16 @@ class Resolver:
         else:
             return {}.values()
 
-    def update(self, other: Union['Resolver', ConfigParser, dict]) -> None:
+    def update(self, other: Union['Resolver', dict]) -> None:
         """Overwrite all items from other onto the Resolver object."""
 
-        if isinstance(other, ConfigParser):
-            # Populate internal data structure from ConfigParser object
-            if not hasattr(self, '_dict'):
-                self._dict = {}
-
-            for section_name, section in other.items():
-                self._dict[section_name.lower()] = Resolver()
-                for key, value in section.items():
-                    self._dict[section_name.lower()][key.lower()] = value
-
-        elif isinstance(other, (Resolver, ConfigParser, dict,)):
+        if isinstance(other, (Resolver, dict,)):
             # Populate internal data structure from dictionary
             if not hasattr(self, '_dict'):
                 self._dict = Resolver()
 
             for key, value in other.items():
-                self._dict[key.lower()] = value
+                self._dict[key] = value
 
         else:
             raise NotImplementedError(
