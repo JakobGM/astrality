@@ -6,6 +6,8 @@ import time
 
 import pytest
 
+from astrality import main
+
 
 @pytest.mark.skipif('TRAVIS' not in os.environ, reason='Only run on CI')
 def test_termination_of_main_process():
@@ -35,3 +37,6 @@ def test_interrupt_of_main_process():
 
     astrality_process.wait()
     assert astrality_process.returncode == 0
+
+def test_invocation_of_main_process():
+    main(test=True)

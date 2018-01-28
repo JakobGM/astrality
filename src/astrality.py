@@ -11,14 +11,20 @@ import sys
 import time
 
 from config import user_configuration
-from conky import exit_conky, start_conky_process, compile_conky_templates
+from conky import start_conky_process, compile_conky_templates
 from wallpaper import exit_feh, update_wallpaper
 
 logger = logging.getLogger('astrality')
 logging.basicConfig(level=os.environ.get('ASTRALITY_LOGGING_LEVEL', 'WARNING'))
 
-def main():
-    """Run the main process for Astrality."""
+
+def main(test: bool = False):
+    """
+    Run the main process for Astrality.
+
+    If test is set to True, then only one main loop is run as an integration
+    test.
+    """
 
     # Quit old astrality instances
     kill_old_astrality_process()
@@ -27,8 +33,6 @@ def main():
     def exit_handler(signal=None, frame=None) -> None:
         logger.critical('Astrality was interrupted')
         logger.info('Cleaning up temporary files before exiting...')
-        exit_conky(config)
-        exit_feh(config)
 
         # Delete all temporary files manually, because if we delete the
         # temp directory, the TemporaryFile closer will raise an error
@@ -51,11 +55,15 @@ def main():
     # into KeyboardInterrupts, so we have to register a signal handler to
     # safeguard against such cases. This seems to be the case when conky is
     # launched as a subprocess, making it the process that receives the SIGINT
-    # signal and not python.
-    signal.signal(signal.SIGINT, exit_handler)
+    # signal and not python. These signal handlers cause issues for \
+    # NamedTemporaryFile.close() though, so they are only registrered when
+    # we are not testing.
+    if not test:
+        signal.signal(signal.SIGINT, exit_handler)
 
-    # Also catch kill-signkal from OS, e.g. `kill $(pgrep -f "python astrality.py")`
-    signal.signal(signal.SIGTERM, exit_handler)
+        # Also catch kill-signkal from OS,
+        # e.g. `kill $(pgrep -f "python astrality.py")`
+        signal.signal(signal.SIGTERM, exit_handler)
 
     try:
         config = user_configuration()
@@ -74,7 +82,7 @@ def main():
             changed = new_period != old_period
 
             if changed:
-                logger.info('New time of day detected: ' + period)
+                logger.info('New time of day detected: ' + new_period)
                 # We are in a new time of day, and we can change the background
                 # image
                 update_wallpaper(config, new_period)
@@ -82,8 +90,12 @@ def main():
                 old_period = new_period
                 logger.info(f'Configuration updated.')
 
-            logger.info(f'Waiting {timer.time_until_next_period()} seconds until next update.')
-            time.sleep(timer.time_until_next_period().total_seconds())
+            if test:
+                logger.debug('Main loop interupted since argument test=True.')
+                return
+            else:
+                logger.info(f'Waiting {timer.time_until_next_period()} seconds until next update.')
+                time.sleep(timer.time_until_next_period().total_seconds())
 
     except KeyboardInterrupt:
         exit_handler()

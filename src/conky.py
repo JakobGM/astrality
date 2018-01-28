@@ -58,6 +58,3 @@ def start_conky_process(config: Resolver) -> None:
         logger.info(f'Initializing conky module "{module_path}"')
         logger.info(f'    Tempory file placed at "{file.name}"')
         subprocess.Popen(['conky', '-c', file.name])
-
-def exit_conky(config: Resolver) -> None:
-    os.system('killall conky')
