@@ -2,9 +2,15 @@
 
 import logging
 import os
-from configparser import ConfigParser, ExtendedInterpolation, InterpolationMissingOptionError
+from configparser import (
+    ConfigParser,
+    ExtendedInterpolation,
+    InterpolationMissingOptionError,
+)
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+import re
+from io import StringIO
+from typing import Dict, Match, MutableMapping, Optional, Tuple
 
 from conky import create_conky_temp_files
 from timer import TIMERS
@@ -58,42 +64,26 @@ def dict_from_config_file(
     """
     Return a dictionary that reflects the contents of `config_file`.
 
-    If with_env=True, an 'env' section is inserted into the dictionary
-    containing all the environment variables. This makes it possible to use
-    variable interpolation in order to expand environment variables like this:
+    Environment variables are interpolated like this:
+        ${env:NAME_OF_ENV_VARIABLE} -> os.environ[NAME_OF_ENV_VARIABLE]
 
-    ${env:NAME_OF_ENV_VARIABLE}
+    If with_env=True, an 'env' section is inserted into the dictionary
+    containing all the environment variables.
     """
 
     if not config_file.is_file():
-        raise RuntimeError(f'Could not load config file "{config_file}".')
+        error_msg = f'Could not load config file "{config_file}".'
+        logger.critical(error_msg)
+        raise RuntimeError(error_msg)
+
+    expanded_env_dict = generate_expanded_env_dict()
+    config_string = preprocess_environment_variables(
+        config_file,
+        expanded_env_dict,
+    )
 
     config_parser = ConfigParser(interpolation=ExtendedInterpolation())
-    config_parser.read(config_file)
-
-    if with_env:
-        # Insert new 'env' section into the contents of of ConfigParser before
-        # using __get__() on it. This enables variable interpolation of
-        # environment variables.
-        config_parser['env'] = {}
-        for name, value in os.environ.items():
-            try:
-                config_parser['env'][name] = os.path.expandvars(value)
-            except ValueError as e:
-                if 'invalid interpolation syntax' in str(e):
-                    logger.warning(f'''
-                    Could not use environment variable {name}={value}.
-                    It is too complex for expansion, using unexpanded value
-                    instead...
-                    ''')
-                    try:
-                        config_parser['env'][name] = value
-                    except ValueError:
-                        # Troubles with recursive env variables.
-                        # Example: ${debian_chroot:+($debian_chroot)}
-                        logger.warning('Unsuccessful, skipping env variable.')
-                else:
-                    raise
+    config_parser.read_file(StringIO(config_string))
 
     # Convert ConfigParser into a dictionary, performing all variable
     # interpolations at the same time
@@ -106,9 +96,8 @@ def dict_from_config_file(
                 # things can go wrong. See the exception handling below.
                 value = section[option]
                 conf_dict[section_name][option] = value
-            except (ValueError, InterpolationMissingOptionError) as e:
-                if 'invalid interpolation syntax' in str(e) or \
-                   'Bad value substitution' in str(e):
+            except InterpolationMissingOptionError as e:
+                if 'Bad value substitution' in str(e):
                     raw_value = config_parser.get(section_name, option, raw=True)
                     conf_dict[section_name][option] = raw_value
 
@@ -120,6 +109,9 @@ def dict_from_config_file(
                     continue
                 else:
                     raise
+
+    if with_env:
+        conf_dict['env'] = expanded_env_dict
 
     return conf_dict
 
@@ -210,3 +202,57 @@ def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
 
 
     return config
+
+def preprocess_environment_variables(
+    conf_file: Path,
+    env_dict: MutableMapping[str, str] = os.environ,
+) -> str:
+    """
+    Interpolate environment variables set in config file parsed by ConfigParser.
+
+    Interpolation syntax: ${env:name} -> os.environ[name].
+    """
+
+    conf_text = ''
+    with open(conf_file, 'r') as file:
+        for line in file:
+            conf_text += insert_environment_values(line, env_dict)
+
+    return conf_text
+
+def insert_environment_values(
+    content: str,
+    env_dict: MutableMapping[str, str] = os.environ,
+) -> str:
+    """Replace all occurences in string: ${env:name} -> env_dict[name]."""
+
+    env_dict = generate_expanded_env_dict()
+    env_variable_pattern = re.compile(r'\$\{env:([\w|\-^:]+)\}')
+
+    def expand_environment_variable(match: Match[str]) -> str:
+        return env_dict[match.groups()[0]]
+
+    return env_variable_pattern.sub(
+        expand_environment_variable,
+        content,
+    )
+
+def generate_expanded_env_dict() -> Dict[str, str]:
+    """Return os.environ dict with all env variables expanded."""
+
+    env_dict = {}
+    for name, value in os.environ.items():
+        try:
+            env_dict[name] = os.path.expandvars(value)
+        except ValueError as e:
+            if 'invalid interpolation syntax' in str(e):
+                logger.warning(f'''
+                Could not use environment variable {name}={value}.
+                It is too complex for expansion, using unexpanded value
+                instead...
+                ''')
+                env_dict[name] = value
+            else:
+                raise
+
+    return env_dict
