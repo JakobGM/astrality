@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import logging
 import os
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 from freezegun import freeze_time
 import pytest
 
-from module import Module
+from module import Module, ModuleManager
 import timer
 
 
@@ -321,3 +322,61 @@ class TestModuleClass:
                 f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"'
             ),
         ]
+
+
+@pytest.fixture
+def config_with_modules():
+    return {
+        'location': {
+            'longitude': '0',
+            'latitude': '0',
+            'elevation': '0',
+        },
+        'module/solar_module': {
+            'enabled': 'true',
+            'timer': 'solar',
+            'template_file': 'src/tests/test_template.conf',
+            'compiled_template': '/tmp/compiled_result',
+            'on_startup': 'echo solar compiling {compiled_template}',
+            'on_period_change': 'echo solar {period}',
+            'on_exit': 'echo solar exit',
+        },
+        'module/weekday_module': {
+            'enabled': 'true',
+            'timer': 'weekday',
+            'on_startup': 'echo weekday startup',
+            'on_period_change': 'echo weekday {period}',
+            'on_exit': 'echo weekday exit',
+        },
+        'module/disabled_module': {
+            'enabled': 'false',
+            'timer': 'static',
+        },
+        '_runtime': {
+            'config_directory': Path(__file__).parents[2],
+        }
+    }
+
+@pytest.fixture
+def module_manager(config_with_modules):
+    return ModuleManager(config_with_modules)
+
+
+class TestModuleManager:
+    def test_number_of_modules_instanziated_by_module_manager(self, module_manager):
+        assert len(module_manager) == 2
+
+
+def test_time_until_next_period_of_several_modules(config_with_modules, module_manager, freezer):
+    solar_timer = timer.Solar(config_with_modules)
+    noon = solar_timer.location.sun()['noon']
+
+    one_minute = timedelta(minutes=1)
+    freezer.move_to(noon - one_minute)
+
+    assert module_manager.time_until_next_period() == one_minute
+    two_minutes_before_midnight = datetime.now().replace(hour=23, minute=58)
+    freezer.move_to(two_minutes_before_midnight)
+
+    assert module_manager.time_until_next_period().total_seconds() == \
+                              timedelta(minutes=2).total_seconds()

@@ -75,7 +75,7 @@ def test_loation(solar):
 
 def test_time_left_before_new_period(solar, before_dusk, freezer):
     freezer.move_to(before_dusk)
-    assert solar.time_until_next_period() == 120
+    assert solar.time_until_next_period().total_seconds() == 120
 
 def test_time_right_before_midnight(solar, freezer):
     """
@@ -96,4 +96,4 @@ def test_time_right_before_midnight(solar, freezer):
 
     # Test that the time left is within the bounds of 0 to 24 hours
     time_left = solar.time_until_next_period()
-    assert 0 < time_left < 60 * 60 * 24
+    assert 0 < time_left.total_seconds() < 60 * 60 * 24

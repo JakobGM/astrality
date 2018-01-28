@@ -1,10 +1,11 @@
 """Module implementing user configured custom functionality."""
 
+from datetime import timedelta
 import logging
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import compiler
 from resolver import Resolver
@@ -225,3 +226,18 @@ class Module:
             return valid_module_name and enabled
         except KeyError:
             return False
+
+class ModuleManager:
+    def __init__(self, config: Resolver) -> None:
+        self.modules: List[Module] = []
+
+        for section, options in config.items():
+            module_dict = {section: options}
+            if Module.valid_class_section(module_dict):
+                self.modules.append(Module(module_dict, config))
+
+    def __len__(self) -> int:
+        return len(self.modules)
+
+    def time_until_next_period(self) -> timedelta:
+        return min(module.timer.time_until_next_period() for module in self.modules)

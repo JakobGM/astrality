@@ -82,7 +82,7 @@ class Solar(Timer):
             else:
                 raise RuntimeError('Could not find the time of the next period')
 
-        return (next_period - now).seconds
+        return next_period - now
 
     def now(self) -> datetime:
         """Return the current UTC time."""

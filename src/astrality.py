@@ -83,7 +83,7 @@ def main():
                 logger.info(f'Configuration updated.')
 
             logger.info(f'Waiting {timer.time_until_next_period()} seconds until next update.')
-            time.sleep(timer.time_until_next_period())
+            time.sleep(timer.time_until_next_period().total_seconds())
 
     except KeyboardInterrupt:
         exit_handler()
