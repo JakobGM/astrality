@@ -35,7 +35,7 @@ def create_conky_temp_files(
     # entirity of the scripts runtime, since the files are deleted when they
     # go out of scope
 
-    return {
+    conky_temp_files = {
         module: NamedTemporaryFile( # type: ignore
             prefix=module + '-',
             dir=temp_directory
@@ -43,6 +43,14 @@ def create_conky_temp_files(
         for module, path
         in conky_module_templates.items()
     }
+
+    for temp_file in conky_temp_files.values():
+        # TODO: There are probably security implications here.
+        # I am not sure how this should be done, as temporary files can be
+        # used arbitrarily by the user, and we should support all use cases.
+        os.chmod(temp_file.name, 0o777)
+
+    return conky_temp_files
 
 def start_conky_process(config: Resolver) -> None:
     conky_temp_files = config['_runtime']['conky_temp_files']
