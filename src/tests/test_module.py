@@ -128,6 +128,11 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
+                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+            ),
+            (
+                'astrality',
+                logging.INFO,
                 '[module/test_module] Running startup command.',
             ),
             (
@@ -155,6 +160,11 @@ class TestModuleClass:
         assert caplog.record_tuples == [
             (
                 'astrality',
+                logging.INFO,
+                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+            ),
+            (
+                'astrality',
                 logging.DEBUG,
                 '[module/test_module] No startup command specified.',
             ),
@@ -163,6 +173,11 @@ class TestModuleClass:
     def test_running_module_period_change_command(self, module, caplog):
         module.period_change()
         assert caplog.record_tuples == [
+            (
+                'astrality',
+                logging.INFO,
+                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+            ),
             (
                 'astrality',
                 logging.INFO,
@@ -191,6 +206,11 @@ class TestModuleClass:
 
         module.period_change()
         assert caplog.record_tuples == [
+            (
+                'astrality',
+                logging.INFO,
+                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+            ),
             (
                 'astrality',
                 logging.DEBUG,
@@ -307,7 +327,7 @@ class TestModuleClass:
         caplog,
     ):
         valid_module_section['module/test_module']['timer'] = 'solar'
-        compiled_template = 'some text\n' + os.environ['USER'] + '\nsolar\n'
+        compiled_template = 'some text\n' + os.environ['USER'] + '\nFuraCode Nerd Font\n'
         module = Module(valid_module_section, conf)
         module.compile_template()
 
@@ -426,12 +446,14 @@ def test_detection_of_new_period_involving_several_modules(
     modules_with_unfinished_tasks = tuple(module_manager.modules_with_unfinished_tasks())
 
     # All modules should now considered period changed
+    assert module_manager.has_unfinished_tasks() == True
     assert len(tuple(modules_with_unfinished_tasks)) == 2
 
     # Running period change method for all the period changed modules
     module_manager.finish_tasks()
 
     # After running these methods, they should all be reverted to not changed
+    assert module_manager.has_unfinished_tasks() == False
     assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 0
 
     # Move time to right after noon
@@ -439,11 +461,13 @@ def test_detection_of_new_period_involving_several_modules(
 
     # The solar timer should now be considered to have been period changed
     modules_with_unfinished_tasks = tuple(module_manager.modules_with_unfinished_tasks())
+    assert module_manager.has_unfinished_tasks() == True
     assert len(modules_with_unfinished_tasks) == 1
     assert isinstance(modules_with_unfinished_tasks[0].timer, timer.Solar)
 
     # Again, check if period_change() method makes them unchanged
     module_manager.finish_tasks()
+    assert module_manager.has_unfinished_tasks() == False
     assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 0
 
     # Move time two days forwards
@@ -451,4 +475,5 @@ def test_detection_of_new_period_involving_several_modules(
     freezer.move_to(noon + two_days)
 
     # Now both timers should be considered period changed
+    assert module_manager.has_unfinished_tasks() == True
     assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 2

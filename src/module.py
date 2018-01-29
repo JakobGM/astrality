@@ -62,6 +62,7 @@ class Module:
         # Attributes used in order to keep track of unfinished tasks
         self.startup_command_has_been_run = False
         self.last_period_change_command_run = 'this_period_should_never_be_valid'
+        self.last_compilation_period = 'this_period_should_never_be_valid'
 
         # Find and prepare templates and compiation targets
         self._prepare_templates()
@@ -107,11 +108,6 @@ class Module:
             prefix=self.name + '-',
             dir=self.application_config['_runtime']['temp_directory'],
         )
-        # TODO: There are probably security implications here.
-        # I am not sure how this should be done, as temporary files can be
-        # used arbitrarily by the user, and we should support all use cases.
-        # Perhaps a seperate config option for this?
-        os.chmod(self.temp_file.name, 0o777)
 
         return Path(self.temp_file.name)
 
@@ -138,6 +134,8 @@ class Module:
 
         self.startup_command_has_been_run = True
 
+        self.compile_template()
+
         if self.startup_command:
             logger.info(f'[module/{self.name}] Running startup command.')
             self.run_shell(command=self.startup_command)
@@ -148,6 +146,8 @@ class Module:
         """Commands to be run when self.timer period changes."""
 
         self.last_period_change_command_run = self.timer.period()
+
+        self.compile_template()
 
         if self.period_change_command:
             logger.info(f'[module/{self.name}] Running period change command.')
@@ -187,21 +187,33 @@ class Module:
     def compile_template(self) -> None:
         """Compile the module template specified by `template_file`."""
 
-        if not self.template_file or not self.compiled_template:
+        if not self.template_file:
+            # This module has no template file to compile, and we can return
+            # early
+            return
+
+        if not self.compiled_template:
             error_msg = f'''[module/{self.name}] Tried to module template with
                             template_file = "{self.template_file}"
-                            compiled_template = "{self.compiled_template}"'''
+                            compiled_template = "{self.compiled_template}"
+                            The compilation target file is missing...'''
 
             logger.critical(error_msg)
             raise RuntimeError(error_msg)
 
         else:
-            compiler.compile_template(  # type: ignore
-                template=self.template_file,
-                target=self.compiled_template,
-                period=self.timer.period(),
-                config=self.application_config,
-            )
+            period = self.timer.period()
+
+            if self.last_compilation_period != period:
+                # The period has changed, and there is a need for compiling the
+                # template again with the new period.
+                compiler.compile_template(  # type: ignore
+                    template=self.template_file,
+                    target=self.compiled_template,
+                    period=self.timer.period(),
+                    config=self.application_config,
+                )
+                self.last_compilation_period = period
 
     def run_shell(self, command) -> None:
         command = command.format(
@@ -251,7 +263,7 @@ class Module:
         try:
             module_name = next(iter(section.keys()))
             valid_module_name = module_name.split('/')[0] == 'module'
-            enabled = section[module_name]['enabled'].lower() == 'true'
+            enabled = section[module_name].get('enabled', 'true').lower() != 'false'
             return valid_module_name and enabled
         except KeyError:
             return False
@@ -277,6 +289,13 @@ class ModuleManager:
 
         return min(
             module.timer.time_until_next_period()
+            for module
+            in self.modules
+        )
+
+    def has_unfinished_tasks(self) -> bool:
+        return any(
+            module.has_unfinished_tasks()
             for module
             in self.modules
         )

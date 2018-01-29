@@ -12,7 +12,6 @@ import re
 from io import StringIO
 from typing import Dict, Match, MutableMapping, Optional, Tuple
 
-from conky import create_conky_temp_files
 from timer import TIMERS
 from wallpaper import import_colors
 
@@ -125,51 +124,14 @@ def infer_runtime_variables_from_config(
 ) -> Resolver:
     """Return infered runtime variables based on config file."""
 
-    # Insert infered paths from config_directory
-    config_module_paths = {
-        module: Path(config_directory, 'conky_themes', module)
-        for module
-        in config['conky']['modules'].split()
-    }
-
-    conky_module_templates = {
-        module: Path(path, 'template.conf')
-        for module, path
-        in config_module_paths.items()
-    }
-
-    wallpaper_theme_directory = Path(
-        config_directory,
-        'wallpaper_themes',
-        config['wallpaper']['theme'],
-    )
-
-    timer_class = TIMERS[config['timer']['type']]
-    periods = timer_class.periods
-
-    wallpaper_paths = {
-        period: list(wallpaper_theme_directory.glob(period + '.*'))[0]
-        for period
-        in periods
-    }
-
     temp_directory = Path(os.environ.get('TMPDIR', '/tmp'), 'astrality')
     if not temp_directory.is_dir():
         os.mkdir(temp_directory)
-
-    conky_temp_files = create_conky_temp_files(temp_directory, conky_module_templates)
 
     return Resolver({
         '_runtime': {
             'config_directory': config_directory,
             'config_file': config_file,
-            'conky_module_paths': config_module_paths,
-            'conky_module_templates': conky_module_templates,
-            'wallpaper_theme_directory': wallpaper_theme_directory,
-            'wallpaper_paths': wallpaper_paths,
-            'conky_temp_files': conky_temp_files,
-            'timer_class': timer_class,
-            'periods': periods,
             'temp_directory': temp_directory,
         }
     })

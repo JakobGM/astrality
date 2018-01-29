@@ -26,6 +26,5 @@ def conf():
     yield config
 
     # Delete temporary files created by the test suite
-    for file in config['_runtime']['conky_temp_files'].values():
-        file.close()
+    # TODO: ModuleManager exit handler
     shutil.rmtree(config['_runtime']['temp_directory'])

@@ -1,4 +1,4 @@
-#/usr/bin/env python3
+#!/usr/bin/env python3
 
 """The module meant to be run in order to start Astrality."""
 
@@ -11,8 +11,7 @@ import sys
 import time
 
 from config import user_configuration
-from conky import start_conky_process, compile_conky_templates
-from wallpaper import exit_feh, update_wallpaper
+from module import ModuleManager
 
 logger = logging.getLogger('astrality')
 logging.basicConfig(level=os.environ.get('ASTRALITY_LOGGING_LEVEL', 'WARNING'))
@@ -37,8 +36,7 @@ def main(test: bool = False):
         # Delete all temporary files manually, because if we delete the
         # temp directory, the TemporaryFile closer will raise an error
         # when it tries to delete itself when it goes out of scope
-        for file in config['_runtime']['conky_temp_files'].values():
-            file.close()
+        # TODO: ModuleManager cleanup
 
         # The temp directory is left alone, for two reasons:
         # 1: An empty directory uses neglible disk space.
@@ -67,35 +65,29 @@ def main(test: bool = False):
 
     try:
         config = user_configuration()
-        timer = config['_runtime']['timer_class'](config)
-        old_period = timer.period()
-        update_wallpaper(config, timer.period())
+        module_manager = ModuleManager(config)
+        module_manager.finish_tasks()
 
-        # We might need to wait some time before starting conky, as startup
-        # scripts may alter screen layouts and interfer with conky
-        time.sleep(int(config['conky'].get('startup_delay', '0')))
-        compile_conky_templates(config, timer.period())
-        start_conky_process(config)
+        # TODO: Implement startup delay config option
 
         while True:
-            new_period = timer.period()
-            changed = new_period != old_period
-
-            if changed:
-                logger.info('New time of day detected: ' + new_period)
-                # We are in a new time of day, and we can change the background
-                # image
-                update_wallpaper(config, new_period)
-                compile_conky_templates(config, new_period)
-                old_period = new_period
-                logger.info(f'Configuration updated.')
+            if module_manager.has_unfinished_tasks():
+                # TODO: Log which new period which has been detected
+                logger.info('New timer period detected.')
+                module_manager.finish_tasks()
+                logger.info(f'Period change routine finished.')
 
             if test:
                 logger.debug('Main loop interupted since argument test=True.')
                 return
             else:
-                logger.info(f'Waiting {timer.time_until_next_period()} seconds until next update.')
-                time.sleep(timer.time_until_next_period().total_seconds())
+                logger.info(
+                    f'Waiting {module_manager.time_until_next_period()} '
+                    'seconds until next update.'
+                )
+                time.sleep(
+                    module_manager.time_until_next_period().total_seconds()
+                )
 
     except KeyboardInterrupt:
         exit_handler()

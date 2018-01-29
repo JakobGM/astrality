@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from compiler import (
     find_placeholders,
     generate_replacements,
@@ -6,7 +8,7 @@ from compiler import (
 
 def test_generation_of_replacements(conf):
     replacements = generate_replacements(
-        conf['_runtime']['conky_module_templates']['time-1920x1080'],
+        Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
         conf,
         'night',
     )
@@ -17,7 +19,7 @@ def test_generation_of_replacements(conf):
 
 def test_use_of_replacer(conf):
     replacements = generate_replacements(
-        conf['_runtime']['conky_module_templates']['time-1920x1080'],
+        Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
         conf,
         'night',
     )

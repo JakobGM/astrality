@@ -1,7 +1,3 @@
-[timer]
-type = solar
-
-
 [timer/solar]
 ; Your current location, easily obtained from here: https://www.latlong.net/
 ; Used by astrality for automatic wallpaper rotation based on time of day
@@ -12,36 +8,37 @@ longitude = 10.421906
 elevation = 0
 
 
-[wallpaper]
-; Available wallpaper themes can be shown by running `ls wallpaper_themes`
-theme = default
-
-; Option passed to `feh` when setting the wallpaper. Available options are:
-; --bg-tile
-; --bg-center
-; --bg-max
-; --bg-fill
-feh_option = --bg-fill
+[module/wallpaper]
+enabled = true
+timer = solar
+on_period_change = feh --bg-fill wallpaper_themes/default/{period}.*
+on_exit = feh --bg-fill src/solid_black_background.jpeg
 
 
-[conky]
+[module/conky-time]
+enabled = true
 ; You might run into issues if you are automatically rearranging displays
 ; at startup, since conky might render its modules to a screen which does
 ; not exist anymore shortly after starting conky. You can prevent this
 ; by delaying the start of the conky process
-startup_delay = 0
+timer = solar
+template_file = conky_themes/time-1920x1080/template.conf
+on_startup = conky -c {compiled_template}
 
-; Available Conky modules can be shown by running `ls conky_themes`
-modules = performance-1920x1080 time-1920x1080
+
+[module/conky-performance]
+enabled = true
+; You might run into issues if you are automatically rearranging displays
+; at startup, since conky might render its modules to a screen which does
+; not exist anymore shortly after starting conky. You can prevent this
+; by delaying the start of the conky process
+timer = solar
+template_file = conky_themes/performance-1920x1080/template.conf
+on_startup = conky -c {compiled_template}
 
 
 [fonts]
 1 = FuraCode Nerd Font
-
-
-[behaviour]
-; How often to check if we have entered a new time of day, in seconds
-refresh_period = 60
 
 
 ; vim:filetype=dosini
