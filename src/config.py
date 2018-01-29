@@ -218,3 +218,20 @@ def generate_expanded_env_dict() -> Dict[str, str]:
                 raise
 
     return env_dict
+
+def insert_into(
+    config: Resolver,
+    section: str,
+    from_config_file: Path,
+    from_section: str,
+) -> Resolver:
+    """
+    Import section from config file into config dictionary.
+
+    The method overwrites `config[section]` with the values from [from_section]
+    defined in `from_config_file`.
+    """
+    conf_resolver = resolver_from_config_file(from_config_file, with_env=False)
+    config[section] = conf_resolver[from_section]
+
+    return config

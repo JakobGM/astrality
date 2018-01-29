@@ -21,6 +21,7 @@ def dummy_config():
     test_conf = Path(Path(__file__).parent, 'test.conf')
     return resolver_from_config_file(test_conf)
 
+
 class TestAllConfigFeaturesFromDummyConfig:
     def test_normal_variable(self, dummy_config):
         assert dummy_config['section1']['var1'] == 'value1'
@@ -43,7 +44,6 @@ class TestAllConfigFeaturesFromDummyConfig:
         assert dummy_config['section4']['1'] == 'primary_value'
         assert dummy_config['section4']['0'] == 'primary_value'
         assert dummy_config['section4']['2'] == 'primary_value'
-
 
 
 def test_config_directory_name(conf):
@@ -138,3 +138,33 @@ def test_insert_environment_variables():
     upper_case_conficting_key = '${env:CONFLICTING_KEY}'
     expected = 'value2'
     assert insert_environment_values(upper_case_conficting_key) == expected
+
+def test_insert_config_section():
+    config = {'section1': {'key_one': 'value_one'}}
+    test_config_file = Path(__file__).parent / 'test.conf'
+    config = insert_into(
+        config=config,
+        section='new_section',
+        from_config_file=test_config_file,
+        from_section='section2'
+    )
+
+    assert config['section1']['key_one'] == 'value_one'
+    assert config['new_section']['var3'] == 'value1'
+
+    config = insert_into(
+        config=config,
+        section='section3',
+        from_config_file=test_config_file,
+        from_section='section3'
+    )
+    assert config['section3']['env_variable'] == 'test_value, hello'
+
+    config = insert_into(
+        config=config,
+        section='section1',
+        from_config_file=test_config_file,
+        from_section='section1'
+    )
+    assert config['section1']['var2'] == 'value1/value2'
+    assert 'key_one' not in config['section1']

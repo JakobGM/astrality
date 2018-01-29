@@ -13,6 +13,16 @@ timer = solar
 run_on_period_change = feh --bg-fill wallpaper_themes/default/{period}.*
 run_on_exit = feh --bg-fill src/solid_black_background.jpeg
 
+# The option "load_conf_on_period_change = section file_path {period}" does
+# the following after each "timer" period change:
+#     - Find the dosini file located at "file_path"
+#     - Retrieve the values defined in [period]
+#     - Load the values into this configuration under the section [section]
+#     - Recompile all templates with proper substitution of ${ast:section:value}
+#
+# Here we change the colors of other templates based on the current wallpaper
+load_conf_on_period_change = colors wallpaper_themes/default/colors.conf {period}
+
 
 [module/conky-time]
 enabled = true

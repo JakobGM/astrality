@@ -9,6 +9,7 @@ from tempfile import NamedTemporaryFile
 from typing import Dict, Iterable, List, Optional, Union
 
 import compiler
+from config import insert_into
 from resolver import Resolver
 from timer import TIMERS
 
@@ -68,6 +69,7 @@ class Module:
         self.startup_command = self.config.get('run_on_startup')
         self.period_change_command = self.config.get('run_on_period_change')
         self.exit_command = self.config.get('run_on_exit')
+        self.load_conf_on_period_change = self.config.get('load_conf_on_period_change')
 
         # Attributes used in order to keep track of unfinished tasks
         self.startup_command_has_been_run = False
@@ -194,7 +196,14 @@ class Module:
         if self.last_period_change_command_run != self.timer.period():
             self.period_change()
 
-    def compile_template(self) -> None:
+            if self.load_conf_on_period_change:
+                self.load_conf(self.load_conf_on_period_change)
+
+                if self.manager:
+                    for module in self.manager.modules:
+                        module.compile_template(force=True)
+
+    def compile_template(self, force=False) -> None:
         """Compile the module template specified by `template_file`."""
 
         if not self.template_file:
@@ -214,7 +223,7 @@ class Module:
         else:
             period = self.timer.period()
 
-            if self.last_compilation_period != period:
+            if force or self.last_compilation_period != period:
                 # The period has changed, and there is a need for compiling the
                 # template again with the new period.
                 compiler.compile_template(  # type: ignore
@@ -262,8 +271,22 @@ class Module:
                 'intentional for background processes and daemons.'
             )
 
+    def load_conf(self, command: str) -> None:
+        """Import config section into application config."""
+        section, path, from_section = command.format(
+            period=self.timer.period(),
+        ).split(' ')
+        config_path = Path(path)
+
+        insert_into(
+            config=self.application_config,
+            section=section,
+            from_config_file=config_path,
+            from_section=from_section,
+        )
+
     @staticmethod
-    def valid_class_section(section: Dict[str, Dict[str, str]]) -> bool:
+    def valid_class_section(section: Resolver) -> bool:
         """Check if the given dict represents a valid enabled module."""
 
         if not len(section) == 1:
