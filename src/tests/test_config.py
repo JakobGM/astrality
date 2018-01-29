@@ -7,8 +7,9 @@ from pathlib import Path
 import pytest
 
 from config import (
-    dict_from_config_file,
+    resolver_from_config_file,
     insert_environment_values,
+    insert_into,
     generate_expanded_env_dict,
     preprocess_environment_variables,
 )
@@ -18,7 +19,7 @@ from resolver import Resolver
 @pytest.fixture
 def dummy_config():
     test_conf = Path(Path(__file__).parent, 'test.conf')
-    return Resolver(dict_from_config_file(test_conf))
+    return resolver_from_config_file(test_conf)
 
 class TestAllConfigFeaturesFromDummyConfig:
     def test_normal_variable(self, dummy_config):

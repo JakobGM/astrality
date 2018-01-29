@@ -36,17 +36,27 @@ class Module:
 
     def __init__(
         self,
-        module_config: Union[dict, Resolver],
-        application_config: Union[dict, Resolver],
+        module_config: Union[Resolver, dict],
+        application_config: Resolver,
+        manager: Optional['ModuleManager'] = None,
     ) -> None:
         """
         Initialize Module object with a section from a config dictionary.
+
+        Argument `manager` is the ModuleManager instance responible for the
+        Module instance, allowing two-way communication between modules and
+        their respective managers.
 
         Section name must be [module/*], where * is the module name.
         In addition, the enabled option must be set to "true", or not set at
         all.
         """
-        self.application_config = application_config
+
+        self.manager = manager
+        self.application_config = application_config  # type: ignore
+
+        if self.manager:
+            self.application_config = self.manager.application_config
 
         section = next(iter(module_config.keys()))
         self.name = section.split('/')[1]
@@ -254,6 +264,8 @@ class Module:
 
     @staticmethod
     def valid_class_section(section: Dict[str, Dict[str, str]]) -> bool:
+        """Check if the given dict represents a valid enabled module."""
+
         if not len(section) == 1:
             raise RuntimeError(
                 'Tried to check module section with dict '
@@ -272,12 +284,13 @@ class ModuleManager:
     """A manager for operating on a set of modules."""
 
     def __init__(self, config: Resolver) -> None:
+        self.application_config = config
         self.modules: List[Module] = []
 
         for section, options in config.items():
-            module_dict = {section: options}
-            if Module.valid_class_section(module_dict):
-                self.modules.append(Module(module_dict, config))
+            module_resolver = Resolver({section: options})
+            if Module.valid_class_section(module_resolver):
+                self.modules.append(Module(module_resolver, config))
 
     def __len__(self) -> int:
         """Return the number of managed modules."""

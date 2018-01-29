@@ -149,6 +149,14 @@ class Resolver:
         else:
             return {}.__str__()
 
+    def __len__(self) -> int:
+        """Return the number of key inserted into the Resolver object."""
+
+        return self._dict.__len__()
+
+    def __contains__(self, key: str) -> bool:
+        return self._dict.__contains__(key)
+
     def items(self) -> ItemsView[str, Any]:
         if hasattr(self, '_dict'):
             return self._dict.items()

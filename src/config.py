@@ -10,7 +10,7 @@ from configparser import (
 from pathlib import Path
 import re
 from io import StringIO
-from typing import Dict, Match, MutableMapping, Optional, Tuple
+from typing import Dict, Match, MutableMapping, Optional, Tuple, Union
 
 from timer import TIMERS
 from wallpaper import import_colors
@@ -56,10 +56,10 @@ def infer_config_location(
     return config_directory, config_file
 
 
-def dict_from_config_file(
+def resolver_from_config_file(
     config_file: Path,
     with_env: Optional[bool] = True,
-) -> Dict[str, Dict[str, str]]:
+) -> Resolver:
     """
     Return a dictionary that reflects the contents of `config_file`.
 
@@ -114,7 +114,7 @@ def dict_from_config_file(
 
     conf_dict.pop('DEFAULT')
 
-    return conf_dict
+    return Resolver(conf_dict)
 
 
 def infer_runtime_variables_from_config(
@@ -154,16 +154,14 @@ def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
     """
     config_directory, config_file = infer_config_location(config_directory)
 
-    config = Resolver(dict_from_config_file(
+    config = resolver_from_config_file(
         config_file,
         with_env=True,
-    ))
+    )
     config.update(infer_runtime_variables_from_config(config_directory, config_file, config))
 
     # Import the colorscheme specified by the users wallpaper theme
     config.update(import_colors(config))
-
-
 
     return config
 
