@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 import logging
+import os
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
@@ -106,6 +107,11 @@ class Module:
             prefix=self.name + '-',
             dir=self.application_config['_runtime']['temp_directory'],
         )
+        # TODO: There are probably security implications here.
+        # I am not sure how this should be done, as temporary files can be
+        # used arbitrarily by the user, and we should support all use cases.
+        # Perhaps a seperate config option for this?
+        os.chmod(self.temp_file.name, 0o777)
 
         return Path(self.temp_file.name)
 
