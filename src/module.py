@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 import compiler
 from resolver import Resolver
@@ -57,6 +57,10 @@ class Module:
         self.startup_command = self.config.get('on_startup')
         self.period_change_command = self.config.get('on_period_change')
         self.exit_command = self.config.get('on_exit')
+
+        # Attributes used in order to keep track of unfinished tasks
+        self.startup_command_has_been_run = False
+        self.last_period_change_command_run = 'this_period_should_never_be_valid'
 
         # Find and prepare templates and compiation targets
         self._prepare_templates()
@@ -126,6 +130,8 @@ class Module:
     def startup(self) -> None:
         """Commands to be run on Module instance startup."""
 
+        self.startup_command_has_been_run = True
+
         if self.startup_command:
             logger.info(f'[module/{self.name}] Running startup command.')
             self.run_shell(command=self.startup_command)
@@ -134,6 +140,8 @@ class Module:
 
     def period_change(self) -> None:
         """Commands to be run when self.timer period changes."""
+
+        self.last_period_change_command_run = self.timer.period()
 
         if self.period_change_command:
             logger.info(f'[module/{self.name}] Running period change command.')
@@ -154,6 +162,21 @@ class Module:
             # A temporary file has been created for this module and it should
             # be deleted.
             self.temp_file.close()
+
+    def has_unfinished_tasks(self) -> bool:
+        """Returns True if any of the modules have unfinished tasks."""
+
+        return not self.startup_command_has_been_run or \
+            self.last_period_change_command_run != self.timer.period()
+
+    def finish_tasks(self) -> None:
+        """Finish all unfinished tasks of all the modules."""
+
+        if not self.startup_command_has_been_run:
+            self.startup()
+
+        if self.last_period_change_command_run != self.timer.period():
+            self.period_change()
 
     def compile_template(self) -> None:
         """Compile the module template specified by `template_file`."""
@@ -228,6 +251,8 @@ class Module:
             return False
 
 class ModuleManager:
+    """A manager for operating on a set of modules."""
+
     def __init__(self, config: Resolver) -> None:
         self.modules: List[Module] = []
 
@@ -237,11 +262,31 @@ class ModuleManager:
                 self.modules.append(Module(module_dict, config))
 
     def __len__(self) -> int:
+        """Return the number of managed modules."""
+
         return len(self.modules)
 
     def time_until_next_period(self) -> timedelta:
+        """Time left until first period change of any of the modules managed."""
+
         return min(
             module.timer.time_until_next_period()
             for module
             in self.modules
         )
+
+    def modules_with_unfinished_tasks(self) -> Iterable[Module]:
+        """Return a generator of all modules with unfinished tasks."""
+
+        return (
+            module
+            for module
+            in self.modules
+            if module.has_unfinished_tasks()
+        )
+
+    def finish_tasks(self) -> None:
+        """Finish all unfinished tasks of all the managed modules."""
+
+        for module in self.modules_with_unfinished_tasks():
+            module.finish_tasks()

@@ -323,6 +323,36 @@ class TestModuleClass:
             ),
         ]
 
+def test_has_unfinished_tasks(valid_module_section, conf, freezer):
+    # Move time to midday
+    midday = datetime.now().replace(hour=12, minute=0)
+    freezer.move_to(midday)
+
+    # At instanziation, the module should have unfinished tasks
+    weekday_module = Module(valid_module_section, conf)
+    assert weekday_module.has_unfinished_tasks() == True
+
+    # After finishing tasks, there should be no unfinished tasks (duh!)
+    weekday_module.finish_tasks()
+    assert weekday_module.has_unfinished_tasks() == False
+
+    # If we move the time forwards, but not to a new period, there should still
+    # not be any unfinished tasks
+    before_midnight = datetime.now().replace(hour=23, minute=59)
+    freezer.move_to(before_midnight)
+    assert weekday_module.has_unfinished_tasks() == False
+
+    # But right after a period change (new weekday), there should be unfinished
+    # tasks
+    two_minutes = timedelta(minutes=2)
+    freezer.move_to(before_midnight + two_minutes)
+    assert weekday_module.has_unfinished_tasks() == True
+
+    # Again, after finishing tasks, there should be no unfinished tasks left
+    weekday_module.finish_tasks()
+    assert weekday_module.has_unfinished_tasks() == False
+
+
 
 @pytest.fixture
 def config_with_modules():
@@ -380,3 +410,45 @@ def test_time_until_next_period_of_several_modules(config_with_modules, module_m
 
     assert module_manager.time_until_next_period().total_seconds() == \
                               timedelta(minutes=2).total_seconds()
+
+def test_detection_of_new_period_involving_several_modules(
+    config_with_modules,
+    freezer,
+):
+    # Move time to right before noon
+    solar_timer = timer.Solar(config_with_modules)
+    noon = solar_timer.location.sun()['noon']
+    one_minute = timedelta(minutes=1)
+    freezer.move_to(noon - one_minute)
+
+    # Get period changed modules right after ModuleManager instanziation
+    module_manager = ModuleManager(config_with_modules)
+    modules_with_unfinished_tasks = tuple(module_manager.modules_with_unfinished_tasks())
+
+    # All modules should now considered period changed
+    assert len(tuple(modules_with_unfinished_tasks)) == 2
+
+    # Running period change method for all the period changed modules
+    module_manager.finish_tasks()
+
+    # After running these methods, they should all be reverted to not changed
+    assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 0
+
+    # Move time to right after noon
+    freezer.move_to(noon + one_minute)
+
+    # The solar timer should now be considered to have been period changed
+    modules_with_unfinished_tasks = tuple(module_manager.modules_with_unfinished_tasks())
+    assert len(modules_with_unfinished_tasks) == 1
+    assert isinstance(modules_with_unfinished_tasks[0].timer, timer.Solar)
+
+    # Again, check if period_change() method makes them unchanged
+    module_manager.finish_tasks()
+    assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 0
+
+    # Move time two days forwards
+    two_days = timedelta(days=2)
+    freezer.move_to(noon + two_days)
+
+    # Now both timers should be considered period changed
+    assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 2
