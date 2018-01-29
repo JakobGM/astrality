@@ -13,10 +13,10 @@ class Timer(abc.ABC):
 
     periods: Tuple[str, ...]
 
-    @abc.abstractmethod
     def __init__(self, config: Resolver) -> None:
         """Initialize a period timer based on the configuration of the user."""
-        pass
+        self.application_config = config
+        self.name = self.__class__.__name__.lower()
 
     @abc.abstractmethod
     def period(self) -> str:
@@ -28,6 +28,10 @@ class Timer(abc.ABC):
         """Return the time remaining until the next period in seconds."""
         pass
 
+    @property
+    def config(self):
+        return self.application_config.get('timer/' + self.name, {})
+
 
 class Solar(Timer):
     """
@@ -38,7 +42,7 @@ class Solar(Timer):
     periods = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
 
     def __init__(self, config: Resolver) -> None:
-        self.config = config
+        Timer.__init__(self, config)
         self.location = self.construct_astral_location()
 
     def period(self) -> str:
@@ -101,9 +105,9 @@ class Solar(Timer):
         location.region = 'RegionIsNotImportantEither'
 
         # But these are important, and should be provided by the user
-        location.latitude = float(self.config['location']['latitude'])
-        location.longitude = float(self.config['location']['longitude'])
-        location.elevation = float(self.config['location']['elevation'])
+        location.latitude = float(self.config.get('latitude', '0'))
+        location.longitude = float(self.config.get('longitude', '0'))
+        location.elevation = float(self.config.get('elevation', '0'))
         location.timezone = 'UTC'
 
         return location
@@ -123,10 +127,6 @@ class Weekday(Timer):
     )
 
     weekdays = dict(zip(range(0,7), periods))
-
-    def __init__(self, config: Resolver) -> None:
-        """Initialize a weekday tracker independent of user configuration."""
-        pass
 
     def period(self) -> str:
         """Return the current determined period."""

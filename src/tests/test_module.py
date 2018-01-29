@@ -327,7 +327,7 @@ class TestModuleClass:
 @pytest.fixture
 def config_with_modules():
     return {
-        'location': {
+        'timer/solar': {
             'longitude': '0',
             'latitude': '0',
             'elevation': '0',

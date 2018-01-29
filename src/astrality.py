@@ -27,7 +27,7 @@ def main(test: bool = False):
     """
 
     # Quit old astrality instances
-    kill_old_astrality_process()
+    kill_old_astrality_processes()
 
     # How to quit this process
     def exit_handler(signal=None, frame=None) -> None:
@@ -116,7 +116,7 @@ def other_astrality_pids() -> Set[int]:
     return pids - set((this_process_pid,))
 
 
-def kill_old_astrality_process() -> None:
+def kill_old_astrality_processes() -> None:
     """Kill all other instances of this script, to prevent duplicates."""
 
     pids = other_astrality_pids()

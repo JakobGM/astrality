@@ -2,7 +2,7 @@
 type = solar
 
 
-[location]
+[timer/solar]
 ; Your current location, easily obtained from here: https://www.latlong.net/
 ; Used by astrality for automatic wallpaper rotation based on time of day
 latitude = 63.446827
@@ -27,7 +27,7 @@ feh_option = --bg-fill
 [conky]
 ; You might run into issues if you are automatically rearranging displays
 ; at startup, since conky might render its modules to a screen which does
-; not exist anymore shortly after starting conky. You can prevent this 
+; not exist anymore shortly after starting conky. You can prevent this
 ; by delaying the start of the conky process
 startup_delay = 0
 

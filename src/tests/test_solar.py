@@ -97,3 +97,18 @@ def test_time_right_before_midnight(solar, freezer):
     # Test that the time left is within the bounds of 0 to 24 hours
     time_left = solar.time_until_next_period()
     assert 0 < time_left.total_seconds() < 60 * 60 * 24
+
+def test_config_timer_method():
+    solar_timer_application_config = {
+        'timer/solar': {
+            'longitude': '0',
+            'latitude': '0',
+            'elevation': '0',
+        },
+    }
+    solar_timer = Solar(solar_timer_application_config)
+    assert solar_timer.config['latitude'] == '0'
+
+def test_config_with_empty_config_section():
+    solar_timer = Solar({})
+    assert solar_timer.location.latitude == 0

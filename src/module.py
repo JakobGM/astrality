@@ -240,4 +240,8 @@ class ModuleManager:
         return len(self.modules)
 
     def time_until_next_period(self) -> timedelta:
-        return min(module.timer.time_until_next_period() for module in self.modules)
+        return min(
+            module.timer.time_until_next_period()
+            for module
+            in self.modules
+        )
