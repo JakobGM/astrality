@@ -55,9 +55,9 @@ class Module:
         self.timer = TIMERS[self.config['timer']](application_config)  # type: ignore
 
         # Commands to run at specified times
-        self.startup_command = self.config.get('on_startup')
-        self.period_change_command = self.config.get('on_period_change')
-        self.exit_command = self.config.get('on_exit')
+        self.startup_command = self.config.get('run_on_startup')
+        self.period_change_command = self.config.get('run_on_period_change')
+        self.exit_command = self.config.get('run_on_exit')
 
         # Attributes used in order to keep track of unfinished tasks
         self.startup_command_has_been_run = False

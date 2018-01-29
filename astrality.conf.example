@@ -10,22 +10,22 @@ startup_delay = 0
 
 enabled = true
 timer = solar
-on_period_change = feh --bg-fill wallpaper_themes/default/{period}.*
-on_exit = feh --bg-fill src/solid_black_background.jpeg
+run_on_period_change = feh --bg-fill wallpaper_themes/default/{period}.*
+run_on_exit = feh --bg-fill src/solid_black_background.jpeg
 
 
 [module/conky-time]
 enabled = true
 timer = solar
 template_file = conky_themes/time-1920x1080/template.conf
-on_startup = conky -c {compiled_template}
+run_on_startup = conky -c {compiled_template}
 
 
 [module/conky-performance]
 enabled = true
 timer = solar
 template_file = conky_themes/performance-1920x1080/template.conf
-on_startup = conky -c {compiled_template}
+run_on_startup = conky -c {compiled_template}
 
 
 [timer/solar]

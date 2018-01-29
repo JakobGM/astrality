@@ -18,9 +18,9 @@ def valid_module_section():
             'timer': 'weekday',
             'template_file': 'src/tests/test_template.conf',
             'compiled_template': '/tmp/compiled_result',
-            'on_startup': 'echo startup',
-            'on_period_change': 'echo period_change',
-            'on_exit': 'echo exit',
+            'run_on_startup': 'echo startup',
+            'run_on_period_change': 'echo period_change',
+            'run_on_exit': 'echo exit',
         }
     }
 
@@ -38,9 +38,9 @@ class TestModuleClass:
         disabled_module_section =  {
             'module/disabled_test_module': {
                 'enabled': 'false',
-                'on_startup': '',
-                'on_period_change': '',
-                'on_exit': '',
+                'run_on_startup': '',
+                'run_on_period_change': '',
+                'run_on_exit': '',
             }
         }
         assert Module.valid_class_section(disabled_module_section) == False
@@ -153,7 +153,7 @@ class TestModuleClass:
         conf,
         caplog,
     ):
-        valid_module_section['module/test_module'].pop('on_startup')
+        valid_module_section['module/test_module'].pop('run_on_startup')
         module = Module(valid_module_section, conf)
 
         module.startup()
@@ -201,7 +201,7 @@ class TestModuleClass:
         conf,
         caplog,
     ):
-        valid_module_section['module/test_module'].pop('on_period_change')
+        valid_module_section['module/test_module'].pop('run_on_period_change')
         module = Module(valid_module_section, conf)
 
         module.period_change()
@@ -244,7 +244,7 @@ class TestModuleClass:
         conf,
         caplog,
     ):
-        valid_module_section['module/test_module'].pop('on_exit')
+        valid_module_section['module/test_module'].pop('run_on_exit')
         module = Module(valid_module_section, conf)
 
         module.exit()
