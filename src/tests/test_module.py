@@ -327,7 +327,7 @@ class TestModuleClass:
         caplog,
     ):
         valid_module_section['module/test_module']['timer'] = 'solar'
-        compiled_template = 'some text\n' + os.environ['USER'] + '\nFuraCode Nerd Font\n'
+        compiled_template = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font\n'
         module = Module(valid_module_section, conf)
         module.compile_template()
 

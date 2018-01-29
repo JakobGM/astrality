@@ -38,5 +38,6 @@ def test_interrupt_of_main_process():
     astrality_process.wait()
     assert astrality_process.returncode == 0
 
+@pytest.mark.skipif('TRAVIS' not in os.environ, reason='Only run on CI')
 def test_invocation_of_main_process():
     main(test=True)

@@ -1,14 +1,13 @@
-[timer/solar]
-; Your current location, easily obtained from here: https://www.latlong.net/
-; Used by astrality for automatic wallpaper rotation based on time of day
-latitude = 63.446827
-longitude = 10.421906
-
-; Height above sea level
-elevation = 0
+[settings/general]
+# You can delay astrality on startup if other tasks need to finish first,
+# for example if you are automatically rearranging displays, which might
+# interfere with conky. The delay is given in seconds.
+startup_delay = 0
 
 
 [module/wallpaper]
+# A module for changing your wallpaper based on the suns position in the sky.
+
 enabled = true
 timer = solar
 on_period_change = feh --bg-fill wallpaper_themes/default/{period}.*
@@ -17,10 +16,6 @@ on_exit = feh --bg-fill src/solid_black_background.jpeg
 
 [module/conky-time]
 enabled = true
-; You might run into issues if you are automatically rearranging displays
-; at startup, since conky might render its modules to a screen which does
-; not exist anymore shortly after starting conky. You can prevent this
-; by delaying the start of the conky process
 timer = solar
 template_file = conky_themes/time-1920x1080/template.conf
 on_startup = conky -c {compiled_template}
@@ -28,17 +23,38 @@ on_startup = conky -c {compiled_template}
 
 [module/conky-performance]
 enabled = true
-; You might run into issues if you are automatically rearranging displays
-; at startup, since conky might render its modules to a screen which does
-; not exist anymore shortly after starting conky. You can prevent this
-; by delaying the start of the conky process
 timer = solar
 template_file = conky_themes/performance-1920x1080/template.conf
 on_startup = conky -c {compiled_template}
 
 
+[timer/solar]
+# The solar timer provides the following periods:
+# sunrise, morning, afternoon, sunset, and night.
+
+# Since this is dependent on your exact location, you have to specify your
+# GPS coordinates. They are can be easily obtained from:
+# https://www.latlong.net/
+
+latitude = 63.446827
+longitude = 10.421906
+elevation = 0
+
+
+[general]
+# It is possible to define further arbitrarily named sections.
+# For instance, with this option set, you can use ${ast:general:display} in all
+# your templates.
+display = eDP1
+
+
 [fonts]
+# You can use integer indexed variables in order to have fallback values. If
+# ${ast:fonts:4} is used in a template, but it is not defined, it will be
+# replaced with ${ast:fonts:3} instead.
 1 = FuraCode Nerd Font
+2 = FuraMono Nerd Font
+3 = RobotoMono Nerd Font
 
 
-; vim:filetype=dosini
+# vim:filetype=dosini

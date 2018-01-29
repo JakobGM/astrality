@@ -65,6 +65,11 @@ def main(test: bool = False):
 
     try:
         config = user_configuration()
+
+        # Delay further actions if configuration says so
+        startup_delay = float(config.get('settings/general', {}).get('startup_delay', '0'))
+        time.sleep(startup_delay)
+
         module_manager = ModuleManager(config)
         module_manager.finish_tasks()
 
@@ -83,7 +88,7 @@ def main(test: bool = False):
             else:
                 logger.info(
                     f'Waiting {module_manager.time_until_next_period()} '
-                    'seconds until next update.'
+                    'until next period change and ensuing update.'
                 )
                 time.sleep(
                     module_manager.time_until_next_period().total_seconds()
