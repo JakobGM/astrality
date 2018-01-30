@@ -358,3 +358,11 @@ class ModuleManager:
 
         for module in self.modules_with_unfinished_tasks():
             module.finish_tasks()
+
+    def exit(self) -> None:
+        """Run all module on_exit commands."""
+
+        logger.info('Running all module on_exit commands')
+
+        for module in self.modules:
+            module.exit()

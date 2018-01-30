@@ -30,19 +30,19 @@ def main(test: bool = False):
 
     # How to quit this process
     def exit_handler(signal=None, frame=None) -> None:
-        logger.critical('Astrality was interrupted')
-        logger.info('Cleaning up temporary files before exiting...')
-
-        # Delete all temporary files manually, because if we delete the
-        # temp directory, the TemporaryFile closer will raise an error
-        # when it tries to delete itself when it goes out of scope
-        # TODO: ModuleManager cleanup
+        """Cleanup all temporary files and run module exit handlers."""
 
         # The temp directory is left alone, for two reasons:
         # 1: An empty directory uses neglible disk space.
         # 2: If this process is interrupted by another Astrality instance,
         #    we might experience race conditions when the exit handler deletes
         #    the temporary directory *after* the new Astrality instance creates it.
+
+        logger.critical('Astrality was interrupted')
+        logger.info('Cleaning up temporary files before exiting...')
+
+        # Run all the module exit handlers
+        module_manager.exit()
 
         try:
             sys.exit(0)
