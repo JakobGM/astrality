@@ -50,6 +50,11 @@ latitude = 63.446827
 longitude = 10.421906
 elevation = 0
 
+# You can force a timer to always return the same period for debugging reasons,
+# e.g. if you want to check if all your periodic color schemes fit your
+# periodic wallpapers.
+; force_period = morning
+
 
 [general]
 # It is possible to define further arbitrarily named sections.

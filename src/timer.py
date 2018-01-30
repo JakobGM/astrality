@@ -1,11 +1,14 @@
 import abc
 from datetime import datetime, timedelta
+import logging
 from typing import Any, Dict, Tuple
 
 import pytz
 from astral import Location
 
 from resolver import Resolver
+
+logger = logging.getLogger('astrality')
 
 
 class Timer(abc.ABC):
@@ -15,11 +18,38 @@ class Timer(abc.ABC):
 
     def __init__(self, config: Resolver) -> None:
         """Initialize a period timer based on the configuration of the user."""
-        self.application_config = config
         self.name = self.__class__.__name__.lower()
+        self.application_config = config
+        self.timer_config = self.application_config.get(
+            'timer/' + self.name,
+            {},
+        )
+
+    def period(self) -> str:
+        """
+        Return the current determined period.
+
+        If the timer option `force_period` is set, this value will always be
+        returned instead of the correct period.
+        """
+        if self.timer_config.get('force_period', False):
+            force_period = self.timer_config['force_period']
+
+            if not force_period in self.periods:
+                logger.warning(
+                    f'[timer/{self.name}] option `force_period` set to '
+                    f'{force_period}, which is not a valid period type for '
+                    f'the timer type "{self.name}": {self.periods}. Still using'
+                    ' the option in case it is intentional.'
+                )
+
+            return force_period
+
+        return self._period()
+
 
     @abc.abstractmethod
-    def period(self) -> str:
+    def _period(self) -> str:
         """Return the current determined period."""
         pass
 
@@ -45,7 +75,7 @@ class Solar(Timer):
         Timer.__init__(self, config)
         self.location = self.construct_astral_location()
 
-    def period(self) -> str:
+    def _period(self) -> str:
         now = self.now()
 
         if now < self.location.sun()['dawn']:
@@ -128,7 +158,7 @@ class Weekday(Timer):
 
     weekdays = dict(zip(range(0,7), periods))
 
-    def period(self) -> str:
+    def _period(self) -> str:
         """Return the current determined period."""
         return self.weekdays[datetime.today().weekday()]
 
