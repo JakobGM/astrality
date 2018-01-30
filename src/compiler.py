@@ -1,6 +1,6 @@
 from pathlib import Path
 import logging
-from typing import Any, Callable, Dict, List, Match, Set
+from typing import Callable, Dict, Set
 import re
 
 from resolver import Resolver
@@ -9,6 +9,8 @@ logger = logging.getLogger('astrality')
 
 
 def find_placeholders(string: str) -> Set[str]:
+    """Return all astrality placeholders present in `string`."""
+
     placeholder_pattern = re.compile(r'\$\{ast:[\w|\-^:]+:[\w|\-^:]+\}')
     return set(placeholder_pattern.findall(string))
 
@@ -16,13 +18,17 @@ def find_placeholders(string: str) -> Set[str]:
 def compile_template(
     template: Path,
     target: Path,
-    period: str,
     config: Resolver,
 ) -> None:
-    """Compile template based on contents of config and the given period."""
+    """
+    Compile template based on contents of a given configuration.
 
-    replacements = generate_replacements(template, config, period)
-    replace = generate_replacer(replacements, period, config)
+    All instances of ${ast:section:option} is replaced with the value in
+    config[section][option].
+    """
+
+    replacements = generate_replacements(template, config)
+    replace = generate_replacer(replacements)
 
     logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')
 
@@ -32,30 +38,26 @@ def compile_template(
                 target_file.write(replace(line))
 
 
-def generate_replacements(
-    template: Path,
-    config: Resolver,
-    period: str,
-) -> Dict[str, str]:
+def generate_replacements(template: Path, config: Resolver) -> Dict[str, str]:
     """
-    Given a configuration and the time of day, we can generate all the
-    placeholders that could be present in the conky module templates and their
-    respective replacements fitting for the time of day
+    Return dictionary defining all placeholder -> replacement mappings.
+
+    The function only generates mappings for the placeholders present in in the
+    template file.
     """
+
+    # Find all placeholders present in the template file
     placeholders: Set[str] = set()
     with open(template, 'r') as template_file:
         for line in template_file:
             placeholders = placeholders | find_placeholders(line)
 
+    # Find all corresponding replacement values from the configuration
     replacements: Dict[str, str] = {}
     for placeholder in placeholders:
-        category, key = placeholder[6:-1].split(':')
+        section, option = placeholder[6:-1].split(':')
         try:
-            value = config[category][key]
-            if category == 'colors':
-                replacements[placeholder] = value[period]
-            elif isinstance(value, str):
-                replacements[placeholder] = value
+            replacements[placeholder] = config[section][option]
         except KeyError:
             logger.error(f'Invalid template tag "{placeholder}"'
                          'Replacing it with an empty string instead')
@@ -64,16 +66,9 @@ def generate_replacements(
     return replacements
 
 
-def generate_replacer(
-    replacements: Dict[str, str],
-    period: str,
-    config: Resolver,
-) -> Callable[[str], str]:
-    """
-    Given a set of replacements returned from generate_replacements() we can
-    create a regex replacer which will replace these placeholders in string
-    types
-    """
+def generate_replacer(replacements: Dict[str, str]) -> Callable[[str], str]:
+    """Return function that replaces placeholders with fitting values."""
+
     # We have to escape the placeholder patterns in case of use of reserved
     # regex characters
     escaped_placeholders = (
@@ -92,5 +87,3 @@ def generate_replacer(
         )
 
     return replace
-
-

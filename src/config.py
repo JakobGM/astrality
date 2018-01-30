@@ -139,18 +139,20 @@ def infer_runtime_variables_from_config(
 
 def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
     """
+    Return Resolver object containing the users configuration.
+
     Create a configuration dictionary which should directly reflect the
     hierarchy of a typical `astrality.conf` file. Users should be able to insert
     elements from their configuration directly into conky module templates. The
     mapping should be:
 
-    ${astrality:conky:main_font} -> config['conky']['main_font']
+    ${astrality:fonts:1} -> config['fonts']['1']
 
-    Some additional configurations are automatically added to the root level of
-    the dictionary such as:
-    - config['config_directory']
-    - config['config_file']
-    - config['conky_module_paths']
+    In addition, the section config['_runtime'] is inserted, which contains
+    several items specifying runtime specific values. Example keys are:
+    - config_directory
+    - config_file
+    - temp_directory
     """
     config_directory, config_file = infer_config_location(config_directory)
 
@@ -159,9 +161,6 @@ def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
         with_env=True,
     )
     config.update(infer_runtime_variables_from_config(config_directory, config_file, config))
-
-    # Import the colorscheme specified by the users wallpaper theme
-    config.update(import_colors(config))
 
     return config
 

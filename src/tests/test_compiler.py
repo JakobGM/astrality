@@ -7,10 +7,10 @@ from compiler import (
 )
 
 def test_generation_of_replacements(conf):
+    conf['colors'] = {'1': 'CACCFD'}
     replacements = generate_replacements(
         Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
         conf,
-        'night',
     )
     assert replacements == {
         '${ast:colors:1}': 'CACCFD',
@@ -18,12 +18,12 @@ def test_generation_of_replacements(conf):
     }
 
 def test_use_of_replacer(conf):
+    conf['colors'] = {'1': 'CACCFD'}
     replacements = generate_replacements(
         Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
         conf,
-        'night',
     )
-    replace = generate_replacer(replacements, 'night', conf)
+    replace = generate_replacer(replacements)
     assert replace('${ast:colors:1}') == 'CACCFD'
 
 def test_find_placeholders():

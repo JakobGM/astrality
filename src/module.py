@@ -2,11 +2,10 @@
 
 from datetime import timedelta
 import logging
-import os
 from pathlib import Path
 import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 import compiler
 from config import insert_into
@@ -52,7 +51,6 @@ class Module:
         In addition, the enabled option must be set to "true", or not set at
         all.
         """
-
         self.manager = manager
         self.application_config = application_config  # type: ignore
 
@@ -204,11 +202,19 @@ class Module:
                         module.compile_template(force=True)
 
     def compile_template(self, force=False) -> None:
-        """Compile the module template specified by `template_file`."""
+        """
+        Compile the module template specified by `template_file`.
+
+        If force=True, the template file will be compiled even though the
+        period has not changed since the last compilation. This is used when
+        some module has changed the application config by importing a new
+        section, which requires recompilation of all templates to reflect the
+        new changes to the application config.
+        """
 
         if not self.template_file:
             # This module has no template file to compile, and we can return
-            # early
+            # early.
             return
 
         if not self.compiled_template:
@@ -229,7 +235,6 @@ class Module:
                 compiler.compile_template(  # type: ignore
                     template=self.template_file,
                     target=self.compiled_template,
-                    period=self.timer.period(),
                     config=self.application_config,
                 )
                 self.last_compilation_period = period
@@ -266,7 +271,7 @@ class Module:
 
         except subprocess.TimeoutExpired:
             logger.warning(
-                f'The command "{command}" used more than 2 seconds in order to'
+                f'The command "{command}" used more than 2 seconds in order to '
                 'finish. The exit code can not be verified. This might be '
                 'intentional for background processes and daemons.'
             )
@@ -276,7 +281,7 @@ class Module:
         section, path, from_section = command.format(
             period=self.timer.period(),
         ).split(' ')
-        config_path = Path(path)
+        config_path = self.expand_path(Path(path))
 
         insert_into(
             config=self.application_config,

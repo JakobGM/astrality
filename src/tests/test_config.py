@@ -1,7 +1,5 @@
 from configparser import ConfigParser
-from math import inf
 import os
-from os import path
 from pathlib import Path
 
 import pytest
@@ -13,7 +11,7 @@ from config import (
     generate_expanded_env_dict,
     preprocess_environment_variables,
 )
-from resolver import Resolver
+from module import ModuleManager
 
 
 @pytest.fixture
@@ -54,23 +52,11 @@ def test_name_of_config_file(conf):
     assert '/astrality.conf' in str(conf['_runtime']['config_file'])
 
 
+@pytest.mark.skipif('TRAVIS' not in os.environ, reason='Slow tests only run on CI')
 def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf):
-    assert conf['colors'] == {
-        '1': {
-            'afternoon': 'FC6F42',
-            'morning': '5BA276',
-            'night': 'CACCFD',
-            'sunrise': 'FC6F42',
-            'sunset': 'FEE676',
-        },
-        '2': {
-            'afternoon': 'DB4E38',
-            'morning': '76B087',
-            'night': '3F72E8',
-            'sunrise': 'DB4E38',
-            'sunset': '9B3A1A',
-        }
-    }
+    module_manager = ModuleManager(conf)
+    module_manager.finish_tasks()
+    assert conf['colors'] == {'1': 'CACCFD', '2': '3F72E8'}
 
 def test_environment_variable_interpolation_by_preprocessing_conf_ini_file():
     test_conf = Path(__file__).parent / 'test.conf'
