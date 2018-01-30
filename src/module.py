@@ -303,7 +303,9 @@ class Module:
         try:
             module_name = next(iter(section.keys()))
             valid_module_name = module_name.split('/')[0] == 'module'
-            enabled = section[module_name].get('enabled', 'true').lower() != 'false'
+            enabled = section[module_name].get('enabled', 'true').lower()
+            enabled = enabled not in ('false', 'off', 'disabled', 'not', '0',)
+
             return valid_module_name and enabled
         except KeyError:
             return False
