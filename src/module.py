@@ -365,4 +365,12 @@ class ModuleManager:
         logger.info('Running all module on_exit commands')
 
         for module in self.modules:
-            module.exit()
+            try:
+                module.exit()
+            except FileNotFoundError:
+                # Some temp file has already been cleaned up.
+                # This shouldn't be necessary if we are more careful with
+                # keeping 'TemporaryFile's within scope, but alas, it is what
+                # it is at the moment. I think this exception may be caused
+                # by running tests at the same time Astrality is interrupted.
+                continue
