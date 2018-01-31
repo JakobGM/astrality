@@ -29,6 +29,15 @@ def test_use_of_replacer(conf):
     replace = generate_replacer(replacements)
     assert replace('${ast:colors:1}') == 'CACCFD'
 
+def test_use_of_replacer_with_integer_valued_item_in_conf(conf):
+    conf['colors'] = {1: 10}
+    replacements = generate_replacements(
+        Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
+        conf,
+    )
+    replace = generate_replacer(replacements)
+    assert replace('${ast:colors:1}') == '10'
+
 def test_find_placeholders():
     template = """
     Some text and then a valid template tag ${ast:wallpaper:theme}

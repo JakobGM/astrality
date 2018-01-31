@@ -57,7 +57,7 @@ def generate_replacements(template: Path, config: Resolver) -> Dict[str, str]:
     for placeholder in placeholders:
         section, option = placeholder[6:-1].split(':')
         try:
-            replacements[placeholder] = config[section][cast_to_numeric(option)]
+            replacements[placeholder] = str(config[section][cast_to_numeric(option)])
         except KeyError:
             logger.error(f'Invalid template tag "{placeholder}"'
                          'Replacing it with an empty string instead')
