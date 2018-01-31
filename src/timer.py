@@ -1,6 +1,7 @@
 import abc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, MAXYEAR, MINYEAR
 import logging
+from math import inf
 from typing import Any, Dict, Tuple
 
 import pytz
@@ -167,6 +168,50 @@ class Weekday(Timer):
         tomorrow = datetime.today() + timedelta(days=1)
         tomorrow = tomorrow.replace(hour=0, minute=0)
         return tomorrow - datetime.now()
+
+
+class Periodic(Timer):
+    """Constant frequency Timer subclass."""
+
+    class Periods(tuple):
+        def __contains__(self, item) -> bool:
+            try:
+                if float(item) - int(item) != 0:
+                    return False
+                else:
+                    return 0 <= int(item) < inf
+            except ValueError:
+                return False
+
+    periods = Periods()
+
+    def __init__(self, config: Resolver) -> None:
+        """Initialize a constant frequency timer."""
+
+        super().__init__(config)
+
+        # Period specified by the user
+        self.timedelta = timedelta(
+            seconds=int(self.timer_config.get('seconds', '0')),
+            minutes=int(self.timer_config.get('minutes', '0')),
+            hours=int(self.timer_config.get('hours', '0')),
+            days=int(self.timer_config.get('days', '0')),
+        )
+
+        if self.timedelta.total_seconds() == 0.0:
+            # If no period is specified by the user, then 1 hour is used
+            self.timedelta = timedelta(hours=1)
+
+        self.initialization_time = datetime.now()
+
+    def _period(self) -> str:
+        return str(int(
+            (datetime.now() - self.initialization_time) / self.timedelta
+        ))
+
+    def time_until_next_period(self) -> timedelta:
+        """Return the time remaining until the next period in seconds."""
+        return self.timedelta - (datetime.now() - self.initialization_time) % self.timedelta
 
 
 TIMERS = {
