@@ -20,5 +20,6 @@ pytest-mypy==0.3.0
 pytest==3.3.2
 python-dateutil==2.6.1    # via freezegun
 pytz==2017.3              # via astral
+pyyaml==3.12
 six==1.11.0               # via freezegun, pip-tools, pytest, python-dateutil
 typed-ast==1.1.0          # via mypy

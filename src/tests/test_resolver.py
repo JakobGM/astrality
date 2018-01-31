@@ -34,13 +34,13 @@ class TestResolverClass:
         config['string_key'] = 1
         assert config._max_key == -inf
 
-        config['2'] = 'string_value'
+        config[2] = 'string_value'
         assert config._max_key == 2
 
-        config['1'] = 'string_value'
+        config[1] = 'string_value'
         assert config._max_key == 2
 
-        config['3'] = 'string_value'
+        config[3] = 'string_value'
         assert config._max_key == 3
 
     def test_getting_item_from_empty_config(self):
@@ -55,27 +55,27 @@ class TestResolverClass:
         config['some_key'] = 'some_value'
         assert config['some_key'] == 'some_value'
 
-        config['-2'] = 'some_other_value'
-        assert config['-2'] == 'some_other_value'
+        config[-2] = 'some_other_value'
+        assert config[-2] == 'some_other_value'
 
     def test_integer_index_resolution(self):
         config = Resolver()
         config['some_key'] = 'some_value'
-        config['1'] = 'FureCode Nerd Font'
-        assert config['2'] == 'FureCode Nerd Font'
+        config[1] = 'FureCode Nerd Font'
+        assert config[2] == 'FureCode Nerd Font'
 
     def test_integer_index_resolution_without_earlier_index_key(self):
         config = Resolver()
         config['some_key'] = 'some_value'
         with pytest.raises(KeyError) as exception:
-            config['2']
+            config[2]
         assert exception.value.args[0] == \
             'Integer index "2" is non-existent and ' \
             'had no lower index to be substituted for'
 
     def test_index_resolution_with_string_key(self):
         config = Resolver()
-        config['2'] = 'some_value'
+        config[2] = 'some_value'
         with pytest.raises(KeyError) as exception:
             config['test']
         assert exception.value.args[0] == 'test'
@@ -83,21 +83,21 @@ class TestResolverClass:
     def test_use_of_recursive_config_objects_created_by_dicts(self):
         conf_dict = {
             'key1': 'value1',
-            '1': 'value2',
-            '2': {'1': 'some_value'},
+            1: 'value2',
+            2: {1: 'some_value'},
             'key3': ('one', 'two', 'three'),
-            'key4': {'1': 'uno', 'key4-2': 'dos'}
+            'key4': {1: 'uno', 'key4-2': 'dos'}
         }
         config = Resolver(conf_dict)
         assert config == conf_dict
-        assert config['3']['2'] == 'some_value'
-        assert config['2'] == {'1': 'some_value'}
-        assert config['3'] == {'1': 'some_value'}
+        assert config[3][2] == 'some_value'
+        assert config[2] == {1: 'some_value'}
+        assert config[3] == {1: 'some_value'}
 
         assert isinstance(config['key4'], Resolver)
-        assert config['key4'] == {'1': 'uno', 'key4-2': 'dos'}
-        assert config['key4']['1'] == 'uno'
-        assert config['key4']['2'] == 'uno'
+        assert config['key4'] == {1: 'uno', 'key4-2': 'dos'}
+        assert config['key4'][1] == 'uno'
+        assert config['key4'][2] == 'uno'
 
     def test_getter(self):
         config = Resolver()
@@ -134,19 +134,19 @@ class TestResolverClass:
     def test_update(self):
         one_conf_dict = {
             'key1': 'value1',
-            '1': 'value2',
-            '2': {'1': 'some_value'},
+            1: 'value2',
+            2: {1: 'some_value'},
         }
         another_conf_dict = {
             'key3': ('one', 'two', 'three'),
-            'key4': {'1': 'uno', 'key4-2': 'dos'}
+            'key4': {1: 'uno', 'key4-2': 'dos'}
         }
         merged_conf_dicts = {
             'key1': 'value1',
-            '1': 'value2',
-            '2': {'1': 'some_value'},
+            1: 'value2',
+            2: {1: 'some_value'},
             'key3': ('one', 'two', 'three'),
-            'key4': {'1': 'uno', 'key4-2': 'dos'}
+            'key4': {1: 'uno', 'key4-2': 'dos'}
         }
         config = Resolver(one_conf_dict)
         config.update(another_conf_dict)
@@ -154,11 +154,11 @@ class TestResolverClass:
 
     def test_resolver_class(self):
         resolver = Resolver()
-        resolver['1'] = 'firs_value'
-        resolver['2'] = 'second_value'
+        resolver[1] = 'firs_value'
+        resolver[2] = 'second_value'
         resolver['string_key'] = 'string_value'
 
-        assert resolver['1'] == 'firs_value'
-        assert resolver['2'] == 'second_value'
-        assert resolver['3'] == 'second_value'
+        assert resolver[1] == 'firs_value'
+        assert resolver[2] == 'second_value'
+        assert resolver[3] == 'second_value'
         assert resolver['string_key'] == 'string_value'

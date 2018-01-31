@@ -40,9 +40,9 @@ class TestAllConfigFeaturesFromDummyConfig:
         assert dummy_config['section3']['env_variable'] == 'test_value, hello'
 
     def test_integer_index_resolution(self, dummy_config):
-        assert dummy_config['section4']['1'] == 'primary_value'
-        assert dummy_config['section4']['0'] == 'primary_value'
-        assert dummy_config['section4']['2'] == 'primary_value'
+        assert dummy_config['section4'][1] == 'primary_value'
+        assert dummy_config['section4'][0] == 'primary_value'
+        assert dummy_config['section4'][2] == 'primary_value'
 
 
 def test_config_directory_name(conf):
@@ -50,37 +50,37 @@ def test_config_directory_name(conf):
 
 
 def test_name_of_config_file(conf):
-    assert '/astrality.conf' in str(conf['_runtime']['config_file'])
+    assert '/astrality.yaml' in str(conf['_runtime']['config_file'])
 
 
-@pytest.mark.skipif('TRAVIS' not in os.environ, reason='Slow tests only run on CI')
+@pytest.mark.slow
 def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf, freezer):
     midnight = datetime(year=2018, month=1, day=31, hour=0, minute=0)
     freezer.move_to(midnight)
     module_manager = ModuleManager(conf)
     module_manager.finish_tasks()
-    assert conf['colors'] == {'1': 'CACCFD', '2': '3F72E8'}
+    assert conf['colors'] == {1: 'CACCFD', 2: '3F72E8'}
 
 def test_environment_variable_interpolation_by_preprocessing_conf_ini_file():
     test_conf = Path(__file__).parent / 'test.conf'
     result = preprocess_environment_variables(test_conf)
 
     expected_result = \
-'''[section1]
-var1 = value1
-var2 = ${var1}/value2
+'''section1:
+    var1: value1
+    var2: value1/value2
 
 
-[section2]
-# Comment
-var3 = ${section1:var1}
-empty_string_var =
+section2:
+    # Comment
+    var3: value1
+    empty_string_var: ''
 
-[section3]
-env_variable = test_value, hello
+section3:
+    env_variable: test_value, hello
 
-[section4]
-1 = primary_value
+section4:
+    1: primary_value
 '''
     assert expected_result == result
 

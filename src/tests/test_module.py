@@ -102,7 +102,7 @@ class TestModuleClass:
             )
         ]
 
-    @pytest.mark.skipif('TRAVIS' not in os.environ, reason='Only run on CI')
+    @pytest.mark.slow
     def test_running_shell_command_that_times_out(self, module, caplog):
         module.run_shell('sleep 2.1')
         assert 'used more than 2 seconds' in caplog.record_tuples[1][2]
@@ -417,6 +417,14 @@ def module_manager(config_with_modules):
 
 
 class TestModuleManager:
+    def test_invocation_of_module_manager_with_config(self, conf):
+        ModuleManager(conf)
+
+    @pytest.mark.slow
+    def test_using_finish_tasks_on_example_configuration(self, conf):
+        module_manager = ModuleManager(conf)
+        module_manager.finish_tasks()
+
     def test_number_of_modules_instanziated_by_module_manager(self, module_manager):
         assert len(module_manager) == 2
 

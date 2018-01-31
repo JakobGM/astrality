@@ -10,7 +10,7 @@ install:
   - pip install coveralls
 script:
   - cd src
-  - coverage run --source='.' -m py.test -vv
+  - coverage run --source='.' -m py.test -vv --runslow
   - coverage report -m
 after_success:
   - coveralls

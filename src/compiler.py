@@ -1,6 +1,6 @@
 from pathlib import Path
 import logging
-from typing import Callable, Dict, Set
+from typing import Callable, Dict, Set, Union
 import re
 
 from resolver import Resolver
@@ -57,7 +57,7 @@ def generate_replacements(template: Path, config: Resolver) -> Dict[str, str]:
     for placeholder in placeholders:
         section, option = placeholder[6:-1].split(':')
         try:
-            replacements[placeholder] = config[section][option]
+            replacements[placeholder] = config[section][cast_to_numeric(option)]
         except KeyError:
             logger.error(f'Invalid template tag "{placeholder}"'
                          'Replacing it with an empty string instead')
@@ -87,3 +87,14 @@ def generate_replacer(replacements: Dict[str, str]) -> Callable[[str], str]:
         )
 
     return replace
+
+def cast_to_numeric(value: str) -> Union[int, float, str]:
+    """Casts string to numeric type if possible, else return string."""
+
+    try:
+        return int(value)
+    except ValueError:
+        try:
+            return float(value)
+        except ValueError:
+            return value

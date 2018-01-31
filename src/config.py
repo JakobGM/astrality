@@ -16,6 +16,17 @@ from resolver import Resolver
 
 logger = logging.getLogger('astrality')
 
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore
+    logger.info('Using LibYAML bindings for faster .yaml parsing.')
+except ImportError:
+    from yaml import Loader, Dumper
+    logger.warning(
+        'LibYAML not installed.'
+        'Using somewhat slower pure python implementation.',
+    )
+
 
 def infer_config_location(
     config_directory: Optional[Path] = None,
@@ -36,7 +47,7 @@ def infer_config_location(
                 'astrality',
             )
 
-    config_file = Path(config_directory, 'astrality.conf')
+    config_file = Path(config_directory, 'astrality.yaml')
 
     if not config_file.is_file():
         logger.warning(
@@ -45,7 +56,7 @@ def infer_config_location(
             '.'
         )
         config_directory = Path(__file__).parents[1]
-        config_file = Path(config_directory, 'astrality.conf.example')
+        config_file = Path(config_directory, 'astrality.yaml.example')
         logger.warning(f'Using example configuration instead: "{config_file}"')
     else:
         logging.info(f'Using configuration file "{config_file}"')
@@ -77,9 +88,7 @@ def resolver_from_config_file(
         config_file,
         expanded_env_dict,
     )
-
-    config_parser = ConfigParser(interpolation=ExtendedInterpolation())
-    config_parser.read_file(StringIO(config_string))
+    config_parser = load(StringIO(config_string))
 
     # Convert ConfigParser into a dictionary, performing all variable
     # interpolations at the same time
@@ -109,8 +118,6 @@ def resolver_from_config_file(
     if with_env:
         conf_dict['env'] = expanded_env_dict
 
-    conf_dict.pop('DEFAULT')
-
     return Resolver(conf_dict)
 
 
@@ -139,7 +146,7 @@ def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
     Return Resolver object containing the users configuration.
 
     Create a configuration dictionary which should directly reflect the
-    hierarchy of a typical `astrality.conf` file. Users should be able to insert
+    hierarchy of a typical `astrality.yaml` file. Users should be able to insert
     elements from their configuration directly into conky module templates. The
     mapping should be:
 

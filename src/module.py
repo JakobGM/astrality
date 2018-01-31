@@ -58,7 +58,7 @@ class Module:
             self.application_config = self.manager.application_config
 
         section = next(iter(module_config.keys()))
-        self.name = section.split('/')[1]
+        self.name = section.split('/')[1]  # type: ignore
 
         self.config = module_config[section]
         self.timer = TIMERS[self.config.get('timer', 'static')](application_config)  # type: ignore
@@ -302,8 +302,8 @@ class Module:
 
         try:
             module_name = next(iter(section.keys()))
-            valid_module_name = module_name.split('/')[0] == 'module'
-            enabled = section[module_name].get('enabled', 'true').lower()
+            valid_module_name = module_name.split('/')[0] == 'module'  # type: ignore
+            enabled = section[module_name].get('enabled', True)
             enabled = enabled not in ('false', 'off', 'disabled', 'not', '0',)
 
             return valid_module_name and enabled

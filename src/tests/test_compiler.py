@@ -1,13 +1,16 @@
 from pathlib import Path
 
+import pytest
+
 from compiler import (
+    cast_to_numeric,
     find_placeholders,
     generate_replacements,
     generate_replacer,
 )
 
 def test_generation_of_replacements(conf):
-    conf['colors'] = {'1': 'CACCFD'}
+    conf['colors'] = {1: 'CACCFD'}
     replacements = generate_replacements(
         Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
         conf,
@@ -18,7 +21,7 @@ def test_generation_of_replacements(conf):
     }
 
 def test_use_of_replacer(conf):
-    conf['colors'] = {'1': 'CACCFD'}
+    conf['colors'] = {1: 'CACCFD'}
     replacements = generate_replacements(
         Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
         conf,
@@ -42,3 +45,15 @@ def test_find_placeholders():
         '${ast:conky:modules}',
         '${ast:valid:tag}',
     ))
+
+@pytest.mark.parametrize(('string,cast,resulting_type'), [
+    ('-2', -2, int),
+    ('0', 0, int),
+    ('1', 1, int),
+    ('1.5', 1.5, float),
+    ('one', 'one', str),
+])
+def test_cast_to_numeric(string, cast, resulting_type):
+    result = cast_to_numeric(string)
+    assert result == cast
+    assert isinstance(result, resulting_type)

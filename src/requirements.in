@@ -18,3 +18,6 @@ mypy
 
 # Needed in order to get the time of dawn, noon, sunset, and dusk
 astral
+
+# For parsing .yaml config files
+pyyaml

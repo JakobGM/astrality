@@ -9,7 +9,7 @@ import pytest
 from astrality import main
 
 
-@pytest.mark.skipif('TRAVIS' not in os.environ, reason='Only run on CI')
+@pytest.mark.slow
 def test_termination_of_main_process():
     astrality_process = subprocess.Popen(
         ['python3', Path(Path(__file__).parents[1], 'astrality.py', )],
@@ -24,7 +24,7 @@ def test_termination_of_main_process():
     assert astrality_process.returncode == 0
 
 
-@pytest.mark.skipif('TRAVIS' not in os.environ, reason='Only run on CI')
+@pytest.mark.slow
 def test_interrupt_of_main_process():
     astrality_process = subprocess.Popen(
         ['python3', Path(Path(__file__).parents[1], 'astrality.py', )],
@@ -38,6 +38,6 @@ def test_interrupt_of_main_process():
     astrality_process.wait()
     assert astrality_process.returncode == 0
 
-@pytest.mark.skipif('TRAVIS' not in os.environ, reason='Only run on CI')
+@pytest.mark.slow
 def test_invocation_of_main_process():
     main(test=True)
