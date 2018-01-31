@@ -10,10 +10,7 @@ from configparser import (
 from pathlib import Path
 import re
 from io import StringIO
-from typing import Dict, Match, MutableMapping, Optional, Tuple, Union
-
-from timer import TIMERS
-from wallpaper import import_colors
+from typing import Dict, Match, MutableMapping, Optional, Tuple
 
 from resolver import Resolver
 
