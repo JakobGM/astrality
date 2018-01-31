@@ -63,6 +63,10 @@ general:
     # your templates.
     display: eDP1
 
+    # You can also use command substitution in order to insert the standard
+    # output of a shell command into a configuration option.
+    HDMI: $(xrandr | grep "HDMI2 connected")
+
 
 fonts:
     # You can use integer indexed variables in order to have fallback values. If
@@ -71,3 +75,5 @@ fonts:
     1: FuraCode Nerd Font
     2: FuraMono Nerd Font
     3: RobotoMono Nerd Font
+
+# vim:filetype=yaml

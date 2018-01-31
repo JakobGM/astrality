@@ -11,6 +11,7 @@ import compiler
 from config import insert_into
 from resolver import Resolver
 from timer import TIMERS
+from utils import run_shell
 
 logger = logging.getLogger('astrality')
 
@@ -245,36 +246,10 @@ class Module:
             compiled_template=self.compiled_template,
         )
         logger.info(f'[module/{self.name}] Running command "{command}".')
-        process = subprocess.Popen(
-            command,
-            cwd=self.application_config['_runtime']['config_directory'],
-            shell=True,
-            universal_newlines=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+        run_shell(
+            command=command,
+            working_directory=self.application_config['_runtime']['config_directory'],
         )
-
-        try:
-            process.wait(timeout=2)
-
-            for line in process.stdout:
-                logger.info(str(line))
-
-            for error_line in process.stdout:
-                logger.error(str(error_line))
-
-            if process.returncode != 0:
-                logger.error(
-                    f'Command "{command}" exited with non-zero return code: ' +
-                    str(process.returncode)
-                )
-
-        except subprocess.TimeoutExpired:
-            logger.warning(
-                f'The command "{command}" used more than 2 seconds in order to '
-                'finish. The exit code can not be verified. This might be '
-                'intentional for background processes and daemons.'
-            )
 
     def load_conf(self, command: str) -> None:
         """Import config section into application config."""

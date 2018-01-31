@@ -13,6 +13,7 @@ from io import StringIO
 from typing import Dict, Match, MutableMapping, Optional, Tuple
 
 from resolver import Resolver
+from utils import run_shell
 
 logger = logging.getLogger('astrality')
 
@@ -84,7 +85,7 @@ def resolver_from_config_file(
         raise RuntimeError(error_msg)
 
     expanded_env_dict = generate_expanded_env_dict()
-    config_string = preprocess_environment_variables(
+    config_string = preprocess_configuration_file(
         config_file,
         expanded_env_dict,
     )
@@ -168,20 +169,23 @@ def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
 
     return config
 
-def preprocess_environment_variables(
+def preprocess_configuration_file(
     conf_file: Path,
     env_dict: MutableMapping[str, str] = os.environ,
 ) -> str:
     """
     Interpolate environment variables set in config file parsed by ConfigParser.
 
-    Interpolation syntax: ${env:name} -> os.environ[name].
+    Interpolation syntax: ${name} -> os.environ[name].
     """
 
     conf_text = ''
     with open(conf_file, 'r') as file:
         for line in file:
-            conf_text += insert_environment_values(line, env_dict)
+            conf_text += insert_environment_values(
+                insert_command_substitutions(line),
+                env_dict,
+            )
 
     return conf_text
 
@@ -189,7 +193,7 @@ def insert_environment_values(
     content: str,
     env_dict: MutableMapping[str, str] = os.environ,
 ) -> str:
-    """Replace all occurences in string: ${env:name} -> env_dict[name]."""
+    """Replace all occurences in string: ${name} -> env_dict[name]."""
 
     env_dict = generate_expanded_env_dict()
     env_variable_pattern = re.compile(r'\$\{(\w+)\}')
@@ -201,6 +205,27 @@ def insert_environment_values(
         expand_environment_variable,
         content,
     )
+
+
+def insert_command_substitutions(content: str) -> str:
+    """Replace all occurences in string: $(command) -> command stdout."""
+
+    command_substitution_pattern = re.compile(r'\$\((.*)\)')
+
+    def command_substitution(match: Match[str]) -> str:
+        command = match.groups()[0]
+        result = run_shell(command=command)
+        if result == '':
+            logger.error(
+                f'Command substitution $({command}) returned empty stdout.'
+            )
+        return result
+
+    return command_substitution_pattern.sub(
+        command_substitution,
+        content,
+    )
+
 
 def generate_expanded_env_dict() -> Dict[str, str]:
     """Return os.environ dict with all env variables expanded."""

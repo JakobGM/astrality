@@ -109,7 +109,8 @@ class TestModuleClass:
 
     def test_running_shell_command_with_non_zero_exit_code(self, module, caplog):
         module.run_shell('thiscommandshould not exist')
-        assert 'non-zero return code' in caplog.record_tuples[1][2]
+        assert 'not found' in caplog.record_tuples[1][2]
+        assert 'non-zero return code' in caplog.record_tuples[2][2]
 
     def test_running_shell_command_with_environment_variable(self, module, caplog):
         module.run_shell('echo $USER')

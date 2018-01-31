@@ -1,0 +1,5 @@
+section1:
+    key1: $(echo test)
+    key2: $(echo ${EXAMPLE_ENV_VARIABLE})
+    key3: ${EXAMPLE_ENV_VARIABLE}
+    key4: $(sleep 3)

@@ -8,9 +8,10 @@ import pytest
 from config import (
     resolver_from_config_file,
     insert_environment_values,
+    insert_command_substitutions,
     insert_into,
     generate_expanded_env_dict,
-    preprocess_environment_variables,
+    preprocess_configuration_file,
 )
 from module import ModuleManager
 
@@ -61,9 +62,9 @@ def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf, freez
     module_manager.finish_tasks()
     assert conf['colors'] == {1: 'CACCFD', 2: '3F72E8'}
 
-def test_environment_variable_interpolation_by_preprocessing_conf_ini_file():
+def test_environment_variable_interpolation_by_preprocessing_conf_yaml_file():
     test_conf = Path(__file__).parent / 'test.yaml'
-    result = preprocess_environment_variables(test_conf)
+    result = preprocess_configuration_file(test_conf)
 
     expected_result = \
 '''section1:
@@ -81,6 +82,20 @@ section3:
 
 section4:
     1: primary_value
+'''
+    assert expected_result == result
+
+@pytest.mark.slow
+def test_command_substition_by_preprocessing_yaml_file():
+    test_conf = Path(__file__).parent / 'commands.yaml'
+    result = preprocess_configuration_file(test_conf)
+
+    expected_result = \
+'''section1:
+    key1: test
+    key2: test_value
+    key3: test_value
+    key4: 
 '''
     assert expected_result == result
 
@@ -157,3 +172,7 @@ def test_insert_config_section():
     )
     assert config['section1']['var2'] == 'value1/value2'
     assert 'key_one' not in config['section1']
+
+def test_insert_command_substitutions():
+    string = 'some text: $(echo result)'
+    assert insert_command_substitutions(string) == 'some text: result'
