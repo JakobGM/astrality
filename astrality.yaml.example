@@ -29,6 +29,7 @@ module/conky-time:
     timer: solar
     template_file: conky_themes/time-1920x1080/template.conf
     run_on_startup: conky -c {compiled_template}
+    run_on_exit: pkill -f conky
 
 
 module/conky-performance:
