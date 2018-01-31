@@ -17,7 +17,7 @@ from module import ModuleManager
 
 @pytest.fixture
 def dummy_config():
-    test_conf = Path(Path(__file__).parent, 'test.conf')
+    test_conf = Path(__file__).parent / 'test.yaml'
     return resolver_from_config_file(test_conf)
 
 
@@ -62,7 +62,7 @@ def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf, freez
     assert conf['colors'] == {1: 'CACCFD', 2: '3F72E8'}
 
 def test_environment_variable_interpolation_by_preprocessing_conf_ini_file():
-    test_conf = Path(__file__).parent / 'test.conf'
+    test_conf = Path(__file__).parent / 'test.yaml'
     result = preprocess_environment_variables(test_conf)
 
     expected_result = \
@@ -130,7 +130,7 @@ def test_insert_environment_variables():
 
 def test_insert_config_section():
     config = {'section1': {'key_one': 'value_one'}}
-    test_config_file = Path(__file__).parent / 'test.conf'
+    test_config_file = Path(__file__).parent / 'test.yaml'
     config = insert_into(
         config=config,
         section='new_section',
