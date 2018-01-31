@@ -68,7 +68,7 @@ class Module:
         self.startup_command = self.config.get('run_on_startup')
         self.period_change_command = self.config.get('run_on_period_change')
         self.exit_command = self.config.get('run_on_exit')
-        self.load_conf_on_period_change = self.config.get('load_conf_on_period_change')
+        self.import_section_on_period_change = self.config.get('import_section_on_period_change')
 
         # Attributes used in order to keep track of unfinished tasks
         self.startup_command_has_been_run = False
@@ -195,8 +195,8 @@ class Module:
         if self.last_period_change_command_run != self.timer.period():
             self.period_change()
 
-            if self.load_conf_on_period_change:
-                self.load_conf(self.load_conf_on_period_change)
+            if self.import_section_on_period_change:
+                self.import_section(self.import_section_on_period_change)
 
                 if self.manager:
                     for module in self.manager.modules:
@@ -251,7 +251,7 @@ class Module:
             working_directory=self.application_config['_runtime']['config_directory'],
         )
 
-    def load_conf(self, command: str) -> None:
+    def import_section(self, command: str) -> None:
         """Import config section into application config."""
         section, path, from_section = command.format(
             period=self.timer.period(),
