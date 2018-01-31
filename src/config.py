@@ -192,7 +192,7 @@ def insert_environment_values(
     """Replace all occurences in string: ${env:name} -> env_dict[name]."""
 
     env_dict = generate_expanded_env_dict()
-    env_variable_pattern = re.compile(r'\$\{env:([\w|\-^:]+)\}')
+    env_variable_pattern = re.compile(r'\$\{(\w+)\}')
 
     def expand_environment_variable(match: Match[str]) -> str:
         return env_dict[match.groups()[0]]

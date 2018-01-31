@@ -101,30 +101,30 @@ def test_insert_environment_variables():
         CONFLICTING_KEY=value2
     '''
 
-    config_line = 'key=value-${env:EXAMPLE_ENV_VARIABLE}'
+    config_line = 'key=value-${EXAMPLE_ENV_VARIABLE}'
     expected = 'key=value-test_value'
     assert insert_environment_values(config_line) == expected
 
     # Test if several variables on the same line are all interpolated
-    several_env_variables = 'key=${env:lower_case_key}-${env:EXAMPLE_ENV_VARIABLE}'
+    several_env_variables = 'key=${lower_case_key}-${EXAMPLE_ENV_VARIABLE}'
     expected = 'key=lower_case_value-test_value'
     assert insert_environment_values(several_env_variables) == expected
 
     # Check that case sensitiveness is correctly handled
-    lower_case_key = 'something ${env:lower_case_key}'
+    lower_case_key = 'something ${lower_case_key}'
     expected = 'something lower_case_value'
     assert insert_environment_values(lower_case_key) == expected
 
-    upper_case_key = 'something ${env:UPPER_CASE_KEY}'
+    upper_case_key = 'something ${UPPER_CASE_KEY}'
     expected = 'something UPPER_CASE_VALUE'
     assert insert_environment_values(upper_case_key) == expected
 
     # Check if interpolation is case sensitive when "conficts" occur
-    lower_case_conficting_key = '${env:conflicting_key}'
+    lower_case_conficting_key = '${conflicting_key}'
     expected = 'value1'
     assert insert_environment_values(lower_case_conficting_key) == expected
 
-    upper_case_conficting_key = '${env:CONFLICTING_KEY}'
+    upper_case_conficting_key = '${CONFLICTING_KEY}'
     expected = 'value2'
     assert insert_environment_values(upper_case_conficting_key) == expected
 
