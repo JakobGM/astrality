@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+from datetime import datetime
 import os
 from pathlib import Path
 
@@ -53,7 +54,9 @@ def test_name_of_config_file(conf):
 
 
 @pytest.mark.skipif('TRAVIS' not in os.environ, reason='Slow tests only run on CI')
-def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf):
+def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf, freezer):
+    midnight = datetime(year=2018, month=1, day=31, hour=0, minute=0)
+    freezer.move_to(midnight)
     module_manager = ModuleManager(conf)
     module_manager.finish_tasks()
     assert conf['colors'] == {'1': 'CACCFD', '2': '3F72E8'}

@@ -61,7 +61,7 @@ class Module:
         self.name = section.split('/')[1]
 
         self.config = module_config[section]
-        self.timer = TIMERS[self.config['timer']](application_config)  # type: ignore
+        self.timer = TIMERS[self.config.get('timer', 'static')](application_config)  # type: ignore
 
         # Commands to run at specified times
         self.startup_command = self.config.get('run_on_startup')

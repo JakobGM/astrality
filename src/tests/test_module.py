@@ -66,6 +66,10 @@ class TestModuleClass:
     def test_module_timer_class(self, module):
         assert isinstance(module.timer, timer.Weekday)
 
+    def test_using_default_static_timer_when_no_timer_is_given(self, conf):
+        static_module = Module({'module/static': {}}, conf)
+        assert isinstance(static_module.timer, timer.Static)
+
     @freeze_time('2018-01-27')
     def test_run_shell_command_with_special_expansions(self, module, caplog):
         module.run_shell('echo {period}')

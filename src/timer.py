@@ -214,7 +214,25 @@ class Periodic(Timer):
         return self.timedelta - (datetime.now() - self.initialization_time) % self.timedelta
 
 
+class Static(Timer):
+    """Timer subclass which never changes period."""
+
+    periods = ('static',)
+
+    def _period(self) -> str:
+        """Static timer asways returns the period 'static'."""
+
+        return 'static'
+
+    def time_until_next_period(self) -> timedelta:
+        """Returns a 100 year timedelta as an infinite approximation."""
+
+        return timedelta(days=36500)
+
+
 TIMERS = {
         'solar': Solar,
         'weekday': Weekday,
+        'periodic': Periodic,
+        'static': Static,
 }
