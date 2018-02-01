@@ -35,9 +35,9 @@ module/conky:
 
     templates:
         time:
-            source: conky_themes/time-1920x1080/template.conf
+            source: templates/conky_time.conf
         performance:
-            source: conky_themes/performance-1920x1080/template.conf
+            source: templates/conky_performance.conf
 
     run_on_startup:
         - conky -c {time}
