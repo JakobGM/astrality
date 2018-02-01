@@ -14,13 +14,17 @@ import timer
 def valid_module_section():
     return {
         'module/test_module': {
-            'enabled': 'true',
+            'enabled': True,
             'timer': 'weekday',
-            'template_file': 'src/tests/test_template.conf',
-            'compiled_template': '/tmp/compiled_result',
-            'run_on_startup': 'echo startup',
-            'run_on_period_change': 'echo period_change',
-            'run_on_exit': 'echo exit',
+            'templates': {
+                'template_name': {
+                    'source': 'src/tests/test_template.conf',
+                    'target': '/tmp/compiled_result',
+                }
+            },
+            'run_on_startup': ['echo startup'],
+            'run_on_period_change': ['echo period_change'],
+            'run_on_exit': ['echo exit'],
         }
     }
 
@@ -37,10 +41,10 @@ class TestModuleClass:
     def test_valid_class_section_method_with_disabled_module_section(self):
         disabled_module_section =  {
             'module/disabled_test_module': {
-                'enabled': 'false',
-                'run_on_startup': '',
-                'run_on_period_change': '',
-                'run_on_exit': '',
+                'enabled': False,
+                'run_on_startup': ['test'],
+                'run_on_period_change': [''],
+                'run_on_exit': ['whatever'],
             }
         }
         assert Module.valid_class_section(disabled_module_section) == False
@@ -55,7 +59,7 @@ class TestModuleClass:
 
     def test_valid_class_section_with_wrongly_sized_dict(self, valid_module_section):
         invalid_module_section = valid_module_section
-        invalid_module_section.update({'module/valid2': {'enabled': 'true'}})
+        invalid_module_section.update({'module/valid2': {'enabled': True}})
 
         with pytest.raises(RuntimeError):
             Module.valid_class_section(invalid_module_section)
@@ -87,13 +91,13 @@ class TestModuleClass:
         ]
 
         caplog.clear()
-        module.run_shell('echo {compiled_template}')
-        compilation_target = str(module.compiled_template)
+        module.run_shell('echo {template_name}')
+        compilation_target = '/tmp/compiled_result'
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.INFO,
-                f'[module/test_module] Running command "echo {compilation_target}".',
+                '[module/test_module] Running command "echo /tmp/compiled_result".',
             ),
             (
                 'astrality',
@@ -127,13 +131,22 @@ class TestModuleClass:
             )
         ]
 
-    def test_running_module_startup_command(self, module, caplog):
+    def test_running_module_startup_command(
+        self,
+        module,
+        valid_module_section,
+        caplog,
+    ):
         module.startup()
+
+        template_file = str(module.templates['template_name']['source'])
+        compiled_template = str(module.templates['template_name']['target'])
+
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.INFO,
-                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
             ),
             (
                 'astrality',
@@ -162,11 +175,15 @@ class TestModuleClass:
         module = Module(valid_module_section, conf)
 
         module.startup()
+
+        template_file = str(module.templates['template_name']['source'])
+        compiled_template = str(module.templates['template_name']['target'])
+
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.INFO,
-                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
             ),
             (
                 'astrality',
@@ -175,13 +192,22 @@ class TestModuleClass:
             ),
         ]
 
-    def test_running_module_period_change_command(self, module, caplog):
+    def test_running_module_period_change_command(
+        self,
+        module,
+        valid_module_section,
+        caplog,
+    ):
         module.period_change()
+
+        template_file = str(module.templates['template_name']['source'])
+        compiled_template = str(module.templates['template_name']['target'])
+
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.INFO,
-                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
             ),
             (
                 'astrality',
@@ -210,11 +236,15 @@ class TestModuleClass:
         module = Module(valid_module_section, conf)
 
         module.period_change()
+
+        template_file = str(module.templates['template_name']['source'])
+        compiled_template = str(module.templates['template_name']['target'])
+
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.INFO,
-                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"',
+                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
             ),
             (
                 'astrality',
@@ -262,8 +292,11 @@ class TestModuleClass:
         ]
 
     def test_location_of_template_file_defined_relatively(self, module):
-        assert module.template_file == Path(__file__).parent / 'test_template.conf'
-        assert module.compiled_template == Path('/tmp/compiled_result')
+        template_file = module.templates['template_name']['source']
+        compiled_template = module.templates['template_name']['target']
+
+        assert template_file == Path(__file__).parent / 'test_template.conf'
+        assert compiled_template == Path('/tmp/compiled_result')
 
     def test_location_of_template_file_defined_absolutely(
         self,
@@ -271,10 +304,12 @@ class TestModuleClass:
         conf,
     ):
         absolute_path = Path(__file__).parent / 'test_template.conf'
-        valid_module_section['module/test_module']['template_file'] = absolute_path
+        valid_module_section['module/test_module']['templates']['template_name']['source'] = absolute_path
 
         module = Module(valid_module_section, conf)
-        assert module.template_file == absolute_path
+        template_file = module.templates['template_name']['source']
+
+        assert template_file == absolute_path
 
     def test_missing_template_file(
         self,
@@ -282,17 +317,16 @@ class TestModuleClass:
         conf,
         caplog,
     ):
-        valid_module_section['module/test_module']['template_file'] = \
+        valid_module_section['module/test_module']['templates']['template_name']['source'] = \
             '/not/existing'
 
         module = Module(valid_module_section, conf)
-        assert module.template_file == None
-        assert module.compiled_template == None
+        assert module.templates == {}
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.ERROR,
-                '[module/test_module] Template file "/not/existing" does'
+                '[module/test_module] Template "template_name": source "/not/existing" does'
                 ' not exist. Skipping compilation of this file.'
             ),
         ]
@@ -320,10 +354,9 @@ class TestModuleClass:
         valid_module_section,
         conf,
     ):
-        valid_module_section['module/test_module'].pop('compiled_template')
+        valid_module_section['module/test_module']['templates']['template_name'].pop('target')
         module = Module(valid_module_section, conf)
-        assert Path(module.temp_file.name).is_file()
-        assert Path(module.temp_file.name) == module.compiled_template
+        assert module.templates['template_name']['target'].is_file()
 
     def test_compilation_of_template(
         self,
@@ -332,19 +365,22 @@ class TestModuleClass:
         caplog,
     ):
         valid_module_section['module/test_module']['timer'] = 'solar'
-        compiled_template = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font\n'
+        compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font\n'
         module = Module(valid_module_section, conf)
-        module.compile_template()
+        module.compile_templates()
+
+        template_file = str(module.templates['template_name']['source'])
+        compiled_template = str(module.templates['template_name']['target'])
 
         with open('/tmp/compiled_result', 'r') as file:
             compiled_result = file.read()
 
-        assert compiled_template == compiled_result
+        assert compiled_template_content == compiled_result
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.INFO,
-                f'[Compiling] Template: "{module.template_file}" -> Target: "{module.compiled_template}"'
+                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"'
             ),
         ]
 
@@ -383,28 +419,32 @@ def test_has_unfinished_tasks(valid_module_section, conf, freezer):
 def config_with_modules():
     return {
         'timer/solar': {
-            'longitude': '0',
-            'latitude': '0',
-            'elevation': '0',
+            'longitude': 0,
+            'latitude': 0,
+            'elevation': 0,
         },
         'module/solar_module': {
-            'enabled': 'true',
+            'enabled': True,
             'timer': 'solar',
-            'template_file': 'src/tests/test_template.conf',
-            'compiled_template': '/tmp/compiled_result',
-            'on_startup': 'echo solar compiling {compiled_template}',
-            'on_period_change': 'echo solar {period}',
-            'on_exit': 'echo solar exit',
+            'templates': {
+                'template_name': {
+                    'source': 'src/tests/test_template.conf',
+                    'target': '/tmp/compiled_result',
+                }
+            },
+            'on_startup': ['echo solar compiling {template_name}'],
+            'on_period_change': ['echo solar {period}'],
+            'on_exit': ['echo solar exit'],
         },
         'module/weekday_module': {
-            'enabled': 'true',
+            'enabled': True,
             'timer': 'weekday',
-            'on_startup': 'echo weekday startup',
-            'on_period_change': 'echo weekday {period}',
-            'on_exit': 'echo weekday exit',
+            'on_startup': ['echo weekday startup'],
+            'on_period_change': ['echo weekday {period}'],
+            'on_exit': ['echo weekday exit'],
         },
         'module/disabled_module': {
-            'enabled': 'false',
+            'enabled': False,
             'timer': 'static',
         },
         '_runtime': {

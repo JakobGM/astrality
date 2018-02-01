@@ -3,14 +3,13 @@
 from datetime import timedelta
 import logging
 from pathlib import Path
-import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Iterable, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 import compiler
 from config import insert_into
 from resolver import Resolver
-from timer import TIMERS
+from timer import Timer, TIMERS
 from utils import run_shell
 
 logger = logging.getLogger('astrality')
@@ -20,19 +19,13 @@ class Module:
     """
     Class for executing user defined functionality in [module/*] section.
 
-    The module can define a set of commands to be run on astrality startup and
+    The module can define a set of commands to be run on astrality startup, and
     exit, in addition to every time a given type of period changes.
-
-    Available module options are as follows:
-    - enabled: true or false. Defaults to true.
-    - timer: Name of timer which determines when to run module commands.
-    - template_files: Space-seperated paths of templates to be compiled.
-
 
     Commands are run in the users shell, and can use the following placeholders:
     - {period}: The period specified by the timer instance.
-    - {compiled_template}: The path to the compiled template specified in the
-                           'template' option.
+    - {name_of_template}: The path to the compiled template specified in the
+                          'target' option.
     """
 
     def __init__(
@@ -52,75 +45,79 @@ class Module:
         In addition, the enabled option must be set to "true", or not set at
         all.
         """
-        self.manager = manager
-        self.application_config = application_config  # type: ignore
+        self.manager: Optional['ModuleManager'] = manager
+        self.application_config: Resolver = application_config  # type: ignore
 
         if self.manager:
             self.application_config = self.manager.application_config
 
         section = next(iter(module_config.keys()))
-        self.name = section.split('/')[1]  # type: ignore
+        self.name: str = section.split('/')[1]  # type: ignore
 
-        self.config = module_config[section]
-        self.timer = TIMERS[self.config.get('timer', 'static')](application_config)  # type: ignore
+        self.config: Resolver = module_config[section]
+        self.timer: Timer = TIMERS[self.config.get('timer', 'static')](application_config)  # type: ignore
 
         # Commands to run at specified times
-        self.startup_command = self.config.get('run_on_startup')
-        self.period_change_command = self.config.get('run_on_period_change')
-        self.exit_command = self.config.get('run_on_exit')
-        self.import_section_on_period_change = self.config.get('import_section_on_period_change')
+        self.startup_commands: List[str] = self.config.get('run_on_startup', [])
+        self.period_change_commands: List[str] = self.config.get('run_on_period_change', [])
+        self.exit_commands: List[str] = self.config.get('run_on_exit', [])
+        self.import_sections_on_period_change: List[str] = self.config.get('import_sections_on_period_change', [])
 
         # Attributes used in order to keep track of unfinished tasks
-        self.startup_command_has_been_run = False
-        self.last_period_change_command_run = 'this_period_should_never_be_valid'
+        self.startup_commands_have_been_run = False
+        self.last_period_change_run = 'this_period_should_never_be_valid'
         self.last_compilation_period = 'this_period_should_never_be_valid'
 
-        # Find and prepare templates and compiation targets
+        # Find and prepare templates and compilation targets
         self._prepare_templates()
-        self._prepare_compiled_templates()
 
     def _prepare_templates(self) -> None:
         """Determine template sources and compilation targets."""
 
-        self.template_file: Optional[Path] = self.config.get('template_file')
+        # config['templates'] is a dictionary with keys naming each template,
+        # and values containing another dictionary containing the mandatory
+        # key `source`, and the optional key `target`.
+        templates: Dict[str, Dict[str, str]] = self.config.get(
+            'templates',
+            {},
+        )
+        self.templates: Dict[str, Dict[str, Path]] = {}
 
-        if self.template_file:
-            self.template_file = self.expand_path(Path(self.template_file))
+        for name, template in templates.items():
+            source = self.expand_path(Path(template['source']))
 
-            if not self.template_file.is_file():
+            if not source.is_file():
                 logger.error(\
-                    f'[module/{self.name}] Template file "{self.template_file}"'
+                    f'[module/{self.name}] Template "{name}": source "{source}"'
                     ' does not exist. Skipping compilation of this file.'
                 )
-                self.template_file = None
+                continue
 
-    def _prepare_compiled_templates(self) -> None:
-        """Find compilation targets, and possibly create temporary target files."""
+            config_target = template.get('target')
+            if config_target:
+                target = self.expand_path(Path(config_target))
+            else:
+                target = self.create_temp_file()
 
-        self.compiled_template: Optional[Path] = None
-        if not self.template_file:
-            # We do not need a compilation target if no template has been set.
-            return
-
-        self.compiled_template: Optional[Path] = self.config.get('compiled_template')
-        if self.compiled_template:
-            self.compiled_template = self.expand_path(Path(self.compiled_template))
-        else:
-            self.compiled_template = self.create_temp_file()
+            self.templates[name] = {'source': source, 'target': target}
 
     def create_temp_file(self) -> Path:
         """Create a temp file used as a compilation target, returning its path."""
 
-        # NB: These temporary files/directories need to be persisted during the
-        # entirity of the scripts runtime, since the files are deleted when they
-        # go out of scope
-
-        self.temp_file = NamedTemporaryFile(  # type: ignore
+        temp_file = NamedTemporaryFile(  # type: ignore
             prefix=self.name + '-',
             dir=self.application_config['_runtime']['temp_directory'],
         )
 
-        return Path(self.temp_file.name)
+        # NB: These temporary files need to be persisted during the entirity of
+        # the scripts runtime, since the files are deleted when they go out of
+        # scope.
+        if not hasattr(self, 'temp_files'):
+            self.temp_files = [temp_file]
+        else:
+            self.temp_files.append(temp_file)
+
+        return Path(temp_file.name)
 
     def expand_path(self, path: Path) -> Path:
         """
@@ -143,107 +140,103 @@ class Module:
     def startup(self) -> None:
         """Commands to be run on Module instance startup."""
 
-        self.startup_command_has_been_run = True
+        self.startup_commands_have_been_run = True
 
-        self.compile_template()
+        self.compile_templates()
 
-        if self.startup_command:
+        for command in self.startup_commands:
             logger.info(f'[module/{self.name}] Running startup command.')
-            self.run_shell(command=self.startup_command)
-        else:
+            self.run_shell(command=command)
+
+        if len(self.startup_commands) == 0:
             logger.debug(f'[module/{self.name}] No startup command specified.')
 
     def period_change(self) -> None:
         """Commands to be run when self.timer period changes."""
 
-        self.last_period_change_command_run = self.timer.period()
+        self.last_period_change_run = self.timer.period()
 
-        self.compile_template()
+        self.compile_templates()
 
-        if self.period_change_command:
+        for command in self.period_change_commands:
             logger.info(f'[module/{self.name}] Running period change command.')
-            self.run_shell(command=self.period_change_command)
-        else:
+            self.run_shell(command=command)
+
+        if len(self.period_change_commands) == 0:
             logger.debug(f'[module/{self.name}] No period change command specified.')
 
     def exit(self) -> None:
         """Commands to be run on Module instance shutdown."""
 
-        if self.exit_command:
+        for command in self.exit_commands:
             logger.info(f'[module/{self.name}] Running exit command.')
-            self.run_shell(command=self.exit_command)
-        else:
+            self.run_shell(command=command)
+
+        if len(self.exit_commands) == 0:
             logger.debug(f'[module/{self.name}] No exit command specified.')
 
-        if hasattr(self, 'temp_file'):
-            # A temporary file has been created for this module and it should
+        if hasattr(self, 'temp_files'):
+            # Temporary files have been created for this module and they should
             # be deleted.
-            self.temp_file.close()
+            for temp_file in self.temp_files:
+                temp_file.close()
 
     def has_unfinished_tasks(self) -> bool:
         """Returns True if any of the modules have unfinished tasks."""
 
-        return not self.startup_command_has_been_run or \
-            self.last_period_change_command_run != self.timer.period()
+        return not self.startup_commands_have_been_run or \
+            self.last_period_change_run != self.timer.period()
 
     def finish_tasks(self) -> None:
         """Finish all unfinished tasks of all the modules."""
 
-        if not self.startup_command_has_been_run:
+        if not self.startup_commands_have_been_run:
             self.startup()
 
-        if self.last_period_change_command_run != self.timer.period():
+        if self.last_period_change_run != self.timer.period():
             self.period_change()
 
-            if self.import_section_on_period_change:
-                self.import_section(self.import_section_on_period_change)
+            if len(self.import_sections_on_period_change) != 0:
+                for command in self.import_sections_on_period_change:
+                    self.import_section(command)
 
                 if self.manager:
                     for module in self.manager.modules:
-                        module.compile_template(force=True)
+                        module.compile_templates(force=True)
 
-    def compile_template(self, force=False) -> None:
+    def compile_templates(self, force=False) -> None:
         """
-        Compile the module template specified by `template_file`.
+        Compile the module templates specified by the `templates` option.
 
-        If force=True, the template file will be compiled even though the
+        If force=True, the template files will be compiled even though the
         period has not changed since the last compilation. This is used when
         some module has changed the application config by importing a new
         section, which requires recompilation of all templates to reflect the
         new changes to the application config.
         """
 
-        if not self.template_file:
-            # This module has no template file to compile, and we can return
-            # early.
-            return
+        period = self.timer.period()
 
-        if not self.compiled_template:
-            error_msg = f'''[module/{self.name}] Tried to module template with
-                            template_file = "{self.template_file}"
-                            compiled_template = "{self.compiled_template}"
-                            The compilation target file is missing...'''
+        if force or self.last_compilation_period != period:
+            # The period has changed, and there is a need for compiling the
+            # templates again with the new period.
+            self.last_compilation_period = period
 
-            logger.critical(error_msg)
-            raise RuntimeError(error_msg)
-
-        else:
-            period = self.timer.period()
-
-            if force or self.last_compilation_period != period:
-                # The period has changed, and there is a need for compiling the
-                # template again with the new period.
-                compiler.compile_template(  # type: ignore
-                    template=self.template_file,
-                    target=self.compiled_template,
+            for name, template in self.templates.items():
+                compiler.compile_template(
+                    template=template['source'],
+                    target=template['target'],
                     config=self.application_config,
                 )
-                self.last_compilation_period = period
 
     def run_shell(self, command) -> None:
         command = command.format(
             period=self.timer.period(),
-            compiled_template=self.compiled_template,
+            **{
+                name: template['target']
+                for name, template
+                in self.templates.items()
+            }
         )
         logger.info(f'[module/{self.name}] Running command "{command}".')
         run_shell(
@@ -279,7 +272,14 @@ class Module:
             module_name = next(iter(section.keys()))
             valid_module_name = module_name.split('/')[0] == 'module'  # type: ignore
             enabled = section[module_name].get('enabled', True)
-            enabled = enabled not in ('false', 'off', 'disabled', 'not', '0',)
+            enabled = enabled not in (
+                'false',
+                'off',
+                'disabled',
+                'not',
+                '0',
+                False,
+            )
 
             return valid_module_name and enabled
         except KeyError:
@@ -295,7 +295,11 @@ class ModuleManager:
         for section, options in config.items():
             module_resolver = Resolver({section: options})
             if Module.valid_class_section(module_resolver):
-                self.modules.append(Module(module_resolver, config))
+                self.modules.append(Module(
+                    module_config=module_resolver,
+                    application_config=self.application_config,
+                    manager=self,
+                ))
 
     def __len__(self) -> int:
         """Return the number of managed modules."""
@@ -348,4 +352,5 @@ class ModuleManager:
                 # keeping 'TemporaryFile's within scope, but alas, it is what
                 # it is at the moment. I think this exception may be caused
                 # by running tests at the same time Astrality is interrupted.
+                continue
                 continue

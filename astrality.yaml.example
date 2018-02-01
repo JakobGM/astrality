@@ -10,34 +10,40 @@ module/wallpaper:
 
     enabled: true
     timer: solar
-    run_on_period_change: feh --bg-fill wallpaper_themes/default/{period}.*
-    run_on_exit: feh --bg-fill src/solid_black_background.jpeg
+    run_on_period_change:
+        - feh --bg-fill wallpaper_themes/default/{period}.*
+    run_on_exit:
+        - feh --bg-fill src/solid_black_background.jpeg
 
-    # The option "import_section_on_period_change: section file_path {period}" does
-    # the following after each "timer" period change:
+    # `import_section_on_period_change` can specify a string list with the format:
+    # "section file_path {period}". It does the following after each "timer" period
+    # change:
     #     - Find the yaml formatted file located at "file_path".
-    #     - Retrieve the values defined in the section named the same as the 
+    #     - Retrieve the values defined in the section named the same as the
     #       current period, e.g. night.
-    #     - Load the entire section into this configuration.
+    #     - Load the values into the section "section" of this configuration.
     #     - Recompile all templates with new values for ${ast:section:*}
     #
     # Here we change the colors of other templates based on the current wallpaper
-    import_section_on_period_change: colors wallpaper_themes/default/colors.yaml {period}
+    import_sections_on_period_change:
+        - colors wallpaper_themes/default/colors.yaml {period}
 
 
-module/conky-time:
+module/conky:
     enabled: true
     timer: solar
-    template_file: conky_themes/time-1920x1080/template.conf
-    run_on_startup: conky -c {compiled_template}
-    run_on_exit: pkill -f conky
 
+    templates:
+        time:
+            source: conky_themes/time-1920x1080/template.conf
+        performance:
+            source: conky_themes/performance-1920x1080/template.conf
 
-module/conky-performance:
-    enabled: true
-    timer: solar
-    template_file: conky_themes/performance-1920x1080/template.conf
-    run_on_startup: conky -c {compiled_template}
+    run_on_startup:
+        - conky -c {time}
+        - conky -c {performance}
+    run_on_exit:
+        - pkill -f conky
 
 
 timer/solar:

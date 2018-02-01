@@ -7,8 +7,8 @@ morning:
     2: 76B087
 
 afternoon:
-    1: ${sunrise:1}
-    2: ${sunrise:2}
+    1: FC6F42
+    2: DB4E38
 
 sunset:
     2: 9B3A1A
