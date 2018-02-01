@@ -1,13 +1,24 @@
-# Astrality - A wallpaper theme manager which uses the suns position in the sky [![Build Status](https://travis-ci.org/JakobGM/astrality.svg?branch=master)](https://travis-ci.org/JakobGM/astrality) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/astrality?branch=master)
+# Astrality - A dynamic configuration file manager <br/> [![Build Status](https://travis-ci.org/JakobGM/astrality.svg?branch=master)](https://travis-ci.org/JakobGM/astrality) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/astrality?branch=master)
 
 <img align="left" src="src/doc/astrality_logo.png">
 
 ## What does it do?
-Astrality is a Linux tool which automatically changes the wallpaper when your specific location (given by latitude and longitude) experiences dawn, noon, sunset, and dusk. It adapts to the length of day through the year.
+Astrality is a tool for managing configuration files and scheduling tasks related to those files.
 
-Conky modules are also supported, where the font color can change during the different times of the day.
+You can create templates for your configuration files, and Astrality will replace placeholders within those templates with `context` values defined in a central configuration file. Furthermore, you can dynamically manipulate that `context` at predefined times and events. 
 
-It is relatively easy to add new themes to your own liking. Pull requests with new themes, conky modules, and improvements are very welcome.
+<br/>
+
+**Possible use cases are:**
+
+* Insert environment variables (e.g. `$USER`) and command substitutions (e.g. `$(xrandr | grep -cw connected)`) into config files that do not support them.
+* Create a single source of truth for configuration options. Change your preferred font type or color scheme, and instantly see that change be applied across several different applications.
+* Change your desktop wallpaper when your specific location (given by latitude and longitude) experiences dawn, noon, sunset, and dusk. It adapts to the length of day through the year. Make your [Conky modules](https://github.com/brndnmtthws/conky) change font color accordingly.
+* And much more...  An example configuration with several examples is included.
+
+The configuration format uses the flexible [YAML](http://docs.ansible.com/ansible/latest/YAMLSyntax.html#yaml-basics) format, and the template language uses the [Jinja2 syntax](http://jinja.pocoo.org/docs/2.10/), which is easy to get started with, but allows complex templating for those inclined.
+
+It is relatively easy to create `modules` to your own liking. Pull requests with new themes, conky modules, and improvements are very welcome.
 
 ## How to install
 
