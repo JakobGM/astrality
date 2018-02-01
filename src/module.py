@@ -226,7 +226,7 @@ class Module:
                 compiler.compile_template(
                     template=template['source'],
                     target=template['target'],
-                    config=self.application_config,
+                    context=self.application_config,
                 )
 
     def run_shell(self, command) -> None:
@@ -352,5 +352,4 @@ class ModuleManager:
                 # keeping 'TemporaryFile's within scope, but alas, it is what
                 # it is at the moment. I think this exception may be caused
                 # by running tests at the same time Astrality is interrupted.
-                continue
                 continue

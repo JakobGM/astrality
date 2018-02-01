@@ -1,59 +1,56 @@
+"""Tests for the compiler module."""
+
+import logging
+from compiler import cast_to_numeric, compile_template, jinja_environment
 from pathlib import Path
 
 import pytest
+from jinja2 import Environment
 
-from compiler import (
-    cast_to_numeric,
-    find_placeholders,
-    generate_replacements,
-    generate_replacer,
-)
+from resolver import Resolver
 
-def test_generation_of_replacements(conf):
-    conf['colors'] = {1: 'CACCFD'}
-    replacements = generate_replacements(
-        Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
-        conf,
-    )
-    assert replacements == {
-        '${ast:colors:1}': 'CACCFD',
-        '${ast:fonts:1}': 'FuraCode Nerd Font',
-    }
 
-def test_use_of_replacer(conf):
-    conf['colors'] = {1: 'CACCFD'}
-    replacements = generate_replacements(
-        Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
-        conf,
-    )
-    replace = generate_replacer(replacements)
-    assert replace('${ast:colors:1}') == 'CACCFD'
+@pytest.fixture
+def test_templates_folder():
+    return Path(__file__).parent / 'templates'
 
-def test_use_of_replacer_with_integer_valued_item_in_conf(conf):
-    conf['colors'] = {1: 10}
-    replacements = generate_replacements(
-        Path(__file__).parents[2] / 'conky_themes' / 'time-1920x1080' / 'template.conf',
-        conf,
-    )
-    replace = generate_replacer(replacements)
-    assert replace('${ast:colors:1}') == '10'
 
-def test_find_placeholders():
-    template = """
-    Some text and then a valid template tag ${ast:wallpaper:theme}
-    some more text, and then another valid template tag
-    ${ast:conky:modules} even more text, and then several invalid tags
-    stuff ${astrality:conky:stuff} ${:conky:test} ${::} ${ast::}
-    ${ast:somthing:} {ast:wrong:tag} and then one last valid tag at
-    the beginning of a line:
-    ${ast:valid:tag}
-    """
-    placeholders = find_placeholders(template)
-    assert placeholders == set((
-        '${ast:wallpaper:theme}',
-        '${ast:conky:modules}',
-        '${ast:valid:tag}',
-    ))
+@pytest.fixture
+def jinja_test_env(test_templates_folder):
+    return jinja_environment(test_templates_folder)
+
+
+def test_rendering_environment_variables(jinja_test_env, expanded_env_dict):
+    template = jinja_test_env.get_template('env_vars')
+    assert template.render(env=expanded_env_dict) == \
+        'test_value\nfallback_value\n'
+
+
+def test_logging_undefined_variables(jinja_test_env, expanded_env_dict, caplog):
+    template = jinja_test_env.get_template('env_vars')
+    template.render(env=expanded_env_dict)
+    assert (
+        'compiler',
+        logging.WARNING,
+        'Template variable warning: env_UNDEFINED_VARIABLE is undefined',
+    ) in caplog.record_tuples
+
+
+def test_integer_indexed_templates(jinja_test_env):
+    template = jinja_test_env.get_template('integer_indexed')
+    context = Resolver({'section': {1: 'one', 2: 'two'}})
+    assert template.render(context) == 'one\ntwo\ntwo'
+
+
+# @pytest.mark.skip
+def test_compilation_of_jinja_template(test_templates_folder, expanded_env_dict):
+    template = test_templates_folder / 'env_vars'
+    target = Path('/tmp/astrality') / template.name
+    context = {'env': expanded_env_dict}
+    compile_template(template, target, context)
+
+    with open(target) as target:
+        assert target.read() == 'test_value\nfallback_value\n'
 
 @pytest.mark.parametrize(('string,cast,resulting_type'), [
     ('-2', -2, int),

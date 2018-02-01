@@ -9,6 +9,8 @@ attrs==17.4.0             # via pytest
 click==6.7                # via pip-tools
 first==2.0.1              # via pip-tools
 freezegun==0.3.9          # via pytest-freezegun
+jinja2==2.10
+markupsafe==1.0           # via jinja2
 mypy==0.560
 pip-tools==1.11.0
 pluggy==0.6.0             # via pytest

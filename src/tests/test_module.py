@@ -6,6 +6,7 @@ from pathlib import Path
 from freezegun import freeze_time
 import pytest
 
+from config import generate_expanded_env_dict
 from module import Module, ModuleManager
 import timer
 
@@ -18,7 +19,7 @@ def valid_module_section():
             'timer': 'weekday',
             'templates': {
                 'template_name': {
-                    'source': 'src/tests/test_template.conf',
+                    'source': 'src/tests/templates/test_template.conf',
                     'target': '/tmp/compiled_result',
                 }
             },
@@ -295,7 +296,7 @@ class TestModuleClass:
         template_file = module.templates['template_name']['source']
         compiled_template = module.templates['template_name']['target']
 
-        assert template_file == Path(__file__).parent / 'test_template.conf'
+        assert template_file == Path(__file__).parent / 'templates' / 'test_template.conf'
         assert compiled_template == Path('/tmp/compiled_result')
 
     def test_location_of_template_file_defined_absolutely(
@@ -303,7 +304,7 @@ class TestModuleClass:
         valid_module_section,
         conf,
     ):
-        absolute_path = Path(__file__).parent / 'test_template.conf'
+        absolute_path = Path(__file__).parent / 'templates' / 'test_template.conf'
         valid_module_section['module/test_module']['templates']['template_name']['source'] = absolute_path
 
         module = Module(valid_module_section, conf)
@@ -365,7 +366,7 @@ class TestModuleClass:
         caplog,
     ):
         valid_module_section['module/test_module']['timer'] = 'solar'
-        compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font\n'
+        compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font'
         module = Module(valid_module_section, conf)
         module.compile_templates()
 
@@ -418,6 +419,7 @@ def test_has_unfinished_tasks(valid_module_section, conf, freezer):
 @pytest.fixture
 def config_with_modules():
     return {
+        'env': generate_expanded_env_dict(),
         'timer/solar': {
             'longitude': 0,
             'latitude': 0,
@@ -428,7 +430,7 @@ def config_with_modules():
             'timer': 'solar',
             'templates': {
                 'template_name': {
-                    'source': 'src/tests/test_template.conf',
+                    'source': 'src/tests/templates/test_template.conf',
                     'target': '/tmp/compiled_result',
                 }
             },
@@ -447,6 +449,7 @@ def config_with_modules():
             'enabled': False,
             'timer': 'static',
         },
+        'fonts': {1: 'FuraCode Nerd Font'},
         '_runtime': {
             'config_directory': Path(__file__).parents[2],
         }

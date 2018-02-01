@@ -21,3 +21,6 @@ astral
 
 # For parsing .yaml config files
 pyyaml
+
+# For template rendering
+Jinja2

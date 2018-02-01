@@ -1,0 +1,3 @@
+{{ env.EXAMPLE_ENV_VARIABLE }}
+{{ env.UNDEFINED_VARIABLE or 'fallback_value' }}
+{{ env_UNDEFINED_VARIABLE }}
