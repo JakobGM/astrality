@@ -1,14 +1,16 @@
+"""Module for all timer classes, keeping track of certain events for modules."""
+
 import abc
-from datetime import datetime, timedelta, MAXYEAR, MINYEAR
+from datetime import datetime, timedelta
 import logging
 from math import inf
-from typing import Any, Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import pytz
 from astral import Location
 
-from resolver import Resolver
 
+TimerConfig = Dict[str, Union[str, int, float]]
 logger = logging.getLogger('astrality')
 
 
@@ -16,15 +18,16 @@ class Timer(abc.ABC):
     """Class which defines different periods."""
 
     periods: Tuple[str, ...]
+    default_timer_config: TimerConfig
 
-    def __init__(self, config: Resolver) -> None:
+    def __init__(self, timer_config: TimerConfig) -> None:
         """Initialize a period timer based on the configuration of the user."""
         self.name = self.__class__.__name__.lower()
-        self.application_config = config
-        self.timer_config = self.application_config.get(
-            'timer/' + self.name,
-            {},
-        )
+
+        # Use default values for timer configuration options that are not
+        # specified
+        self.timer_config = self.default_timer_config.copy()
+        self.timer_config.update(timer_config)
 
     def period(self) -> str:
         """
@@ -44,7 +47,7 @@ class Timer(abc.ABC):
                     ' the option in case it is intentional.'
                 )
 
-            return force_period
+            return force_period  # type: ignore
 
         return self._period()
 
@@ -59,10 +62,6 @@ class Timer(abc.ABC):
         """Return the time remaining until the next period in seconds."""
         pass
 
-    @property
-    def config(self):
-        return self.application_config.get('timer/' + self.name, {})
-
 
 class Solar(Timer):
     """
@@ -71,9 +70,15 @@ class Solar(Timer):
     It changes period after dawn, sunrise, morning, afternoon, sunset, dusk.
     """
     periods = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
+    default_timer_config = {
+        'type': 'solar',
+        'longitude': 0,
+        'latitude': 0,
+        'elevation': 0,
+    }
 
-    def __init__(self, config: Resolver) -> None:
-        Timer.__init__(self, config)
+    def __init__(self, timer_config: TimerConfig) -> None:
+        super().__init__(timer_config)
         self.location = self.construct_astral_location()
 
     def _period(self) -> str:
@@ -136,9 +141,9 @@ class Solar(Timer):
         location.region = 'RegionIsNotImportantEither'
 
         # But these are important, and should be provided by the user
-        location.latitude = float(self.config.get('latitude', '0'))
-        location.longitude = float(self.config.get('longitude', '0'))
-        location.elevation = float(self.config.get('elevation', '0'))
+        location.latitude = self.timer_config['latitude']
+        location.longitude = self.timer_config['longitude']
+        location.elevation = self.timer_config['elevation']
         location.timezone = 'UTC'
 
         return location
@@ -156,6 +161,7 @@ class Weekday(Timer):
         'saturday',
         'sunday',
     )
+    default_timer_config = {'type': 'weekday'}
 
     weekdays = dict(zip(range(0,7), periods))
 
@@ -184,18 +190,25 @@ class Periodic(Timer):
                 return False
 
     periods = Periods()
+    default_timer_config = {
+        'type': 'periodic',
+        'seconds': 0,
+        'minutes': 0,
+        'hours': 0,
+        'days': 0,
+    }
 
-    def __init__(self, config: Resolver) -> None:
+    def __init__(self, timer_config: TimerConfig) -> None:
         """Initialize a constant frequency timer."""
 
-        super().__init__(config)
+        super().__init__(timer_config)
 
         # Period specified by the user
-        self.timedelta = timedelta(
-            seconds=int(self.timer_config.get('seconds', '0')),
-            minutes=int(self.timer_config.get('minutes', '0')),
-            hours=int(self.timer_config.get('hours', '0')),
-            days=int(self.timer_config.get('days', '0')),
+        self.timedelta = timedelta(  # type: ignore
+            seconds=self.timer_config['seconds'],
+            minutes=self.timer_config['minutes'],
+            hours=self.timer_config['hours'],
+            days=self.timer_config['days'],
         )
 
         if self.timedelta.total_seconds() == 0.0:
@@ -218,6 +231,7 @@ class Static(Timer):
     """Timer subclass which never changes period."""
 
     periods = ('static',)
+    default_timer_config = {'type': 'static'}
 
     def _period(self) -> str:
         """Static timer asways returns the period 'static'."""
@@ -236,3 +250,7 @@ TIMERS = {
         'periodic': Periodic,
         'static': Static,
 }
+
+def timer_factory(timer_config: Dict[str, Union[str, int]]) -> Timer:
+    timer_type = timer_config['type']
+    return TIMERS[timer_type](timer_config)  # type: ignore

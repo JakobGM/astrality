@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Any, Dict, Union
 
 from jinja2 import (
     Environment,
@@ -26,6 +26,7 @@ def cast_to_numeric(value: str) -> Union[int, float, str]:
             return float(value)
         except ValueError:
             return value
+
 
 def jinja_environment(templates_folder: Path) -> Environment:
     """Return a jinja Environment instance for templates in a folder."""
@@ -57,7 +58,11 @@ def finalize_variable_expression(result: str) -> str:
         return result
 
 
-def compile_template(template: Path, target: Path, context: Resolver) -> None:
+def compile_template(
+    template: Path,
+    target: Path,
+    context: Union[Dict[str, Any], Resolver],
+) -> None:
     """Compile template to target destination with specific context."""
     logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')
 

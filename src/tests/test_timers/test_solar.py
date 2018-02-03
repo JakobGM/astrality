@@ -6,8 +6,17 @@ from timer import Solar
 
 
 @pytest.fixture
-def solar(conf):
-    return Solar(conf)
+def solar_config():
+    return {
+        'type': 'solar',
+        'latitude': 63.446827,
+        'longitude': 10.421906,
+        'elevation': 0,
+    }
+
+@pytest.fixture
+def solar(solar_config):
+    return Solar(solar_config)
 
 # --- Times around dawn ---
 @pytest.fixture
@@ -69,7 +78,7 @@ def test_that_sunset_is_correctly_identified_before_dusk(solar, before_dusk, fre
     assert period == 'sunset'
 
 
-def test_loation(solar):
+def test_location(solar):
     location = solar.construct_astral_location()
     assert str(location) == 'CityNotImportant/RegionIsNotImportantEither, tz=UTC, lat=63.45, lon=10.42'
 
@@ -99,16 +108,6 @@ def test_time_right_before_midnight(solar, freezer):
     assert 0 < time_left.total_seconds() < 60 * 60 * 24
 
 def test_config_timer_method():
-    solar_timer_application_config = {
-        'timer/solar': {
-            'longitude': '0',
-            'latitude': '0',
-            'elevation': '0',
-        },
-    }
+    solar_timer_application_config = {'type': 'solar'}
     solar_timer = Solar(solar_timer_application_config)
-    assert solar_timer.config['latitude'] == '0'
-
-def test_config_with_empty_config_section():
-    solar_timer = Solar({})
-    assert solar_timer.location.latitude == 0
+    assert solar_timer.timer_config['latitude'] == 0

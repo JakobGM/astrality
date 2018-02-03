@@ -2,17 +2,11 @@
 
 import logging
 import os
-from configparser import (
-    ConfigParser,
-    ExtendedInterpolation,
-    InterpolationMissingOptionError,
-)
 from pathlib import Path
 import re
 from io import StringIO
-from typing import Dict, Match, MutableMapping, Optional, Tuple
+from typing import Any, Dict, Match, MutableMapping, Optional, Tuple
 
-from resolver import Resolver
 from utils import run_shell
 
 logger = logging.getLogger('astrality')
@@ -27,6 +21,9 @@ except ImportError:
         'LibYAML not installed.'
         'Using somewhat slower pure python implementation.',
     )
+
+
+ApplicationConfig = Dict[str, Dict[str, Any]]
 
 
 def infer_config_location(
@@ -65,10 +62,10 @@ def infer_config_location(
     return config_directory, config_file
 
 
-def resolver_from_config_file(
+def dict_from_config_file(
     config_file: Path,
     with_env: Optional[bool] = True,
-) -> Resolver:
+) -> ApplicationConfig:
     """
     Return a dictionary that reflects the contents of `config_file`.
 
@@ -89,60 +86,35 @@ def resolver_from_config_file(
         config_file,
         expanded_env_dict,
     )
-    config_parser = load(StringIO(config_string))
-
-    # Convert ConfigParser into a dictionary, performing all variable
-    # interpolations at the same time
-    conf_dict: Dict[str, Dict[str, str]] = {}
-    for section_name, section in config_parser.items():
-        conf_dict[section_name] = {}
-        for option in section.keys():
-            try:
-                # Here we must be very careful when `get`ing values, as several
-                # things can go wrong. See the exception handling below.
-                value = section[option]
-                conf_dict[section_name][option] = value
-            except InterpolationMissingOptionError as e:
-                if 'Bad value substitution' in str(e):
-                    raw_value = config_parser.get(section_name, option, raw=True)
-                    conf_dict[section_name][option] = raw_value
-
-                    logger.warning(f'''
-                    Error: In section [{section_name}]:
-                    Could not interpolate {option}={raw_value}.
-                    Using raw value instead.
-                    ''')
-                    continue
-                else:
-                    raise
+    conf_dict = load(StringIO(config_string))
 
     if with_env:
         conf_dict['env'] = expanded_env_dict
 
-    return Resolver(conf_dict)
+    return conf_dict
 
 
 def infer_runtime_variables_from_config(
     config_directory: Path,
     config_file: Path,
-    config: Resolver,
-) -> Resolver:
+    config: ApplicationConfig,
+) -> Dict[str, Dict[str, Path]]:
     """Return infered runtime variables based on config file."""
 
-    temp_directory = Path(os.environ.get('TMPDIR', '/tmp'), 'astrality')
+    temp_directory = Path(os.environ.get('TMPDIR', '/tmp')) / 'astrality'
     if not temp_directory.is_dir():
         os.mkdir(temp_directory)
 
-    return Resolver({
+    return {
         '_runtime': {
             'config_directory': config_directory,
             'config_file': config_file,
             'temp_directory': temp_directory,
         }
-    })
+    }
 
 
-def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
+def user_configuration(config_directory: Optional[Path] = None) -> ApplicationConfig:
     """
     Return Resolver object containing the users configuration.
 
@@ -161,11 +133,15 @@ def user_configuration(config_directory: Optional[Path] = None) -> Resolver:
     """
     config_directory, config_file = infer_config_location(config_directory)
 
-    config = resolver_from_config_file(
+    config = dict_from_config_file(
         config_file,
         with_env=True,
     )
-    config.update(infer_runtime_variables_from_config(config_directory, config_file, config))
+    config.update(infer_runtime_variables_from_config(
+        config_directory,
+        config_file,
+        config,
+    ))
 
     return config
 
@@ -174,9 +150,11 @@ def preprocess_configuration_file(
     env_dict: MutableMapping[str, str] = os.environ,
 ) -> str:
     """
-    Interpolate environment variables set in config file parsed by ConfigParser.
+    Interpolate environment variables and command substitutions in file.
 
-    Interpolation syntax: ${name} -> os.environ[name].
+    Interpolation syntax:
+        ${name} -> os.environ[name].
+        $(command) -> stdout from shell execution.
     """
 
     conf_text = ''
@@ -247,19 +225,20 @@ def generate_expanded_env_dict() -> Dict[str, str]:
 
     return env_dict
 
+
 def insert_into(
-    config: Resolver,
+    config: Any,
     section: str,
     from_config_file: Path,
     from_section: str,
-) -> Resolver:
+) -> Any:
     """
     Import section from config file into config dictionary.
 
     The method overwrites `config[section]` with the values from [from_section]
     defined in `from_config_file`.
     """
-    conf_resolver = resolver_from_config_file(from_config_file, with_env=False)
+    conf_resolver = dict_from_config_file(from_config_file, with_env=False)
     config[section] = conf_resolver[from_section]
 
     return config

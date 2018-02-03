@@ -6,8 +6,8 @@ import pytest
 from timer import Weekday
 
 @pytest.fixture
-def weekday(conf):
-    return Weekday(conf)
+def weekday():
+    return Weekday({'type': 'weekday'})
 
 @pytest.fixture
 def noon_friday():
@@ -38,9 +38,8 @@ def test_weekday_time_until_next_period(weekday, noon_friday, freezer):
 
 def test_using_force_period_config_option(noon_friday, freezer, caplog):
     solar_timer_application_config = {
-        'timer/weekday': {
-            'force_period': 'monday',
-        },
+        'type': 'weekday',
+        'force_period': 'monday',
     }
     freezer.move_to(noon_friday)
     weekday_timer = Weekday(solar_timer_application_config)
@@ -59,9 +58,8 @@ def test_using_force_period_config_option_with_wrong_period_type(
     caplog,
 ):
     solar_timer_application_config = {
-        'timer/weekday': {
-            'force_period': 'Mothers_day',
-        },
+        'type': 'weekday',
+        'force_period': 'Mothers_day',
     }
     freezer.move_to(noon_friday)
     weekday_timer = Weekday(solar_timer_application_config)

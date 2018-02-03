@@ -16,7 +16,7 @@ def valid_module_section():
     return {
         'module/test_module': {
             'enabled': True,
-            'timer': 'weekday',
+            'timer': {'type': 'weekday'},
             'templates': {
                 'template_name': {
                     'source': 'src/tests/templates/test_template.conf',
@@ -365,7 +365,7 @@ class TestModuleClass:
         conf,
         caplog,
     ):
-        valid_module_section['module/test_module']['timer'] = 'solar'
+        valid_module_section['module/test_module']['timer']['type'] = 'solar'
         compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font'
         module = Module(valid_module_section, conf)
         module.compile_templates()
@@ -420,14 +420,14 @@ def test_has_unfinished_tasks(valid_module_section, conf, freezer):
 def config_with_modules():
     return {
         'env': generate_expanded_env_dict(),
-        'timer/solar': {
-            'longitude': 0,
-            'latitude': 0,
-            'elevation': 0,
-        },
         'module/solar_module': {
             'enabled': True,
-            'timer': 'solar',
+            'timer': {
+                'type': 'solar',
+                'longitude': 0,
+                'latitude': 0,
+                'elevation': 0,
+            },
             'templates': {
                 'template_name': {
                     'source': 'src/tests/templates/test_template.conf',
@@ -440,7 +440,7 @@ def config_with_modules():
         },
         'module/weekday_module': {
             'enabled': True,
-            'timer': 'weekday',
+            'timer': {'type': 'weekday'},
             'on_startup': ['echo weekday startup'],
             'on_period_change': ['echo weekday {period}'],
             'on_exit': ['echo weekday exit'],

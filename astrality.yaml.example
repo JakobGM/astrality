@@ -7,9 +7,25 @@ settings/general:
 
 module/wallpaper:
     # A module for changing your wallpaper based on the suns position in the sky.
-
     enabled: true
-    timer: solar
+
+    timer:
+        # The solar timer provides the following periods:
+        # sunrise, morning, afternoon, sunset, and night.
+        type: solar
+
+        # Since this is dependent on your exact location, you have to specify your
+        # GPS coordinates. They are can be easily obtained from:
+        # https://www.latlong.net/
+        latitude: 63.446827
+        longitude: 10.421906
+        elevation: 0
+
+        # You can force a timer to always return the same period for debugging reasons,
+        # e.g. if you want to check if all your periodic color schemes fit your
+        # periodic wallpapers.
+        # force_period: morning
+
     run_on_period_change:
         - feh --bg-fill wallpaper_themes/default/{period}.*
     run_on_exit:
@@ -31,7 +47,6 @@ module/wallpaper:
 
 module/conky:
     enabled: true
-    timer: solar
 
     templates:
         time:
@@ -44,24 +59,6 @@ module/conky:
         - conky -c {performance}
     run_on_exit:
         - pkill -f conky
-
-
-timer/solar:
-    # The solar timer provides the following periods:
-    # sunrise, morning, afternoon, sunset, and night.
-
-    # Since this is dependent on your exact location, you have to specify your
-    # GPS coordinates. They are can be easily obtained from:
-    # https://www.latlong.net/
-
-    latitude: 63.446827
-    longitude: 10.421906
-    elevation: 0
-
-    # You can force a timer to always return the same period for debugging reasons,
-    # e.g. if you want to check if all your periodic color schemes fit your
-    # periodic wallpapers.
-    # force_period: morning
 
 
 general:

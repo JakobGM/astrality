@@ -4,14 +4,15 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import compiler
-from config import insert_into
+from config import ApplicationConfig, insert_into
 from resolver import Resolver
-from timer import Timer, TIMERS
+from timer import Timer, timer_factory
 from utils import run_shell
 
+ModuleConfig = Dict[str, Any]
 logger = logging.getLogger('astrality')
 
 
@@ -30,8 +31,8 @@ class Module:
 
     def __init__(
         self,
-        module_config: Union[Resolver, dict],
-        application_config: Resolver,
+        module_config: ModuleConfig,
+        application_config: ApplicationConfig,
         manager: Optional['ModuleManager'] = None,
     ) -> None:
         """
@@ -46,7 +47,7 @@ class Module:
         all.
         """
         self.manager: Optional['ModuleManager'] = manager
-        self.application_config: Resolver = application_config  # type: ignore
+        self.application_config: ApplicationConfig = application_config  # type: ignore
 
         if self.manager:
             self.application_config = self.manager.application_config
@@ -54,8 +55,12 @@ class Module:
         section = next(iter(module_config.keys()))
         self.name: str = section.split('/')[1]  # type: ignore
 
-        self.config: Resolver = module_config[section]
-        self.timer: Timer = TIMERS[self.config.get('timer', 'static')](application_config)  # type: ignore
+        self.config: ModuleConfig = module_config[section]
+
+        # Use static timer if no timer is specified
+        self.timer: Timer = timer_factory(
+            self.config.get('timer', {'type': 'static'}),
+        )
 
         # Commands to run at specified times
         self.startup_commands: List[str] = self.config.get('run_on_startup', [])
@@ -259,7 +264,7 @@ class Module:
         )
 
     @staticmethod
-    def valid_class_section(section: Resolver) -> bool:
+    def valid_class_section(section: ModuleConfig) -> bool:
         """Check if the given dict represents a valid enabled module."""
 
         if not len(section) == 1:
@@ -288,12 +293,12 @@ class Module:
 class ModuleManager:
     """A manager for operating on a set of modules."""
 
-    def __init__(self, config: Resolver) -> None:
+    def __init__(self, config: ApplicationConfig) -> None:
         self.application_config = config
         self.modules: List[Module] = []
 
         for section, options in config.items():
-            module_resolver = Resolver({section: options})
+            module_resolver = {section: options}
             if Module.valid_class_section(module_resolver):
                 self.modules.append(Module(
                     module_config=module_resolver,

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from config import (
-    resolver_from_config_file,
+    dict_from_config_file,
     insert_environment_values,
     insert_command_substitutions,
     insert_into,
@@ -19,7 +19,7 @@ from module import ModuleManager
 @pytest.fixture
 def dummy_config():
     test_conf = Path(__file__).parent / 'test.yaml'
-    return resolver_from_config_file(test_conf)
+    return dict_from_config_file(test_conf)
 
 
 class TestAllConfigFeaturesFromDummyConfig:
@@ -39,11 +39,6 @@ class TestAllConfigFeaturesFromDummyConfig:
 
     def test_environment_variable_interpolation(self, dummy_config):
         assert dummy_config['section3']['env_variable'] == 'test_value, hello'
-
-    def test_integer_index_resolution(self, dummy_config):
-        assert dummy_config['section4'][1] == 'primary_value'
-        assert dummy_config['section4'][0] == 'primary_value'
-        assert dummy_config['section4'][2] == 'primary_value'
 
 
 def test_config_directory_name(conf):

@@ -6,8 +6,8 @@ from timer import Periodic
 
 
 @pytest.fixture
-def periodic(conf):
-    return Periodic(conf)
+def periodic():
+    return Periodic({'type': 'periodic'})
 
 
 @pytest.mark.parametrize("period, is_period", [
@@ -34,12 +34,11 @@ def test_periodic_standard_timedelta(freezer):
 
 def test_using_custom_periodic_timer(freezer):
     custom_periodic_config = {
-        'timer/periodic': {
-            'seconds': '1',
-            'minutes': '2',
-            'hours': '3',
-            'days': '4',
-        },
+        'type': 'periodic',
+        'seconds': 1,
+        'minutes': 2,
+        'hours': 3,
+        'days': 4,
     }
     custom_periodic = Periodic(custom_periodic_config)
     assert custom_periodic.time_until_next_period() == timedelta(
