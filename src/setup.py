@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='astrality',
-    version='0.0.7',
+    version='0.0.9',
     packages=find_packages(),
     install_requires=[
         'astral',
@@ -13,7 +13,7 @@ setup(
         'Jinja2',
     ],
     python_requires='>=3.6',
-    scripts=['astrality'],
+    scripts=['bin/astrality'],
 
     # metadata for upload to PyPI
     author='Jakob Gerhard Martinussen',
