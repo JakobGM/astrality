@@ -24,3 +24,9 @@ pyyaml
 
 # For template rendering
 Jinja2
+
+# For distribution and installation of this application
+setuptools
+
+# For binary distribution for faster installation times
+wheel
