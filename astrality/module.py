@@ -6,11 +6,11 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterable, List, Optional, Union
 
-import compiler
-from config import ApplicationConfig, insert_into
-from resolver import Resolver
-from timer import Timer, timer_factory
-from utils import run_shell
+from astrality import compiler
+from astrality.config import ApplicationConfig, insert_into
+from astrality.resolver import Resolver
+from astrality.timer import Timer, timer_factory
+from astrality.utils import run_shell
 
 ModuleConfig = Dict[str, Any]
 logger = logging.getLogger('astrality')

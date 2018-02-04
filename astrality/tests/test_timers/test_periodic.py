@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from timer import Periodic
+from astrality.timer import Periodic
 
 
 @pytest.fixture

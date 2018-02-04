@@ -1,0 +1,2 @@
+recursive-include astrality/config *
+recursive-include astrality/tests *

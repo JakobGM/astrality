@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from timer import Weekday
+from astrality.timer import Weekday
 
 @pytest.fixture
 def weekday():

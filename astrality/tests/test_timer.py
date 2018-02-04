@@ -1,6 +1,6 @@
 import pytest
 
-from timer import Periodic, Solar, Static, Weekday, timer_factory
+from astrality.timer import Periodic, Solar, Static, Weekday, timer_factory
 
 
 @pytest.fixture

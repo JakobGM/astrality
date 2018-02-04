@@ -1,18 +1,17 @@
 import os
-from pathlib import Path
 import signal
 import subprocess
 import time
 
 import pytest
 
-from astrality import main
+from astrality.astrality import main
 
 
 @pytest.mark.slow
 def test_termination_of_main_process():
     astrality_process = subprocess.Popen(
-        ['python3', Path(Path(__file__).parents[1], 'astrality.py', )],
+        ['./bin/astrality'],
         stdout=subprocess.PIPE,
         preexec_fn=os.setsid,
     )
@@ -27,7 +26,7 @@ def test_termination_of_main_process():
 @pytest.mark.slow
 def test_interrupt_of_main_process():
     astrality_process = subprocess.Popen(
-        ['python3', Path(Path(__file__).parents[1], 'astrality.py', )],
+        ['./bin/astrality'],
         stdout=subprocess.PIPE,
         preexec_fn=os.setsid,
     )

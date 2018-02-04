@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from timer import Static
+from astrality.timer import Static
 
 
 def test_static_periods():

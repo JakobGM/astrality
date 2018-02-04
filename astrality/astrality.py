@@ -10,8 +10,8 @@ import subprocess
 import sys
 import time
 
-from config import user_configuration
-from module import ModuleManager
+from astrality.config import user_configuration
+from astrality.module import ModuleManager
 
 logger = logging.getLogger('astrality')
 logging.basicConfig(level=os.environ.get('ASTRALITY_LOGGING_LEVEL', 'WARNING'))

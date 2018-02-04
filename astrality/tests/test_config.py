@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from config import (
+from astrality.config import (
     dict_from_config_file,
     insert_environment_values,
     insert_command_substitutions,
@@ -13,7 +13,7 @@ from config import (
     generate_expanded_env_dict,
     preprocess_configuration_file,
 )
-from module import ModuleManager
+from astrality.module import ModuleManager
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ class TestAllConfigFeaturesFromDummyConfig:
 
 
 def test_config_directory_name(conf):
-    assert str(conf['_runtime']['config_directory'])[-10:] == '/astrality'
+    assert str(conf['_runtime']['config_directory'])[-7:] == '/config'
 
 
 def test_name_of_config_file(conf):

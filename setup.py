@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='astrality',
-    version='0.0.9',
+    version='0.0.15',
     packages=find_packages(),
     install_requires=[
         'astral',
@@ -14,6 +14,7 @@ setup(
     ],
     python_requires='>=3.6',
     scripts=['bin/astrality'],
+    include_package_data=True,
 
     # metadata for upload to PyPI
     author='Jakob Gerhard Martinussen',

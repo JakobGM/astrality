@@ -29,7 +29,7 @@ module/wallpaper:
     run_on_period_change:
         - feh --bg-fill wallpaper_themes/default/{period}.*
     run_on_exit:
-        - feh --bg-fill src/solid_black_background.jpeg
+        - feh --bg-fill wallpaper_themes/default/solid_black_background.jpeg
 
     # `import_section_on_period_change` can specify a string list with the format:
     # "section file_path {period}". It does the following after each "timer" period

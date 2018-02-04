@@ -1,0 +1,262 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/1620c633/
+ApplicationConfig	astrality/config.py	/^ApplicationConfig = Dict[str, Dict[str, Any]]$/;"	v
+Dumper	astrality/config.py	/^    from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore$/;"	x
+Key	astrality/resolver.py	/^Key = Union[str, Real]$/;"	v
+Loader	astrality/config.py	/^    from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore$/;"	x
+Module	astrality/module.py	/^class Module:$/;"	c
+ModuleConfig	astrality/module.py	/^ModuleConfig = Dict[str, Any]$/;"	v
+ModuleManager	astrality/module.py	/^class ModuleManager:$/;"	c
+Periodic	astrality/timer.py	/^class Periodic(Timer):$/;"	c
+Periods	astrality/timer.py	/^    class Periods(tuple):$/;"	c	class:Periodic
+Real	astrality/resolver.py	/^Real = Union[int, float]$/;"	v
+Resolver	astrality/resolver.py	/^class Resolver:$/;"	c
+Solar	astrality/timer.py	/^class Solar(Timer):$/;"	c
+Static	astrality/timer.py	/^class Static(Timer):$/;"	c
+TIMERS	astrality/timer.py	/^TIMERS = {$/;"	v
+TestAllConfigFeaturesFromDummyConfig	astrality/tests/test_config.py	/^class TestAllConfigFeaturesFromDummyConfig:$/;"	c
+TestModuleClass	astrality/tests/test_module.py	/^class TestModuleClass:$/;"	c
+TestModuleManager	astrality/tests/test_module.py	/^class TestModuleManager:$/;"	c
+TestResolverClass	astrality/tests/test_resolver.py	/^class TestResolverClass:$/;"	c
+TestTimerDefaultConfiguration	astrality/tests/test_timer.py	/^class TestTimerDefaultConfiguration:$/;"	c
+TestTimerFactory	astrality/tests/test_timer.py	/^class TestTimerFactory:$/;"	c
+Timer	astrality/timer.py	/^class Timer(abc.ABC):$/;"	c
+TimerConfig	astrality/timer.py	/^TimerConfig = Dict[str, Union[str, int, float]]$/;"	v
+Value	astrality/resolver.py	/^Value = Any$/;"	v
+Weekday	astrality/timer.py	/^class Weekday(Timer):$/;"	c
+__contains__	astrality/resolver.py	/^    def __contains__(self, key: Key) -> bool:$/;"	m	class:Resolver
+__contains__	astrality/timer.py	/^        def __contains__(self, item) -> bool:$/;"	m	class:Periodic.Periods
+__eq__	astrality/resolver.py	/^    def __eq__(self, other) -> bool:$/;"	m	class:Resolver
+__getitem__	astrality/resolver.py	/^    def __getitem__(self, key: Key) -> Value:$/;"	m	class:Resolver
+__init__	astrality/module.py	/^    def __init__($/;"	m	class:Module
+__init__	astrality/module.py	/^    def __init__(self, config: ApplicationConfig) -> None:$/;"	m	class:ModuleManager
+__init__	astrality/resolver.py	/^    def __init__($/;"	m	class:Resolver
+__init__	astrality/timer.py	/^    def __init__(self, timer_config: TimerConfig) -> None:$/;"	m	class:Periodic
+__init__	astrality/timer.py	/^    def __init__(self, timer_config: TimerConfig) -> None:$/;"	m	class:Solar
+__init__	astrality/timer.py	/^    def __init__(self, timer_config: TimerConfig) -> None:$/;"	m	class:Timer
+__len__	astrality/module.py	/^    def __len__(self) -> int:$/;"	m	class:ModuleManager
+__len__	astrality/resolver.py	/^    def __len__(self) -> int:$/;"	m	class:Resolver
+__repr__	astrality/resolver.py	/^    def __repr__(self) -> str:$/;"	m	class:Resolver
+__req__	astrality/resolver.py	/^    def __req__(self, other) -> bool:$/;"	m	class:Resolver
+__setitem__	astrality/resolver.py	/^    def __setitem__(self, key: Key, value: Value) -> None:$/;"	m	class:Resolver
+__str__	astrality/resolver.py	/^    def __str__(self) -> str:$/;"	m	class:Resolver
+_period	astrality/timer.py	/^    def _period(self) -> str:$/;"	m	class:Periodic
+_period	astrality/timer.py	/^    def _period(self) -> str:$/;"	m	class:Solar
+_period	astrality/timer.py	/^    def _period(self) -> str:$/;"	m	class:Static
+_period	astrality/timer.py	/^    def _period(self) -> str:$/;"	m	class:Timer
+_period	astrality/timer.py	/^    def _period(self) -> str:$/;"	m	class:Weekday
+_prepare_templates	astrality/module.py	/^    def _prepare_templates(self) -> None:$/;"	m	class:Module
+addopts	pytest.ini	/^addopts = --mypy$/;"	k	section:pytest
+after_dawn	astrality/tests/test_timers/test_solar.py	/^def after_dawn(dawn):$/;"	f
+after_dusk	astrality/tests/test_timers/test_solar.py	/^def after_dusk(dusk):$/;"	f
+before_dawn	astrality/tests/test_timers/test_solar.py	/^def before_dawn(dawn):$/;"	f
+before_dusk	astrality/tests/test_timers/test_solar.py	/^def before_dusk(dusk):$/;"	f
+cast_to_numeric	astrality/compiler.py	/^def cast_to_numeric(value: str) -> Union[int, float, str]:$/;"	f
+command_substitution	astrality/config.py	/^    def command_substitution(match: Match[str]) -> str:$/;"	f	function:insert_command_substitutions	file:
+compile_template	astrality/compiler.py	/^def compile_template($/;"	f
+compile_templates	astrality/module.py	/^    def compile_templates(self, force=False) -> None:$/;"	m	class:Module
+conf	conftest.py	/^def conf():$/;"	f
+conf_file_path	conftest.py	/^def conf_file_path(conf_path):$/;"	f
+conf_path	conftest.py	/^def conf_path():$/;"	f
+config	templates/conky_performance.conf	/^conky.config = {$/;"	k
+config	templates/conky_time.conf	/^conky.config = {$/;"	k
+config_with_modules	astrality/tests/test_module.py	/^def config_with_modules():$/;"	f
+construct_astral_location	astrality/timer.py	/^    def construct_astral_location($/;"	m	class:Solar
+create_temp_file	astrality/module.py	/^    def create_temp_file(self) -> Path:$/;"	m	class:Module
+dawn	astrality/tests/test_timers/test_solar.py	/^def dawn(solar):$/;"	f
+default_timer_config	astrality/timer.py	/^    default_timer_config = {$/;"	v	class:Periodic
+default_timer_config	astrality/timer.py	/^    default_timer_config = {$/;"	v	class:Solar
+default_timer_config	astrality/timer.py	/^    default_timer_config = {'type': 'static'}$/;"	v	class:Static
+default_timer_config	astrality/timer.py	/^    default_timer_config = {'type': 'weekday'}$/;"	v	class:Weekday
+dict_from_config_file	astrality/config.py	/^def dict_from_config_file($/;"	f
+dummy_config	astrality/tests/test_config.py	/^def dummy_config():$/;"	f
+dusk	astrality/tests/test_timers/test_solar.py	/^def dusk(solar):$/;"	f
+env	pytest.ini	/^env =$/;"	k	section:pytest
+exit	astrality/module.py	/^    def exit(self) -> None:$/;"	m	class:Module
+exit	astrality/module.py	/^    def exit(self) -> None:$/;"	m	class:ModuleManager
+exit_handler	astrality/astrality.py	/^    def exit_handler(signal=None, frame=None) -> None:$/;"	f	function:main	file:
+expand_environment_variable	astrality/config.py	/^    def expand_environment_variable(match: Match[str]) -> str:$/;"	f	function:insert_environment_values	file:
+expand_path	astrality/module.py	/^    def expand_path(self, path: Path) -> Path:$/;"	m	class:Module
+expanded_env_dict	conftest.py	/^def expanded_env_dict():$/;"	f
+finalize_variable_expression	astrality/compiler.py	/^def finalize_variable_expression(result: str) -> str:$/;"	f
+finish_tasks	astrality/module.py	/^    def finish_tasks(self) -> None:$/;"	m	class:Module
+finish_tasks	astrality/module.py	/^    def finish_tasks(self) -> None:$/;"	m	class:ModuleManager
+generate_expanded_env_dict	astrality/config.py	/^def generate_expanded_env_dict() -> Dict[str, str]:$/;"	f
+get	astrality/resolver.py	/^    def get(self, key: Key, defualt=None) -> Value:$/;"	m	class:Resolver
+has_unfinished_tasks	astrality/module.py	/^    def has_unfinished_tasks(self) -> bool:$/;"	m	class:Module
+has_unfinished_tasks	astrality/module.py	/^    def has_unfinished_tasks(self) -> bool:$/;"	m	class:ModuleManager
+ignore_missing_imports	mypy.ini	/^ignore_missing_imports = True$/;"	k	section:mypy
+import_section	astrality/module.py	/^    def import_section(self, command: str) -> None:$/;"	m	class:Module
+incremental	mypy.ini	/^incremental = True$/;"	k	section:mypy
+infer_config_location	astrality/config.py	/^def infer_config_location($/;"	f
+infer_runtime_variables_from_config	astrality/config.py	/^def infer_runtime_variables_from_config($/;"	f
+insert_command_substitutions	astrality/config.py	/^def insert_command_substitutions(content: str) -> str:$/;"	f
+insert_environment_values	astrality/config.py	/^def insert_environment_values($/;"	f
+insert_into	astrality/config.py	/^def insert_into($/;"	f
+items	astrality/resolver.py	/^    def items(self) -> ItemsView[Key, Value]:$/;"	m	class:Resolver
+jinja_environment	astrality/compiler.py	/^def jinja_environment(templates_folder: Path) -> Environment:$/;"	f
+jinja_test_env	astrality/tests/test_compiler.py	/^def jinja_test_env(test_templates_folder):$/;"	f
+keys	astrality/resolver.py	/^    def keys(self) -> KeysView[Key]:$/;"	m	class:Resolver
+kill_old_astrality_processes	astrality/astrality.py	/^def kill_old_astrality_processes() -> None:$/;"	f
+logger	astrality/astrality.py	/^logger = logging.getLogger('astrality')$/;"	v
+logger	astrality/compiler.py	/^logger = logging.getLogger('astrality')$/;"	v
+logger	astrality/config.py	/^logger = logging.getLogger('astrality')$/;"	v
+logger	astrality/module.py	/^logger = logging.getLogger('astrality')$/;"	v
+logger	astrality/timer.py	/^logger = logging.getLogger('astrality')$/;"	v
+logger	astrality/utils.py	/^logger = logging.getLogger('astrality')$/;"	v
+main	astrality/astrality.py	/^def main(test: bool = False):$/;"	f
+module	astrality/tests/test_module.py	/^def module(valid_module_section, conf):$/;"	f
+module_manager	astrality/tests/test_module.py	/^def module_manager(config_with_modules):$/;"	f
+modules_with_unfinished_tasks	astrality/module.py	/^    def modules_with_unfinished_tasks(self) -> Iterable[Module]:$/;"	m	class:ModuleManager
+mypy	mypy.ini	/^[mypy]$/;"	s
+noon_friday	astrality/tests/test_timers/test_weekday.py	/^def noon_friday():$/;"	f
+now	astrality/timer.py	/^    def now(self) -> datetime:$/;"	m	class:Solar
+other_astrality_pids	astrality/astrality.py	/^def other_astrality_pids() -> Set[int]:$/;"	f
+period	astrality/timer.py	/^    def period(self) -> str:$/;"	m	class:Timer
+period_change	astrality/module.py	/^    def period_change(self) -> None:$/;"	m	class:Module
+periodic	astrality/tests/test_timers/test_periodic.py	/^def periodic():$/;"	f
+periodic_config	astrality/tests/test_timer.py	/^def periodic_config():$/;"	f
+periodic_timer	astrality/tests/test_timer.py	/^def periodic_timer(periodic_config):$/;"	f
+periods	astrality/timer.py	/^    periods = ($/;"	v	class:Weekday
+periods	astrality/timer.py	/^    periods = ('static',)$/;"	v	class:Static
+periods	astrality/timer.py	/^    periods = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')$/;"	v	class:Solar
+periods	astrality/timer.py	/^    periods = Periods()$/;"	v	class:Periodic
+preprocess_configuration_file	astrality/config.py	/^def preprocess_configuration_file($/;"	f
+pytest	pytest.ini	/^[pytest]$/;"	s
+pytest_addoption	conftest.py	/^def pytest_addoption(parser):$/;"	f
+pytest_collection_modifyitems	conftest.py	/^def pytest_collection_modifyitems(config, items):$/;"	f
+python_files	pytest.ini	/^python_files = test_*.py$/;"	k	section:pytest
+python_version	mypy.ini	/^python_version = 3.6$/;"	k	section:mypy
+run_shell	astrality/module.py	/^    def run_shell(self, command) -> None:$/;"	m	class:Module
+run_shell	astrality/utils.py	/^def run_shell(command: str, working_directory: Path = Path.home()) -> str:$/;"	f
+solar	astrality/tests/test_timers/test_solar.py	/^def solar(solar_config):$/;"	f
+solar_config	astrality/tests/test_timer.py	/^def solar_config():$/;"	f
+solar_config	astrality/tests/test_timers/test_solar.py	/^def solar_config():$/;"	f
+solar_timer	astrality/tests/test_timer.py	/^def solar_timer(solar_config):$/;"	f
+startup	astrality/module.py	/^    def startup(self) -> None:$/;"	m	class:Module
+static_config	astrality/tests/test_timer.py	/^def static_config():$/;"	f
+static_timer	astrality/tests/test_timer.py	/^def static_timer(static_config):$/;"	f
+strict_optional	mypy.ini	/^strict_optional = True$/;"	k	section:mypy
+test_accessing_existing_key	astrality/tests/test_resolver.py	/^    def test_accessing_existing_key(self):$/;"	m	class:TestResolverClass
+test_all_options_specified_of_solar_timer	astrality/tests/test_timer.py	/^    def test_all_options_specified_of_solar_timer($/;"	m	class:TestTimerDefaultConfiguration
+test_cast_to_numeric	astrality/tests/test_compiler.py	/^def test_cast_to_numeric(string, cast, resulting_type):$/;"	f
+test_cleanup_of_tempfile_on_exit	astrality/tests/test_module.py	/^    def test_cleanup_of_tempfile_on_exit(self, module):$/;"	m	class:TestModuleClass
+test_command_substition_by_preprocessing_yaml_file	astrality/tests/test_config.py	/^def test_command_substition_by_preprocessing_yaml_file():$/;"	f
+test_compilation_of_jinja_template	astrality/tests/test_compiler.py	/^def test_compilation_of_jinja_template(test_templates_folder, expanded_env_dict):$/;"	f
+test_compilation_of_template	astrality/tests/test_module.py	/^    def test_compilation_of_template($/;"	m	class:TestModuleClass
+test_config_directory_name	astrality/tests/test_config.py	/^def test_config_directory_name(conf):$/;"	f
+test_config_timer_method	astrality/tests/test_timers/test_solar.py	/^def test_config_timer_method():$/;"	f
+test_create_temp_file_method	astrality/tests/test_module.py	/^    def test_create_temp_file_method(self, module):$/;"	m	class:TestModuleClass
+test_creation_of_temporary_file_when_compiled_template_is_not_defined	astrality/tests/test_module.py	/^    def test_creation_of_temporary_file_when_compiled_template_is_not_defined($/;"	m	class:TestModuleClass
+test_detection_of_new_period_involving_several_modules	astrality/tests/test_module.py	/^def test_detection_of_new_period_involving_several_modules($/;"	f
+test_empty_string_variable	astrality/tests/test_config.py	/^    def test_empty_string_variable(self, dummy_config):$/;"	m	class:TestAllConfigFeaturesFromDummyConfig
+test_enumeration_of_periodic_timer_periods	astrality/tests/test_timers/test_periodic.py	/^def test_enumeration_of_periodic_timer_periods(freezer):$/;"	f
+test_environment_variable_interpolation	astrality/tests/test_config.py	/^    def test_environment_variable_interpolation(self, dummy_config):$/;"	m	class:TestAllConfigFeaturesFromDummyConfig
+test_environment_variable_interpolation_by_preprocessing_conf_yaml_file	astrality/tests/test_config.py	/^def test_environment_variable_interpolation_by_preprocessing_conf_yaml_file():$/;"	f
+test_expand_path_method	astrality/tests/test_module.py	/^    def test_expand_path_method(self, module, conf):$/;"	m	class:TestModuleClass
+test_generation_of_expanded_env_dict	astrality/tests/test_config.py	/^def test_generation_of_expanded_env_dict():$/;"	f
+test_getter	astrality/tests/test_resolver.py	/^    def test_getter(self):$/;"	m	class:TestResolverClass
+test_getting_item_from_empty_config	astrality/tests/test_resolver.py	/^    def test_getting_item_from_empty_config(self):$/;"	m	class:TestResolverClass
+test_has_unfinished_tasks	astrality/tests/test_module.py	/^def test_has_unfinished_tasks(valid_module_section, conf, freezer):$/;"	f
+test_index_resolution_with_string_key	astrality/tests/test_resolver.py	/^    def test_index_resolution_with_string_key(self):$/;"	m	class:TestResolverClass
+test_initialization_of_config_class_with_dict	astrality/tests/test_resolver.py	/^    def test_initialization_of_config_class_with_dict(self):$/;"	m	class:TestResolverClass
+test_initialization_of_config_class_with_no_config_parser	astrality/tests/test_resolver.py	/^    def test_initialization_of_config_class_with_no_config_parser(self):$/;"	m	class:TestResolverClass
+test_insert_command_substitutions	astrality/tests/test_config.py	/^def test_insert_command_substitutions():$/;"	f
+test_insert_config_section	astrality/tests/test_config.py	/^def test_insert_config_section():$/;"	f
+test_insert_environment_variables	astrality/tests/test_config.py	/^def test_insert_environment_variables():$/;"	f
+test_integer_index_resolution	astrality/tests/test_resolver.py	/^    def test_integer_index_resolution(self):$/;"	m	class:TestResolverClass
+test_integer_index_resolution_without_earlier_index_key	astrality/tests/test_resolver.py	/^    def test_integer_index_resolution_without_earlier_index_key(self):$/;"	m	class:TestResolverClass
+test_integer_indexed_templates	astrality/tests/test_compiler.py	/^def test_integer_indexed_templates(jinja_test_env):$/;"	f
+test_interrupt_of_main_process	astrality/tests/test_astrality.py	/^def test_interrupt_of_main_process():$/;"	f
+test_invocation_of_class_with_application_config	astrality/tests/test_resolver.py	/^    def test_invocation_of_class_with_application_config(self, conf):$/;"	m	class:TestResolverClass
+test_invocation_of_main_process	astrality/tests/test_astrality.py	/^def test_invocation_of_main_process():$/;"	f
+test_invocation_of_module_manager_with_config	astrality/tests/test_module.py	/^    def test_invocation_of_module_manager_with_config(self, conf):$/;"	m	class:TestModuleManager
+test_items	astrality/tests/test_resolver.py	/^    def test_items(self):$/;"	m	class:TestResolverClass
+test_keys	astrality/tests/test_resolver.py	/^    def test_keys(self):$/;"	m	class:TestResolverClass
+test_location	astrality/tests/test_timers/test_solar.py	/^def test_location(solar):$/;"	f
+test_location_of_template_file_defined_absolutely	astrality/tests/test_module.py	/^    def test_location_of_template_file_defined_absolutely($/;"	m	class:TestModuleClass
+test_location_of_template_file_defined_relatively	astrality/tests/test_module.py	/^    def test_location_of_template_file_defined_relatively(self, module):$/;"	m	class:TestModuleClass
+test_logging_undefined_variables	astrality/tests/test_compiler.py	/^def test_logging_undefined_variables(jinja_test_env, expanded_env_dict, caplog):$/;"	f
+test_missing_template_file	astrality/tests/test_module.py	/^    def test_missing_template_file($/;"	m	class:TestModuleClass
+test_module_name	astrality/tests/test_module.py	/^    def test_module_name(self, module):$/;"	m	class:TestModuleClass
+test_module_timer_class	astrality/tests/test_module.py	/^    def test_module_timer_class(self, module):$/;"	m	class:TestModuleClass
+test_name_of_config_file	astrality/tests/test_config.py	/^def test_name_of_config_file(conf):$/;"	f
+test_non_existing_variable	astrality/tests/test_config.py	/^    def test_non_existing_variable(self, dummy_config):$/;"	m	class:TestAllConfigFeaturesFromDummyConfig
+test_normal_variable	astrality/tests/test_config.py	/^    def test_normal_variable(self, dummy_config):$/;"	m	class:TestAllConfigFeaturesFromDummyConfig
+test_number_of_modules_instanziated_by_module_manager	astrality/tests/test_module.py	/^    def test_number_of_modules_instanziated_by_module_manager(self, module_manager):$/;"	m	class:TestModuleManager
+test_periodic_beginning_period	astrality/tests/test_timers/test_periodic.py	/^def test_periodic_beginning_period(freezer):$/;"	f
+test_periodic_periods	astrality/tests/test_timers/test_periodic.py	/^def test_periodic_periods(period, is_period, periodic):$/;"	f
+test_periodic_standard_timedelta	astrality/tests/test_timers/test_periodic.py	/^def test_periodic_standard_timedelta(freezer):$/;"	f
+test_rendering_environment_variables	astrality/tests/test_compiler.py	/^def test_rendering_environment_variables(jinja_test_env, expanded_env_dict):$/;"	f
+test_replacement_of_missing_timer_config_option	astrality/tests/test_timer.py	/^    def test_replacement_of_missing_timer_config_option($/;"	m	class:TestTimerDefaultConfiguration
+test_resolver_class	astrality/tests/test_resolver.py	/^    def test_resolver_class(self):$/;"	m	class:TestResolverClass
+test_run_shell_command_with_special_expansions	astrality/tests/test_module.py	/^    def test_run_shell_command_with_special_expansions(self, module, caplog):$/;"	m	class:TestModuleClass
+test_running_module_exit_command	astrality/tests/test_module.py	/^    def test_running_module_exit_command(self, module, caplog):$/;"	m	class:TestModuleClass
+test_running_module_exit_command_when_no_command_is_specified	astrality/tests/test_module.py	/^    def test_running_module_exit_command_when_no_command_is_specified($/;"	m	class:TestModuleClass
+test_running_module_period_change_command	astrality/tests/test_module.py	/^    def test_running_module_period_change_command($/;"	m	class:TestModuleClass
+test_running_module_period_change_command_when_no_command_is_specified	astrality/tests/test_module.py	/^    def test_running_module_period_change_command_when_no_command_is_specified($/;"	m	class:TestModuleClass
+test_running_module_startup_command	astrality/tests/test_module.py	/^    def test_running_module_startup_command($/;"	m	class:TestModuleClass
+test_running_module_startup_command_when_no_command_is_specified	astrality/tests/test_module.py	/^    def test_running_module_startup_command_when_no_command_is_specified($/;"	m	class:TestModuleClass
+test_running_shell_command_that_times_out	astrality/tests/test_module.py	/^    def test_running_shell_command_that_times_out(self, module, caplog):$/;"	m	class:TestModuleClass
+test_running_shell_command_with_environment_variable	astrality/tests/test_module.py	/^    def test_running_shell_command_with_environment_variable(self, module, caplog):$/;"	m	class:TestModuleClass
+test_running_shell_command_with_non_zero_exit_code	astrality/tests/test_module.py	/^    def test_running_shell_command_with_non_zero_exit_code(self, module, caplog):$/;"	m	class:TestModuleClass
+test_static_periods	astrality/tests/test_timers/test_static.py	/^def test_static_periods():$/;"	f
+test_static_time_until_next_period	astrality/tests/test_timers/test_static.py	/^def test_static_time_until_next_period():$/;"	f
+test_templates_folder	astrality/tests/test_compiler.py	/^def test_templates_folder():$/;"	f
+test_termination_of_main_process	astrality/tests/test_astrality.py	/^def test_termination_of_main_process():$/;"	f
+test_that_colors_are_correctly_imported_based_on_wallpaper_theme	astrality/tests/test_config.py	/^def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf, freezer):$/;"	f
+test_that_night_is_correctly_identified	astrality/tests/test_timers/test_solar.py	/^def test_that_night_is_correctly_identified(solar, before_dawn, freezer):$/;"	f
+test_that_night_is_correctly_identified_after_dusk	astrality/tests/test_timers/test_solar.py	/^def test_that_night_is_correctly_identified_after_dusk(solar, after_dusk, freezer):$/;"	f
+test_that_sunrise_is_correctly_identified	astrality/tests/test_timers/test_solar.py	/^def test_that_sunrise_is_correctly_identified(solar, after_dawn, freezer):$/;"	f
+test_that_sunset_is_correctly_identified_before_dusk	astrality/tests/test_timers/test_solar.py	/^def test_that_sunset_is_correctly_identified_before_dusk(solar, before_dusk, freezer):$/;"	f
+test_time_left_before_new_period	astrality/tests/test_timers/test_solar.py	/^def test_time_left_before_new_period(solar, before_dusk, freezer):$/;"	f
+test_time_right_before_midnight	astrality/tests/test_timers/test_solar.py	/^def test_time_right_before_midnight(solar, freezer):$/;"	f
+test_time_until_next_period_of_several_modules	astrality/tests/test_module.py	/^def test_time_until_next_period_of_several_modules(config_with_modules, module_manager, freezer)/;"	f
+test_timer_factory_with_periodic_confi	astrality/tests/test_timer.py	/^    def test_timer_factory_with_periodic_confi(self, periodic_config):$/;"	m	class:TestTimerFactory
+test_timer_factory_with_solar_confi	astrality/tests/test_timer.py	/^    def test_timer_factory_with_solar_confi(self, solar_config):$/;"	m	class:TestTimerFactory
+test_timer_factory_with_static_confi	astrality/tests/test_timer.py	/^    def test_timer_factory_with_static_confi(self, static_config):$/;"	m	class:TestTimerFactory
+test_timer_factory_with_weekday_confi	astrality/tests/test_timer.py	/^    def test_timer_factory_with_weekday_confi(self, weekday_config):$/;"	m	class:TestTimerFactory
+test_update	astrality/tests/test_resolver.py	/^    def test_update(self):$/;"	m	class:TestResolverClass
+test_use_of_recursive_config_objects_created_by_dicts	astrality/tests/test_resolver.py	/^    def test_use_of_recursive_config_objects_created_by_dicts(self):$/;"	m	class:TestResolverClass
+test_using_custom_periodic_timer	astrality/tests/test_timers/test_periodic.py	/^def test_using_custom_periodic_timer(freezer):$/;"	f
+test_using_default_static_timer_when_no_timer_is_given	astrality/tests/test_module.py	/^    def test_using_default_static_timer_when_no_timer_is_given(self, conf):$/;"	m	class:TestModuleClass
+test_using_finish_tasks_on_example_configuration	astrality/tests/test_module.py	/^    def test_using_finish_tasks_on_example_configuration(self, conf):$/;"	m	class:TestModuleManager
+test_using_force_period_config_option	astrality/tests/test_timers/test_weekday.py	/^def test_using_force_period_config_option(noon_friday, freezer, caplog):$/;"	f
+test_using_force_period_config_option_with_wrong_period_type	astrality/tests/test_timers/test_weekday.py	/^def test_using_force_period_config_option_with_wrong_period_type($/;"	f
+test_valid_class_section_method_with_disabled_module_section	astrality/tests/test_module.py	/^    def test_valid_class_section_method_with_disabled_module_section(self):$/;"	m	class:TestModuleClass
+test_valid_class_section_method_with_invalid_section	astrality/tests/test_module.py	/^    def test_valid_class_section_method_with_invalid_section(self):$/;"	m	class:TestModuleClass
+test_valid_class_section_method_with_valid_section	astrality/tests/test_module.py	/^    def test_valid_class_section_method_with_valid_section(self, valid_module_section):$/;"	m	class:TestModuleClass
+test_valid_class_section_with_wrongly_sized_dict	astrality/tests/test_module.py	/^    def test_valid_class_section_with_wrongly_sized_dict(self, valid_module_section):$/;"	m	class:TestModuleClass
+test_values	astrality/tests/test_resolver.py	/^    def test_values(self):$/;"	m	class:TestResolverClass
+test_values_for_max_key_property	astrality/tests/test_resolver.py	/^    def test_values_for_max_key_property(self):$/;"	m	class:TestResolverClass
+test_variable_interpolation	astrality/tests/test_config.py	/^    def test_variable_interpolation(self, dummy_config):$/;"	m	class:TestAllConfigFeaturesFromDummyConfig
+test_weekday_period	astrality/tests/test_timers/test_weekday.py	/^def test_weekday_period(weekday, noon_friday, freezer):$/;"	f
+test_weekday_periods	astrality/tests/test_timers/test_weekday.py	/^def test_weekday_periods(weekday):$/;"	f
+test_weekday_time_until_next_period	astrality/tests/test_timers/test_weekday.py	/^def test_weekday_time_until_next_period(weekday, noon_friday, freezer):$/;"	f
+test_weekday_time_until_next_period_of_periodic_timer	astrality/tests/test_timers/test_periodic.py	/^def test_weekday_time_until_next_period_of_periodic_timer(freezer):$/;"	f
+text	templates/conky_performance.conf	/^conky.text = [[$/;"	k
+text	templates/conky_time.conf	/^conky.text = [[$/;"	k
+time_until_next_period	astrality/module.py	/^    def time_until_next_period(self) -> timedelta:$/;"	m	class:ModuleManager
+time_until_next_period	astrality/timer.py	/^    def time_until_next_period(self) -> timedelta:$/;"	m	class:Periodic
+time_until_next_period	astrality/timer.py	/^    def time_until_next_period(self) -> timedelta:$/;"	m	class:Solar
+time_until_next_period	astrality/timer.py	/^    def time_until_next_period(self) -> timedelta:$/;"	m	class:Static
+time_until_next_period	astrality/timer.py	/^    def time_until_next_period(self) -> timedelta:$/;"	m	class:Timer
+time_until_next_period	astrality/timer.py	/^    def time_until_next_period(self) -> timedelta:$/;"	m	class:Weekday
+timer_factory	astrality/timer.py	/^def timer_factory(timer_config: Dict[str, Union[str, int]]) -> Timer:$/;"	f
+update	astrality/resolver.py	/^    def update(self, other: Union['Resolver', dict]) -> None:$/;"	m	class:Resolver
+user_configuration	astrality/config.py	/^def user_configuration(config_directory: Optional[Path] = None) -> ApplicationConfig:$/;"	f
+valid_class_section	astrality/module.py	/^    def valid_class_section(section: ModuleConfig) -> bool:$/;"	m	class:Module
+valid_module_section	astrality/tests/test_module.py	/^def valid_module_section():$/;"	f
+values	astrality/resolver.py	/^    def values(self) -> ValuesView[Value]:$/;"	m	class:Resolver
+vim	templates/conky_performance.conf	/^-- vim:filetype=lua$/;"	k
+vim	templates/conky_time.conf	/^-- vim:filetype=lua$/;"	k
+warn_redundant_casts	mypy.ini	/^warn_redundant_casts = True$/;"	k	section:mypy
+weekday	astrality/tests/test_timers/test_weekday.py	/^def weekday():$/;"	f
+weekday_config	astrality/tests/test_timer.py	/^def weekday_config():$/;"	f
+weekday_timer	astrality/tests/test_timer.py	/^def weekday_timer(weekday_config):$/;"	f
+weekdays	astrality/timer.py	/^    weekdays = dict(zip(range(0,7), periods))$/;"	v	class:Weekday

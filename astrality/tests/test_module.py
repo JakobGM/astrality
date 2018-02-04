@@ -6,9 +6,9 @@ from pathlib import Path
 from freezegun import freeze_time
 import pytest
 
-from config import generate_expanded_env_dict
-from module import Module, ModuleManager
-import timer
+from astrality.config import generate_expanded_env_dict
+from astrality.module import Module, ModuleManager
+from astrality import timer
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def valid_module_section():
             'timer': {'type': 'weekday'},
             'templates': {
                 'template_name': {
-                    'source': 'src/tests/templates/test_template.conf',
+                    'source': '../tests/templates/test_template.conf',
                     'target': '/tmp/compiled_result',
                 }
             },
@@ -296,7 +296,7 @@ class TestModuleClass:
         template_file = module.templates['template_name']['source']
         compiled_template = module.templates['template_name']['target']
 
-        assert template_file == Path(__file__).parent / 'templates' / 'test_template.conf'
+        assert template_file.resolve() == Path(__file__).parent / 'templates' / 'test_template.conf'
         assert compiled_template == Path('/tmp/compiled_result')
 
     def test_location_of_template_file_defined_absolutely(

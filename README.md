@@ -1,6 +1,6 @@
 # Astrality - A dynamic configuration file manager <br/> [![Build Status](https://travis-ci.org/JakobGM/astrality.svg?branch=master)](https://travis-ci.org/JakobGM/astrality) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/astrality?branch=master)
 
-<img align="left" src="src/doc/astrality_logo.png">
+<img align="left" src="astrality/doc/astrality_logo.png">
 
 ## What does it do?
 Astrality is a tool for managing configuration files and scheduling tasks related to those files.

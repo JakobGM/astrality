@@ -11,7 +11,7 @@ from jinja2 import (
     make_logging_undefined,
 )
 
-from resolver import Resolver
+from astrality.resolver import Resolver
 
 
 logger = logging.getLogger('astrality')

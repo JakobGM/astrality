@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from timer import Solar
+from astrality.timer import Solar
 
 
 @pytest.fixture

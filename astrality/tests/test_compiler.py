@@ -1,13 +1,13 @@
 """Tests for the compiler module."""
 
 import logging
-from compiler import cast_to_numeric, compile_template, jinja_environment
 from pathlib import Path
 
 import pytest
 from jinja2 import Environment
 
-from resolver import Resolver
+from astrality.compiler import cast_to_numeric, compile_template, jinja_environment
+from astrality.resolver import Resolver
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def test_logging_undefined_variables(jinja_test_env, expanded_env_dict, caplog):
     template = jinja_test_env.get_template('env_vars')
     template.render(env=expanded_env_dict)
     assert (
-        'compiler',
+        'astrality.compiler',
         logging.WARNING,
         'Template variable warning: env_UNDEFINED_VARIABLE is undefined',
     ) in caplog.record_tuples

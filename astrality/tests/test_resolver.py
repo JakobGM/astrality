@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from resolver import Resolver
-from timer import Solar
+from astrality.resolver import Resolver
+from astrality.timer import Solar
 
 
 class TestResolverClass:

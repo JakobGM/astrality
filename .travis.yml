@@ -6,10 +6,9 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y feh conky
 install:
-  - pip install -r src/requirements.txt
+  - pip install -r requirements.txt
   - pip install coveralls
 script:
-  - cd src
   - coverage run --source='.' -m py.test -vv --runslow
   - coverage report -m
 after_success:

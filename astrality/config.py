@@ -7,7 +7,7 @@ import re
 from io import StringIO
 from typing import Any, Dict, Match, MutableMapping, Optional, Tuple
 
-from utils import run_shell
+from astrality.utils import run_shell
 
 logger = logging.getLogger('astrality')
 
@@ -53,8 +53,8 @@ def infer_config_location(
             + str(config_file) +
             '.'
         )
-        config_directory = Path(__file__).parents[1]
-        config_file = Path(config_directory, 'astrality.yaml.example')
+        config_directory = Path(__file__).parent.absolute() / 'config'
+        config_file = config_directory / 'astrality.yaml'
         logger.warning(f'Using example configuration instead: "{config_file}"')
     else:
         logging.info(f'Using configuration file "{config_file}"')
