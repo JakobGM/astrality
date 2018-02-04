@@ -52,7 +52,7 @@ class TestModuleClass:
 
     def test_valid_class_section_method_with_invalid_section(self):
         invalid_module_section =  {
-            'general/fonts': {
+            'context/fonts': {
                 'some_key': 'some_value',
             }
         }
@@ -449,7 +449,7 @@ def config_with_modules():
             'enabled': False,
             'timer': 'static',
         },
-        'fonts': {1: 'FuraCode Nerd Font'},
+        'context/fonts': {1: 'FuraCode Nerd Font'},
         '_runtime': {
             'config_directory': Path(__file__).parents[2],
         }

@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from astrality import compiler
+from astrality.compiler import context
 from astrality.config import ApplicationConfig, insert_into
 from astrality.resolver import Resolver
 from astrality.timer import Timer, timer_factory
@@ -47,10 +48,13 @@ class Module:
         all.
         """
         self.manager: Optional['ModuleManager'] = manager
-        self.application_config: ApplicationConfig = application_config  # type: ignore
 
         if self.manager:
             self.application_config = self.manager.application_config
+            self.context = self.manager.application_context
+        else:
+            self.application_config = application_config
+            self.context = context(application_config)
 
         section = next(iter(module_config.keys()))
         self.name: str = section.split('/')[1]  # type: ignore
@@ -231,7 +235,7 @@ class Module:
                 compiler.compile_template(
                     template=template['source'],
                     target=template['target'],
-                    context=self.application_config,
+                    context=self.context,
                 )
 
     def run_shell(self, command) -> None:
@@ -257,7 +261,7 @@ class Module:
         config_path = self.expand_path(Path(path))
 
         insert_into(
-            config=self.application_config,
+            context=self.context,
             section=section,
             from_config_file=config_path,
             from_section=from_section,
@@ -295,6 +299,7 @@ class ModuleManager:
 
     def __init__(self, config: ApplicationConfig) -> None:
         self.application_config = config
+        self.application_context = context(config)
         self.modules: List[Module] = []
 
         for section, options in config.items():

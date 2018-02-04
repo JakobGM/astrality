@@ -85,7 +85,7 @@ def finalize_variable_expression(result: str) -> str:
 def compile_template(
     template: Path,
     target: Path,
-    context: Union[Dict[str, Any], Resolver],
+    context: Context,
 ) -> None:
     """Compile template to target destination with specific context."""
     logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')

@@ -61,7 +61,7 @@ module/conky:
         - pkill -f conky
 
 
-general:
+context/general:
     # It is possible to define further arbitrarily named sections.
     # For instance, with this option set, you can use ${ast:general:display} in all
     # your templates.
@@ -72,7 +72,7 @@ general:
     HDMI: $(xrandr | grep "HDMI2 connected")
 
 
-fonts:
+context/fonts:
     # You can use integer indexed variables in order to have fallback values. If
     # ${ast:fonts:4} is used in a template, but it is not defined, it will be
     # replaced with ${ast:fonts:3} instead.

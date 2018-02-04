@@ -8,6 +8,9 @@ from io import StringIO
 from typing import Any, Dict, Match, MutableMapping, Optional, Tuple
 
 from astrality.utils import run_shell
+from astrality.resolver import Resolver
+
+Context = Dict[str, Resolver]
 
 logger = logging.getLogger('astrality')
 
@@ -89,7 +92,7 @@ def dict_from_config_file(
     conf_dict = load(StringIO(config_string))
 
     if with_env:
-        conf_dict['env'] = expanded_env_dict
+        conf_dict['context/env'] = expanded_env_dict
 
     return conf_dict
 
@@ -227,18 +230,21 @@ def generate_expanded_env_dict() -> Dict[str, str]:
 
 
 def insert_into(
-    config: Any,
+    context: Context,
     section: str,
     from_config_file: Path,
     from_section: str,
-) -> Any:
+) -> Context:
     """
     Import section from config file into config dictionary.
 
     The method overwrites `config[section]` with the values from [from_section]
     defined in `from_config_file`.
     """
-    conf_resolver = dict_from_config_file(from_config_file, with_env=False)
-    config[section] = conf_resolver[from_section]
+    conf_resolver = Resolver(dict_from_config_file(
+        from_config_file,
+        with_env=False,
+    ))
+    context[section] = conf_resolver[from_section]
 
-    return config
+    return context

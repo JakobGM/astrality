@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from astrality import compiler
 from astrality.config import (
     dict_from_config_file,
     insert_environment_values,
@@ -138,35 +139,35 @@ def test_insert_environment_variables():
     expected = 'value2'
     assert insert_environment_values(upper_case_conficting_key) == expected
 
-def test_insert_config_section():
-    config = {'section1': {'key_one': 'value_one'}}
+def test_insert_context_section():
+    context = compiler.context({'context/section1': {'key_one': 'value_one'}})
     test_config_file = Path(__file__).parent / 'test.yaml'
-    config = insert_into(
-        config=config,
+    context = insert_into(
+        context=context,
         section='new_section',
         from_config_file=test_config_file,
         from_section='section2'
     )
 
-    assert config['section1']['key_one'] == 'value_one'
-    assert config['new_section']['var3'] == 'value1'
+    assert context['section1']['key_one'] == 'value_one'
+    assert context['new_section']['var3'] == 'value1'
 
-    config = insert_into(
-        config=config,
+    context = insert_into(
+        context=context,
         section='section3',
         from_config_file=test_config_file,
         from_section='section3'
     )
-    assert config['section3']['env_variable'] == 'test_value, hello'
+    assert context['section3']['env_variable'] == 'test_value, hello'
 
-    config = insert_into(
-        config=config,
+    context = insert_into(
+        context=context,
         section='section1',
         from_config_file=test_config_file,
         from_section='section1'
     )
-    assert config['section1']['var2'] == 'value1/value2'
-    assert 'key_one' not in config['section1']
+    assert context['section1']['var2'] == 'value1/value2'
+    assert 'key_one' not in context['section1']
 
 def test_insert_command_substitutions():
     string = 'some text: $(echo result)'
