@@ -16,20 +16,20 @@ You can create templates for your configuration files, and Astrality will replac
 * Change your desktop wallpaper when your specific location (given by latitude and longitude) experiences dawn, noon, sunset, and dusk. It adapts to the length of day through the year. Make your [Conky modules](https://github.com/brndnmtthws/conky) change font color accordingly.
 * And much more...  An example configuration with several examples is included.
 
-The configuration format uses the flexible [YAML](http://docs.ansible.com/ansible/latest/YAMLSyntax.html#yaml-basics) format, and the template language uses the [Jinja2 syntax](http://jinja.pocoo.org/docs/2.10/), which is easy to get started with, but allows complex templating for those inclined.
+The configuration format uses the flexible [YAML](http://docs.ansible.com/ansible/latest/YAMLSyntax.html#yaml-basics) format, and the template language uses the [Jinja2 syntax](http://jinja.pocoo.org/docs/2.10/), which is easy to get started with, but allows complex templating for those who need it.
 
 It is relatively easy to create `modules` to your own liking. Pull requests with new themes, conky modules, and improvements are very welcome.
 
-## How to install
+## Getting started
 
-### System requirements
-Astrality requires the following system packages: [`conky`](https://wiki.archlinux.org/index.php/Conky),  [`feh`](https://wiki.archlinux.org/index.php/feh), and `python 3.6`. An example installation on ArchLinux would be:
+### Prerequisites
+Astrality requires [`python 3.6`](https://www.python.org/downloads/) or greater. The included configuration for Astrality also contains modules which utilize [`conky`](https://wiki.archlinux.org/index.php/Conky) and [`feh`](https://wiki.archlinux.org/index.php/feh). You can either disable these modules or install their dependencies. An example installation on ArchLinux would be:
 
 ```bash
 sudo pacman -Syu conky feh python
 ```
 
-The default configuration uses the [Nerd Font](https://github.com/ryanoasis/nerd-fonts) "FuraCode Nerd Font". Install it if you don't change the font in your configuration. On ArchLinux, it can be installed with the `nerd-fonts-complete` AUR package:
+The default configuration also uses the [Nerd Font](https://github.com/ryanoasis/nerd-fonts) "FuraCode Nerd Font". Install it if you don't change the font in your configuration. On ArchLinux, it can be installed with the `nerd-fonts-complete` AUR package:
 
 ```bash
 yaourt -S nerd-fonts-complete
@@ -37,42 +37,25 @@ yaourt -S nerd-fonts-complete
 
 ### Python requirements
 
-Create a new virtualenv for python 3.6 (or use your system python 3.6 if you prefer). Install the following requirements:
+Create a new virtualenv for python 3.6 (or use your system python 3.6 if you prefer). Install Astrality from [pypi](https://pypi.org/project/astrality/) like so:
 
 ```bash
-pip3 install astral
-git clone https://github.com/jakobgm/astrality /path/to/astrality
+pip3 install astrality
 ```
 
-The script can be run as a background job in the following way:
+You can now start astrality from your command line:
 
 ```bash
-python3.6 /path/to/astrality/src/main.py &
+astrality
 ```
 
 Your wallpaper should now be automatically changed during the different times of day.
-
-### Example installation using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/):
-Here is how I would install this tool using virtualenvwrapper
-
-```bash
-git clone https://github.com/jakobgm/astrality $XDG_CONFIG_HOME
-mkvirtualenv -p python3.6 -a $XDG_CONFIG_HOME/astrality astrality
-pip install astral
-deactivate
-```
 
 ### Example initialization using the [i3 tiling window manager](https://github.com/i3/i3)
 Add the following line to `$XDG_CONFIG_HOME/i3/config`:
 
 ```config
-exec --no-startup-id "/path/to/python/with/installed/dependencies/python /path/to/astrality/src/main.py &"
-```
-
-Or more specifically, if you have used the virtualenvwrapper method of installing astrality:
-
-```config
-exec --no-startup-id "$WORKON_HOME/astrality/bin/python $XDG_CONFIG_HOME/astrality/src/main.py &"
+exec --no-startup-id "astrality"
 ```
 
 ## Configuration
@@ -80,15 +63,10 @@ The configuration directory for astrality is determined in the following way:
 
 * If `$ASTRALITY_CONFIG_HOME` is set, use that folder as the configuration directory, else...
 * If `$XDG_CONFIG_HOME` is set, use `$XDG_CONFIG_HOME/astrality`, else...
-* Use `~/.config/astrality`.
+* Use `~/.config/astrality`, if it contains a `astrality.yaml` file, else...
+* Use an example configuration.
 
 The configuration file for astrality should be placed at the root of the astrality configuration directory and an example configuration can be found [here](https://github.com/JakobGM/astrality/blob/master/astrality.conf.example).
-
-You can also copy the example configuration file from this repository:
-
-```bash
-cp /path/to/astrality/astrality.conf.example $XDG_CONFIG_HOME/astrality/astrality.conf
-```
 
 Edit the configuration file in order to add your current location, given by your GPS coordinates (longitude, latitude, and elevation). These coordinates can be obtained from [this website](https://www.latlong.net/).
 
