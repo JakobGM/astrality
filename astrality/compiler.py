@@ -11,8 +11,11 @@ from jinja2 import (
     make_logging_undefined,
 )
 
+from astrality.config import ApplicationConfig
 from astrality.resolver import Resolver
 
+
+Context = Dict[str, Resolver]
 
 logger = logging.getLogger('astrality')
 
@@ -26,6 +29,27 @@ def cast_to_numeric(value: str) -> Union[int, float, str]:
             return float(value)
         except ValueError:
             return value
+
+
+def context(config: ApplicationConfig) -> Context:
+    """
+    Return a context dictionary based on the contents of a config dict.
+
+    Only sections named context/* are considered to be context sections, and
+    these sections are returned with 'context/' stripped away, and with their
+    contents cast to a Resolver instance.
+    """
+    contents: Context = {}
+    for section_name, section in config.items():
+        if not isinstance(section_name, str) or \
+           not len(section_name) > 8 or \
+           not section_name[:8] == 'context/':
+            continue
+        else:
+            category = section_name[8:]
+            contents[category] = Resolver(section)
+
+    return contents
 
 
 def jinja_environment(templates_folder: Path) -> Environment:
