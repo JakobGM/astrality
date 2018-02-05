@@ -1,13 +1,9 @@
-from configparser import ConfigParser
+"""Tests for Resolver class."""
 from math import inf
-from os import path
-import os
-from pathlib import Path
 
 import pytest
 
 from astrality.resolver import Resolver
-from astrality.timer import Solar
 
 
 class TestResolverClass:
@@ -47,8 +43,6 @@ class TestResolverClass:
         config = Resolver()
         with pytest.raises(KeyError) as exception:
             config['empty_config_with_no_key']
-        assert exception.value.args[0] == \
-            'Tried to access key from empty Resolver section'
 
     def test_accessing_existing_key(self):
         config = Resolver()
@@ -162,3 +156,16 @@ class TestResolverClass:
         assert resolver[2] == 'second_value'
         assert resolver[3] == 'second_value'
         assert resolver['string_key'] == 'string_value'
+
+    def test_initializing_resolver_with_resolver(self):
+        resolver1 = Resolver({'key1': 1})
+        resolver2 = Resolver(resolver1)
+        assert resolver1 == resolver2
+
+    def test_updating_resolver_with_resolver(self):
+        resolver1 = Resolver({'key1': 1})
+        resolver2 = Resolver({'key2': 2})
+
+        resolver1.update(resolver2)
+        expected_result = Resolver({'key1': 1, 'key2': 2})
+        assert resolver1 == expected_result

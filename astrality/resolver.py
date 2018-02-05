@@ -19,20 +19,17 @@ Value = Any
 
 class Resolver:
     """
-    Dictionary-like object which specifies application configuration options.
-
-    It also tries resolves access to missing integer indexed keys if a lesser
-    integer key exists.
+    Dictionary-like object whith integer index resolution.
 
     An example of its functionality:
     replacements = Resolver({
     'colors': {1: 'CACCFD', 2: 'BACBEB'}
     })
-    replacements[1]
+    replacements['colors'][1]
     >>> 'CACCFD'
-    replacements[2]
+    replacements['colors'][2]
     >>> 'BACBEB'
-    replacements[3]
+    replacements['colors'][3]
     >>> 'BACBEB'
     """
     _dict: Union['Resolver', Dict[Key, Value]]
@@ -42,11 +39,12 @@ class Resolver:
         content: Optional[Union['Resolver', dict]] = None,
     ) -> None:
         """
-        Initialize a configuration file from source object.
+        Initialize a Resolver instance from another Resolver or dictionary.
 
-        The source object can either be a dictionary or another Resolver object.
         If not given an argument, an empty Resolver object is initialized.
         """
+        self._dict = {}
+        self._max_key: Real = float(-inf)
 
         if isinstance(content, (Resolver, dict,)):
             self.update(content)
@@ -54,34 +52,28 @@ class Resolver:
             raise ValueError('Resolver initialized with wrong argument type.')
 
         # Determine the greatest number index inserted
-        self._max_key: Real = float(-inf)
-        if hasattr(self, '_dict'):
-            for key in self._dict.keys():
-                if isinstance(key, Number):
-                    self._max_key = max(key, self._max_key)
+        for key in self._dict.keys():
+            if isinstance(key, Number):
+                self._max_key = max(key, self._max_key)
 
     def __eq__(self, other) -> bool:
         """Check if content is identical to other Resolver or dictionary."""
-
-        if hasattr(self, '_dict'):
-            return self._dict.__eq__(other)
+        if isinstance(other, Resolver):
+            return self._dict == other._dict
+        elif isinstance(other, dict):
+            return self._dict == other
         else:
-            return {}.__eq__(other)
-
-    def __req__(self, other) -> bool:
-        """Right side comparison, see self.__eq__()."""
-        return self.__eq__(other)
+            raise RuntimeError(
+                f'Resolver comparison with unknown type "{type(other)}"',
+            )
 
     def __setitem__(self, key: Key, value: Value) -> None:
         """Insert `value` into the `key` index."""
-
-        if not hasattr(self, '_dict'):
-            self._dict: Dict[Key, Value] = {}
-
         if isinstance(key, Number):
             self._max_key = max(key, self._max_key)
 
         if isinstance(value, dict):
+            # Insterted dictionaries are cast to Resolver instances
             self._dict[key] = Resolver(value)
         else:
             self._dict[key] = value
@@ -94,14 +86,9 @@ class Resolver:
         non-existent integer index 2, it will retrieve the greatest available
         integer indexed value instead.
         """
-
-        if not hasattr(self, '_dict'):
-            raise KeyError('Tried to access key from empty Resolver section')
-
         try:
             # Return excact hit if present
             return self._dict[key]
-
         except KeyError as key_error:
             # The key is not present. See if we can resolve the use of another
             # one through integer key priority.
@@ -127,58 +114,33 @@ class Resolver:
 
     def __repr__(self) -> str:
         """Return human-readable representation of Resolver object."""
-        if hasattr(self, '_dict'):
-            return f'Resolver({self._dict.__repr__()})'
-        else:
-            return 'Resolver(' + {}.__repr__() + ')'
+        return f'Resolver({self._dict.__repr__()})'
 
     def __str__(self) -> str:
         """Return string representation of Resolver object."""
-        if hasattr(self, '_dict'):
-            return f'Resolver({self._dict.__str__()})'
-        else:
-            return 'Resolver(' + {}.__str__() + ')'
+        return f'Resolver({self._dict.__str__()})'
 
     def __len__(self) -> int:
         """Return the number of key inserted into the Resolver object."""
-
         return self._dict.__len__()
 
     def __contains__(self, key: Key) -> bool:
+        """Return true if `key` is inserted into Resolver object."""
         return self._dict.__contains__(key)
 
     def items(self) -> ItemsView[Key, Value]:
-        if hasattr(self, '_dict'):
-            return self._dict.items()
-        else:
-            return {}.items()
+        """Return all key, value pairs of the Resolver object."""
+        return self._dict.items()
 
     def keys(self) -> KeysView[Key]:
         """Return all keys which have been inserted into the Resolver object."""
-        if hasattr(self, '_dict'):
-            return self._dict.keys()
-        else:
-            return {}.keys()
+        return self._dict.keys()
 
     def values(self) -> ValuesView[Value]:
         """Return all values inserted into the Resolver object."""
-        if hasattr(self, '_dict'):
-            return self._dict.values()
-        else:
-            return {}.values()
+        return self._dict.values()
 
     def update(self, other: Union['Resolver', dict]) -> None:
         """Overwrite all items from other onto the Resolver object."""
-
-        if isinstance(other, (Resolver, dict,)):
-            # Populate internal data structure from dictionary
-            if not hasattr(self, '_dict'):
-                self._dict = Resolver()
-
-            for key, value in other.items():
-                self._dict[key] = value
-
-        else:
-            raise NotImplementedError(
-                f'Resolver.update() not yet implemented for type {type(other)})'
-            )
+        for key, value in other.items():
+            self.__setitem__(key, value)
