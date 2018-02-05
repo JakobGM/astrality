@@ -102,7 +102,7 @@ def other_astrality_pids() -> Set[int]:
 
     # Get all processes instanciated from this file
     result = subprocess.Popen(
-        ['pgrep', '-f', __file__],
+        ['pgrep', '-f', 'astrality'],
         stdout=subprocess.PIPE,
         universal_newlines=True,
     )
