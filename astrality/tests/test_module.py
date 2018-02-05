@@ -194,11 +194,6 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
-                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
-            ),
-            (
-                'astrality',
-                logging.INFO,
                 '[module/test_module] Running startup command.',
             ),
             (
@@ -230,11 +225,6 @@ class TestModuleClass:
         assert caplog.record_tuples == [
             (
                 'astrality',
-                logging.INFO,
-                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
-            ),
-            (
-                'astrality',
                 logging.DEBUG,
                 '[module/test_module] No startup command specified.',
             ),
@@ -252,11 +242,6 @@ class TestModuleClass:
         compiled_template = str(module.templates['template_name']['target'])
 
         assert caplog.record_tuples == [
-            (
-                'astrality',
-                logging.INFO,
-                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
-            ),
             (
                 'astrality',
                 logging.INFO,
@@ -290,11 +275,6 @@ class TestModuleClass:
         compiled_template = str(module.templates['template_name']['target'])
 
         assert caplog.record_tuples == [
-            (
-                'astrality',
-                logging.INFO,
-                f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"',
-            ),
             (
                 'astrality',
                 logging.DEBUG,
@@ -337,6 +317,54 @@ class TestModuleClass:
                 logging.DEBUG,
                 '[module/test_module] No exit command specified.',
             ),
+        ]
+
+    @freeze_time('2018-02-05')
+    def test_running_finished_tasks_command(
+        self,
+        simple_application_config,
+        caplog,
+    ):
+        """Test that every task is finished at first finish_tasks() invocation."""
+        module_manager = ModuleManager(simple_application_config)
+        module_manager.finish_tasks()
+        template = str(module_manager.modules['test_module'].templates['template_name']['source'])
+        assert caplog.record_tuples == [
+            (
+                'astrality',
+                logging.INFO,
+                f'[Compiling] Template: "{template}" -> Target: "/tmp/compiled_result"'
+            ),
+            (
+                'astrality',
+                logging.INFO,
+                '[module/test_module] Running startup command.',
+            ),
+            (
+                'astrality',
+                logging.INFO,
+                '[module/test_module] Running command "echo monday".',
+            ),
+            (
+                'astrality',
+                logging.INFO,
+                'monday\n',
+            ),
+            (
+                'astrality',
+                logging.INFO,
+                '[module/test_module] Running period change command.',
+            ),
+            (
+                'astrality',
+                logging.INFO,
+                '[module/test_module] Running command "echo /tmp/compiled_result".',
+            ),
+            (
+                'astrality',
+                logging.INFO,
+                '/tmp/compiled_result\n',
+            )
         ]
 
     def test_location_of_template_file_defined_relatively(self, module):

@@ -288,6 +288,7 @@ class ModuleManager:
         return len(self.modules)
 
     def module_periods(self) -> Dict[str, str]:
+        """Return dict containing the period of all modules."""
         module_periods = {}
         for module_name, module in self.modules.items():
             module_periods[module_name] = module.timer.period()
@@ -295,14 +296,28 @@ class ModuleManager:
         return module_periods
 
     def finish_tasks(self) -> None:
-        if not self.startup_done:
-            self.startup()
+        """
+        Finish all due tasks defined by the managed modules.
 
-        if self.last_module_periods != self.module_periods():
-            self.last_module_periods = self.module_periods()
+        The order of finishing tasks is as follows:
+            1) Import any relevant context sections.
+            2) Compile all templates with the new section.
+            3) Run startup commands, if it is not already done.
+            4) Run period change commands, if it is not already done for this
+               module periods combination.
+        """
+        if not self.startup_done:
+            self.import_context_sections()
+            self.compile_templates()
+            self.startup()
+            self.period_change()
+        elif self.last_module_periods != self.module_periods():
+            self.import_context_sections()
+            self.compile_templates()
             self.period_change()
 
     def has_unfinished_tasks(self) -> bool:
+        """Return True if there are any module tasks due."""
         if not self.startup_done:
             return True
         else:
@@ -342,9 +357,7 @@ class ModuleManager:
                 )
 
     def startup(self):
-        self.import_context_sections()
-        self.compile_templates()
-
+        """Run all startup commands specified by the managed modules."""
         for module in self.modules.values():
             startup_commands = module.startup_commands()
             for command in startup_commands:
@@ -354,16 +367,21 @@ class ModuleManager:
         self.startup_done = True
 
     def period_change(self):
-        self.import_context_sections()
-        self.compile_templates()
-
+        """Run all period change commands specified by the managed modules."""
         for module in self.modules.values():
             period_change_commands = module.period_change_commands()
             for command in period_change_commands:
                 logger.info(f'[module/{module.name}] Running period change command.')
                 self.run_shell(command, module.name)
 
+        self.last_module_periods = self.module_periods()
+
     def exit(self):
+        """
+        Run all exit commands specified by the managed modules.
+
+        Also close all temporary file handlers created by the modules.
+        """
         for module in self.modules.values():
             exit_commands = module.exit_commands()
             for command in exit_commands:
@@ -376,7 +394,7 @@ class ModuleManager:
 
 
     def run_shell(self, command: str, module_name: str) -> None:
-        """Run shell command defined in module."""
+        """Run a shell command defined by a managed module."""
         logger.info(f'[module/{module_name}] Running command "{command}".')
         run_shell(
             command=command,
