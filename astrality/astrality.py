@@ -71,7 +71,7 @@ def main(test: bool = False):
         time.sleep(startup_delay)
 
         module_manager = ModuleManager(config)
-        module_manager.finish_tasks()
+        module_manager.startup()
 
         # TODO: Implement startup delay config option
 

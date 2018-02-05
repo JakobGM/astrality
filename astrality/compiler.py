@@ -11,11 +11,11 @@ from jinja2 import (
     make_logging_undefined,
 )
 
-from astrality.config import ApplicationConfig
 from astrality.resolver import Resolver
 
 
 Context = Dict[str, Resolver]
+ApplicationConfig = Dict[str, Dict[str, Any]]
 
 logger = logging.getLogger('astrality')
 

@@ -41,7 +41,7 @@ module/wallpaper:
     #     - Recompile all templates with new values for ${ast:section:*}
     #
     # Here we change the colors of other templates based on the current wallpaper
-    import_sections_on_period_change:
+    import_context_sections_on_period_change:
         - colors wallpaper_themes/default/colors.yaml {period}
 
 

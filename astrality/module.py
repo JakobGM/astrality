@@ -1,92 +1,87 @@
 """Module implementing user configured custom functionality."""
 
+from collections import namedtuple
 from datetime import timedelta
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from astrality import compiler
 from astrality.compiler import context
 from astrality.config import ApplicationConfig, insert_into
-from astrality.resolver import Resolver
 from astrality.timer import Timer, timer_factory
 from astrality.utils import run_shell
 
 ModuleConfig = Dict[str, Any]
+ContextSectionImport = namedtuple(
+    'ContextSectionImport',
+    ['into_section', 'from_section', 'from_config_file'],
+)
 logger = logging.getLogger('astrality')
 
 
 class Module:
     """
-    Class for executing user defined functionality in [module/*] section.
+    Class for determining module actions.
 
-    The module can define a set of commands to be run on astrality startup, and
+    A Module instance should only return actions to be performed, but never
+    perform them. That is the responsibility of a ModuleManager instance.
+
+    A module can define a set of commands to be run on astrality startup, and
     exit, in addition to every time a given type of period changes.
 
     Commands are run in the users shell, and can use the following placeholders:
     - {period}: The period specified by the timer instance.
     - {name_of_template}: The path to the compiled template specified in the
-                          'target' option.
+                          'target' option, or if not specified, a created
+                          temporary file.
     """
 
     def __init__(
         self,
         module_config: ModuleConfig,
-        application_config: ApplicationConfig,
-        manager: Optional['ModuleManager'] = None,
+        config_directory: Path,
+        temp_directory: Path,
     ) -> None:
         """
         Initialize Module object with a section from a config dictionary.
 
-        Argument `manager` is the ModuleManager instance responible for the
-        Module instance, allowing two-way communication between modules and
-        their respective managers.
-
         Section name must be [module/*], where * is the module name.
         In addition, the enabled option must be set to "true", or not set at
         all.
-        """
-        self.manager: Optional['ModuleManager'] = manager
 
-        if self.manager:
-            self.application_config = self.manager.application_config
-            self.context = self.manager.application_context
-        else:
-            self.application_config = application_config
-            self.context = context(application_config)
+        module_config example:
+        {'module/name':
+            'enabled': True,
+            'timer': {'type': 'weekday'},
+            'on_startup': ['echo weekday is {period}'],
+        }
+        """
+        # Can only initialize one module at a time
+        assert len(module_config) == 1
 
         section = next(iter(module_config.keys()))
-        self.name: str = section.split('/')[1]  # type: ignore
+        self.name: str = section.split('/')[1]
 
-        self.config: ModuleConfig = module_config[section]
+        self.module_config = module_config[section]
+        self.config_directory = config_directory
+        self.temp_directory = temp_directory
 
         # Use static timer if no timer is specified
         self.timer: Timer = timer_factory(
-            self.config.get('timer', {'type': 'static'}),
+            self.module_config.get('timer', {'type': 'static'}),
         )
-
-        # Commands to run at specified times
-        self.startup_commands: List[str] = self.config.get('run_on_startup', [])
-        self.period_change_commands: List[str] = self.config.get('run_on_period_change', [])
-        self.exit_commands: List[str] = self.config.get('run_on_exit', [])
-        self.import_sections_on_period_change: List[str] = self.config.get('import_sections_on_period_change', [])
-
-        # Attributes used in order to keep track of unfinished tasks
-        self.startup_commands_have_been_run = False
-        self.last_period_change_run = 'this_period_should_never_be_valid'
-        self.last_compilation_period = 'this_period_should_never_be_valid'
 
         # Find and prepare templates and compilation targets
         self._prepare_templates()
 
     def _prepare_templates(self) -> None:
         """Determine template sources and compilation targets."""
-
         # config['templates'] is a dictionary with keys naming each template,
         # and values containing another dictionary containing the mandatory
         # key `source`, and the optional key `target`.
-        templates: Dict[str, Dict[str, str]] = self.config.get(
+        templates: Dict[str, Dict[str, str]] = self.module_config.get(
             'templates',
             {},
         )
@@ -115,7 +110,7 @@ class Module:
 
         temp_file = NamedTemporaryFile(  # type: ignore
             prefix=self.name + '-',
-            dir=self.application_config['_runtime']['temp_directory'],
+            dir=self.temp_directory,
         )
 
         # NB: These temporary files need to be persisted during the entirity of
@@ -140,132 +135,106 @@ class Module:
 
         if not path.is_absolute():
             path = Path(
-                self.application_config['_runtime']['config_directory'],
+                self.config_directory,
                 path,
             )
 
         return path
 
-    def startup(self) -> None:
-        """Commands to be run on Module instance startup."""
+    def startup_commands(self) -> Tuple[str, ...]:
+        """Return commands to be run on Module instance startup."""
+        startup_commands: List[str] = self.module_config.get(
+            'run_on_startup',
+            [],
+        )
 
-        self.startup_commands_have_been_run = True
-
-        self.compile_templates()
-
-        for command in self.startup_commands:
-            logger.info(f'[module/{self.name}] Running startup command.')
-            self.run_shell(command=command)
-
-        if len(self.startup_commands) == 0:
+        if len(startup_commands) == 0:
             logger.debug(f'[module/{self.name}] No startup command specified.')
+            return ()
+        else:
+            return tuple(
+                self.interpolate_string(command)
+                for command
+                in startup_commands
+            )
 
-    def period_change(self) -> None:
+    def period_change_commands(self) -> Tuple[str, ...]:
         """Commands to be run when self.timer period changes."""
+        period_change_commands: List[str] = self.module_config.get(
+            'run_on_period_change',
+            [],
+        )
 
-        self.last_period_change_run = self.timer.period()
-
-        self.compile_templates()
-
-        for command in self.period_change_commands:
-            logger.info(f'[module/{self.name}] Running period change command.')
-            self.run_shell(command=command)
-
-        if len(self.period_change_commands) == 0:
+        if len(period_change_commands) == 0:
             logger.debug(f'[module/{self.name}] No period change command specified.')
+            return ()
+        else:
+            return tuple(
+                self.interpolate_string(command)
+                for command
+                in period_change_commands
+            )
 
-    def exit(self) -> None:
+    def exit_commands(self) -> Tuple[str, ...]:
         """Commands to be run on Module instance shutdown."""
+        exit_commands: List[str] = self.module_config.get(
+            'run_on_exit',
+            [],
+        )
 
-        for command in self.exit_commands:
-            logger.info(f'[module/{self.name}] Running exit command.')
-            self.run_shell(command=command)
-
-        if len(self.exit_commands) == 0:
+        if len(exit_commands) == 0:
             logger.debug(f'[module/{self.name}] No exit command specified.')
+            return ()
+        else:
+            return tuple(
+                self.interpolate_string(command)
+                for command
+                in exit_commands
+            )
 
-        if hasattr(self, 'temp_files'):
-            # Temporary files have been created for this module and they should
-            # be deleted.
-            for temp_file in self.temp_files:
-                temp_file.close()
+    def context_section_imports(self) -> Tuple[ContextSectionImport, ...]:
+        """Return what to import into the global application_context."""
+        context_section_imports = []
+        import_config = self.module_config.get(
+            'import_context_sections_on_period_change',
+            [],
+        )
 
-    def has_unfinished_tasks(self) -> bool:
-        """Returns True if any of the modules have unfinished tasks."""
+        for command in import_config:
+            # Insert placeholders
+            command = self.interpolate_string(command)
 
-        return not self.startup_commands_have_been_run or \
-            self.last_period_change_run != self.timer.period()
+            # Split string into its defined components
+            into_section, path, from_section = command.split(' ')
 
-    def finish_tasks(self) -> None:
-        """Finish all unfinished tasks of all the modules."""
+            # Get the absolute path
+            config_path = self.expand_path(Path(path))
 
-        if not self.startup_commands_have_been_run:
-            self.startup()
-
-        if self.last_period_change_run != self.timer.period():
-            self.period_change()
-
-            if len(self.import_sections_on_period_change) != 0:
-                for command in self.import_sections_on_period_change:
-                    self.import_section(command)
-
-                if self.manager:
-                    for module in self.manager.modules:
-                        module.compile_templates(force=True)
-
-    def compile_templates(self, force=False) -> None:
-        """
-        Compile the module templates specified by the `templates` option.
-
-        If force=True, the template files will be compiled even though the
-        period has not changed since the last compilation. This is used when
-        some module has changed the application config by importing a new
-        section, which requires recompilation of all templates to reflect the
-        new changes to the application config.
-        """
-
-        period = self.timer.period()
-
-        if force or self.last_compilation_period != period:
-            # The period has changed, and there is a need for compiling the
-            # templates again with the new period.
-            self.last_compilation_period = period
-
-            for name, template in self.templates.items():
-                compiler.compile_template(
-                    template=template['source'],
-                    target=template['target'],
-                    context=self.context,
+            # Isert a ContextSectionImport tuple into the return value
+            context_section_imports.append(
+                ContextSectionImport(
+                    into_section=into_section,
+                    from_section=from_section,
+                    from_config_file=config_path,
                 )
+            )
 
-    def run_shell(self, command) -> None:
-        command = command.format(
+        return tuple(context_section_imports)
+
+
+    def interpolate_string(self, string: str) -> str:
+        """Replace all module placeholders in string."""
+        string = string.format(
+            # {period} -> current period defined by module timer
             period=self.timer.period(),
+            # {name_of_template} -> string path to compiled template
             **{
-                name: template['target']
+                name: str(template['target'])
                 for name, template
                 in self.templates.items()
             }
         )
-        logger.info(f'[module/{self.name}] Running command "{command}".')
-        run_shell(
-            command=command,
-            working_directory=self.application_config['_runtime']['config_directory'],
-        )
-
-    def import_section(self, command: str) -> None:
-        """Import config section into application config."""
-        section, path, from_section = command.format(
-            period=self.timer.period(),
-        ).split(' ')
-        config_path = self.expand_path(Path(path))
-
-        insert_into(
-            context=self.context,
-            section=section,
-            from_config_file=config_path,
-            from_section=from_section,
-        )
+        return string
 
     @staticmethod
     def valid_class_section(section: ModuleConfig) -> bool:
@@ -300,66 +269,117 @@ class ModuleManager:
     def __init__(self, config: ApplicationConfig) -> None:
         self.application_config = config
         self.application_context = context(config)
-        self.modules: List[Module] = []
+        self.modules: Dict[str, Module] = {}
+        self.startup_done = False
+        self.last_module_periods: Dict[str, str] = {}
 
         for section, options in config.items():
-            module_resolver = {section: options}
-            if Module.valid_class_section(module_resolver):
-                self.modules.append(Module(
-                    module_config=module_resolver,
-                    application_config=self.application_config,
-                    manager=self,
-                ))
+            module_config = {section: options}
+            if Module.valid_class_section(module_config):
+                module = Module(
+                    module_config=module_config,
+                    config_directory=self.application_config['_runtime']['config_directory'],
+                    temp_directory=self.application_config['_runtime']['temp_directory'],
+                )
+                self.modules[module.name] = module
 
     def __len__(self) -> int:
         """Return the number of managed modules."""
-
         return len(self.modules)
+
+    def module_periods(self) -> Dict[str, str]:
+        module_periods = {}
+        for module_name, module in self.modules.items():
+            module_periods[module_name] = module.timer.period()
+
+        return module_periods
+
+    def finish_tasks(self) -> None:
+        if not self.startup_done:
+            self.startup()
+
+        if self.last_module_periods != self.module_periods():
+            self.last_module_periods = self.module_periods()
+            self.period_change()
+
+    def has_unfinished_tasks(self) -> bool:
+        if not self.startup_done:
+            return True
+        else:
+            return self.last_module_periods != self.module_periods()
 
     def time_until_next_period(self) -> timedelta:
         """Time left until first period change of any of the modules managed."""
-
         return min(
             module.timer.time_until_next_period()
             for module
-            in self.modules
+            in self.modules.values()
         )
 
-    def has_unfinished_tasks(self) -> bool:
-        return any(
-            module.has_unfinished_tasks()
-            for module
-            in self.modules
+    def import_context_sections(self):
+        """Import context sections defined by the managed modules."""
+        for module in self.modules.values():
+            context_section_imports = module.context_section_imports()
+
+            for csi in context_section_imports:
+                self.application_context = insert_into(
+                    context=self.application_context,
+                    section=csi.into_section,
+                    from_section=csi.from_section,
+                    from_config_file=csi.from_config_file,
+                )
+
+    def compile_templates(self) -> None:
+        """
+        Compile the module templates specified by the `templates` option.
+        """
+        for module in self.modules.values():
+            for files in module.templates.values():
+                compiler.compile_template(
+                    template=files['source'],
+                    target=files['target'],
+                    context=self.application_context,
+                )
+
+    def startup(self):
+        self.import_context_sections()
+        self.compile_templates()
+
+        for module in self.modules.values():
+            startup_commands = module.startup_commands()
+            for command in startup_commands:
+                logger.info(f'[module/{module.name}] Running startup command.')
+                self.run_shell(command, module.name)
+
+        self.startup_done = True
+
+    def period_change(self):
+        self.import_context_sections()
+        self.compile_templates()
+
+        for module in self.modules.values():
+            period_change_commands = module.period_change_commands()
+            for command in period_change_commands:
+                logger.info(f'[module/{module.name}] Running period change command.')
+                self.run_shell(command, module.name)
+
+    def exit(self):
+        for module in self.modules.values():
+            exit_commands = module.exit_commands()
+            for command in exit_commands:
+                logger.info(f'[module/{module.name}] Running exit command.')
+                self.run_shell(command, module.name)
+
+            if hasattr(module, 'temp_files'):
+                for temp_file in module.temp_files:
+                    temp_file.close()
+
+
+    def run_shell(self, command: str, module_name: str) -> None:
+        """Run shell command defined in module."""
+        logger.info(f'[module/{module_name}] Running command "{command}".')
+        run_shell(
+            command=command,
+            working_directory=self.application_config['_runtime']['config_directory'],
         )
 
-    def modules_with_unfinished_tasks(self) -> Iterable[Module]:
-        """Return a generator of all modules with unfinished tasks."""
-
-        return (
-            module
-            for module
-            in self.modules
-            if module.has_unfinished_tasks()
-        )
-
-    def finish_tasks(self) -> None:
-        """Finish all unfinished tasks of all the managed modules."""
-
-        for module in self.modules_with_unfinished_tasks():
-            module.finish_tasks()
-
-    def exit(self) -> None:
-        """Run all module on_exit commands."""
-
-        logger.info('Running all module on_exit commands')
-
-        for module in self.modules:
-            try:
-                module.exit()
-            except FileNotFoundError:
-                # Some temp file has already been cleaned up.
-                # This shouldn't be necessary if we are more careful with
-                # keeping 'TemporaryFile's within scope, but alas, it is what
-                # it is at the moment. I think this exception may be caused
-                # by running tests at the same time Astrality is interrupted.
-                continue

@@ -1,0 +1,20 @@
+context/monday:
+    day: monday
+
+context/thuesday:
+    day: thuesday
+
+context/wednesday:
+    day: wednesday
+
+context/thursday:
+    day: thursday
+
+context/friday:
+    day: friday
+
+context/saturday:
+    day: saturday
+
+context/sunday:
+    day: sunday

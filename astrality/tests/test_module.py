@@ -6,9 +6,10 @@ from pathlib import Path
 from freezegun import freeze_time
 import pytest
 
+from astrality import timer
 from astrality.config import generate_expanded_env_dict
 from astrality.module import Module, ModuleManager
-from astrality import timer
+from astrality.resolver import Resolver
 
 
 @pytest.fixture
@@ -23,15 +24,38 @@ def valid_module_section():
                     'target': '/tmp/compiled_result',
                 }
             },
-            'run_on_startup': ['echo startup'],
-            'run_on_period_change': ['echo period_change'],
+            'run_on_startup': ['echo {period}'],
+            'run_on_period_change': ['echo {template_name}'],
             'run_on_exit': ['echo exit'],
         }
     }
 
+
 @pytest.fixture
-def module(valid_module_section, conf):
-    return Module(valid_module_section, conf)
+def folders(conf):
+    return (
+        conf['_runtime']['config_directory'],
+        conf['_runtime']['temp_directory'],
+    )
+
+@pytest.fixture
+def simple_application_config(valid_module_section, folders, expanded_env_dict):
+    config = valid_module_section.copy()
+    config['_runtime'] = {}
+    config['_runtime']['config_directory'], \
+        config['_runtime']['temp_directory'] = folders
+    config['context/env'] = expanded_env_dict
+    config['context/fonts'] = {1: 'FuraMono Nerd Font'}
+    return config
+
+
+@pytest.fixture
+def module(valid_module_section, folders):
+    return Module(valid_module_section, *folders)
+
+@pytest.fixture
+def single_module_manager(simple_application_config):
+    return ModuleManager(simple_application_config)
 
 
 class TestModuleClass:
@@ -71,59 +95,80 @@ class TestModuleClass:
     def test_module_timer_class(self, module):
         assert isinstance(module.timer, timer.Weekday)
 
-    def test_using_default_static_timer_when_no_timer_is_given(self, conf):
-        static_module = Module({'module/static': {}}, conf)
+    def test_using_default_static_timer_when_no_timer_is_given(self, folders):
+        static_module = Module({'module/static': {}}, *folders)
         assert isinstance(static_module.timer, timer.Static)
 
     @freeze_time('2018-01-27')
-    def test_run_shell_command_with_special_expansions(self, module, caplog):
-        module.run_shell('echo {period}')
-        assert caplog.record_tuples == [
-            (
-                'astrality',
-                logging.INFO,
-                '[module/test_module] Running command "echo saturday".',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                'saturday\n',
-            )
-        ]
+    def test_get_shell_commands_with_special_interpolations(
+        self,
+        module,
+        caplog,
+    ):
+        assert module.startup_commands() == ('echo saturday',)
+
+        compilation_target = '/tmp/compiled_result'
+        assert module.period_change_commands() == (
+            f'echo {compilation_target}',
+        )
+
+    @freeze_time('2018-01-27')
+    def test_running_module_manager_commands_with_special_interpolations(
+        self,
+        single_module_manager,
+        caplog,
+    ):
+        single_module_manager.startup()
+        assert (
+            'astrality',
+            logging.INFO,
+            '[module/test_module] Running command "echo saturday".',
+        ) in caplog.record_tuples
+        assert (
+            'astrality',
+            logging.INFO,
+            'saturday\n',
+        ) in caplog.record_tuples
 
         caplog.clear()
-        module.run_shell('echo {template_name}')
+        single_module_manager.period_change()
         compilation_target = '/tmp/compiled_result'
-        assert caplog.record_tuples == [
-            (
-                'astrality',
-                logging.INFO,
-                '[module/test_module] Running command "echo /tmp/compiled_result".',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                compilation_target + '\n',
-            )
-        ]
+        assert (
+            'astrality',
+            logging.INFO,
+            '[module/test_module] Running command "echo /tmp/compiled_result".',
+        ) in caplog.record_tuples
+        assert (
+            'astrality',
+            logging.INFO,
+            compilation_target + '\n',
+        ) in caplog.record_tuples
 
     @pytest.mark.slow
-    def test_running_shell_command_that_times_out(self, module, caplog):
-        module.run_shell('sleep 2.1')
+    def test_running_shell_command_that_times_out(self, single_module_manager, caplog):
+        single_module_manager.run_shell('sleep 2.1', 'name')
         assert 'used more than 2 seconds' in caplog.record_tuples[1][2]
 
-    def test_running_shell_command_with_non_zero_exit_code(self, module, caplog):
-        module.run_shell('thiscommandshould not exist')
+    def test_running_shell_command_with_non_zero_exit_code(
+        self,
+        single_module_manager,
+        caplog,
+    ):
+        single_module_manager.run_shell('thiscommandshould not exist', 'name')
         assert 'not found' in caplog.record_tuples[1][2]
         assert 'non-zero return code' in caplog.record_tuples[2][2]
 
-    def test_running_shell_command_with_environment_variable(self, module, caplog):
-        module.run_shell('echo $USER')
+    def test_running_shell_command_with_environment_variable(
+        self,
+        single_module_manager,
+        caplog,
+    ):
+        single_module_manager.run_shell('echo $USER', 'name')
         assert caplog.record_tuples == [
             (
                 'astrality',
                 logging.INFO,
-                '[module/test_module] Running command "echo $USER".',
+                '[module/name] Running command "echo $USER".',
             ),
             (
                 'astrality',
@@ -132,13 +177,15 @@ class TestModuleClass:
             )
         ]
 
+    @freeze_time('2018-01-27')
     def test_running_module_startup_command(
         self,
+        single_module_manager,
         module,
         valid_module_section,
         caplog,
     ):
-        module.startup()
+        single_module_manager.startup()
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -157,25 +204,25 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
-                '[module/test_module] Running command "echo startup".',
+                '[module/test_module] Running command "echo saturday".',
             ),
             (
                 'astrality',
                 logging.INFO,
-                'startup\n',
+                'saturday\n',
             )
         ]
 
     def test_running_module_startup_command_when_no_command_is_specified(
         self,
-        valid_module_section,
-        conf,
+        simple_application_config,
+        module,
         caplog,
     ):
-        valid_module_section['module/test_module'].pop('run_on_startup')
-        module = Module(valid_module_section, conf)
+        simple_application_config['module/test_module'].pop('run_on_startup')
+        module_manager = ModuleManager(simple_application_config)
 
-        module.startup()
+        module_manager.startup()
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -195,11 +242,11 @@ class TestModuleClass:
 
     def test_running_module_period_change_command(
         self,
+        single_module_manager,
         module,
-        valid_module_section,
         caplog,
     ):
-        module.period_change()
+        single_module_manager.period_change()
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -218,25 +265,26 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
-                '[module/test_module] Running command "echo period_change".',
+                f'[module/test_module] Running command "echo {compiled_template}".',
             ),
             (
                 'astrality',
                 logging.INFO,
-                'period_change\n',
+                f'{compiled_template}\n',
             )
         ]
 
     def test_running_module_period_change_command_when_no_command_is_specified(
         self,
-        valid_module_section,
+        simple_application_config,
+        module,
         conf,
         caplog,
     ):
-        valid_module_section['module/test_module'].pop('run_on_period_change')
-        module = Module(valid_module_section, conf)
+        simple_application_config['module/test_module'].pop('run_on_period_change')
+        module_manager = ModuleManager(simple_application_config)
 
-        module.period_change()
+        module_manager.period_change()
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -254,8 +302,8 @@ class TestModuleClass:
             ),
         ]
 
-    def test_running_module_exit_command(self, module, caplog):
-        module.exit()
+    def test_running_module_exit_command(self, single_module_manager, caplog):
+        single_module_manager.exit()
         assert caplog.record_tuples == [
             (
                 'astrality',
@@ -276,14 +324,13 @@ class TestModuleClass:
 
     def test_running_module_exit_command_when_no_command_is_specified(
         self,
-        valid_module_section,
-        conf,
+        simple_application_config,
         caplog,
     ):
-        valid_module_section['module/test_module'].pop('run_on_exit')
-        module = Module(valid_module_section, conf)
+        simple_application_config['module/test_module'].pop('run_on_exit')
+        module_manager = ModuleManager(simple_application_config)
 
-        module.exit()
+        module_manager.exit()
         assert caplog.record_tuples == [
             (
                 'astrality',
@@ -302,12 +349,12 @@ class TestModuleClass:
     def test_location_of_template_file_defined_absolutely(
         self,
         valid_module_section,
-        conf,
+        folders,
     ):
         absolute_path = Path(__file__).parent / 'templates' / 'test_template.conf'
         valid_module_section['module/test_module']['templates']['template_name']['source'] = absolute_path
 
-        module = Module(valid_module_section, conf)
+        module = Module(valid_module_section, *folders)
         template_file = module.templates['template_name']['source']
 
         assert template_file == absolute_path
@@ -315,13 +362,13 @@ class TestModuleClass:
     def test_missing_template_file(
         self,
         valid_module_section,
-        conf,
+        folders,
         caplog,
     ):
         valid_module_section['module/test_module']['templates']['template_name']['source'] = \
             '/not/existing'
 
-        module = Module(valid_module_section, conf)
+        module = Module(valid_module_section, *folders)
         assert module.templates == {}
         assert caplog.record_tuples == [
             (
@@ -345,30 +392,31 @@ class TestModuleClass:
         temp_file = module.create_temp_file()
         assert temp_file.is_file()
 
-    def test_cleanup_of_tempfile_on_exit(self, module):
-        temp_file = module.create_temp_file()
-        module.exit()
+    def test_cleanup_of_tempfile_on_exit(self, single_module_manager):
+        temp_file = single_module_manager.modules['test_module'].create_temp_file()
+        assert temp_file.is_file()
+        single_module_manager.exit()
         assert not temp_file.is_file()
 
     def test_creation_of_temporary_file_when_compiled_template_is_not_defined(
         self,
-        valid_module_section,
-        conf,
+        simple_application_config,
     ):
-        valid_module_section['module/test_module']['templates']['template_name'].pop('target')
-        module = Module(valid_module_section, conf)
-        assert module.templates['template_name']['target'].is_file()
+        simple_application_config['module/test_module']['templates']['template_name'].pop('target')
+        module_manager = ModuleManager(simple_application_config)
+        assert module_manager.modules['test_module'].templates['template_name']['target'].is_file()
 
     def test_compilation_of_template(
         self,
-        valid_module_section,
+        simple_application_config,
+        module,
         conf,
         caplog,
     ):
-        valid_module_section['module/test_module']['timer']['type'] = 'solar'
+        simple_application_config['module/test_module']['timer']['type'] = 'solar'
         compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font'
-        module = Module(valid_module_section, conf)
-        module.compile_templates()
+        module_manager = ModuleManager(simple_application_config)
+        module_manager.compile_templates()
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -385,13 +433,13 @@ class TestModuleClass:
             ),
         ]
 
-def test_has_unfinished_tasks(valid_module_section, conf, freezer):
+def test_has_unfinished_tasks(simple_application_config, freezer):
     # Move time to midday
     midday = datetime.now().replace(hour=12, minute=0)
     freezer.move_to(midday)
 
     # At instanziation, the module should have unfinished tasks
-    weekday_module = Module(valid_module_section, conf)
+    weekday_module = ModuleManager(simple_application_config)
     assert weekday_module.has_unfinished_tasks() == True
 
     # After finishing tasks, there should be no unfinished tasks (duh!)
@@ -419,7 +467,7 @@ def test_has_unfinished_tasks(valid_module_section, conf, freezer):
 @pytest.fixture
 def config_with_modules():
     return {
-        'env': generate_expanded_env_dict(),
+        'context/env': generate_expanded_env_dict(),
         'module/solar_module': {
             'enabled': True,
             'timer': {
@@ -430,7 +478,7 @@ def config_with_modules():
             },
             'templates': {
                 'template_name': {
-                    'source': 'src/tests/templates/test_template.conf',
+                    'source': 'astrality/tests/templates/test_template.conf',
                     'target': '/tmp/compiled_result',
                 }
             },
@@ -452,12 +500,31 @@ def config_with_modules():
         'context/fonts': {1: 'FuraCode Nerd Font'},
         '_runtime': {
             'config_directory': Path(__file__).parents[2],
+            'temp_directory': '/tmp',
         }
     }
 
 @pytest.fixture
 def module_manager(config_with_modules):
     return ModuleManager(config_with_modules)
+
+
+def test_import_sections_on_period_change(config_with_modules, freezer):
+    config_with_modules['module/weekday_module']['import_context_sections_on_period_change'] = \
+        ['week astrality/tests/templates/weekday.yaml {period}']
+    module_manager = ModuleManager(config_with_modules)
+
+    assert 'env' in module_manager.application_context
+    assert module_manager.application_context['fonts'] == {1: 'FuraCode Nerd Font'}
+
+    monday = datetime(year=2018, month=2, day=5)
+    freezer.move_to(monday)
+    module_manager.finish_tasks()
+    module_manager.application_context.pop('env')
+    assert module_manager.application_context == {
+        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
+        'week': Resolver({'day': 'monday'}),
+    }
 
 
 class TestModuleManager:
@@ -496,35 +563,26 @@ def test_detection_of_new_period_involving_several_modules(
     noon = solar_timer.location.sun()['noon']
     one_minute = timedelta(minutes=1)
     freezer.move_to(noon - one_minute)
-
-    # Get period changed modules right after ModuleManager instanziation
     module_manager = ModuleManager(config_with_modules)
-    modules_with_unfinished_tasks = tuple(module_manager.modules_with_unfinished_tasks())
 
     # All modules should now considered period changed
     assert module_manager.has_unfinished_tasks() == True
-    assert len(tuple(modules_with_unfinished_tasks)) == 2
 
     # Running period change method for all the period changed modules
     module_manager.finish_tasks()
 
     # After running these methods, they should all be reverted to not changed
     assert module_manager.has_unfinished_tasks() == False
-    assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 0
 
     # Move time to right after noon
     freezer.move_to(noon + one_minute)
 
     # The solar timer should now be considered to have been period changed
-    modules_with_unfinished_tasks = tuple(module_manager.modules_with_unfinished_tasks())
     assert module_manager.has_unfinished_tasks() == True
-    assert len(modules_with_unfinished_tasks) == 1
-    assert isinstance(modules_with_unfinished_tasks[0].timer, timer.Solar)
 
     # Again, check if period_change() method makes them unchanged
     module_manager.finish_tasks()
     assert module_manager.has_unfinished_tasks() == False
-    assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 0
 
     # Move time two days forwards
     two_days = timedelta(days=2)
@@ -532,4 +590,3 @@ def test_detection_of_new_period_involving_several_modules(
 
     # Now both timers should be considered period changed
     assert module_manager.has_unfinished_tasks() == True
-    assert len(tuple(module_manager.modules_with_unfinished_tasks())) == 2

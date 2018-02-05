@@ -7,8 +7,9 @@ import re
 from io import StringIO
 from typing import Any, Dict, Match, MutableMapping, Optional, Tuple
 
-from astrality.utils import run_shell
+from astrality import compiler
 from astrality.resolver import Resolver
+from astrality.utils import run_shell
 
 Context = Dict[str, Resolver]
 
@@ -241,10 +242,14 @@ def insert_into(
     The method overwrites `config[section]` with the values from [from_section]
     defined in `from_config_file`.
     """
-    conf_resolver = Resolver(dict_from_config_file(
+    logger.info(
+        f'Importing context section {section} from {str(from_config_file)}',
+    )
+
+    contexts = compiler.context(dict_from_config_file(
         from_config_file,
         with_env=False,
     ))
-    context[section] = conf_resolver[from_section]
+    context[section] = contexts[from_section]
 
     return context

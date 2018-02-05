@@ -25,21 +25,21 @@ def dummy_config():
 
 class TestAllConfigFeaturesFromDummyConfig:
     def test_normal_variable(self, dummy_config):
-        assert dummy_config['section1']['var1'] == 'value1'
+        assert dummy_config['context/section1']['var1'] == 'value1'
 
     def test_variable_interpolation(self, dummy_config):
-        assert dummy_config['section1']['var2'] == 'value1/value2'
-        assert dummy_config['section2']['var3'] == 'value1'
+        assert dummy_config['context/section1']['var2'] == 'value1/value2'
+        assert dummy_config['context/section2']['var3'] == 'value1'
 
     def test_empty_string_variable(self, dummy_config):
-        assert dummy_config['section2']['empty_string_var'] == ''
+        assert dummy_config['context/section2']['empty_string_var'] == ''
 
     def test_non_existing_variable(self, dummy_config):
         with pytest.raises(KeyError):
-            assert dummy_config['section2']['not_existing_option'] is None
+            assert dummy_config['context/section2']['not_existing_option'] is None
 
     def test_environment_variable_interpolation(self, dummy_config):
-        assert dummy_config['section3']['env_variable'] == 'test_value, hello'
+        assert dummy_config['context/section3']['env_variable'] == 'test_value, hello'
 
 
 def test_config_directory_name(conf):
@@ -55,28 +55,29 @@ def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf, freez
     midnight = datetime(year=2018, month=1, day=31, hour=0, minute=0)
     freezer.move_to(midnight)
     module_manager = ModuleManager(conf)
+    assert 'colors' not in module_manager.application_context
     module_manager.finish_tasks()
-    assert conf['colors'] == {1: 'CACCFD', 2: '3F72E8'}
+    assert module_manager.application_context['colors'] == {1: 'CACCFD', 2: '3F72E8'}
 
 def test_environment_variable_interpolation_by_preprocessing_conf_yaml_file():
     test_conf = Path(__file__).parent / 'test.yaml'
     result = preprocess_configuration_file(test_conf)
 
     expected_result = \
-'''section1:
+'''context/section1:
     var1: value1
     var2: value1/value2
 
 
-section2:
+context/section2:
     # Comment
     var3: value1
     empty_string_var: ''
 
-section3:
+context/section3:
     env_variable: test_value, hello
 
-section4:
+context/section4:
     1: primary_value
 '''
     assert expected_result == result
@@ -141,6 +142,8 @@ def test_insert_environment_variables():
 
 def test_insert_context_section():
     context = compiler.context({'context/section1': {'key_one': 'value_one'}})
+    assert context['section1']['key_one'] == 'value_one'
+
     test_config_file = Path(__file__).parent / 'test.yaml'
     context = insert_into(
         context=context,
