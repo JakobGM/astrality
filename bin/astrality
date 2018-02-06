@@ -1,4 +1,5 @@
 #!/usr/bin/env python3.6
+from argparse import ArgumentParser
 import sys
 from pathlib import Path
 
@@ -8,7 +9,47 @@ PROJECT_DIR = Path(__file__).absolute().parents[1]
 sys.path.append(str(PROJECT_DIR))
 
 from astrality.astrality import main
+from astrality.config import resolve_config_directory, create_config_directory
 
-main()
+config_dir = resolve_config_directory()
+
+parser = ArgumentParser(
+    prog='Astrality',
+    description='Compile configuration templates at predefined times.',
+    epilog=f'''The location of Astralitys configuration directory is:
+               "{str(config_dir)}".
+               You can change this by setting $ASTRALITY_CONFIG_HOME or $XDG_CONFIG_HOME.
+            '''
+)
+parser.add_argument(
+    '-c',
+    '--create-example-config',
+    help='Create astrality configuration folder with example content.',
+    action='store_true',
+)
+parser.add_argument(
+    '-e',
+    '--create-empty-config',
+    help='Create empty astrality configuration folder.',
+    action='store_true',
+)
+parser.add_argument(
+    '-l',
+    '--logging-level',
+    help='Set the degree of logging of the application. Default: INFO.',
+    choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+    default='INFO',
+    const='INFO',
+    nargs='?',
+)
+args = parser.parse_args()
+
+if args.create_example_config:
+    create_config_directory(empty=False)
+elif args.create_empty_config:
+    create_config_directory(empty=True)
+else:
+    logging_level = args.logging_level
+    main(logging_level=logging_level)
 
 # vim:filetype=python

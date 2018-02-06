@@ -276,12 +276,16 @@ def create_config_directory(path: Optional[Path]=None, empty=False) -> Path:
 
     if not path.exists():
         if empty:
+            logger.warning(f'Creating empty directory at "{str(path)}".')
             path.mkdir(parents=True)
         else:
+            logger.warning(f'Copying over example config directory to "{str(path)}".')
             example_config_dir = Path(__file__).parent / 'config'
             copy_tree(
                 src=str(example_config_dir),
                 dst=str(path),
             )
+    else:
+        logger.warning(f'Path "{str(path)}" already exists! Delete it first.')
 
     return path

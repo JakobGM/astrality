@@ -14,16 +14,21 @@ from astrality.config import user_configuration
 from astrality.module import ModuleManager
 
 logger = logging.getLogger('astrality')
-logging.basicConfig(level=os.environ.get('ASTRALITY_LOGGING_LEVEL', 'WARNING'))
 
 
-def main(test: bool = False):
+def main(logging_level: str = 'INFO', test: bool = False):
     """
     Run the main process for Astrality.
 
     If test is set to True, then only one main loop is run as an integration
     test.
     """
+    if 'ASTRALITY_LOGGING_LEVEL' in os.environ:
+        # Override logging level if env variable is set
+        logger.setLevel(os.environ['ASTRALITY_LOGGING_LEVEL'])
+    else:
+        # Set the logging level to the level passed in by bin/astrality cli
+        logger.setLevel(logging_level)
 
     # Quit old astrality instances
     kill_old_astrality_processes()
