@@ -94,8 +94,18 @@ html_theme = 'sphinx_rtd_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-# html_theme_options = {}
+html_theme_options = {
+    'canonical_url': 'https://astrality.readthedocs.io/',
+    'analytics_id': 'UA-113716252-1',
+    'logo_only': False,
+    'display_version': True,
+    'prev_next_buttons_location': 'both',
+
+    # Toc options
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -113,6 +123,9 @@ html_sidebars = {
         'searchbox.html',
     ]
 }
+
+# Logo for the documentation
+html_logo = 'astrality_logo.png'
 
 
 # -- Options for HTMLHelp output ------------------------------------------
