@@ -2,9 +2,10 @@
 
 import logging
 import os
-from pathlib import Path
 import re
+from distutils.dir_util import copy_tree
 from io import StringIO
+from pathlib import Path
 from typing import Any, Dict, Match, MutableMapping, Optional, Tuple
 
 from astrality import compiler
@@ -266,3 +267,21 @@ def insert_into(
     context[section] = contexts[from_section]
 
     return context
+
+
+def create_config_directory(path: Optional[Path]=None, empty=False) -> Path:
+    """Create application configuration directory and return its path."""
+    if not path:
+        path = resolve_config_directory()
+
+    if not path.exists():
+        if empty:
+            path.mkdir(parents=True)
+        else:
+            example_config_dir = Path(__file__).parent / 'config'
+            copy_tree(
+                src=str(example_config_dir),
+                dst=str(path),
+            )
+
+    return path

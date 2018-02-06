@@ -1,12 +1,13 @@
-from configparser import ConfigParser
-from datetime import datetime
 import os
+from datetime import datetime
 from pathlib import Path
+from shutil import rmtree
 
 import pytest
 
 from astrality import compiler
 from astrality.config import (
+    create_config_directory,
     dict_from_config_file,
     generate_expanded_env_dict,
     insert_environment_values,
@@ -203,3 +204,36 @@ class TestResolveConfigDirectory:
     def test_using_standard_config_dir_when_nothing_else_is_specified(self, monkeypatch):
         monkeypatch.setattr(os, 'environ', {})
         assert resolve_config_directory() == Path('~/.config/astrality').expanduser()
+
+
+class TestCreateConfigDirectory:
+    def test_creation_of_empty_config_directory(self):
+        config_path = Path('/tmp/config_test')
+        config_dir = create_config_directory(path=config_path, empty=True)
+        assert config_path == config_dir
+        assert config_dir.is_dir()
+        assert len(list(config_dir.iterdir())) == 0
+        config_dir.rmdir()
+
+    def test_creation_of_infered_config_directory(self, monkeypatch):
+        config_path = Path('/tmp/astrality_config')
+        monkeypatch.setattr(
+            os,
+            'environ',
+            {'ASTRALITY_CONFIG_HOME': str(config_path)},
+        )
+        created_config_dir = create_config_directory(empty=True)
+        assert created_config_dir == config_path
+        created_config_dir.rmdir()
+
+    def test_creation_of_config_directory_with_example_content(self):
+        """Test copying example configuration contents."""
+        config_path = Path('/tmp/astrality_config_with_contents')
+        created_config_dir = create_config_directory(config_path)
+        assert created_config_dir == config_path
+
+        # Test presence of content in created folder
+        dir_contents = tuple(file.name for file in created_config_dir.iterdir())
+        assert 'astrality.yaml' in dir_contents
+        assert 'templates' in dir_contents
+        rmtree(created_config_dir)
