@@ -30,3 +30,12 @@ setuptools
 
 # For binary distribution for faster installation times
 wheel
+
+# For documentation compilation
+sphinx
+
+# For filewatching and autobuilding documentation
+sphinx-autobuild
+
+# ReadTheDocs theme for sphinx
+sphinx_rtd_theme
