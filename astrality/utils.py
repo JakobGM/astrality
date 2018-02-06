@@ -1,9 +1,8 @@
 """General utility functions which are used across the application."""
 
 import logging
-from pathlib import Path
 import subprocess
-
+from pathlib import Path
 
 logger = logging.getLogger('astrality')
 

@@ -8,10 +8,11 @@ import pytest
 from astrality import compiler
 from astrality.config import (
     dict_from_config_file,
+    generate_expanded_env_dict,
     insert_environment_values,
     insert_command_substitutions,
     insert_into,
-    generate_expanded_env_dict,
+    resolve_config_directory,
     preprocess_configuration_file,
 )
 from astrality.module import ModuleManager
@@ -175,3 +176,30 @@ def test_insert_context_section():
 def test_insert_command_substitutions():
     string = 'some text: $(echo result)'
     assert insert_command_substitutions(string) == 'some text: result'
+
+
+class TestResolveConfigDirectory:
+    def test_setting_directory_using_application_env_variable(self, monkeypatch):
+        monkeypatch.setattr(
+            os,
+            'environ',
+            {
+                'ASTRALITY_CONFIG_HOME': '/test/dir',
+                'XDG_CONFIG_HOME': '/xdg/dir',
+            },
+        )
+        assert resolve_config_directory() == Path('/test/dir')
+
+    def test_setting_directory_using_xdg_directory_standard(self, monkeypatch):
+        monkeypatch.setattr(
+            os,
+            'environ',
+            {
+                'XDG_CONFIG_HOME': '/xdg/dir',
+            },
+        )
+        assert resolve_config_directory() == Path('/xdg/dir/astrality')
+
+    def test_using_standard_config_dir_when_nothing_else_is_specified(self, monkeypatch):
+        monkeypatch.setattr(os, 'environ', {})
+        assert resolve_config_directory() == Path('~/.config/astrality').expanduser()

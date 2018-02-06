@@ -30,25 +30,38 @@ except ImportError:
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
 
+def resolve_config_directory() -> Path:
+    """
+    Return the absolute configuration directory path for the application.
+
+    The directory path is resolved as follows:
+        1) If $ASTRALITY_CONFIG_HOME is present, use it.
+        2) If $XDG_CONFIG_HOME is present, use $XDG_CONFIG_HOME/astrality.
+        3) Elsewise, use ~/config/astrality.
+    """
+    if 'ASTRALITY_CONFIG_HOME' in os.environ:
+        # The user has set a custom config directory for astrality
+        config_directory = Path(os.environ['ASTRALITY_CONFIG_HOME'])
+    else:
+        # Follow the XDG directory standard
+        config_directory = Path(
+            os.getenv('XDG_CONFIG_HOME', '~/.config'),
+            'astrality',
+        )
+    return config_directory.expanduser().absolute()
+
+
 def infer_config_location(
     config_directory: Optional[Path] = None,
 ) -> Tuple[Path, Path]:
     """
     Try to find the configuration directory and file for astrality, based on
     filesystem or specific environment variables if they are present several
-    places to put it. See README.md.
+    places to put it. If the expected config file is not present, use an
+    example configuration instead.
     """
     if not config_directory:
-        if 'ASTRALITY_CONFIG_HOME' in os.environ:
-            # The user has set a custom config directory for astrality
-            config_directory = Path(os.environ['ASTRALITY_CONFIG_HOME'])
-        else:
-            # Follow the XDG directory standard
-            config_directory = Path(
-                os.getenv('XDG_CONFIG_HOME', '~/.config'),
-                'astrality',
-            )
-
+        config_directory = resolve_config_directory()
     config_file = Path(config_directory, 'astrality.yaml')
 
     if not config_file.is_file():
