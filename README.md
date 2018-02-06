@@ -1,8 +1,8 @@
-# Astrality - A dynamic configuration file manager <br/> [![Build Status](https://travis-ci.org/JakobGM/astrality.svg?branch=master)](https://travis-ci.org/JakobGM/astrality) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/astrality?branch=master)
+# Astrality - A Dynamic Configuration File Manager <br/> [![Build Status](https://travis-ci.org/JakobGM/astrality.svg?branch=master)](https://travis-ci.org/JakobGM/astrality) [![Coverage Status](https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master)](https://coveralls.io/github/JakobGM/astrality?branch=master)
 
-<img align="left" src="astrality/doc/astrality_logo.png">
+<img align="left" src="docs/astrality_logo.png">
 
-## What does it do?
+## What Does It Do?
 Astrality is a tool for managing configuration files and scheduling tasks related to those files.
 
 You can create templates for your configuration files, and Astrality will replace placeholders within those templates with `context` values defined in a central configuration file. Furthermore, you can dynamically manipulate that `context` at predefined times and events. 
@@ -20,7 +20,7 @@ The configuration format uses the flexible [YAML](http://docs.ansible.com/ansibl
 
 It is relatively easy to create `modules` to your own liking. Pull requests with new themes, conky modules, and improvements are very welcome.
 
-## Getting started
+## Getting Started
 
 ### Prerequisites
 Astrality requires [`python 3.6`](https://www.python.org/downloads/) or greater. The included configuration for Astrality also contains modules which utilize [`conky`](https://wiki.archlinux.org/index.php/Conky) and [`feh`](https://wiki.archlinux.org/index.php/feh). You can either disable these modules or install their dependencies. An example installation on ArchLinux would be:
@@ -35,7 +35,7 @@ The default configuration also uses the [Nerd Font](https://github.com/ryanoasis
 yaourt -S nerd-fonts-complete
 ```
 
-### Python requirements
+### Installation
 
 Create a new virtualenv for python 3.6 (or use your system python 3.6 if you prefer). Install Astrality from [pypi](https://pypi.org/project/astrality/) like so:
 
@@ -43,7 +43,13 @@ Create a new virtualenv for python 3.6 (or use your system python 3.6 if you pre
 pip3 install astrality
 ```
 
-You can now start astrality from your command line:
+You should now be able to start `astrality` from your command line, but first, let's create an example configuration:
+
+```bash
+astrality --create-example-config
+```
+
+And now start `astrality`:
 
 ```bash
 astrality
