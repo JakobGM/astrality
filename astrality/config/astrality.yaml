@@ -30,7 +30,9 @@ module/wallpaper:
         run:
             - feh --bg-fill wallpaper_themes/default/{period}.*
         import_context:
-            - colors wallpaper_themes/default/colors.yaml {period}
+            - from_file: wallpaper_themes/default/colors.yaml
+              from_section: '{period}'
+              to_section: colors
 
     on_exit:
         run:

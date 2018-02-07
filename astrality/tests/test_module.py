@@ -538,8 +538,11 @@ def module_manager(config_with_modules):
 
 
 def test_import_sections_on_period_change(config_with_modules, freezer):
-    config_with_modules['module/weekday_module']['on_period_change']['import_context'] = \
-        ['week astrality/tests/templates/weekday.yaml {period}']
+    config_with_modules['module/weekday_module']['on_period_change']['import_context'] = [{
+        'to_section': 'week',
+        'from_file': 'astrality/tests/templates/weekday.yaml',
+        'from_section': '{period}',
+    }]
     module_manager = ModuleManager(config_with_modules)
 
     assert 'env' in module_manager.application_context

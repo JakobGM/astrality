@@ -200,20 +200,19 @@ class Module:
             {},
         ).get('import_context', [])
 
-        for command in import_config:
+        for context_import in import_config:
             # Insert placeholders
-            command = self.interpolate_string(command)
-
-            # Split string into its defined components
-            into_section, path, from_section = command.split(' ')
+            from_file = self.interpolate_string(context_import['from_file'])
+            from_section = self.interpolate_string(context_import['from_section'])
+            to_section = self.interpolate_string(context_import['to_section'])
 
             # Get the absolute path
-            config_path = self.expand_path(Path(path))
+            config_path = self.expand_path(Path(from_file))
 
             # Isert a ContextSectionImport tuple into the return value
             context_section_imports.append(
                 ContextSectionImport(
-                    into_section=into_section,
+                    into_section=to_section,
                     from_section=from_section,
                     from_config_file=config_path,
                 )
