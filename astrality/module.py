@@ -5,7 +5,7 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from astrality import compiler
 from astrality.compiler import context
@@ -55,7 +55,7 @@ class Module:
         {'module/name':
             'enabled': True,
             'timer': {'type': 'weekday'},
-            'on_startup': ['echo weekday is {period}'],
+            'on_startup': {'run': ['echo weekday is {period}']},
         }
         """
         # Can only initialize one module at a time
@@ -144,9 +144,9 @@ class Module:
     def startup_commands(self) -> Tuple[str, ...]:
         """Return commands to be run on Module instance startup."""
         startup_commands: List[str] = self.module_config.get(
-            'run_on_startup',
-            [],
-        )
+            'on_startup',
+            {},
+        ).get('run', [])
 
         if len(startup_commands) == 0:
             logger.debug(f'[module/{self.name}] No startup command specified.')
@@ -161,9 +161,9 @@ class Module:
     def period_change_commands(self) -> Tuple[str, ...]:
         """Commands to be run when self.timer period changes."""
         period_change_commands: List[str] = self.module_config.get(
-            'run_on_period_change',
-            [],
-        )
+            'on_period_change',
+            {},
+        ).get('run', [])
 
         if len(period_change_commands) == 0:
             logger.debug(f'[module/{self.name}] No period change command specified.')
@@ -178,9 +178,9 @@ class Module:
     def exit_commands(self) -> Tuple[str, ...]:
         """Commands to be run on Module instance shutdown."""
         exit_commands: List[str] = self.module_config.get(
-            'run_on_exit',
-            [],
-        )
+            'on_exit',
+            {},
+        ).get('run', [])
 
         if len(exit_commands) == 0:
             logger.debug(f'[module/{self.name}] No exit command specified.')
@@ -196,9 +196,9 @@ class Module:
         """Return what to import into the global application_context."""
         context_section_imports = []
         import_config = self.module_config.get(
-            'import_context_sections_on_period_change',
-            [],
-        )
+            'on_period_change',
+            {},
+        ).get('import_context', [])
 
         for command in import_config:
             # Insert placeholders

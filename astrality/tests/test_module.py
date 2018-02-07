@@ -24,9 +24,9 @@ def valid_module_section():
                     'target': '/tmp/compiled_result',
                 }
             },
-            'run_on_startup': ['echo {period}'],
-            'run_on_period_change': ['echo {template_name}'],
-            'run_on_exit': ['echo exit'],
+            'on_startup': {'run': ['echo {period}']},
+            'on_period_change': {'run': ['echo {template_name}']},
+            'on_exit': {'run': ['echo exit']},
         }
     }
 
@@ -67,9 +67,9 @@ class TestModuleClass:
         disabled_module_section =  {
             'module/disabled_test_module': {
                 'enabled': False,
-                'run_on_startup': ['test'],
-                'run_on_period_change': [''],
-                'run_on_exit': ['whatever'],
+                'on_startup': {'run': ['test']},
+                'on_period_change': {'run': ['']},
+                'on_exit': {'run': ['whatever']},
             }
         }
         assert Module.valid_class_section(disabled_module_section) == False
@@ -214,7 +214,7 @@ class TestModuleClass:
         module,
         caplog,
     ):
-        simple_application_config['module/test_module'].pop('run_on_startup')
+        simple_application_config['module/test_module']['on_startup'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
         module_manager.startup()
@@ -266,7 +266,7 @@ class TestModuleClass:
         conf,
         caplog,
     ):
-        simple_application_config['module/test_module'].pop('run_on_period_change')
+        simple_application_config['module/test_module']['on_period_change'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
         module_manager.period_change()
@@ -307,7 +307,7 @@ class TestModuleClass:
         simple_application_config,
         caplog,
     ):
-        simple_application_config['module/test_module'].pop('run_on_exit')
+        simple_application_config['module/test_module']['on_exit'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
         module_manager.exit()
@@ -510,16 +510,16 @@ def config_with_modules():
                     'target': '/tmp/compiled_result',
                 }
             },
-            'on_startup': ['echo solar compiling {template_name}'],
-            'on_period_change': ['echo solar {period}'],
-            'on_exit': ['echo solar exit'],
+            'on_startup': {'run': ['echo solar compiling {template_name}']},
+            'on_period_change': {'run': ['echo solar {period}']},
+            'on_exit': {'run': ['echo solar exit']},
         },
         'module/weekday_module': {
             'enabled': True,
             'timer': {'type': 'weekday'},
-            'on_startup': ['echo weekday startup'],
-            'on_period_change': ['echo weekday {period}'],
-            'on_exit': ['echo weekday exit'],
+            'on_startup': {'run': ['echo weekday startup']},
+            'on_period_change': {'run': ['echo weekday {period}']},
+            'on_exit': {'run': ['echo weekday exit']},
         },
         'module/disabled_module': {
             'enabled': False,
@@ -538,7 +538,7 @@ def module_manager(config_with_modules):
 
 
 def test_import_sections_on_period_change(config_with_modules, freezer):
-    config_with_modules['module/weekday_module']['import_context_sections_on_period_change'] = \
+    config_with_modules['module/weekday_module']['on_period_change']['import_context'] = \
         ['week astrality/tests/templates/weekday.yaml {period}']
     module_manager = ModuleManager(config_with_modules)
 

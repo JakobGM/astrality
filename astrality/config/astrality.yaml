@@ -26,10 +26,15 @@ module/wallpaper:
         # periodic wallpapers.
         # force_period: morning
 
-    run_on_period_change:
-        - feh --bg-fill wallpaper_themes/default/{period}.*
-    run_on_exit:
-        - feh --bg-fill wallpaper_themes/default/solid_black_background.jpeg
+    on_period_change:
+        run:
+            - feh --bg-fill wallpaper_themes/default/{period}.*
+        import_context:
+            - colors wallpaper_themes/default/colors.yaml {period}
+
+    on_exit:
+        run:
+            - feh --bg-fill wallpaper_themes/default/solid_black_background.jpeg
 
     # `import_section_on_period_change` can specify a string list with the format:
     # "section file_path {period}". It does the following after each "timer" period
@@ -41,8 +46,6 @@ module/wallpaper:
     #     - Recompile all templates with new values for ${ast:section:*}
     #
     # Here we change the colors of other templates based on the current wallpaper
-    import_context_sections_on_period_change:
-        - colors wallpaper_themes/default/colors.yaml {period}
 
 
 module/conky:
@@ -54,11 +57,14 @@ module/conky:
         performance:
             source: templates/conky_performance.conf
 
-    run_on_startup:
-        - conky -c {time}
-        - conky -c {performance}
-    run_on_exit:
-        - pkill -f conky
+    on_startup:
+        run:
+            - conky -c {time}
+            - conky -c {performance}
+
+    on_exit:
+        run:
+            - pkill -f conky
 
 
 context/general:
