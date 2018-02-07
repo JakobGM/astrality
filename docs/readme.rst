@@ -1,3 +1,5 @@
+.. _readme:
+
 .. |travis-ci| image:: https://travis-ci.org/JakobGM/astrality.svg?branch=master
     :target: https://travis-ci.org/JakobGM/astrality
 
@@ -15,7 +17,7 @@ What Does It Do?
 
 Astrality is a tool for managing configuration files and scheduling tasks related to those files.
 
-You can create templates for your configuration files, and Astrality will replace placeholders within those templates with ``context`` values defined in a central configuration file. Furthermore, you can dynamically manipulate that ``context`` at predefined times and events. 
+You can create templates for your configuration files, and Astrality will replace placeholders within those templates with ``context`` values defined in a central configuration file. Furthermore, you can dynamically manipulate that ``context`` at predefined times and events.
 
 **Possible use cases are:**
 
@@ -66,14 +68,9 @@ And now start `astrality`:
 
     astrality
 
-Your wallpaper should now be automatically changed during the different times of day.
+If you have ``feh`` installed, your desktop wallpaper should now be changed according to the sun's position in the sky at `Null Island <https://en.wikipedia.org/wiki/Null_Island>`_. Since you probably don't live there, you should now configure Astrality.
 
+Configuration and Further Documentation
+---------------------------------------
 
-Example initialization using the `i3 tiling window manager <https://github.com/i3/i3>`_:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Add the following line to ``$XDG_CONFIG_HOME/i3/config``:
-
-.. code-block:: console
-
-    exec --no-startup-id "astrality"
+I recommend taking a look at the `full documentation <https://astrality.readthedocs.io/>`_ of Astrality hosted at `Read the Docs <https://readthedocs.org>`_.

@@ -1,6 +1,8 @@
-===========
-Atributions
-===========
+.. _attributions:
+
+============
+Attributions
+============
 
 Inspirations for themes
 =======================

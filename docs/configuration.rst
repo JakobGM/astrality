@@ -1,3 +1,5 @@
+.. _configuration:
+
 =============
 Configuration
 =============
@@ -68,10 +70,20 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 
 .. note::
 
-    Configuration file interpolations occur on Astrality startup, and will not reflect changes to environment variables and shell commands after startup.
+    Interpolations in ``astrality.yaml`` occur on Astrality startup, and will not reflect changes to environment variables and shell commands after startup.
 
 Configuration of other applications
 ===================================
+
+i3wm
+----
+You probably want to automatically start Astrality on startup. Here is an example for those who use the `i3 tiling window manager <https://github.com/i3/i3>`_.
+
+Add the following line to ``$XDG_CONFIG_HOME/i3/config``:
+
+.. code-block:: console
+
+    exec --no-startup-id "astrality"
 
 Compton
 -------
