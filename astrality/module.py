@@ -192,11 +192,22 @@ class Module:
                 in exit_commands
             )
 
-    def context_section_imports(self) -> Tuple[ContextSectionImport, ...]:
-        """Return what to import into the global application_context."""
+    def context_section_imports(
+        self,
+        trigger: str,
+    ) -> Tuple[ContextSectionImport, ...]:
+        """
+        Return what to import into the global application_context.
+
+        Trigger is one of 'on_startup', 'on_period_change', or 'on_exit'.
+        This determines which section of the module is used to get the context
+        import specification from.
+        """
+        assert trigger in ('on_startup', 'on_period_change', 'on_startup',)
+
         context_section_imports = []
         import_config = self.module_config.get(
-            'on_period_change',
+            trigger,
             {},
         ).get('import_context', [])
 
@@ -306,12 +317,12 @@ class ModuleManager:
                module periods combination.
         """
         if not self.startup_done:
-            self.import_context_sections()
+            self.import_context_sections('on_startup')
             self.compile_templates()
             self.startup()
             self.period_change()
         elif self.last_module_periods != self.module_periods():
-            self.import_context_sections()
+            self.import_context_sections('on_period_change')
             self.compile_templates()
             self.period_change()
 
@@ -330,10 +341,18 @@ class ModuleManager:
             in self.modules.values()
         )
 
-    def import_context_sections(self):
-        """Import context sections defined by the managed modules."""
+    def import_context_sections(self, trigger: str) -> None:
+        """
+        Import context sections defined by the managed modules.
+
+        Trigger is one of 'on_startup', 'on_period_change', or 'on_exit'.
+        This determines which section of the module is used to get the context
+        import specification from.
+        """
+        assert trigger in ('on_startup', 'on_period_change', 'on_exit',)
+
         for module in self.modules.values():
-            context_section_imports = module.context_section_imports()
+            context_section_imports = module.context_section_imports(trigger)
 
             for csi in context_section_imports:
                 self.application_context = insert_into(

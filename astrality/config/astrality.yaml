@@ -26,6 +26,12 @@ module/wallpaper:
         # periodic wallpapers.
         # force_period: morning
 
+    on_startup:
+        import_context:
+            - from_file: wallpaper_themes/default/colors.yaml
+              from_section: '{period}'
+              to_section: colors
+
     on_period_change:
         run:
             - feh --bg-fill wallpaper_themes/default/{period}.*

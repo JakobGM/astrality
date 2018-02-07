@@ -543,19 +543,75 @@ def test_import_sections_on_period_change(config_with_modules, freezer):
         'from_file': 'astrality/tests/templates/weekday.yaml',
         'from_section': '{period}',
     }]
+    config_with_modules.pop('module/solar_module')
     module_manager = ModuleManager(config_with_modules)
 
-    assert 'env' in module_manager.application_context
     assert module_manager.application_context['fonts'] == {1: 'FuraCode Nerd Font'}
+
+    sunday = datetime(year=2018, month=2, day=4)
+    freezer.move_to(sunday)
+    module_manager.finish_tasks()
+
+    # Make application_context comparisons easier
+    module_manager.application_context.pop('env')
+
+    # Startup does not count as a period change, so no context has been imported
+    assert module_manager.application_context == {
+        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
+    }
 
     monday = datetime(year=2018, month=2, day=5)
     freezer.move_to(monday)
     module_manager.finish_tasks()
-    module_manager.application_context.pop('env')
+
+    # The period has now changed, so context should be imported
     assert module_manager.application_context == {
         'fonts': Resolver({1: 'FuraCode Nerd Font'}),
         'week': Resolver({'day': 'monday'}),
     }
+
+def test_import_sections_on_startup(config_with_modules, freezer):
+    # Insert day the module was started into 'start day'
+    config_with_modules['module/weekday_module']['on_startup']['import_context'] = [{
+        'to_section': 'start_day',
+        'from_file': 'astrality/tests/templates/weekday.yaml',
+        'from_section': '{period}',
+    }]
+
+    # Insert the current day into 'day_now'
+    config_with_modules['module/weekday_module']['on_period_change']['import_context'] = [{
+        'to_section': 'day_now',
+        'from_file': 'astrality/tests/templates/weekday.yaml',
+        'from_section': '{period}',
+    }]
+    config_with_modules.pop('module/solar_module')
+    module_manager = ModuleManager(config_with_modules)
+
+    # Remove 'env' context for easier comparisons
+    module_manager.application_context.pop('env')
+
+    # Before finishing tasks, no context sections are imported
+    assert module_manager.application_context['fonts'] == {1: 'FuraCode Nerd Font'}
+
+    # Start module on a monday
+    sunday = datetime(year=2018, month=2, day=4)
+    freezer.move_to(sunday)
+    module_manager.finish_tasks()
+    assert module_manager.application_context == {
+        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
+        'start_day': Resolver({'day': 'sunday'}),
+    }
+
+    # 'now_day' should now be added, but 'start_day' should remain unchanged
+    monday = datetime(year=2018, month=2, day=5)
+    freezer.move_to(monday)
+    module_manager.finish_tasks()
+    assert module_manager.application_context == {
+        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
+        'start_day': Resolver({'day': 'sunday'}),
+        'day_now': Resolver({'day': 'monday'}),
+    }
+
 
 
 class TestModuleManager:
