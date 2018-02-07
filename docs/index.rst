@@ -9,12 +9,14 @@ Welcome to the documentation for Astrality
 
 Table of Contents
 =================
-.. toctree::
-	:maxdepth: 2
 
-	readme
-	configuration
-	timers
-	templating
-	attributions
-	license
+.. toctree::
+    :maxdepth: 2
+
+    readme
+    configuration
+    modules
+    timers
+    templating
+    attributions
+    license
