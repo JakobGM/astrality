@@ -4,6 +4,13 @@
 Timers
 ======
 
+.. _periods:
+
+Periods
+=======
+
+TODO: Explain periods
+
 Solar Timer
 ===========
 
