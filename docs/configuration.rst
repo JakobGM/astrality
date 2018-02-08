@@ -71,3 +71,14 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 .. note::
 
     Interpolations in ``astrality.yaml`` occur on Astrality startup, and will not reflect changes to environment variables and shell commands after startup.
+
+Where to go from here
+=====================
+
+What you should read of the documentation from here on depends on what you intend to solve by using Astrality. The most central concepts are:
+
+* :doc:`modules` define which templates to compile, when to compile them, and which commands to run after they have been compiled.
+* :doc:`timers` define when modules should change their behaviour.
+* :doc:`templating` explains how to write configuration file templates.
+
+These concepts are relatively interdependent, and each documentation section assumes knowledge of concepts explained in earlier sections. If this is the first time you are reading this documentation, you should probably just continue reading the documentation in chronological order.
