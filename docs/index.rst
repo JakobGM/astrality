@@ -18,5 +18,6 @@ Table of Contents
     modules
     timers
     templating
+    tips_and_tricks
     attributions
     license
