@@ -31,6 +31,9 @@ module/wallpaper:
             - from_file: wallpaper_themes/default/colors.yaml
               from_section: '{period}'
               to_section: colors
+        compile:
+            - conky.time
+            - conky.performance
 
     on_period_change:
         run:
@@ -39,6 +42,9 @@ module/wallpaper:
             - from_file: wallpaper_themes/default/colors.yaml
               from_section: '{period}'
               to_section: colors
+        compile:
+            - conky.time
+            - conky.performance
 
     on_exit:
         run:

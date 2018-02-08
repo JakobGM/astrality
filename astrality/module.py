@@ -5,7 +5,7 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from astrality import compiler
 from astrality.compiler import context
@@ -318,12 +318,12 @@ class ModuleManager:
         """
         if not self.startup_done:
             self.import_context_sections('on_startup')
-            self.compile_templates()
+            self.compile_templates('on_startup')
             self.startup()
             self.period_change()
         elif self.last_module_periods != self.module_periods():
             self.import_context_sections('on_period_change')
-            self.compile_templates()
+            self.compile_templates('on_period_change')
             self.period_change()
 
     def has_unfinished_tasks(self) -> bool:
@@ -362,15 +362,31 @@ class ModuleManager:
                     from_config_file=csi.from_config_file,
                 )
 
-    def compile_templates(self) -> None:
+    def compile_templates(self, trigger: str) -> None:
         """
         Compile the module templates specified by the `templates` option.
+
+        Trigger is one of 'on_startup', 'on_period_change', or 'on_exit'.
+        This determines which section of the module is used to get the compile
+        specification from.
         """
+        assert trigger in ('on_startup', 'on_period_change', 'on_exit',)
+
         for module in self.modules.values():
-            for files in module.templates.values():
+            for compilation in module.module_config.get(trigger, {}).get('compile', []):
+
+                # What to compile is given by [module.]template_name
+                *_module, template_name = compilation.split('.')
+                if len(_module) == 1:
+                    # Explicit module has been specified
+                    module_name = _module[0]
+                else:
+                    # No module has been specified, use the module itself
+                    module_name = module.name
+
                 compiler.compile_template(
-                    template=files['source'],
-                    target=files['target'],
+                    template=self.modules[module_name].templates[template_name]['source'],
+                    target=self.modules[module_name].templates[template_name]['target'],
                     context=self.application_context,
                 )
 

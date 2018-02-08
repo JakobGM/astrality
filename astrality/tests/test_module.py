@@ -24,7 +24,10 @@ def valid_module_section():
                     'target': '/tmp/compiled_result',
                 }
             },
-            'on_startup': {'run': ['echo {period}']},
+            'on_startup': {
+                'run': ['echo {period}'],
+                'compile': ['template_name'],
+            },
             'on_period_change': {'run': ['echo {template_name}']},
             'on_exit': {'run': ['echo exit']},
         }
@@ -444,7 +447,7 @@ class TestModuleClass:
         simple_application_config['module/test_module']['timer']['type'] = 'solar'
         compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font'
         module_manager = ModuleManager(simple_application_config)
-        module_manager.compile_templates()
+        module_manager.compile_templates('on_startup')
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -569,6 +572,44 @@ def test_import_sections_on_period_change(config_with_modules, freezer):
         'fonts': Resolver({1: 'FuraCode Nerd Font'}),
         'week': Resolver({'day': 'monday'}),
     }
+
+def test_compiling_templates_on_cross_of_module_boundries():
+    module_A = {
+        'templates': {
+            'template_A': {
+                'source': '../tests/templates/no_context.template',
+            },
+        },
+    }
+    modules_config = {
+        'module/A': module_A,
+        '_runtime': {
+            'config_directory': Path(__file__).parent,
+            'temp_directory': Path('/tmp'),
+        },
+    }
+
+    module_manager = ModuleManager(modules_config)
+    module_manager.finish_tasks()
+
+    # Modules should not compile their templates unless they explicitly
+    # define a compile string in a on_* block.
+    with open(module_manager.modules['A'].templates['template_A']['target']) as compilation:
+        assert compilation.read() == ''
+
+    # We now insert another module, B, which compiles the template of the
+    # previous module, A
+    module_B = {
+        'on_startup': {
+            'compile': ['A.template_A'],
+        },
+    }
+    modules_config['module/B'] = module_B
+    module_manager = ModuleManager(modules_config)
+    module_manager.finish_tasks()
+    with open(module_manager.modules['A'].templates['template_A']['target']) as compilation:
+        assert compilation.read() == 'one\ntwo\nthree'
+
 
 def test_import_sections_on_startup(config_with_modules, freezer):
     # Insert day the module was started into 'start day'
