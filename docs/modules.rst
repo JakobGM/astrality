@@ -72,7 +72,39 @@ An example of module templates syntax:
 
 Events
 ======
-TODO
+
+When you want to assign :ref:`tasks <actions>` for Astrality to perform, you have to define *when* to perform them. This is done by defining those ``actions`` in one of three available ``event`` blocks.
+
+    ``on_startup``:
+        Tasks to be performed when Astrality first starts up.
+        Useful for compiling templates that don't need to change after they have been compiled.
+
+    ``on_exit``:
+        Tasks to be performed when you kill the Astrality process.
+        Useful for cleaning up any unwanted clutter.
+
+    ``on_period_change``:
+        Tasks to be performed when the specified module ``timer`` detects a new ``period``.
+        Useful for dynamic behaviour, periodic tasks, and templates that should change during runtime.
+        This event will never be triggered when no module timer is defined.
+        More on timers follows in :ref:`the next section <timers>`.
+
+Example of module event blocks:
+
+.. code-block:: yaml
+
+    module/module_name:
+        on_startup:
+            ...startup actions...
+
+        on_period_change:
+            ...period change actions...
+
+        on_exit:
+            ...shutdow actions...
+
+.. note::
+    On Astrality startup, the ``on_startup`` event will be triggered, but **not** ``on_period_change``. The ``on_period_change`` event will only be triggered when the ``timer`` defined ``period`` changes *after* Astrality startup.
 
 .. _actions:
 
