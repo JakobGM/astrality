@@ -215,7 +215,12 @@ class Module:
             # Insert placeholders
             from_file = self.interpolate_string(context_import['from_file'])
             from_section = self.interpolate_string(context_import['from_section'])
-            to_section = self.interpolate_string(context_import['to_section'])
+
+            # If no `to_section` is specified, use the same section as
+            # `from_section`
+            to_section = self.interpolate_string(
+                context_import.get('to_section', from_section),
+            )
 
             # Get the absolute path
             config_path = self.expand_path(Path(from_file))

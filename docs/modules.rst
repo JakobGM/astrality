@@ -39,7 +39,34 @@ The default value of ``enabled`` is ``true``.
 
 Templates
 =========
-TODO
+
+Modules define which templates that are *available* for compilation.
+Templates are defined on a per-module-basis, using the ``templates`` keyword.
+
+Each *key* in the ``templates`` dictionary becomes a ``shortname`` for that specific template, used to refer to that template in other parts of your Astrality configuration. More on that later in the :ref:`actions` section of this page.
+
+Each template item has the following available attributes:
+
+    * ``source``: Path to the template.
+    * ``target``: *[Optional]* Path which specifies where to put the *compiled* template. You can skip this option if you do not care where the compiled template is placed, and what it is named. You can still use the compiled result by referencing its ``shortname``, which will be explained :ref:`later <actions>`.
+
+An example of module templates syntax:
+
+.. code-block:: yaml
+
+    module/module_name:
+        templates:
+            template_A:
+                source: templates/A.conf
+            template_B:
+                source: /absolute/path/B.conf
+                target: ${XDG_CONFIG_HOME}/B/config
+
+.. note::
+    All relative file paths are interpreted relative to the :ref:`config directory<config_directory>` of Astrality.
+
+.. caution::
+    Defining a ``templates`` section in a module will make those templates *available* for compilation. It will **not** automatically compile them. That must be additionaly specified as an action. See the :ref:`actions` section.
 
 .. _events:
 

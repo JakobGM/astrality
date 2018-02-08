@@ -4,6 +4,8 @@
 Configuration
 =============
 
+.. _config_directory:
+
 The Astrality configuration directory
 =====================================
 The configuration directory for astrality is determined in the following way:

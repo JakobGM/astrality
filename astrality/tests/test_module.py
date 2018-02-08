@@ -8,7 +8,7 @@ import pytest
 
 from astrality import timer
 from astrality.config import generate_expanded_env_dict
-from astrality.module import Module, ModuleManager
+from astrality.module import ContextSectionImport, Module, ModuleManager
 from astrality.resolver import Resolver
 
 
@@ -653,6 +653,49 @@ def test_import_sections_on_startup(config_with_modules, freezer):
         'day_now': Resolver({'day': 'monday'}),
     }
 
+
+def test_context_section_imports(folders):
+    module_config = {
+        'module/name': {
+            'on_startup': {
+                'import_context': [
+                    {
+                        'from_file': '/testfile',
+                        'from_section': 'source_section',
+                        'to_section': 'target_section',
+                    }
+                ]
+            },
+            'on_period_change': {
+                'import_context': [
+                    {
+                        'from_file': '/testfile',
+                        'from_section': 'source_section',
+                    }
+                ]
+            },
+        },
+    }
+    module = Module(module_config, *folders)
+    startup_csis = module.context_section_imports('on_startup')
+    expected = (
+        ContextSectionImport(
+            from_config_file=Path('/testfile'),
+            from_section='source_section',
+            into_section='target_section',
+        ),
+    )
+    assert startup_csis == expected
+
+    period_change_csis = module.context_section_imports('on_period_change')
+    expected = (
+        ContextSectionImport(
+            from_config_file=Path('/testfile'),
+            from_section='source_section',
+            into_section='source_section',
+        ),
+    )
+    assert period_change_csis == expected
 
 
 class TestModuleManager:
