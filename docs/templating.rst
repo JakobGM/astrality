@@ -3,3 +3,8 @@
 ==========
 Templating
 ==========
+
+.. _context:
+
+Context
+=======
