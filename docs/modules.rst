@@ -10,7 +10,7 @@ What are modules?
 Tasks to be performed by Astrality are grouped into so-called ``modules``.
 These modules are used to define:
 
-:ref:`templates`
+:ref:`module_templates`
     Configuration file templates that are available for compilation.
 
 :doc:`timers`
@@ -35,7 +35,7 @@ The simplest module, with no associated behaviour, is:
 Astrality skips parsing any modules which contain the option :code:`enabled: false`.
 The default value of ``enabled`` is ``true``.
 
-.. _templates:
+.. _module_templates:
 
 Templates
 =========
@@ -119,10 +119,10 @@ Actions
 Actions are tasks for Astrality to perform, and are placed within :ref:`event blocks <events>` in order to specify *when* to perform them. There are three available ``action`` types:
 
     :ref:`import_context <context_import_action>`:
-        Import a ``context`` section from a YAML formatted file. ``context`` variables are used as replacement values for placeholders in your :ref:`templates <templates>`. See :ref:`context <context>` for more information.
+        Import a ``context`` section from a YAML formatted file. ``context`` variables are used as replacement values for placeholders in your :ref:`templates <module_templates>`. See :ref:`context <context>` for more information.
 
     :ref:`compile <compile_action>`:
-        Compile a specific :ref:`template <templates>` to its target destination.
+        Compile a specific :ref:`template <module_templates>` to its target destination.
 
     :ref:`run <run_action>`:
         Execute a shell command, possibly referring to any compiled template and/or the current :ref:`period <periods>` defined by the :ref:`module timer <timers>`.
@@ -191,7 +191,7 @@ The available attributes for ``import_context`` are:
 Compile templates
 -----------------
 
-In order to compile a configuration file template, you first need to :ref:`give it a shortname <templates>`.
+In order to compile a configuration file template, you first need to :ref:`give it a shortname <module_templates>`.
 After having done that, you can compile it in an :ref:`event block <events>`. Put the ``shortname`` of the template as a list item within the ``compile`` option.
 Here is an example:
 

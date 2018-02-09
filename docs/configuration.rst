@@ -50,6 +50,9 @@ Value interpolation in the configuration file
 ---------------------------------------------
 Astrality makes two non-standard additions to the ``YAML`` syntax, so-called interpolations. Environment variable `parameter expansions <http://wiki.bash-hackers.org/syntax/pe?s[]=environment&s[]=variable#simple_usage>`_ and `command substitutions <http://wiki.bash-hackers.org/syntax/expansion/cmdsubst>`_. The syntax is as follows:
 
+
+.. _parameter_expansion:
+
 * **Parameter expansion**: 
     ``${ENVIRONMENT_VARIABLE}`` is replaced with the value of the environment variable, i.e. the result of ``echo $ENVIRONMENT_VARIABLE``.
 
@@ -66,6 +69,8 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
     
     .. caution::
         Only ``${NAME}`` blocks are expanded. ``$NAME`` will be left in place, to allow runtime expansions of environment variables when modules define shell commands to be run.
+
+.. _command_substitution:
 
 * **Command substitution**: 
     ``$( some_shell_command )`` is replaced with the standard output resulting from running ``some_shell_command`` in a ``bash`` shell.
