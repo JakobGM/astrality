@@ -261,3 +261,19 @@ Example:
             run:
                 - echo "Deleting today's notes!"
                 - rm ~/notes/notes_for_{period}.txt
+
+
+The execution order of module actions
+-------------------------------------
+
+The order of action execution is as follows:
+
+    #. :ref:`context_import <context_import_action>` for each module.
+    #. :ref:`compile <compile_action>` for each module.
+    #. :ref:`run <run_action>` for each module.
+
+Modules are iterated over from top to bottom such that they appear in ``astrality.yaml``.
+This ensures the following invariants:
+
+    * When you compile templates, all ``context`` imports have been performed, and are available for placeholder substitution.
+    * When you run shell commands, all templates have been compiled, and are available for reference.
