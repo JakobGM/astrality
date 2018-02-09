@@ -220,7 +220,7 @@ If you need to compile a template from another module, you can refer to it by us
                 source: /what/ever
 
     module/B:
-        on_startup:
+        on_period_change:
             compile:
                 - A.template_A
 
@@ -229,4 +229,35 @@ If you need to compile a template from another module, you can refer to it by us
 Run shell commands
 ------------------
 
-TODO
+You can instruct Astrality to run an arbitrary number of shell commands when different :ref:`events <events>` occur.
+Place each command as a list item under the ``run`` option of an :ref:`event block <events>`.
+
+You can place the following placeholders within your shell commands:
+
+    ``{period}``:
+        The current period defined by the :ref:`module timer <timers>`.
+
+    ``{template_shortname}``:
+        The absolute path of the *compiled* template specified in the module option ``templates``.
+
+Example:
+
+.. code-block:: yaml
+
+    module/weekday_module:
+        timer:
+            type: weekday
+
+        on_startup:
+            run:
+                - notify-send "You just started Astrality, and the day is {period}"
+
+        on_period_change:
+            run:
+                - notify-send "It is now midnight, have a great {period}! I'm creating a notes document for this day."
+                - touch ~/notes/notes_for_{period}.txt
+
+        on_exit:
+            run:
+                - echo "Deleting today's notes!"
+                - rm ~/notes/notes_for_{period}.txt
