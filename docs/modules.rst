@@ -186,7 +186,38 @@ The available attributes for ``import_context`` are:
 Compile templates
 -----------------
 
-TODO
+In order to compile a configuration file template, you first need to :ref:`give it a shortname <templates>`.
+After having done that, you can compile it in an :ref:`event block <events>`. Put the ``shortname`` of the template as a list item within the ``compile`` option.
+Here is an example:
+
+.. code-block:: yaml
+
+    module/polybar:
+        templates:
+            polybar:
+                source: templates/polybar
+                target: $XDG_CONFIG_HOME/polybar/config
+
+        on_startup:
+            compile:
+                - polybar
+
+Compiling templates from another module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to compile a template from another module, you can refer to it by using the syntax ``module_name.template_shortname``. For instance:
+
+.. code-block:: yaml
+
+    module/A:
+        templates:
+            template_A:
+                source: /what/ever
+
+    module/B:
+        on_startup:
+            compile:
+                - A.template_A
 
 .. _run_action:
 
