@@ -47,8 +47,13 @@ Each *key* in the ``templates`` dictionary becomes a ``shortname`` for that spec
 
 Each template item has the following available attributes:
 
-    * ``source``: Path to the template.
-    * ``target``: *[Optional]* Path which specifies where to put the *compiled* template. You can skip this option if you do not care where the compiled template is placed, and what it is named. You can still use the compiled result by referencing its ``shortname``, which will be explained :ref:`later <actions>`.
+    ``source``
+        Path to the template.
+    ``target``: *[Optional]*
+        Path which specifies where to put the *compiled* template.
+        
+        You can skip this option if you do not care where the compiled template is placed, and what it is named.
+        You can still use the compiled result by writing ``{shortname}`` in the rest of your module. This placeholder will be replaced with the absolute path of the compiled template. You can for instance refer to the file in :ref:`a shell command <run_action>`.
 
 An example of module templates syntax:
 
