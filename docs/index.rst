@@ -15,9 +15,9 @@ Table of Contents
 
     readme
     configuration
+    templating
     modules
     timers
-    templating
     examples
     tips_and_tricks
     attributions
