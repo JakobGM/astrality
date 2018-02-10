@@ -91,3 +91,14 @@ When Astrality :ref:`compiles your template <_template_how_to_compile>` the resu
                     font_size: 9
 
     And refer to those nested variables with "dotted" syntax ``{{ cosmetics.fonts.1.family }}``.
+            
+
+.. _env_context:
+
+The ``env`` context
+-------------------
+
+Astrality automatically inserts a context section at runtime named ``env``. It contains all your environment variables.
+You can therefore insert environment variables into your templates by writing::
+
+    {{ env.ENVIRONMENT_VARIABLE_NAME }}
