@@ -23,3 +23,33 @@ Template files
 ==============
 
 Templates can be of any file type, named whatever you want, and placed at any desirable path. It is customary, however, to place templates within ``$ASTRALITY_CONFIG_HOME/templates/name_of_application``, where ``name_of_application`` is the application that will use the compiled template.
+
+
+.. _context:
+
+Context
+=======
+
+When you write templates, you use ``placeholders`` which Astrality replaces with values defined in so-called ``context`` sections defined in ``astrality.yaml``. 
+Context sections **must** be named ``context/descriptive_name`` and placed at the root indentation level of ``astrality.yaml``.
+
+An example:
+
+.. code-block:: yaml
+
+    # $ASTRALITY_CONFIG_HOME/astrality.yaml
+
+    context/machine:
+        user: $USER
+        os: $( uname )
+        hostname: $( hostname )
+
+    context/fonts:
+        1: FuraCode Nerd Font
+        2: FuraMono Nerd Font
+
+
+.. warning::
+    Context section names, and any identifiers within a context block (i.e. anything left of a colon), must be valid Python 2.x `identifiers <http://jinja.pocoo.org/docs/2.10/api/#notes-on-identifiers>`_.
+    In other words, they must match the regular expression ``[a-zA-Z_][a-zA-Z0-9_]*``, i.e. use ASCII letters, numbers, and underscores.
+    **No spaces are allowed**.
