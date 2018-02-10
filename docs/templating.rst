@@ -53,3 +53,41 @@ An example:
     Context section names, and any identifiers within a context block (i.e. anything left of a colon), must be valid Python 2.x `identifiers <http://jinja.pocoo.org/docs/2.10/api/#notes-on-identifiers>`_.
     In other words, they must match the regular expression ``[a-zA-Z_][a-zA-Z0-9_]*``, i.e. use ASCII letters, numbers, and underscores.
     **No spaces are allowed**.
+
+
+.. _template_placeholders:
+
+Inserting context variables into your templates
+-----------------------------------------------
+
+You should now be able to insert context values into your templates. You can refer to context variables in your templates by using the syntax ``{{ context_section.variable_name }}``. Using the contexts defined above, you could write the following template:
+
+.. code-block:: dosini
+
+    font-type = '{{ fonts.1 }}'
+    home-directory = /home/{{ machine.user }}
+    machine-name = {{ machine.hostname }}
+
+When Astrality :ref:`compiles your template <_template_how_to_compile>` the result would be:
+
+.. code-block:: dosini
+
+    font-type = 'FuraCode Nerd Font'
+    home-directory = /home/your_username
+    machine-name = your_hostname
+
+.. hint::
+    You can create arbitrarily nested structures within context sections. For instance:
+
+    .. code-block:: yaml
+        
+        context/cosmetics:
+            fonts:
+                1:
+                    family: FuraCode
+                    font_size: 13
+                2:
+                    family: FuraMono
+                    font_size: 9
+
+    And refer to those nested variables with "dotted" syntax ``{{ cosmetics.fonts.1.family }}``.
