@@ -152,3 +152,50 @@ With other words, references to *non-existent* numeric context identifiers are r
 
 .. hint::
     This construct can be very useful when you are expecting to change the underlying context of templates. Defining font types and color schemes using numeric identifiers allows you to switch between themes which define a different number of fonts and colors to be used.
+
+
+.. _jinja2:
+
+Advanced templating
+===================
+
+Astrality templating uses ``Jinja2`` under the hood. If you want to apply more advanced templating techniques than the ones described here, you can use the extended templating features available in the Jinja2 templating engine. Visit Jinja2's `templating documentation <http://jinja.pocoo.org/docs/2.10/templates/>`_ for more information.
+
+Useful constructs include:
+
+    `Filters <http://jinja.pocoo.org/docs/2.10/templates/#list-of-builtin-filters>`_:
+        For manipulating context variables before insertion.
+
+    `Template inheritance <http://jinja.pocoo.org/docs/2.10/templates/#template-inheritance>`_:
+        For reuse of templates with common sections.
+
+    `Iterating over context values <http://jinja.pocoo.org/docs/2.10/templates/#for>`_:
+        For using both the context *name* and *value* in configuration files.
+
+    `Conditionals <http://jinja.pocoo.org/docs/2.10/templates/#if>`_:
+        For only including template content if some conditions(s) are satisfied.
+
+A somewhat normal use case for advanced templating is key, value iteration. If you define the following color scheme context:
+
+.. code-block:: yaml
+
+    context/color_scheme:
+        bg: 282828
+        fg: ebdbb2
+        red: cc241d
+        green: 98971a
+        yellow: d79921
+
+And write the following template::
+
+    {% for key, value in color_scheme %}
+        {{ key }} = '0x{{ value|upper }}'
+    {% endfor %}
+
+It would result in the following compiled template::
+
+    bg = '0x282828'
+    fg = '0xEBDBB2'
+    red = '0xCC241D'
+    green = '0x98971A'
+    yellow = '0xD79921'
