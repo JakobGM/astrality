@@ -63,3 +63,16 @@ def test_cast_to_numeric(string, cast, resulting_type):
     result = cast_to_numeric(string)
     assert result == cast
     assert isinstance(result, resulting_type)
+
+def test_run_shell_template_filter(test_templates_folder):
+    shell_template_path = test_templates_folder / 'shell_filter.template'
+    compiled_shell_template_path = Path('/tmp/astrality') / shell_template_path.name
+    context = {}
+    compile_template(
+        template=shell_template_path,
+        target=compiled_shell_template_path,
+        context=context,
+    )
+
+    with open(compiled_shell_template_path) as target:
+        assert target.read() == 'quick\nanother_quick\nslow_but_allowed\n\nfallback'

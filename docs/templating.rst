@@ -201,6 +201,29 @@ It would result in the following compiled template::
     yellow = '0xD79921'
 
 
+.. _shell_filter:
+
+The ``shell`` filter
+--------------------
+
+Astrality provides an additional ``shell`` template filter in addition to the standard Jinja2 filters. The syntax is::
+
+    {{ 'shell command' | shell }}
+
+You can use the :ref:`command substitution <command_substitution>` syntax in a context section of ``astrality.yaml`` and get much of the same functionality, but with the ``shell`` filter you can specify a timeout in seconds::
+
+    {{ 'shell command' | shell(5) }}
+
+The default timeout is 2 seconds.
+
+To provide a fallback value for functions that time out or return non-zero exit codes, do::
+
+    {{ 'shell command' | shell(1.5, 'fallback value') }}
+
+.. caution::
+    The quotes around the shell command are important, since if you ommit the quotes, you end up refering to a context value instead. Though, this *can* be done intentionally when you have defined a shell command in a context variable.
+
+
 .. _template_how_to_compile:
 
 How to compile templates

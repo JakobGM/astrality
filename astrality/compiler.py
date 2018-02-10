@@ -12,6 +12,7 @@ from jinja2 import (
 )
 
 from astrality.resolver import Resolver
+from astrality.utils import run_shell
 
 
 Context = Dict[str, Resolver]
@@ -71,6 +72,10 @@ def jinja_environment(templates_folder: Path) -> Environment:
         finalize=finalize_variable_expression,
         undefined=LoggingUndefined,
     )
+
+    # Add run shell command filter
+    env.filters['shell'] = run_shell
+
     return env
 
 

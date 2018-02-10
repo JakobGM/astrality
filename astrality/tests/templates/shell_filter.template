@@ -1,0 +1,5 @@
+{{ 'echo quick' | shell }}
+{{ 'echo another_quick' | shell(0.1) }}
+{{ 'sleep 0.1 && echo slow_but_allowed' | shell(0.2) }}
+{{ 'sleep 0.1 && echo slow_and_not_allowed' | shell(0.05) }}
+{{ 'sleep 0.1 && echo slow_but_with_fallback' | shell(0.05, 'fallback') }}
