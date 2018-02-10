@@ -199,3 +199,17 @@ It would result in the following compiled template::
     red = '0xCC241D'
     green = '0x98971A'
     yellow = '0xD79921'
+
+
+.. _template_how_to_compile:
+
+How to compile templates
+========================
+
+Now that you know how to write Astrality templates, you might wonder how to actually *compile* these templates. In order to do this, you need to:
+
+    #. Create an Astrality :ref:`module <modules>`.
+    #. Specify the template as an :ref:`available module template <module_templates>`.
+    #. Specify when to :ref:`compile <compile_action>` the template, by using an :ref:`event block <events>`.
+
+This is probably a bit overwhelming. I recommend to just continue to the next page to get a more gentle introduction to these concepts.
