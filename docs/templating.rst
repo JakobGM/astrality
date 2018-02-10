@@ -102,3 +102,53 @@ Astrality automatically inserts a context section at runtime named ``env``. It c
 You can therefore insert environment variables into your templates by writing::
 
     {{ env.ENVIRONMENT_VARIABLE_NAME }}
+
+
+.. _undefined_context_values:
+
+Undefined context values
+------------------------
+
+When you refer to a context value which is not defined, it will be replaced with an empty string, and logged as a warning in Astrality's standard output.
+
+.. _context_fallback_values:
+
+Default fallback context values
+-------------------------------
+
+Sometimes you want to refer to context variables in your templates, but you want to insert a fallback value in case the context variable is not defined at compile time. This is often the case when referring to environment variables. Defining a fallback value is easy::
+
+    {{ env.ENVIRONMENT_VARIABLE_NAME or 'defualt value' }}
+
+
+.. _template_integer_placeholders:
+
+Integer placeholder resolution
+------------------------------
+
+There exists another way to define fallback values, which sometimes is much more useful.
+It can be used by naming your context sections, subsections, and/or values with numeric values.
+Let's define context values with integer names.
+
+.. code-block:: yaml
+
+    section/fonts:
+        1: FuraCode Nerd Font
+        2: FuraMono Nerd Font
+
+You can now write the following template::
+
+    primary-font = '{{ fonts.1 }}'
+    secondary-font = '{{ fonts.2 }}'
+    tertiary-font = '{{ fonts.3 }}'
+
+And it will be compiled to::
+
+    primary-font = 'FuraCode Nerd Font'
+    secondary-font = 'FuraMono Nerd Font'
+    tertiary-font = 'FuraMono Nerd Font'
+
+With other words, references to *non-existent* numeric context identifiers are replaced with the greatest *available* numeric context identifier at the same indentation level.
+
+.. hint::
+    This construct can be very useful when you are expecting to change the underlying context of templates. Defining font types and color schemes using numeric identifiers allows you to switch between themes which define a different number of fonts and colors to be used.
