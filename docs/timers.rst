@@ -169,3 +169,36 @@ Periods
     module/weekday_module:
         timer:
             type: weekday
+
+
+Periodic
+--------
+
+Description
+    Keeps track of constant length time intervals.
+
+Specifier
+    ``type: periodic``
+
+Periods
+    ``0``, ``1``, ``2``, ``3``, and so on...
+
+.. csv-table:: Configuration options
+   :header: "Option", "Default", "Description"
+   :widths: 6, 5, 30
+
+   "seconds", 0, "Number of seconds between each period."
+   "minutes", 0, "Number of minutes between each period."
+   "hours", 0, "Number of hours between each period."
+   "days", 0, "Number of days between each period."
+
+If the configured time interval is of zero length, Astrality uses ``hours: 1`` instead.
+
+**Example configuration**
+
+.. code-block:: yaml
+
+    module/periodic_module:
+        timer:
+            type: periodic
+            hours: 8
