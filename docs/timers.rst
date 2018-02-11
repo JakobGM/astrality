@@ -148,6 +148,30 @@ These coordinates can be obtained from `this website <https://www.latlong.net/>`
             longitude: 10.421906
             elevation: 0
 
+
+.. _timer_types_static:
+
+Static
+------
+
+Description
+    A timer which never changes its period. This is the default timer for modules.
+
+Specifier
+    ``type: static``
+
+Periods
+    ``static``
+
+*No configuration options are available for the static timer*.
+
+**Example configuration**
+
+.. code-block:: yaml
+
+    module/static_module:
+        ...
+
 Weekday
 -------
 
@@ -170,6 +194,8 @@ Periods
         timer:
             type: weekday
 
+
+.. _timer_types_periodic:
 
 Periodic
 --------
@@ -202,25 +228,3 @@ If the configured time interval is of zero length, Astrality uses ``hours: 1`` i
         timer:
             type: periodic
             hours: 8
-
-
-Static
-------
-
-Description
-    A timer which never changes its period. This is the default timer for modules.
-
-Specifier
-    ``type: static``
-
-Periods
-    ``static``
-
-*No configuration options are available for the static timer*.
-
-**Example configuration**
-
-.. code-block:: yaml
-
-    module/static_module:
-        ...
