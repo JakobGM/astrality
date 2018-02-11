@@ -15,6 +15,12 @@ What are timers?
     #. Timers are optional, you can write valid modules without specifying one. Actions specified within the ``on_period_change`` action block will never be executed when no module timer is specified.
     #. Timers provide the module with the ``{period}`` placeholder. It is replaced by the current ``period`` at runtime. The replacement value is specific for that specific timer's type, and dynamically changes according to rules set by the timer.
 
+What are modules used for?
+==========================
+
+Timers provide you with the tools needed for *dynamic* module behaviour. Sometimes you want a module to :ref:`execute <run_action>` different shell commands, and/or :ref:`compile <compile_action>` templates with :ref:`different context values <context_import_action>`, depending on exactly *when* those :ref:`actions <actions>` are performed.
+
+
 .. _timer_periods:
 
 Periods
