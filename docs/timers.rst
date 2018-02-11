@@ -107,7 +107,43 @@ Now Astrality will set the appropriate wallpaper on startup. We still have a sma
                 - feh --bg-fill modules/weekday_wallpaper/{period}.*
 
 
-Solar Timer
+Timer types
 ===========
 
-Edit the configuration file in order to add your current location, given by your GPS coordinates (longitude, latitude, and elevation). These coordinates can be obtained from `this website <https://www.latlong.net/>`_.
+Here is a list of all available Astrality module timers and their configuration options. If what you need is not available, feel free to `open an issue <https://github.com/JakobGM/astrality/issues>`_ with a timer request!
+
+
+.. _timer_types_solar:
+
+Solar
+-----
+
+Description
+    Keeps track of the sun's position in the sky at a given location.
+
+Specifier
+    ``type: solar``
+
+Periods
+    ``sunrise``, ``morning``, ``afternoon``, ``sunset``, ``night``
+
+.. csv-table:: Configuration options
+   :header: "Option", "Default", "Description"
+   :widths: 6, 5, 30
+
+   "latitude", 0, "Latitude coordinate point of your location."
+   "longitude", 0, "Longitude coordinate point of your location."
+   "elevation", 0, "Height above sea level at your location."
+
+These coordinates can be obtained from `this website <https://www.latlong.net/>`_.
+
+**Example configuration**
+
+.. code-block:: yaml
+
+    module/solar_module:
+        timer:
+            type: solar
+            latitude: 63.446827
+            longitude: 10.421906
+            elevation: 0
