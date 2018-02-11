@@ -14,7 +14,7 @@ These modules are used to define:
     Configuration file templates that are available for compilation.
 
 :doc:`timers`
-    Timers can trigger events when certain predefined :ref:`periods <periods>` occur.
+    Timers can trigger events when certain predefined :ref:`periods <timer_periods>` occur.
 
 :ref:`actions`
     Tasks to be performed when :ref:`events` occur.
@@ -88,6 +88,8 @@ When you want to assign :ref:`tasks <actions>` for Astrality to perform, you hav
         Tasks to be performed when you kill the Astrality process.
         Useful for cleaning up any unwanted clutter.
 
+    .. _module_events_on_period_change:
+
     ``on_period_change``:
         Tasks to be performed when the specified module ``timer`` detects a new ``period``.
         Useful for dynamic behaviour, periodic tasks, and templates that should change during runtime.
@@ -125,7 +127,7 @@ Actions are tasks for Astrality to perform, and are placed within :ref:`event bl
         Compile a specific :ref:`template <module_templates>` to its target destination.
 
     :ref:`run <run_action>`:
-        Execute a shell command, possibly referring to any compiled template and/or the current :ref:`period <periods>` defined by the :ref:`module timer <timers>`.
+        Execute a shell command, possibly referring to any compiled template and/or the current :ref:`period <timer_periods>` defined by the :ref:`module timer <timers>`.
 
 
 .. _context_import_action:
