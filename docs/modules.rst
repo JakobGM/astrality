@@ -19,6 +19,8 @@ These modules are used to define:
 :ref:`actions`
     Tasks to be performed when :ref:`events` occur.
 
+.. _modules_how_to_define:
+
 How to define a module
 ======================
 

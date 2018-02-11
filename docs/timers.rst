@@ -21,6 +21,25 @@ What are modules used for?
 Timers provide you with the tools needed for *dynamic* module behaviour. Sometimes you want a module to :ref:`execute <run_action>` different shell commands, and/or :ref:`compile <compile_action>` templates with :ref:`different context values <context_import_action>`, depending on exactly *when* those :ref:`actions <actions>` are performed.
 
 
+.. _timer_how_to_define:
+
+How to set a module timer
+=========================
+
+Module timers are defined within the :ref:`module block <modules_how_to_define>` it is supposed to provide functionality for. The syntax is as follows:
+
+.. code-block:: yaml
+
+    module/some_dynamic_module:
+        timer:
+            type: type_of_timer
+
+            option1: whatever
+            option2: something
+            ...
+
+Most timers provide you with additional options in order to tweak their behaviour. These are specified at the same indentation level as the timer type.
+
 .. _timer_periods:
 
 Periods
