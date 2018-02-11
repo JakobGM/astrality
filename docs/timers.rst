@@ -47,6 +47,26 @@ Periods
 
 Module timers keep track of some type of ``period`` and trigger the ``period_change`` :ref:`event <events>` whenever it enters a new period. You can refer to the current period in your module configuration (in ``astrality.yaml``) with the ``{period}`` placeholder.
 
+.. caution::
+    
+    When you use placeholders, you must take care that the placeholder is not interpreted as a YAML *dictionary* instead of a *string*. The following will not work as intended:
+
+    .. code-block:: yaml
+
+        some_option: {period}
+
+    This is interpreted as the dictionary ``{'period': None}``. In this case you must mark the option explicitly as a string:
+
+    .. code-block:: yaml
+
+        some_option: '{period}'
+
+    Using quotes is not necessary when the placeholder is part of a greater string. This works:
+
+
+    .. code-block:: yaml
+
+        some_option: echo {period}
 
 An example using periods
 ------------------------
