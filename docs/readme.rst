@@ -6,11 +6,15 @@
 .. |coveralls| image:: https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master
     :target: https://coveralls.io/github/JakobGM/astrality?branch=master
 
+.. |rtfd| image:: https://readthedocs.org/projects/astrality/badge/?version=latest
+    :target: http://astrality.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 .. |logo| image:: https://github.com/JakobGM/astrality/raw/master/docs/astrality_logo.png
 
-===============================================================================
-|logo| Astrality - A Dynamic Configuration File Manager |travis-ci| |coveralls|
-===============================================================================
+======================================================================================
+|logo| Astrality - A Dynamic Configuration File Manager |travis-ci| |rtfd| |coveralls|
+======================================================================================
 
 What Does It Do?
 ================
