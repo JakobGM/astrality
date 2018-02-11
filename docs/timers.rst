@@ -147,3 +147,25 @@ These coordinates can be obtained from `this website <https://www.latlong.net/>`
             latitude: 63.446827
             longitude: 10.421906
             elevation: 0
+
+Weekday
+-------
+
+Description
+    Keeps track of the weekdays.
+
+Specifier
+    ``type: weekday``
+
+Periods
+    ``monday``, ``tuesday``, ``wednesday``, ``thursday``, ``friday``, ``saturday``, ``sunday``
+
+*No configuration options are available for the weekday timer*.
+
+**Example configuration**
+
+.. code-block:: yaml
+
+    module/weekday_module:
+        timer:
+            type: weekday
