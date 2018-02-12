@@ -23,5 +23,6 @@ Table of Contents
     attributions
     license
 
+    External: Astrality source code <https://github.com/JakobGM/astrality>
     External: YAML documentation <http://docs.ansible.com/ansible/latest/YAMLSyntax.html>
     External: Jinja2 documentation <http://jinja.pocoo.org/docs/latest/templates/>
