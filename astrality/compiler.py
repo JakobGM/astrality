@@ -1,5 +1,6 @@
 """Module for compilation of templates."""
 
+from functools import partial
 import logging
 from pathlib import Path
 from typing import Any, Dict, Union
@@ -53,7 +54,10 @@ def context(config: ApplicationConfig) -> Context:
     return contents
 
 
-def jinja_environment(templates_folder: Path) -> Environment:
+def jinja_environment(
+    templates_folder: Path,
+    shell_command_working_directory: Path,
+) -> Environment:
     """Return a jinja Environment instance for templates in a folder."""
     logger = logging.getLogger(__name__)
     LoggingUndefined = make_logging_undefined(
@@ -74,7 +78,11 @@ def jinja_environment(templates_folder: Path) -> Environment:
     )
 
     # Add run shell command filter
-    env.filters['shell'] = run_shell
+    run_shell_from_working_directory = partial(
+        run_shell,
+        working_directory=shell_command_working_directory,
+    )
+    env.filters['shell'] = run_shell_from_working_directory
 
     return env
 
@@ -91,11 +99,15 @@ def compile_template(
     template: Path,
     target: Path,
     context: Context,
+    shell_command_working_directory: Path,
 ) -> None:
     """Compile template to target destination with specific context."""
     logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')
 
-    env = jinja_environment(templates_folder=template.parent)
+    env = jinja_environment(
+        templates_folder=template.parent,
+        shell_command_working_directory=shell_command_working_directory,
+    )
     jinja_template = env.get_template(name=template.name)
     result = jinja_template.render(context)
 

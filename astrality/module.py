@@ -389,10 +389,11 @@ class ModuleManager:
                     # No module has been specified, use the module itself
                     module_name = module.name
 
-                compiler.compile_template(
+                compiler.compile_template(  # type: ignore
                     template=self.modules[module_name].templates[template_name]['source'],
                     target=self.modules[module_name].templates[template_name]['target'],
                     context=self.application_context,
+                    shell_command_working_directory=self.application_config['_runtime']['config_directory'],
                 )
 
     def startup(self):

@@ -761,3 +761,31 @@ def test_detection_of_new_period_involving_several_modules(
 
     # Now both timers should be considered period changed
     assert module_manager.has_unfinished_tasks() == True
+
+def test_that_shell_filter_is_run_from_config_directory(conf_path):
+    shell_filter_template = Path(__file__).parent / 'templates' / 'shell_filter_working_directory.template'
+    shell_filter_template_target = Path('/tmp/astrality/shell_filter_working_directory.template')
+    config = {
+        'module/A': {
+            'templates': {
+                'shell_filter_template': {
+                    'source': str(shell_filter_template),
+                    'target': str(shell_filter_template_target),
+                },
+            },
+            'on_startup': {
+                'compile': ['shell_filter_template'],
+            },
+        },
+        '_runtime': {
+            'config_directory': conf_path,
+            'temp_directory': Path('/tmp/astrality'),
+        },
+    }
+    module_manager = ModuleManager(config)
+    module_manager.compile_templates('on_startup')
+
+    with open(shell_filter_template_target) as compiled:
+        assert compiled.read() == str(conf_path)
+
+    os.remove(shell_filter_template_target)

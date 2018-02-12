@@ -17,7 +17,10 @@ def test_templates_folder():
 
 @pytest.fixture
 def jinja_test_env(test_templates_folder):
-    return jinja_environment(test_templates_folder)
+    return jinja_environment(
+        test_templates_folder,
+        shell_command_working_directory=Path('~').resolve(),
+    )
 
 
 def test_rendering_environment_variables(jinja_test_env, expanded_env_dict):
@@ -42,12 +45,11 @@ def test_integer_indexed_templates(jinja_test_env):
     assert template.render(context) == 'one\ntwo\ntwo'
 
 
-# @pytest.mark.skip
 def test_compilation_of_jinja_template(test_templates_folder, expanded_env_dict):
     template = test_templates_folder / 'env_vars'
     target = Path('/tmp/astrality') / template.name
     context = {'env': expanded_env_dict}
-    compile_template(template, target, context)
+    compile_template(template, target, context, Path('/'))
 
     with open(target) as target:
         assert target.read() == 'test_value\nfallback_value\n'
@@ -72,7 +74,22 @@ def test_run_shell_template_filter(test_templates_folder):
         template=shell_template_path,
         target=compiled_shell_template_path,
         context=context,
+        shell_command_working_directory=Path('/'),
     )
 
     with open(compiled_shell_template_path) as target:
         assert target.read() == 'quick\nanother_quick\nslow_but_allowed\n\nfallback'
+
+def test_working_directory_of_shell_command_filter(test_templates_folder):
+    shell_template_path = test_templates_folder / 'shell_filter_working_directory.template'
+    compiled_shell_template_path = Path('/tmp/astrality') / shell_template_path.name
+    context = {}
+    compile_template(
+        template=shell_template_path,
+        target=compiled_shell_template_path,
+        context=context,
+        shell_command_working_directory=Path('/'),
+    )
+
+    with open(compiled_shell_template_path) as target:
+        assert target.read() == '/'
