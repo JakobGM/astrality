@@ -281,7 +281,7 @@ class TimeOfDay(Timer):
         """Return the current determined period."""
         weekday_name = Weekday({'type': 'weekday'}).period()
         if weekday_name not in self.workdays:
-            return 'leisure'
+            return 'off'
         else:
             now = datetime.now()
             now_hour = now.hour
@@ -296,9 +296,9 @@ class TimeOfDay(Timer):
                 now_minute <= self.workdays[weekday_name].end.tm_min
 
             if after_work_start and before_work_end:
-                return 'work'
+                return 'on'
             else:
-                return 'leisure'
+                return 'off'
 
 
     def time_until_next_period(self) -> timedelta:
@@ -309,7 +309,7 @@ class TimeOfDay(Timer):
         now_hour = now.hour
         now_minute = now.minute
 
-        if self._period() == 'work':
+        if self._period() == 'on':
             # We are within work hours, and it is easy to find the work end for
             # the same day.
             return timedelta(

@@ -28,15 +28,15 @@ def test_processing_of_time_of_day_config(default_time_of_day_timer):
 def test_current_period_of_time_of_day_timer(default_time_of_day_timer, freezer):
     work_monday = datetime(year=2018, month=2, day=12, hour=10)
     freezer.move_to(work_monday)
-    assert default_time_of_day_timer.period() == 'work'
+    assert default_time_of_day_timer.period() == 'on'
 
     monday_freetime = datetime(year=2018, month=2, day=12, hour=18)
     freezer.move_to(monday_freetime)
-    assert default_time_of_day_timer.period() == 'leisure'
+    assert default_time_of_day_timer.period() == 'off'
 
     saturday = datetime(year=2018, month=2, day=17, hour=10)
     freezer.move_to(saturday)
-    assert default_time_of_day_timer.period() == 'leisure'
+    assert default_time_of_day_timer.period() == 'off'
 
 def test_time_until_next_period_for_time_of_day_timer(
     default_time_of_day_timer,
