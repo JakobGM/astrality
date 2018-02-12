@@ -57,6 +57,9 @@ Each template item has the following available attributes:
         You can skip this option if you do not care where the compiled template is placed, and what it is named.
         You can still use the compiled result by writing ``{shortname}`` in the rest of your module. This placeholder will be replaced with the absolute path of the compiled template. You can for instance refer to the file in :ref:`a shell command <run_action>`.
 
+        .. warning::
+            When you do not provide Astrality with a ``target`` path for a template, Astrality will create a *temporary* file as the target for compilation. This file will be automatically deleted when you quit Astrality.
+
 An example of module templates syntax:
 
 .. code-block:: yaml
