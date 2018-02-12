@@ -48,7 +48,7 @@ Periods
 Module timers keep track of some type of ``period`` and trigger the ``period_change`` :ref:`event <events>` whenever it enters a new period. You can refer to the current period in your module configuration (in ``astrality.yaml``) with the ``{period}`` placeholder.
 
 .. caution::
-    
+
     When you use placeholders, you must take care that the placeholder is not interpreted as a YAML *dictionary* instead of a *string*. The following will not work as intended:
 
     .. code-block:: yaml
@@ -191,6 +191,49 @@ Periods
 
     module/static_module:
         ...
+
+
+.. _timer_types_time_of_day:
+
+Time of day
+-----------
+
+Description
+    Keeps track of a specific time interval for each day of the week. Useful for tracking when you are at work.
+
+Specifier
+    ``type: time_of_day``
+
+Periods
+    ``on``, ``off``
+
+.. csv-table:: Configuration options
+   :header: "Option", "Default", "Description"
+   :widths: 6, 5, 30
+
+   "monday", "'09:00-17:00'", "The time of day that is considered 'on'."
+   "tuesday", "'09:00-17:00'", "The time of day that is considered 'on'."
+   "wednesday", "'09:00-17:00'", "The time of day that is considered 'on'."
+   "thursday", "'09:00-17:00'", "The time of day that is considered 'on'."
+   "friday", "'09:00-17:00'", "The time of day that is considered 'on'."
+   "saturday", None, "The time of day that is considered 'on'."
+   "sunday", None, "The time of day that is considered 'on'."
+
+
+**Example configuration**
+
+.. code-block:: yaml
+
+    module/european_tue_to_sat_work:
+        timer:
+            type: time_of_day
+            monday: None
+            tuesday: '08:00-16:00'
+            wednesday: '08:00-16:00'
+            thursday: '08:00-16:00'
+            friday: '08:00-16:00'
+            saturday: '08:00-16:00'
+
 
 Weekday
 -------

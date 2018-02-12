@@ -1,8 +1,10 @@
 """Module for all timer classes, keeping track of certain events for modules."""
 
 import abc
-from datetime import datetime, timedelta
+from collections import namedtuple
 import logging
+import time
+from datetime import datetime, timedelta
 from math import inf
 from typing import Dict, Tuple, Union
 
@@ -10,7 +12,7 @@ import pytz
 from astral import Location
 
 
-TimerConfig = Dict[str, Union[str, int, float]]
+TimerConfig = Dict[str, Union[str, int, float, None]]
 logger = logging.getLogger('astrality')
 
 
@@ -165,9 +167,10 @@ class Weekday(Timer):
 
     weekdays = dict(zip(range(0,7), periods))
 
-    def _period(self) -> str:
+    @classmethod
+    def _period(cls) -> str:
         """Return the current determined period."""
-        return self.weekdays[datetime.today().weekday()]
+        return cls.weekdays[datetime.today().weekday()]
 
     def time_until_next_period(self) -> timedelta:
         """Return the time remaining until the next period in seconds."""
@@ -225,6 +228,132 @@ class Periodic(Timer):
     def time_until_next_period(self) -> timedelta:
         """Return the time remaining until the next period in seconds."""
         return self.timedelta - (datetime.now() - self.initialization_time) % self.timedelta
+
+
+WorkDay = namedtuple('WorkDay', ('start', 'end',))
+
+class TimeOfDay(Timer):
+    """
+    Timer which keeps track of time intervals each day of the week.
+
+    The variable names used in the implementation, assumes that the 'on'
+    periods are referring to worktime.
+    """
+
+    periods = ('on', 'off',)
+    default_timer_config = {
+        'type': 'time_of_day',
+        'monday': '09:00-17:00',
+        'tuesday': '09:00-17:00',
+        'wednesday': '09:00-17:00',
+        'thursday': '09:00-17:00',
+        'friday': '09:00-17:00',
+        'saturday': None,
+        'sunday': None,
+    }
+
+    def __init__(self, timer_config: TimerConfig) -> None:
+        super().__init__(timer_config)
+        self.weekdays = (
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday',
+        )
+        self.workdays: Dict[str, WorkDay] = {}
+
+        for weekday_num, weekday_name in enumerate(self.weekdays):
+            work_period = self.timer_config[weekday_name]
+            if not work_period:
+                continue
+
+            work_start, work_end = work_period.split('-')  # type: ignore
+            workday = WorkDay(
+                start=time.strptime(work_start, '%H:%M'),
+                end=time.strptime(work_end, '%H:%M'),
+            )
+            self.workdays[weekday_name] = workday
+
+    def _period(self) -> str:
+        """Return the current determined period."""
+        weekday_name = Weekday({'type': 'weekday'}).period()
+        if weekday_name not in self.workdays:
+            return 'leisure'
+        else:
+            now = datetime.now()
+            now_hour = now.hour
+            now_minute = now.minute
+
+            after_work_start = \
+                now_hour >= self.workdays[weekday_name].start.tm_hour and \
+                now_minute >= self.workdays[weekday_name].start.tm_min
+
+            before_work_end = \
+                now_hour <= self.workdays[weekday_name].end.tm_hour and \
+                now_minute <= self.workdays[weekday_name].end.tm_min
+
+            if after_work_start and before_work_end:
+                return 'work'
+            else:
+                return 'leisure'
+
+
+    def time_until_next_period(self) -> timedelta:
+        """Return the time remaining until the next period in seconds."""
+        weekday_name = Weekday({'type': 'weekday'}).period()
+
+        now = datetime.now()
+        now_hour = now.hour
+        now_minute = now.minute
+
+        if self._period() == 'work':
+            # We are within work hours, and it is easy to find the work end for
+            # the same day.
+            return timedelta(
+                hours=self.workdays[weekday_name].end.tm_hour - now_hour,
+                minutes=self.workdays[weekday_name].end.tm_min - now_minute + 1,
+            )
+
+        else:
+            # TODO: This is bad code, and should be done more cleanly in the
+            #       future. But it works, and that is good enough for now.
+
+            # The current zero-indexed weekday
+            weekday_num = self.weekdays.index(weekday_name)
+
+            # Get the zero indexed workdays
+            workday_nums = tuple(
+                self.weekdays.index(workday)
+                for workday
+                in self.workdays
+            )
+
+            # Retrieve all zero-indexed workdays that are later in this week
+            next_workday_nums = tuple(
+                workday_num
+                for workday_num
+                in workday_nums
+                if workday_num > weekday_num
+            )
+
+            if len(next_workday_nums) > 0:
+                days_until_next_workday = next_workday_nums[0] - weekday_num
+                next_workday = self.workdays[self.weekdays[next_workday_nums[0]]]
+            else:
+                # There are no workdays later in this week, so we need to
+                # get the *first* workday from next week instead.
+                min_workday_num = min(workday_nums)
+                days_until_next_workday = 7 + min_workday_num - weekday_num
+                next_workday = self.workdays[self.weekdays[min_workday_num]]
+
+            return timedelta(
+                days=days_until_next_workday,
+                hours=next_workday.start.tm_hour - now_hour,
+                minutes=next_workday.start.tm_min - now_minute + 1,
+            )
 
 
 class Static(Timer):
