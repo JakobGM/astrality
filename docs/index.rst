@@ -22,3 +22,6 @@ Table of Contents
     tips_and_tricks
     attributions
     license
+
+    External: YAML documentation <http://docs.ansible.com/ansible/latest/YAMLSyntax.html>
+    External: Jinja2 documentation <http://jinja.pocoo.org/docs/latest/templates/>
