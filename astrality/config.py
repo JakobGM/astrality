@@ -56,6 +56,8 @@ def infer_config_location(
     config_directory: Optional[Path] = None,
 ) -> Tuple[Path, Path]:
     """
+    Return path of Astrality configuration file based on config folder path.
+
     Try to find the configuration directory and file for astrality, based on
     filesystem or specific environment variables if they are present several
     places to put it. If the expected config file is not present, use an
@@ -205,12 +207,16 @@ def insert_environment_values(
 
 def insert_command_substitutions(content: str) -> str:
     """Replace all occurences in string: $(command) -> command stdout."""
+    working_directory = infer_config_location()[0].parent
 
     command_substitution_pattern = re.compile(r'\$\((.*)\)')
 
     def command_substitution(match: Match[str]) -> str:
         command = match.groups()[0]
-        result = run_shell(command=command)
+        result = run_shell(
+            command=command,
+            working_directory=working_directory,
+        )
         if result == '':
             logger.error(
                 f'Command substitution $({command}) returned empty stdout.'

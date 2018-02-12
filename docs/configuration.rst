@@ -66,14 +66,17 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 
     Then the occurrence of ``${VAR1}`` in ``astrality.yaml`` will be replaced with ``run command`` and **not** ``run $VAR2``.
     If you want the ability to turn off this "recursive expansion" feature, `open an issue <https://github.com/JakobGM/astrality/issues>`_, and I will add configuration option for it.
-    
+
     .. caution::
         Only ``${NAME}`` blocks are expanded. ``$NAME`` will be left in place, to allow runtime expansions of environment variables when modules define shell commands to be run.
 
 .. _command_substitution:
 
-* **Command substitution**: 
+* **Command substitution**:
     ``$( some_shell_command )`` is replaced with the standard output resulting from running ``some_shell_command`` in a ``bash`` shell.
+
+    .. note::
+        Shell commands are run from ``$ASTRALITY_CONFIG_HOME``. If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``$( cat ~/.home_directory_file )``.
 
 .. note::
 
