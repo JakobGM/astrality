@@ -211,23 +211,23 @@ Periods
    :header: "Option", "Default", "Description"
    :widths: 6, 5, 30
 
-   "monday", "'09:00-17:00'", "The time of day that is considered 'on'."
-   "tuesday", "'09:00-17:00'", "The time of day that is considered 'on'."
-   "wednesday", "'09:00-17:00'", "The time of day that is considered 'on'."
-   "thursday", "'09:00-17:00'", "The time of day that is considered 'on'."
-   "friday", "'09:00-17:00'", "The time of day that is considered 'on'."
-   "saturday", None, "The time of day that is considered 'on'."
-   "sunday", None, "The time of day that is considered 'on'."
+   "monday", "``'09:00-17:00'``", "The time of day that is considered 'on'."
+   "tuesday", "``'09:00-17:00'``", "The time of day that is considered 'on'."
+   "wednesday", "``'09:00-17:00'``", "The time of day that is considered 'on'."
+   "thursday", "``'09:00-17:00'``", "The time of day that is considered 'on'."
+   "friday", "``'09:00-17:00'``", "The time of day that is considered 'on'."
+   "saturday", "``''``", "The time of day that is considered 'on'."
+   "sunday", "``''``", "The time of day that is considered 'on'."
 
 
 **Example configuration**
 
 .. code-block:: yaml
 
-    module/european_tue_to_sat_work:
+    module/european_tue_to_sat_work_week:
         timer:
             type: time_of_day
-            monday: None
+            monday: ''
             tuesday: '08:00-16:00'
             wednesday: '08:00-16:00'
             thursday: '08:00-16:00'

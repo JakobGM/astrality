@@ -248,8 +248,8 @@ class TimeOfDay(Timer):
         'wednesday': '09:00-17:00',
         'thursday': '09:00-17:00',
         'friday': '09:00-17:00',
-        'saturday': None,
-        'sunday': None,
+        'saturday': '',
+        'sunday': '',
     }
 
     def __init__(self, timer_config: TimerConfig) -> None:
