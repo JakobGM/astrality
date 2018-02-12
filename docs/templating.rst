@@ -80,7 +80,7 @@ When Astrality :ref:`compiles your template <_template_how_to_compile>` the resu
     You can create arbitrarily nested structures within context sections. For instance:
 
     .. code-block:: yaml
-        
+
         context/cosmetics:
             fonts:
                 1:
@@ -91,7 +91,7 @@ When Astrality :ref:`compiles your template <_template_how_to_compile>` the resu
                     font_size: 9
 
     And refer to those nested variables with "dotted" syntax ``{{ cosmetics.fonts.1.family }}``.
-            
+
 
 .. _env_context:
 
@@ -209,6 +209,9 @@ The ``shell`` filter
 Astrality provides an additional ``shell`` template filter in addition to the standard Jinja2 filters. The syntax is::
 
     {{ 'shell command' | shell }}
+
+.. note::
+    Shell commands are run from ``$ASTRALITY_CONFIG_HOME``. If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``{{ 'cat ~/.bashrc' | shell }}``.
 
 You can use the :ref:`command substitution <command_substitution>` syntax in a context section of ``astrality.yaml`` and get much of the same functionality, but with the ``shell`` filter you can specify a timeout in seconds::
 
