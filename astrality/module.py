@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Tuple
 from astrality import compiler
 from astrality.compiler import context
 from astrality.config import ApplicationConfig, insert_into
+from astrality.filewatcher import DirectoryWatcher
 from astrality.timer import Timer, timer_factory
 from astrality.utils import run_shell
 
@@ -192,6 +193,24 @@ class Module:
                 in exit_commands
             )
 
+    def modified_commands(self, template_name: str) -> Tuple[str, ...]:
+        """Commands to be run when a module template is modified."""
+        modified_commands: List[str] = self.module_config.get(
+            'on_modified',
+            {},
+        ).get(template_name, {}).get('run', [])
+
+        if len(modified_commands) == 0:
+            logger.debug(f'[module/{self.name}] No modified command specified.')
+            return ()
+        else:
+            return tuple(
+                self.interpolate_string(command)
+                for command
+                in modified_commands
+            )
+
+
     def context_section_imports(
         self,
         trigger: str,
@@ -288,6 +307,10 @@ class ModuleManager:
         self.startup_done = False
         self.last_module_periods: Dict[str, str] = {}
 
+        # Create a dictionary containing all managed templates, mapping to
+        # the tuple (module, template_shortname)
+        self.managed_templates: Dict[Path, Tuple[Module, str]] = {}
+
         for section, options in config.items():
             module_config = {section: options}
             if Module.valid_class_section(module_config):
@@ -297,6 +320,17 @@ class ModuleManager:
                     temp_directory=self.application_config['_runtime']['temp_directory'],
                 )
                 self.modules[module.name] = module
+
+                # Insert the modules templates into the template Path map
+                for shortname, template in module.templates.items():
+                    self.managed_templates[template['source']] = (module, shortname)
+
+
+        # Initialize the config directory watcher, but don't start it yet
+        self.directory_watcher = DirectoryWatcher(
+            directory=self.application_config['_runtime']['config_directory'],
+            on_modified=self.modified,
+        )
 
     def __len__(self) -> int:
         """Return the number of managed modules."""
@@ -378,23 +412,31 @@ class ModuleManager:
         assert trigger in ('on_startup', 'on_period_change', 'on_exit',)
 
         for module in self.modules.values():
-            for compilation in module.module_config.get(trigger, {}).get('compile', []):
+            for shortname in module.module_config.get(trigger, {}).get('compile', []):
+                self.compile_template(module=module, shortname=shortname)
 
-                # What to compile is given by [module.]template_name
-                *_module, template_name = compilation.split('.')
-                if len(_module) == 1:
-                    # Explicit module has been specified
-                    module_name = _module[0]
-                else:
-                    # No module has been specified, use the module itself
-                    module_name = module.name
 
-                compiler.compile_template(  # type: ignore
-                    template=self.modules[module_name].templates[template_name]['source'],
-                    target=self.modules[module_name].templates[template_name]['target'],
-                    context=self.application_context,
-                    shell_command_working_directory=self.application_config['_runtime']['config_directory'],
-                )
+    def compile_template(self, module: Module, shortname: str) -> None:
+        """
+        Compile a single template given by its shortname.
+
+        A shortname is given either by shortname, implying that the module given
+        defines that template, or by module_name.shortname, making it explicit.
+        """
+        *_module, template_name = shortname.split('.')
+        if len(_module) == 1:
+            # Explicit module has been specified
+            module_name = _module[0]
+        else:
+            # No module has been specified, use the module itself
+            module_name = module.name
+
+        compiler.compile_template(  # type: ignore
+            template=self.modules[module_name].templates[template_name]['source'],
+            target=self.modules[module_name].templates[template_name]['target'],
+            context=self.application_context,
+            shell_command_working_directory=self.application_config['_runtime']['config_directory'],
+        )
 
     def startup(self):
         """Run all startup commands specified by the managed modules."""
@@ -405,6 +447,9 @@ class ModuleManager:
                 self.run_shell(command, module.name)
 
         self.startup_done = True
+
+        # Start watching config directory for file changes
+        self.directory_watcher.start()
 
     def period_change(self):
         """Run all period change commands specified by the managed modules."""
@@ -432,6 +477,33 @@ class ModuleManager:
                 for temp_file in module.temp_files:
                     temp_file.close()
 
+        # Stop watching config directory for file changes
+        self.directory_watcher.stop()
+
+    def modified(self, modified: Path):
+        """
+        Callback for when files within the config directory are modified.
+
+        Run any context imports, compilations, and shell commands specified
+        within the on_modified event block of each module.
+        """
+        if not modified in self.managed_templates:
+            # The modified file is not specified in any of the modules
+            return
+
+        module, template_shortname = self.managed_templates[modified]
+
+        if template_shortname in module.module_config.get('on_modified', {}):
+            for shortname in module.module_config['on_modified'][template_shortname].get('compile', []):
+                self.compile_template(
+                    shortname=shortname,
+                    module=module,
+                )
+
+        modified_commands = module.modified_commands(template_shortname)
+        for command in modified_commands:
+            logger.info(f'[module/{module.name}] Running modified command.')
+            self.run_shell(command, module.name)
 
     def run_shell(self, command: str, module_name: str) -> None:
         """Run a shell command defined by a managed module."""

@@ -68,7 +68,7 @@ You should now be able to insert context values into your templates. You can ref
     home-directory = /home/{{ machine.user }}
     machine-name = {{ machine.hostname }}
 
-When Astrality :ref:`compiles your template <_template_how_to_compile>` the result would be:
+When Astrality :ref:`compiles your template <template_how_to_compile>` the result would be:
 
 .. code-block:: dosini
 

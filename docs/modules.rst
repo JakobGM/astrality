@@ -83,7 +83,7 @@ An example of module templates syntax:
 Events
 ======
 
-When you want to assign :ref:`tasks <actions>` for Astrality to perform, you have to define *when* to perform them. This is done by defining those ``actions`` in one of three available ``event`` blocks.
+When you want to assign :ref:`tasks <actions>` for Astrality to perform, you have to define *when* to perform them. This is done by defining those ``actions`` in one of four available ``event`` blocks.
 
     ``on_startup``:
         Tasks to be performed when Astrality first starts up.
@@ -101,11 +101,26 @@ When you want to assign :ref:`tasks <actions>` for Astrality to perform, you hav
         This event will never be triggered when no module timer is defined.
         More on timers follows in :ref:`the next section <timers>`.
 
+    ``on_modified``:
+        Tasks to be performed when specific templates are modified on disk.
+        You specify a set of tasks to performed on a *per-template-basis*.
+        Useful for quick feedback when editing template files.
+
+        .. caution::
+            Only templates within ``$ASTRALITY_CONFIG_HOME/**/*`` are observed for modifications.
+            Also, :ref:`context imports <context_import_action>` are currently not supported in ``on_modified`` event blocks.
+
+            If any of this is a use case for you, please open an `issue <https://github.com/jakobgm/astrality/issues>`_!
+
 Example of module event blocks:
 
 .. code-block:: yaml
 
     module/module_name:
+        templates:
+            some_template:
+                source: 'templates/some.template'
+
         on_startup:
             ...startup actions...
 
@@ -114,6 +129,10 @@ Example of module event blocks:
 
         on_exit:
             ...shutdow actions...
+
+        on_modified:
+            some_template:
+                ...some_template modified actions...
 
 .. note::
     On Astrality startup, the ``on_startup`` event will be triggered, but **not** ``on_period_change``. The ``on_period_change`` event will only be triggered when the ``timer`` defined ``period`` changes *after* Astrality startup.

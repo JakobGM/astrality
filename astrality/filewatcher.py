@@ -37,8 +37,9 @@ class DirectoryWatcher:
 
     def stop(self) -> None:
         """Stop watching the directory."""
-        self.observer.stop()
-        self.observer.join()
+        if self.observer.is_alive():
+            self.observer.stop()
+            self.observer.join()
 
 
 class DirectoryEventHandler(FileSystemEventHandler):

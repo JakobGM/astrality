@@ -17,6 +17,7 @@ setup(
         'astral',
         'pyyaml',
         'Jinja2',
+        'watchdog',
     ],
     python_requires='>=3.6',
     scripts=['bin/astrality'],
