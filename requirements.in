@@ -39,3 +39,6 @@ sphinx-autobuild
 
 # ReadTheDocs theme for sphinx
 sphinx_rtd_theme
+
+# For watching filesystem changes
+watchdog
