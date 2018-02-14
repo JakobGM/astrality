@@ -176,12 +176,16 @@ def preprocess_configuration_file(
         ${name} -> os.environ[name].
         $(command) -> stdout from shell execution.
     """
+    working_directory = conf_file.parent
 
     conf_text = ''
     with open(conf_file, 'r') as file:
         for line in file:
             conf_text += insert_environment_values(
-                insert_command_substitutions(line),
+                insert_command_substitutions(
+                    content=line,
+                    shell_command_working_directory=working_directory
+                ),
                 env_dict,
             )
 
@@ -205,17 +209,18 @@ def insert_environment_values(
     )
 
 
-def insert_command_substitutions(content: str) -> str:
+def insert_command_substitutions(
+    content: str,
+    shell_command_working_directory: Path,
+) -> str:
     """Replace all occurences in string: $(command) -> command stdout."""
-    working_directory = infer_config_location()[0].parent
-
     command_substitution_pattern = re.compile(r'\$\((.*)\)')
 
     def command_substitution(match: Match[str]) -> str:
         command = match.groups()[0]
         result = run_shell(
             command=command,
-            working_directory=working_directory,
+            working_directory=shell_command_working_directory,
         )
         if result == '':
             logger.error(

@@ -176,7 +176,10 @@ def test_insert_context_section():
 
 def test_insert_command_substitutions():
     string = 'some text: $(echo result)'
-    assert insert_command_substitutions(string) == 'some text: result'
+    assert insert_command_substitutions(
+        string,
+        shell_command_working_directory=Path('~').expanduser(),
+    ) == 'some text: result'
 
 
 class TestResolveConfigDirectory:
