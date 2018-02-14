@@ -25,10 +25,10 @@ def main(logging_level: str = 'INFO', test: bool = False):
     """
     if 'ASTRALITY_LOGGING_LEVEL' in os.environ:
         # Override logging level if env variable is set
-        logger.setLevel(os.environ['ASTRALITY_LOGGING_LEVEL'])
-    else:
-        # Set the logging level to the level passed in by bin/astrality cli
-        logger.setLevel(logging_level)
+        logging_level = os.environ['ASTRALITY_LOGGING_LEVEL']
+
+    # Set the logging level to the configured setting
+    logging.basicConfig(level=logging_level)
 
     # Quit old astrality instances
     kill_old_astrality_processes()
