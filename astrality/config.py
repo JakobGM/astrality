@@ -20,7 +20,7 @@ from yaml import load, dump
 try:
     from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore
     logger.info('Using LibYAML bindings for faster .yaml parsing.')
-except ImportError:
+except ImportError:  # pragma: no cover
     from yaml import Loader, Dumper
     logger.warning(
         'LibYAML not installed.'
@@ -96,7 +96,7 @@ def dict_from_config_file(
     containing all the environment variables.
     """
 
-    if not config_file.is_file():
+    if not config_file.is_file():  # pragma: no cover
         error_msg = f'Could not load config file "{config_file}".'
         logger.critical(error_msg)
         raise RuntimeError(error_msg)

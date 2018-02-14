@@ -99,7 +99,7 @@ def main(logging_level: str = 'INFO', test: bool = False):
                     module_manager.time_until_next_period().total_seconds()
                 )
 
-    except KeyboardInterrupt:
+    except KeyboardInterrupt:  # pragma: no cover
         exit_handler()
 
 def other_astrality_pids() -> Set[int]:
