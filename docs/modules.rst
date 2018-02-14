@@ -227,7 +227,7 @@ Here is an example:
         templates:
             polybar:
                 source: templates/polybar
-                target: $XDG_CONFIG_HOME/polybar/config
+                target: ${XDG_CONFIG_HOME}/polybar/config
 
         on_startup:
             compile:
