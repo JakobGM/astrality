@@ -1,11 +1,17 @@
 #!/usr/bin/env python3.6
 """Distribution and installation of Astrality."""
 
+from pathlib import Path
+
 from setuptools import find_packages, setup
+
+def readme():
+    with open(Path(__file__).parent / 'README.rst') as file:
+        return file.read()
 
 setup(
     name='astrality',
-    version='0.0.16',
+    version='0.1',
     packages=find_packages(),
     install_requires=[
         'astral',
@@ -20,7 +26,7 @@ setup(
     author='Jakob Gerhard Martinussen',
     author_email='jakobgm@gmail.com',
     description='A dynamic configuration file manager.',
-    long_description='See documentation at: https://github.com/JakobGM/astrality',
+    long_description=readme(),
     license="MIT",
     keywords="unix configuration management",
     url="http://github.com/JakobGM/astrality",
