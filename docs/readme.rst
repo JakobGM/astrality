@@ -1,5 +1,8 @@
 .. _readme:
 
+.. |pypi_version| image:: https://badge.fury.io/py/astrality.svg
+    :target: https://badge.fury.io/py/astrality
+
 .. |travis-ci| image:: https://travis-ci.org/JakobGM/astrality.svg?branch=master
     :target: https://travis-ci.org/JakobGM/astrality
 
@@ -12,9 +15,9 @@
 
 .. |logo| image:: https://github.com/JakobGM/astrality/raw/master/docs/astrality_logo.png
 
-======================================================================================
-|logo| Astrality - A Dynamic Configuration File Manager |travis-ci| |rtfd| |coveralls|
-======================================================================================
+=====================================================================================================
+|logo| Astrality - A Dynamic Configuration File Manager |pypi_version| |travis-ci| |rtfd| |coveralls|
+=====================================================================================================
 
 What Does It Do?
 ================
