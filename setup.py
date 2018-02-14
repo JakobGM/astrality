@@ -11,12 +11,13 @@ def readme():
 
 setup(
     name='astrality',
-    version='0.1',
+    version='0.2',
     packages=find_packages(),
     install_requires=[
         'astral',
         'pyyaml',
         'Jinja2',
+        'watchdog',
     ],
     python_requires='>=3.6',
     scripts=['bin/astrality'],
