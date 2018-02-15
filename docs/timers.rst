@@ -126,6 +126,21 @@ Now Astrality will set the appropriate wallpaper on startup. We still have a sma
             run:
                 - feh --bg-fill modules/weekday_wallpaper/{period}.*
 
+Or, alternatively, we can just :ref:`trigger <trigger_action>` startup event when the period changes:
+
+.. code-block:: yaml
+
+    module/weekday_wallpaper:
+        timer:
+            type: weekday
+
+        on_startup:
+            run:
+                - feh --bg-fill modules/weekday_wallpaper/{period}.*
+
+        on_period_change:
+            trigger: on_startup
+
 
 Timer types
 ===========

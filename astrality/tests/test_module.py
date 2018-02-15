@@ -1009,3 +1009,94 @@ def test_that_only_startup_event_block_is_run_on_startup(
         day=16,
         hour=12,
     )
+
+def test_trigger_event_module_action(conf_path):
+    application_config = {
+        'module/A': {
+            'timer': {'type': 'weekday'},
+            'on_startup': {
+                'trigger': ['on_period_change', 'on_exit', 'on_modified.templateA'],
+                'run': ['echo startup'],
+            },
+            'on_period_change': {
+                'run': ['echo period_change'],
+                'import_context': [{
+                    'from_file': 'contexts/file.yaml',
+                    'from_section': 'section',
+                }],
+            },
+            'on_exit': {
+                'run': ['echo exit'],
+            },
+            'on_modified': {
+                'templateA': {
+                    'run': ['echo modified.templateA'],
+                    'compile': ['templateA'],
+                },
+            },
+        },
+        '_runtime': {
+            'config_directory': conf_path,
+            'temp_directory': Path('/tmp/astrality'),
+        },
+    }
+    module_manager = ModuleManager(application_config)
+
+    # Check that all run commands have been imported into startup block
+    assert module_manager.modules['A'].startup_commands() == (
+        'echo startup',
+        'echo period_change',
+        'echo exit',
+        'echo modified.templateA',
+    )
+
+    # Check that all context section imports are available in startup block
+    assert module_manager.modules['A'].context_section_imports('on_startup') == (
+        ContextSectionImport(
+            into_section='section',
+            from_section='section',
+            from_config_file=conf_path / 'contexts' / 'file.yaml',
+        ),
+    )
+
+    # Check that all compile actions have been merged into startup block
+    assert module_manager.modules['A'].module_config['on_startup']['compile'] ==\
+        ['templateA']
+
+    # Double check that the other sections are not affected
+    assert module_manager.modules['A'].period_change_commands() == (
+        'echo period_change',
+    )
+    assert module_manager.modules['A'].exit_commands() == (
+        'echo exit',
+    )
+
+    assert module_manager.modules['A'].context_section_imports('on_period_change') == (
+        ContextSectionImport(
+            into_section='section',
+            from_section='section',
+            from_config_file=conf_path / 'contexts' / 'file.yaml',
+        ),
+    )
+
+def test_not_using_list_when_specifiying_trigger_action(conf_path):
+    application_config = {
+        'module/A': {
+            'on_startup': {
+                'trigger': 'on_period_change',
+            },
+            'on_period_change': {
+                'run': ['echo period_change'],
+            },
+        },
+        '_runtime': {
+            'config_directory': conf_path,
+            'temp_directory': Path('/tmp/astrality'),
+        },
+    }
+    module_manager = ModuleManager(application_config)
+
+    # Check that all run commands have been imported into startup block
+    assert module_manager.modules['A'].startup_commands() == (
+        'echo period_change',
+    )

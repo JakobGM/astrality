@@ -18,6 +18,8 @@ deploy:
   user: jakobgm
   password:
     secure: G84gKVBTjQzm3kLc4VkyQwKL2MY9PSm9Yp6O1Q/FxaBzw5v+P8MGcljwwri0iRc3jppfsuoUFegFHmKg3ufNGINTlVPvSQBIm/UyMxsLgu7BV8aQK5o2E5XN/Q3ET4MlIz7Qpypy8iBs3omNRD+pgSgyRmkk2XOufMw+C9cSM+4udCrXE2HA+4mJVXNs63rmtLCwRQDJ/C5+LtwycuoyZeIvIwrOS9G/PtauUZu+Qv/KmRan7kwaC4zNJHw5GVGsUJ0ozj1PwQJ1uL/+Gb0oUiCWe1m79+XLDtiBgVwQmBeVO9flxJIET5ggZ/Vyku/6qidovMzkiVxX9bkoFd4dU7aFpD7SE8pHpWIguVnYhDE0Xzw3C0JxfUNDGKDPbWRgTzCyMWlTUTqxgXB2/CSaATGZ/DbVR5OBdQwPVF/+qKANxvtpSnJr4NhfjreK4zJ0q32hLz19KOH62yHZNeo7U0Z8EMx6JMPLYFv1FI+WZStkj0JrFJfQ/zG7PRUE2iuE4CXnh5egaRF/jmPsrm/Qljstz/PHtxHuETOxgUyRViscN+XtdCMimqFFKy7CV+kYc9ZzIRqRBa5KHEcMg7kqN5C8hs6ETVHpIAyp2XBeiX5NsJE+vnd0HHj0a7F1KEfz2pflORBnpfU8iz2dpDiMYfRQx1W3wDwuhnJNtMVJ/4g=
+  skip_cleanup: true
   distributions: "sdist bdist_wheel"
   on:
+    all_branches: true
     tags: true
