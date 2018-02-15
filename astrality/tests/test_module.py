@@ -323,54 +323,6 @@ class TestModuleClass:
             ),
         ]
 
-    @freeze_time('2018-02-05')
-    def test_running_finished_tasks_command(
-        self,
-        simple_application_config,
-        caplog,
-    ):
-        """Test that every task is finished at first finish_tasks() invocation."""
-        module_manager = ModuleManager(simple_application_config)
-        module_manager.finish_tasks()
-        template = str(module_manager.modules['test_module'].templates['template_name']['source'])
-        assert caplog.record_tuples == [
-            (
-                'astrality',
-                logging.INFO,
-                f'[Compiling] Template: "{template}" -> Target: "/tmp/compiled_result"'
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                '[module/test_module] Running startup command.',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                '[module/test_module] Running command "echo monday".',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                'monday\n',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                '[module/test_module] Running period change command.',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                '[module/test_module] Running command "echo /tmp/compiled_result".',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                '/tmp/compiled_result\n',
-            )
-        ]
-
     def test_location_of_template_file_defined_relatively(self, module):
         template_file = module.templates['template_name']['source']
         compiled_template = module.templates['template_name']['target']
@@ -464,6 +416,77 @@ class TestModuleClass:
                 f'[Compiling] Template: "{template_file}" -> Target: "{compiled_template}"'
             ),
         ]
+
+
+def test_running_finished_tasks_command(
+    simple_application_config,
+    freezer,
+    caplog,
+):
+    """Test that every task is finished at first finish_tasks() invocation."""
+    thursday = datetime(
+        year=2018,
+        month=2,
+        day=15,
+        hour=12,
+    )
+    freezer.move_to(thursday)
+    module_manager = ModuleManager(simple_application_config)
+    module_manager.finish_tasks()
+
+    # Only startup commands should be finished at first
+    template = str(module_manager.modules['test_module'].templates['template_name']['source'])
+    assert caplog.record_tuples == [
+        (
+            'astrality',
+            logging.INFO,
+            f'[Compiling] Template: "{template}" -> Target: "/tmp/compiled_result"'
+        ),
+        (
+            'astrality',
+            logging.INFO,
+            '[module/test_module] Running startup command.',
+        ),
+        (
+            'astrality',
+            logging.INFO,
+            '[module/test_module] Running command "echo thursday".',
+        ),
+        (
+            'astrality',
+            logging.INFO,
+            'thursday\n',
+        ),
+    ]
+
+    # Now move one day ahead, and observe if period change commands are run
+    caplog.clear()
+    friday = datetime(
+        year=2018,
+        month=2,
+        day=16,
+        hour=12,
+    )
+    freezer.move_to(friday)
+    module_manager.finish_tasks()
+    assert caplog.record_tuples == [
+        (
+            'astrality',
+            logging.INFO,
+            '[module/test_module] Running period change command.',
+        ),
+        (
+            'astrality',
+            logging.INFO,
+            '[module/test_module] Running command "echo /tmp/compiled_result".',
+        ),
+        (
+            'astrality',
+            logging.INFO,
+            '/tmp/compiled_result\n',
+        )
+    ]
+
 
 def test_has_unfinished_tasks(simple_application_config, freezer):
     # Move time to midday
@@ -924,3 +947,65 @@ class TestModuleFileWatching:
 
         # And that the new file has been touched
         assert touch_target.is_file()
+
+
+@pytest.yield_fixture
+def two_test_file_paths():
+    test_file1 = Path('/tmp/astrality/test_file_1')
+    test_file2 = Path('/tmp/astrality/test_file_2')
+
+    yield test_file1, test_file2
+
+    # Cleanup files after test has been run (if they exist)
+    if test_file1.is_file():
+        os.remove(test_file1)
+    if test_file2.is_file():
+        os.remove(test_file2)
+
+
+def test_that_only_startup_event_block_is_run_on_startup(
+    two_test_file_paths,
+    conf_path,
+    freezer,
+):
+    thursday = datetime(
+        year=2018,
+        month=2,
+        day=15,
+        hour=12,
+    )
+    freezer.move_to(thursday)
+
+    test_file1, test_file2 = two_test_file_paths
+    application_config = {
+        'module/A': {
+            'timer': {'type': 'weekday'},
+            'on_startup': {
+                'run': ['touch ' + str(test_file1)],
+            },
+            'on_period_change': {
+                'run': ['touch ' + str(test_file2)],
+            },
+        },
+        '_runtime': {
+            'config_directory': conf_path,
+            'temp_directory': Path('/tmp/astrality'),
+        },
+    }
+    module_manager = ModuleManager(application_config)
+
+    # Before call to finish_tasks, no actions should have been performed
+    assert not test_file1.is_file() and not test_file2.is_file()
+
+    # Now call finish_tasks for the first time, only startup event block should
+    # be run
+    module_manager.finish_tasks()
+    assert test_file1.is_file()
+    assert not test_file2.is_file()
+
+    friday = datetime(
+        year=2018,
+        month=2,
+        day=16,
+        hour=12,
+    )

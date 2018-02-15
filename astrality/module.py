@@ -356,10 +356,14 @@ class ModuleManager:
                module periods combination.
         """
         if not self.startup_done:
+            # Save the last period configuration, such that period_change
+            # is only run when the period *changes*
+            self.last_module_periods = self.module_periods()
+
+            # Perform all startup actions
             self.import_context_sections('on_startup')
             self.compile_templates('on_startup')
             self.startup()
-            self.period_change()
         elif self.last_module_periods != self.module_periods():
             self.import_context_sections('on_period_change')
             self.compile_templates('on_period_change')

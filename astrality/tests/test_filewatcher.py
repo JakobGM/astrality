@@ -77,7 +77,9 @@ def test_filesystem_watcher(test_files, watch_dir):
     assert event_saver.called == 0
 
     # But when we write to it, it is considered "modified"
-    test_file1.write_text('test_content')
+    with open(test_file1, 'w') as file:
+        file.write('test_content')
+
     time.sleep(0.7)
     assert event_saver.argument == test_file1
     assert event_saver.called == 1
