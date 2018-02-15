@@ -66,6 +66,11 @@ class Module:
         self.name: str = section.split('/')[1]
 
         self.module_config = module_config[section]
+        self.populate_event_blocks()
+
+        # Import trigger actions into their respective event blocks
+        self.import_trigger_actions()
+
         self.config_directory = config_directory
         self.temp_directory = temp_directory
 
@@ -76,6 +81,69 @@ class Module:
 
         # Find and prepare templates and compilation targets
         self._prepare_templates()
+
+    def populate_event_blocks(self) -> None:
+        """
+        Populate non-configured actions within event blocks.
+
+        This prevents us from having to use .get() all over the Module.
+        """
+        for event_block in ('on_startup', 'on_period_change', 'on_exit', ):
+            configured_event_block = self.module_config.get(event_block, {})
+            self.module_config[event_block] = {
+                'import_context': [],
+                'compile': [],
+                'run': [],
+            }
+            self.module_config[event_block].update(configured_event_block)
+
+        if not 'on_modified' in self.module_config:
+            self.module_config['on_modified'] = {}
+        else:
+            for template_name in self.module_config['on_modified'].keys():
+                configured_event_block = self.module_config['on_modified'][template_name]
+                self.module_config['on_modified'][template_name] = {
+                    'import_context': [],
+                    'compile': [],
+                    'run': [],
+                }
+                self.module_config['on_modified'][template_name].update(configured_event_block)
+
+    def import_trigger_actions(self) -> None:
+        """If an event block defines trigger events, import those actions."""
+        event_blocks = (
+            self.module_config['on_startup'],
+            self.module_config['on_period_change'],
+            self.module_config['on_exit'],
+            self.module_config['on_modified'].values(),
+        )
+        for event_block in event_blocks:
+            if 'trigger' in event_block:
+                event_blocks_to_import = event_block['trigger']
+                if isinstance(event_blocks_to_import, str):
+                    event_blocks_to_import = [event_blocks_to_import]
+
+                for event_block_to_import in event_blocks_to_import:
+                    self._import_event_block(
+                        from_event_block=event_block_to_import,
+                        into=event_block,
+                    )
+
+    def _import_event_block(
+        self,
+        from_event_block: str,
+        into: Dict[str, Any],
+    ) -> None:
+        """Merge one event block with another one."""
+        if 'on_modified.' in from_event_block:
+            template = from_event_block[12:]
+            from_event_block_dict = self.module_config['on_modified'].get(template, {})
+        else:
+            from_event_block_dict = self.module_config[from_event_block]
+
+        into['run'].extend(from_event_block_dict['run'])
+        into['import_context'].extend(from_event_block_dict['import_context'])
+        into['compile'].extend(from_event_block_dict['compile'])
 
     def _prepare_templates(self) -> None:
         """Determine template sources and compilation targets."""
@@ -416,7 +484,7 @@ class ModuleManager:
         assert trigger in ('on_startup', 'on_period_change', 'on_exit',)
 
         for module in self.modules.values():
-            for shortname in module.module_config.get(trigger, {}).get('compile', []):
+            for shortname in module.module_config[trigger]['compile']:
                 self.compile_template(module=module, shortname=shortname)
 
 

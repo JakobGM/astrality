@@ -142,7 +142,7 @@ Example of module event blocks:
 Actions
 =======
 
-Actions are tasks for Astrality to perform, and are placed within :ref:`event blocks <events>` in order to specify *when* to perform them. There are three available ``action`` types:
+Actions are tasks for Astrality to perform, and are placed within :ref:`event blocks <events>` in order to specify *when* to perform them. There are four available ``action`` types:
 
     :ref:`import_context <context_import_action>`:
         Import a ``context`` section from a YAML formatted file. ``context`` variables are used as replacement values for placeholders in your :ref:`templates <module_templates>`. See :ref:`context <context>` for more information.
@@ -152,6 +152,9 @@ Actions are tasks for Astrality to perform, and are placed within :ref:`event bl
 
     :ref:`run <run_action>`:
         Execute a shell command, possibly referring to any compiled template and/or the current :ref:`period <timer_periods>` defined by the :ref:`module timer <timers>`.
+
+    :ref:`trigger <trigger_action>`:
+        Perform *all* actions specified within another :ref:`event block <events>`. With other words, this action *appends* all the actions within another event block to the actions already specified in the event block. Useful for not having to repeat yourself when you want the same actions to be performed during different events.
 
 
 .. _context_import_action:
@@ -287,6 +290,100 @@ Example:
             run:
                 - echo "Deleting today's notes!"
                 - rm ~/notes/notes_for_{period}.txt
+
+
+.. _trigger_action:
+
+Trigger events
+--------------
+
+You can trigger another module :ref:`event <events>` by specifying the ``trigger`` action.
+
+The ``trigger`` option accepts ``on_startup``, ``on_period_change``, ``on_exit``, and ``on_modified.template_shortname``, either as a single string, or a list with any combination of these.
+
+An example of a module using ``trigger`` actions:
+
+.. code-block:: yaml
+
+    module/module_using_triggers:
+        templates:
+            timer:
+                type: weekday
+
+            templateA:
+                source: templates/A.template
+
+            on_startup:
+                run:
+                    - startup_command
+                trigger:
+                    - on_period_change
+                    - on_modified.templateA
+
+            on_period_change:
+                import_context:
+                    - from_file: contexts/A.yaml
+                      from_section: '{period}'
+                      to_section: a_stuff
+                trigger: on_modified.templateA
+
+            on_modified:
+                templateA:
+                    compile:
+                        - templateA
+                    run:
+                        - shell_command_dependent_on_templateA
+
+This is equivalent to writing the following module:
+
+.. code-block:: yaml
+
+    module/module_using_triggers:
+        templates:
+            timer:
+                type: weekday
+
+            templateA:
+                source: templates/A.template
+
+            on_startup:
+                import_context:
+                    - from_file: contexts/A.yaml
+                      from_section: '{period}'
+                      to_section: a_stuff
+                compile:
+                    - templateA
+                run:
+                    - startup_command
+                    - shell_command_dependent_on_templateA
+
+            on_period_change:
+                import_context:
+                    - from_file: contexts/A.yaml
+                      from_section: '{period}'
+                      to_section: a_stuff
+                compile:
+                    - templateA
+                run:
+                    - shell_command_dependent_on_templateA
+
+            on_modified:
+                templateA:
+                    compile:
+                        - templateA
+                    run:
+                        - shell_command_dependent_on_templateA
+
+
+.. hint::
+    You can use ``trigger: on_period_change`` in order to consider Astrality startup as a ``period change`` event.
+
+    The ``trigger`` action can also help you reduce the degree of repetition in your configuration.
+
+.. caution::
+    Astrality does not invoke recursive trigger events at the moment.
+    You have to specify them manually instead, as shown in the example above.
+
 
 
 The execution order of module actions
