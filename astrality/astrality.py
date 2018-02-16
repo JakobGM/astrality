@@ -72,8 +72,7 @@ def main(logging_level: str = 'INFO', test: bool = False):
         config = user_configuration()
 
         # Delay further actions if configuration says so
-        startup_delay = float(config.get('settings/astrality', {}).get('startup_delay', 0))
-        time.sleep(startup_delay)
+        time.sleep(config['settings/astrality']['startup_delay'])
 
         module_manager = ModuleManager(config)
         module_manager.finish_tasks()

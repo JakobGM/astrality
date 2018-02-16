@@ -5,7 +5,7 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from astrality import compiler
 from astrality.compiler import context
@@ -516,7 +516,11 @@ class ModuleManager:
             startup_commands = module.startup_commands()
             for command in startup_commands:
                 logger.info(f'[module/{module.name}] Running startup command.')
-                self.run_shell(command, module.name)
+                self.run_shell(
+                    command=command,
+                    timeout=self.application_config['settings/astrality']['run_timeout'],
+                    module_name=module.name,
+                )
 
         self.startup_done = True
 
@@ -529,7 +533,11 @@ class ModuleManager:
             period_change_commands = module.period_change_commands()
             for command in period_change_commands:
                 logger.info(f'[module/{module.name}] Running period change command.')
-                self.run_shell(command, module.name)
+                self.run_shell(
+                    command=command,
+                    timeout=self.application_config['settings/astrality']['run_timeout'],
+                    module_name=module.name,
+                )
 
         self.last_module_periods = self.module_periods()
 
@@ -543,7 +551,11 @@ class ModuleManager:
             exit_commands = module.exit_commands()
             for command in exit_commands:
                 logger.info(f'[module/{module.name}] Running exit command.')
-                self.run_shell(command, module.name)
+                self.run_shell(
+                    command=command,
+                    timeout=self.application_config['settings/astrality']['run_timeout'],
+                    module_name=module.name,
+                )
 
             if hasattr(module, 'temp_files'):
                 for temp_file in module.temp_files:
@@ -565,7 +577,7 @@ class ModuleManager:
         if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yaml':
             # The application configuration file has been modified
 
-            if not self.application_config.get('settings/astrality', {}).get('hot_reload', False):
+            if not self.application_config['settings/astrality']['hot_reload']:
                 # Hot reloading is not enabled, so we return early
                 return
 
@@ -600,13 +612,25 @@ class ModuleManager:
         modified_commands = module.modified_commands(template_shortname)
         for command in modified_commands:
             logger.info(f'[module/{module.name}] Running modified command.')
-            self.run_shell(command, module.name)
+            self.run_shell(
+                command=command,
+                timeout=self.application_config['settings/astrality']['run_timeout'],
+                module_name=module.name,
+            )
 
-    def run_shell(self, command: str, module_name: str) -> None:
+    def run_shell(
+        self,
+        command: str,
+        timeout: Union[int, float],
+        module_name: Optional[str] = None,
+    ) -> None:
         """Run a shell command defined by a managed module."""
-        logger.info(f'[module/{module_name}] Running command "{command}".')
+        if module_name:
+            logger.info(f'[module/{module_name}] Running command "{command}".')
+
         run_shell(
             command=command,
+            timeout=timeout,
             working_directory=self.application_config['_runtime']['config_directory'],
         )
 

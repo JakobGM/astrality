@@ -7,6 +7,10 @@ settings/astrality:
     # You can delay astrality on startup. The delay is given in seconds.
     startup_delay: 0
 
+    # Astrality can wait for shell commands to complete in their specified order.
+    # You can set the number of seconds Astrality waits for the shell commands to exit.
+    run_timeout: 0
+
 
 module/wallpaper:
     # A module for changing your wallpaper based on the suns position in the sky.

@@ -43,8 +43,8 @@ def run_shell(
 
     except subprocess.TimeoutExpired:
         logger.warning(
-            f'The command "{command}" used more than 2 seconds in order to '
-            'finish. The exit code can not be verified. This might be '
+            f'The command "{command}" used more than {timeout} seconds in '
+            'order to finish. The exit code can not be verified. This might be '
             'intentional for background processes and daemons.'
         )
         return fallback

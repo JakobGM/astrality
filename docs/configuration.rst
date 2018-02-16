@@ -98,19 +98,29 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
 
 **Avalable configuration options**:
 
-``hot_reload:`` 
+``hot_reload:``
     *Default:* ``false``
 
     If enabled, Astrality will watch for modifications to ``astrality.yaml``.
-    
+
     When ``astrality.yaml`` is modified, Astrality will perform all :ref:`exit actions <module_events_on_exit>` in the old configuration, and then all :ref:`startup actions <module_events_on_startup>` from the new configuration.
 
-    Useful for quick feedback when editing :ref:`templates <templating>`.
+    *Useful for quick feedback when editing :ref:`templates <templating>`.*
 
 ``startup_delay:``
     *Default:* ``0``
 
-    Delay Astrality on startup. The delay is given in seconds.
+    Delay Astrality on startup, given in seconds.
+
+    *Useful when you depend on other startup scripts before Astrality startup,
+    such as reordering displays.*
+
+``run_timeout``
+    *Default:* ``0``
+
+    Determines how long Astrality waits for :ref:`shell commands <run_action>` to exit successfully, given in seconds.
+
+    *Useful when shell commands are dependent on earlier shell commands.*
 
 Where to go from here
 =====================

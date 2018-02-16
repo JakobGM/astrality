@@ -30,6 +30,12 @@ except ImportError:  # pragma: no cover
 
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
+ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'settings/astrality': {
+    'hot_reload': False,
+    'startup_delay': 0,
+    'run_timeout': 0,
+}}
+
 
 def resolve_config_directory() -> Path:
     """
@@ -162,6 +168,11 @@ def user_configuration(config_directory: Optional[Path] = None) -> ApplicationCo
         config_file,
         config,
     ))
+
+    # Insert default global settings that are not specified
+    user_settings = config.get('settings/astrality', {})
+    config['settings/astrality'] = ASTRALITY_DEFAULT_GLOBAL_SETTINGS['settings/astrality'].copy()
+    config['settings/astrality'].update(user_settings)
 
     return config
 

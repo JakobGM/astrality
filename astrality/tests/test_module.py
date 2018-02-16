@@ -44,13 +44,22 @@ def folders(conf):
     )
 
 @pytest.fixture
-def simple_application_config(valid_module_section, folders, expanded_env_dict):
+def simple_application_config(
+    valid_module_section,
+    folders,
+    expanded_env_dict,
+    default_global_options,
+):
     config = valid_module_section.copy()
     config['_runtime'] = {}
     config['_runtime']['config_directory'], \
         config['_runtime']['temp_directory'] = folders
     config['context/env'] = expanded_env_dict
     config['context/fonts'] = {1: 'FuraMono Nerd Font'}
+    config.update(default_global_options)
+
+    # Increase run timeout, so that we can inspect the shell results
+    config['settings/astrality']['run_timeout'] = 2
     return config
 
 
@@ -151,7 +160,11 @@ class TestModuleClass:
 
     @pytest.mark.slow
     def test_running_shell_command_that_times_out(self, single_module_manager, caplog):
-        single_module_manager.run_shell('sleep 2.1', 'name')
+        single_module_manager.run_shell(
+            command='sleep 2.1',
+            timeout=2,
+            module_name='name',
+        )
         assert 'used more than 2 seconds' in caplog.record_tuples[1][2]
 
     def test_running_shell_command_with_non_zero_exit_code(
@@ -159,7 +172,11 @@ class TestModuleClass:
         single_module_manager,
         caplog,
     ):
-        single_module_manager.run_shell('thiscommandshould not exist', 'name')
+        single_module_manager.run_shell(
+            command='thiscommandshould not exist',
+            timeout=2,
+            module_name='name',
+        )
         assert 'not found' in caplog.record_tuples[1][2]
         assert 'non-zero return code' in caplog.record_tuples[2][2]
 
@@ -168,7 +185,11 @@ class TestModuleClass:
         single_module_manager,
         caplog,
     ):
-        single_module_manager.run_shell('echo $USER', 'name')
+        single_module_manager.run_shell(
+            command='echo $USER',
+            timeout=2,
+            module_name='name',
+        )
         assert caplog.record_tuples == [
             (
                 'astrality',
@@ -521,8 +542,9 @@ def test_has_unfinished_tasks(simple_application_config, freezer):
 
 
 @pytest.fixture
-def config_with_modules():
+def config_with_modules(default_global_options):
     return {
+        'settings/astrality': default_global_options['settings/astrality'],
         'context/env': generate_expanded_env_dict(),
         'module/solar_module': {
             'enabled': True,
@@ -817,7 +839,7 @@ def test_that_shell_filter_is_run_from_config_directory(conf_path):
 
 
 @pytest.yield_fixture
-def modules_config(conf_path):
+def modules_config(conf_path, default_global_options):
     empty_template = Path(__file__).parent / 'templates' / 'empty.template'
     empty_template_target = Path('/tmp/astrality/empty_temp_template')
     temp_directory = Path('/tmp/astrality')
@@ -854,6 +876,7 @@ def modules_config(conf_path):
             'temp_directory': temp_directory,
         }
     }
+    config.update(default_global_options)
     yield (
         config,
         empty_template,
@@ -906,6 +929,7 @@ class TestModuleFileWatching:
             assert file.read() == 'new content'
 
         # And that the new file has been touched
+        time.sleep(0.5)
         assert touch_target.is_file()
 
     def test_on_modified_event_in_module(self, modules_config):
@@ -962,7 +986,7 @@ class TestModuleFileWatching:
             os.remove(template_target2)
 
     @pytest.mark.slow
-    def test_hot_reloading(self, test_template_targets):
+    def test_hot_reloading(self, test_template_targets, default_global_options):
         template_target1, template_target2 = test_template_targets
         config_dir = Path(__file__).parent / 'test_config'
         config1 = config_dir / 'astrality1.yaml'
@@ -978,6 +1002,8 @@ class TestModuleFileWatching:
             'config_directory': config_dir,
             'temp_directory': temp_directory,
         }
+        application_config1.update(default_global_options)
+        application_config1['settings/astrality']['hot_reload'] = True
 
         module_manager = ModuleManager(application_config1)
 
@@ -1029,6 +1055,7 @@ def two_test_file_paths():
 def test_that_only_startup_event_block_is_run_on_startup(
     two_test_file_paths,
     conf_path,
+    default_global_options,
     freezer,
 ):
     thursday = datetime(
@@ -1055,6 +1082,7 @@ def test_that_only_startup_event_block_is_run_on_startup(
             'temp_directory': Path('/tmp/astrality'),
         },
     }
+    application_config.update(default_global_options)
     module_manager = ModuleManager(application_config)
 
     # Before call to finish_tasks, no actions should have been performed
@@ -1063,6 +1091,7 @@ def test_that_only_startup_event_block_is_run_on_startup(
     # Now call finish_tasks for the first time, only startup event block should
     # be run
     module_manager.finish_tasks()
+    time.sleep(0.5)
     assert test_file1.is_file()
     assert not test_file2.is_file()
 

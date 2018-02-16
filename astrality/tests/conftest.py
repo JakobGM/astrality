@@ -1,10 +1,15 @@
 """Application wide fixtures."""
+import copy
 import os
 from pathlib import Path
 
 import pytest
 
-from astrality.config import generate_expanded_env_dict, user_configuration
+from astrality.config import (
+    ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
+    generate_expanded_env_dict,
+    user_configuration,
+)
 
 
 @pytest.fixture
@@ -33,3 +38,7 @@ def conf():
 def expanded_env_dict():
     """Return expanded environment dictionary."""
     return generate_expanded_env_dict()
+
+@pytest.fixture
+def default_global_options():
+    return copy.deepcopy(ASTRALITY_DEFAULT_GLOBAL_SETTINGS)
