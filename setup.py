@@ -11,7 +11,7 @@ def readme():
 
 setup(
     name='astrality',
-    version='0.3',
+    version='0.4',
     packages=find_packages(),
     install_requires=[
         'astral',

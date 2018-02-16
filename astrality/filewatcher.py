@@ -38,8 +38,13 @@ class DirectoryWatcher:
     def stop(self) -> None:
         """Stop watching the directory."""
         if self.observer.is_alive():
-            self.observer.stop()
-            self.observer.join()
+            try:
+                self.observer.stop()
+                self.observer.join()
+            except RuntimeError:
+                # TODO: Understand exactly what join() does, and why
+                # it sometimes throws a RuntimeError
+                pass
 
 
 class DirectoryEventHandler(FileSystemEventHandler):

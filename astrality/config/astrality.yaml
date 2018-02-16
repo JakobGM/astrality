@@ -1,7 +1,10 @@
-settings/general:
-    # You can delay astrality on startup if other tasks need to finish first,
-    # for example if you are automatically rearranging displays, which might
-    # interfere with conky. The delay is given in seconds.
+settings/astrality:
+    # If hot_reload is enabled, modifications to this file automatically runs:
+    #       1) exit actions from the old configuration
+    #       2) startup actions from the new configuration
+    hot_reload: false
+
+    # You can delay astrality on startup. The delay is given in seconds.
     startup_delay: 0
 
 

@@ -85,9 +85,13 @@ Events
 
 When you want to assign :ref:`tasks <actions>` for Astrality to perform, you have to define *when* to perform them. This is done by defining those ``actions`` in one of four available ``event`` blocks.
 
+    .. _module_events_on_startup:
+
     ``on_startup``:
         Tasks to be performed when Astrality first starts up.
         Useful for compiling templates that don't need to change after they have been compiled.
+
+    .. _module_events_on_exit:
 
     ``on_exit``:
         Tasks to be performed when you kill the Astrality process.

@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Tuple
 
 from astrality import compiler
 from astrality.compiler import context
-from astrality.config import ApplicationConfig, insert_into
+from astrality.config import ApplicationConfig, insert_into, user_configuration
 from astrality.filewatcher import DirectoryWatcher
 from astrality.timer import Timer, timer_factory
 from astrality.utils import run_shell
@@ -558,7 +558,32 @@ class ModuleManager:
 
         Run any context imports, compilations, and shell commands specified
         within the on_modified event block of each module.
+
+        Also, if hot_reload is True, we reinstantiate the ModuleManager object
+        if the application configuration has been modified.
         """
+        if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yaml':
+            # The application configuration file has been modified
+
+            if not self.application_config.get('settings/astrality', {}).get('hot_reload', False):
+                # Hot reloading is not enabled, so we return early
+                return
+
+            # Hot reloading is enabled, get the new configuration dict
+            new_application_config = user_configuration(
+                config_directory=modified.parent,
+            )
+
+            # Run all exit actions
+            self.exit()
+
+            # Reinstantiate this object
+            self = ModuleManager(new_application_config)
+
+            # Run startup commands
+            self.finish_tasks()
+            return
+
         if not modified in self.managed_templates:
             # The modified file is not specified in any of the modules
             return

@@ -82,13 +82,43 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 
     Interpolations in ``astrality.yaml`` occur on Astrality startup, and will not reflect changes to environment variables and shell commands after startup.
 
+Astrality configuration options
+===============================
+
+Global Astrality configuration options are specified in ``astrality.yaml`` within a dictionary named ``settings/astrality``, i.e.:
+
+.. code-block:: yaml
+
+    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yaml
+
+    settings/astrality:
+        option1: value1
+        option2: value2
+        ...
+
+**Avalable configuration options**:
+
+``hot_reload:`` 
+    *Default:* ``false``
+
+    If enabled, Astrality will watch for modifications to ``astrality.yaml``.
+    
+    When ``astrality.yaml`` is modified, Astrality will perform all :ref:`exit actions <module_events_on_exit>` in the old configuration, and then all :ref:`startup actions <module_events_on_startup>` from the new configuration.
+
+    Useful for quick feedback when editing :ref:`templates <templating>`.
+
+``startup_delay:``
+    *Default:* ``0``
+
+    Delay Astrality on startup. The delay is given in seconds.
+
 Where to go from here
 =====================
 
 What you should read of the documentation from here on depends on what you intend to solve by using Astrality. The most central concepts are:
 
-* :doc:`modules` define which templates to compile, when to compile them, and which commands to run after they have been compiled.
-* :doc:`timers` define when modules should change their behaviour.
 * :doc:`templating` explains how to write configuration file templates.
+* :doc:`modules` specify which templates to compile, when to compile them, and which commands to run after they have been compiled.
+* :doc:`timers` define when modules should change their behaviour.
 
 These concepts are relatively interdependent, and each documentation section assumes knowledge of concepts explained in earlier sections. If this is the first time you are reading this documentation, you should probably just continue reading the documentation in chronological order.

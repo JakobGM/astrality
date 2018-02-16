@@ -1,0 +1,16 @@
+settings/astrality:
+    hot_reload: true
+
+module/A:
+    templates:
+        template1:
+            source: templates/no_context.template
+            target: /tmp/astrality/target1
+
+    on_startup:
+        compile:
+            - template1
+
+    on_exit:
+        run:
+            - rm {template1}

@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -8,7 +9,7 @@ from freezegun import freeze_time
 import pytest
 
 from astrality import timer
-from astrality.config import generate_expanded_env_dict
+from astrality.config import dict_from_config_file, generate_expanded_env_dict
 from astrality.module import ContextSectionImport, Module, ModuleManager
 from astrality.resolver import Resolver
 
@@ -947,6 +948,68 @@ class TestModuleFileWatching:
 
         # And that the new file has been touched
         assert touch_target.is_file()
+
+    @pytest.yield_fixture
+    def test_template_targets(self):
+        template_target1 = Path('/tmp/astrality/target1')
+        template_target2 = Path('/tmp/astrality/target2')
+
+        yield template_target1, template_target2
+
+        if template_target1.is_file():
+            os.remove(template_target1)
+        if template_target2.is_file():
+            os.remove(template_target2)
+
+    @pytest.mark.slow
+    def test_hot_reloading(self, test_template_targets):
+        template_target1, template_target2 = test_template_targets
+        config_dir = Path(__file__).parent / 'test_config'
+        config1 = config_dir / 'astrality1.yaml'
+        config2 = config_dir / 'astrality2.yaml'
+        target_config = config_dir / 'astrality.yaml'
+        temp_directory = Path('/tmp/astrality')
+
+        # Copy the first configuration into place
+        shutil.copy(str(config1), str(target_config))
+
+        application_config1 = dict_from_config_file(config1)
+        application_config1['_runtime'] = {
+            'config_directory': config_dir,
+            'temp_directory': temp_directory,
+        }
+
+        module_manager = ModuleManager(application_config1)
+
+        # Before beginning, the template should not be compiled
+        assert not template_target1.is_file()
+
+        # But when we finalize tasks, it should be compiled
+        module_manager.finish_tasks()
+        assert template_target1.is_file()
+
+        # Also check that the filewatcher has been started
+        assert module_manager.directory_watcher.observer.is_alive()
+
+        # We now "edit" the configuration file
+        shutil.copy(str(config2), str(target_config))
+        time.sleep(0.7)
+
+        # Since hot reloading is enabled, the new template target should be
+        # compiled, and the old one cleaned up
+        assert template_target2.is_file()
+        assert not template_target1.is_file()
+
+        # And we switch back again
+        shutil.copy(str(config1), str(target_config))
+        time.sleep(0.7)
+        assert template_target1.is_file()
+        assert not template_target2.is_file()
+
+        # Cleanup config file
+        if target_config.is_file():
+            os.remove(target_config)
+
 
 
 @pytest.yield_fixture
