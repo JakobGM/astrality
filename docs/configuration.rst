@@ -108,6 +108,8 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
 
     When ``astrality.yaml`` is modified, Astrality will perform all :ref:`exit actions <module_events_on_exit>` in the old configuration, and then all :ref:`startup actions <module_events_on_startup>` from the new configuration.
 
+    Ironically requires restart if enabled.
+
     *Useful for quick feedback when editing :ref:`templates <templating>`.*
 
 ``startup_delay:``

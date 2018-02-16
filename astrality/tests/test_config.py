@@ -238,5 +238,5 @@ class TestCreateConfigDirectory:
         # Test presence of content in created folder
         dir_contents = tuple(file.name for file in created_config_dir.iterdir())
         assert 'astrality.yaml' in dir_contents
-        assert 'templates' in dir_contents
+        assert 'modules' in dir_contents
         rmtree(created_config_dir)
