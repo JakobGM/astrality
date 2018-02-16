@@ -19,6 +19,9 @@ settings/astrality:
 module/wallpaper:
     # A module for changing your wallpaper based on the suns position in the sky.
     enabled: true
+
+    # A module can require shell commands to return successfully in order to
+    # enable the module. Here, we check if `feh` is installed.
     requires: command -v feh
 
     timer:
@@ -33,49 +36,71 @@ module/wallpaper:
         longitude: 10.421906
         elevation: 0
 
-        # You can force a timer to always return the same period for debugging reasons,
-        # e.g. if you want to check if all your periodic color schemes fit your
-        # periodic wallpapers.
-        # force_period: morning
+        # You can force a timer to always return the same period for debugging.
+        # For example, if you want to check if all your periodic color schemes
+        # fit your the respective periodic wallpapers, without waiting for sunset,
+        # etc..
+        # force_period: sunrise
 
     on_startup:
+        # Execute all actions specified in `on_period_change` on Astrality startup
         trigger: on_period_change
 
     on_period_change:
-        run:
-            - feh --bg-fill wallpaper_themes/default/{period}.*
+        # Import the context section named the same as the current period,
+        # e.g. `night`, into the global context section named `colors`,
+        # from the file: wallpaper_themes/default/colors.yaml.
         import_context:
             - from_file: wallpaper_themes/default/colors.yaml
               from_section: '{period}'
               to_section: colors
+
+        # Compile the templates specified in the conky module, as their
+        # context has changed.
         compile:
             - conky.time
             - conky.performance
+
+        # Run shell command to change the desktop wallpaper named the same
+        # as the current period.
+        run:
+            - feh --bg-fill wallpaper_themes/default/{period}.*
+
 
 module/conky:
     enabled: true
     requires: command -v conky
 
+    # Give names to the available templates, used in the wallpaper module.
+    # Since we do not specify targets for the templates, Astrality
+    # will compile the templates to temporary files which are deleted on
+    # Astrality shutdown. We can refer to the paths of the compiled templates
+    # by using the {time} and {performance} placeholders.
     templates:
         time:
             source: templates/conky_time.conf
         performance:
             source: templates/conky_performance.conf
 
+    # Start conky modules on startup.
+    # We do not have to restart conky when we recompile the templates,
+    # since conky automatically reloads when {time} and {performance}
+    # change.
     on_startup:
         run:
             - conky -c {time}
             - conky -c {performance}
 
     on_exit:
+        # Kill the conky processes on Astrality shutdown.
         run:
             - pkill -f conky
 
 
 context/general:
-    # It is possible to define further arbitrarily named sections.
-    # For instance, with this option set, you can use ${ast:general:display} in all
-    # your templates.
+    # We can define context values used when compiling templates.
+    # For instance, with this option set, you can use {{ general.display }} in all
+    # your templates, and it will be replaced with eDP1
     display: eDP1
 
     # You can also use command substitution in order to insert the standard
