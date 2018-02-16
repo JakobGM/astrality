@@ -47,10 +47,6 @@ module/wallpaper:
             - conky.time
             - conky.performance
 
-    on_exit:
-        run:
-            - feh --bg-fill wallpaper_themes/default/solid_black_background.jpeg
-
 module/conky:
     enabled: true
 
