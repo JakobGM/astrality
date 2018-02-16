@@ -16,7 +16,7 @@ settings/astrality:
     requires_timeout: 1
 
 
-module/wallpaper:
+module/solar_wallpaper:
     # A module for changing your wallpaper based on the suns position in the sky.
     enabled: true
 
@@ -51,7 +51,7 @@ module/wallpaper:
         # e.g. `night`, into the global context section named `colors`,
         # from the file: wallpaper_themes/default/colors.yaml.
         import_context:
-            - from_file: wallpaper_themes/default/colors.yaml
+            - from_file: modules/solar_wallpaper/solar_colors.yaml
               from_section: '{period}'
               to_section: colors
 
@@ -64,7 +64,7 @@ module/wallpaper:
         # Run shell command to change the desktop wallpaper named the same
         # as the current period.
         run:
-            - feh --bg-fill wallpaper_themes/default/{period}.*
+            - feh --bg-fill modules/solar_wallpaper/{period}.*
 
 
 module/conky:
@@ -78,9 +78,9 @@ module/conky:
     # by using the {time} and {performance} placeholders.
     templates:
         time:
-            source: templates/conky_time.conf
+            source: modules/conky/time.template
         performance:
-            source: templates/conky_performance.conf
+            source: modules/conky/performance.template
 
     # Start conky modules on startup.
     # We do not have to restart conky when we recompile the templates,
