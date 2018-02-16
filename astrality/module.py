@@ -606,14 +606,24 @@ class ModuleManager:
                 config_directory=modified.parent,
             )
 
-            # Run all exit actions
-            self.exit()
+            try:
+                # Reinstantiate this object
+                new_module_manager = ModuleManager(new_application_config)
 
-            # Reinstantiate this object
-            self = ModuleManager(new_application_config)
+                # Run all old exit actions, since the new config is valid
+                self.exit()
 
-            # Run startup commands
-            self.finish_tasks()
+                # Swap place with the new configuration
+                self = new_module_manager
+
+                # Run startup commands from the new configuration
+                self.finish_tasks()
+            except:
+                # New configuration is invalid, just keep the old one
+                # TODO: Test this behaviour
+                logger.error('New configuration detected, but it is invalid!')
+                pass
+
             return
 
         if not modified in self.managed_templates:
