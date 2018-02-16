@@ -53,7 +53,7 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 
 .. _parameter_expansion:
 
-* **Parameter expansion**: 
+* **Parameter expansion**:
     ``${ENVIRONMENT_VARIABLE}`` is replaced with the value of the environment variable, i.e. the result of ``echo $ENVIRONMENT_VARIABLE``.
 
     If the value of an environment variable contains other environment variables, then those environment variables will also be expanded.
@@ -81,6 +81,9 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 .. note::
 
     Interpolations in ``astrality.yaml`` occur on Astrality startup, and will not reflect changes to environment variables and shell commands after startup.
+
+
+.. _configuration_options:
 
 Astrality configuration options
 ===============================
@@ -121,6 +124,15 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
     Determines how long Astrality waits for :ref:`shell commands <run_action>` to exit successfully, given in seconds.
 
     *Useful when shell commands are dependent on earlier shell commands.*
+
+.. _configuration_options_requires_timeout:
+
+``requires_timeout``
+    *Default:* ``1``
+
+    Determines how long Astrality waits for :ref:`module requirements <module_requires>` to exit successfully, given in seconds. If the requirement times out, it will be considered failed.
+
+    *Useful when requirements are costly to determine, but you still do not want them to time out.*
 
 Where to go from here
 =====================

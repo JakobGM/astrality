@@ -339,7 +339,11 @@ class Module:
         return string
 
     @staticmethod
-    def valid_class_section(section: ModuleConfig) -> bool:
+    def valid_class_section(
+        section: ModuleConfig,
+        requires_timeout: Union[int, float],
+        requires_working_directory: Path,
+    ) -> bool:
         """Check if the given dict represents a valid enabled module."""
 
         if not len(section) == 1:
@@ -352,18 +356,31 @@ class Module:
             module_name = next(iter(section.keys()))
             valid_module_name = module_name.split('/')[0] == 'module'  # type: ignore
             enabled = section[module_name].get('enabled', True)
-            enabled = enabled not in (
-                'false',
-                'off',
-                'disabled',
-                'not',
-                '0',
-                False,
-            )
+            if not (valid_module_name and enabled):
+                return False
 
-            return valid_module_name and enabled
         except KeyError:
             return False
+
+        # The module is enabled, now check if all requirements are satisfied
+        requires = section[module_name].get('requires')
+        if not requires:
+            return True
+        else:
+            if isinstance(requires, str):
+                requires = [requires]
+
+            for requirement in requires:
+                if run_shell(command=requirement, fallback=False) is False:
+                    logger.warning(
+                        f'[{module_name}] Module does not satisfy requirement "{requirement}".',
+                    )
+                    return False
+
+            logger.info(
+                f'[{module_name}] Module satisfies all requirements.'
+            )
+            return True
 
 class ModuleManager:
     """A manager for operating on a set of modules."""
@@ -381,7 +398,11 @@ class ModuleManager:
 
         for section, options in config.items():
             module_config = {section: options}
-            if Module.valid_class_section(module_config):
+            if Module.valid_class_section(
+                section=module_config,
+                requires_timeout=self.application_config['settings/astrality']['requires_timeout'],
+                requires_working_directory=self.application_config['_runtime']['config_directory'],
+            ):
                 module = Module(
                     module_config=module_config,
                     config_directory=self.application_config['_runtime']['config_directory'],
@@ -392,7 +413,6 @@ class ModuleManager:
                 # Insert the modules templates into the template Path map
                 for shortname, template in module.templates.items():
                     self.managed_templates[template['source']] = (module, shortname)
-
 
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(

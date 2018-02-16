@@ -34,6 +34,7 @@ ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'settings/astrality': {
     'hot_reload': False,
     'startup_delay': 0,
     'run_timeout': 0,
+    'requires_timeout': 1,
 }}
 
 

@@ -75,7 +75,11 @@ def single_module_manager(simple_application_config):
 class TestModuleClass:
 
     def test_valid_class_section_method_with_valid_section(self, valid_module_section):
-        assert Module.valid_class_section(valid_module_section) == True
+        assert Module.valid_class_section(
+            section=valid_module_section,
+            requires_timeout=2,
+            requires_working_directory=Path('/'),
+        ) == True
 
     def test_valid_class_section_method_with_disabled_module_section(self):
         disabled_module_section =  {
@@ -86,7 +90,11 @@ class TestModuleClass:
                 'on_exit': {'run': ['whatever']},
             }
         }
-        assert Module.valid_class_section(disabled_module_section) == False
+        assert Module.valid_class_section(
+            section=disabled_module_section,
+            requires_timeout=2,
+            requires_working_directory=Path('/'),
+        ) == False
 
     def test_valid_class_section_method_with_invalid_section(self):
         invalid_module_section =  {
@@ -94,14 +102,22 @@ class TestModuleClass:
                 'some_key': 'some_value',
             }
         }
-        assert Module.valid_class_section(invalid_module_section) == False
+        assert Module.valid_class_section(
+            section=invalid_module_section,
+            requires_timeout=2,
+            requires_working_directory=Path('/'),
+        ) == False
 
     def test_valid_class_section_with_wrongly_sized_dict(self, valid_module_section):
         invalid_module_section = valid_module_section
         invalid_module_section.update({'module/valid2': {'enabled': True}})
 
         with pytest.raises(RuntimeError):
-            Module.valid_class_section(invalid_module_section)
+            Module.valid_class_section(
+                section=invalid_module_section,
+                requires_timeout=2,
+                requires_working_directory=Path('/'),
+            )
 
     def test_module_name(self, module):
         assert module.name == 'test_module'
@@ -620,7 +636,7 @@ def test_import_sections_on_period_change(config_with_modules, freezer):
         'week': Resolver({'day': 'monday'}),
     }
 
-def test_compiling_templates_on_cross_of_module_boundries():
+def test_compiling_templates_on_cross_of_module_boundries(default_global_options):
     module_A = {
         'templates': {
             'template_A': {
@@ -635,6 +651,7 @@ def test_compiling_templates_on_cross_of_module_boundries():
             'temp_directory': Path('/tmp'),
         },
     }
+    modules_config.update(default_global_options)
 
     module_manager = ModuleManager(modules_config)
     module_manager.finish_tasks()
@@ -809,7 +826,10 @@ def test_detection_of_new_period_involving_several_modules(
     # Now both timers should be considered period changed
     assert module_manager.has_unfinished_tasks() == True
 
-def test_that_shell_filter_is_run_from_config_directory(conf_path):
+def test_that_shell_filter_is_run_from_config_directory(
+    conf_path,
+    default_global_options,
+):
     shell_filter_template = Path(__file__).parent / 'templates' / 'shell_filter_working_directory.template'
     shell_filter_template_target = Path('/tmp/astrality/shell_filter_working_directory.template')
     config = {
@@ -829,6 +849,7 @@ def test_that_shell_filter_is_run_from_config_directory(conf_path):
             'temp_directory': Path('/tmp/astrality'),
         },
     }
+    config.update(default_global_options)
     module_manager = ModuleManager(config)
     module_manager.compile_templates('on_startup')
 
@@ -1102,7 +1123,7 @@ def test_that_only_startup_event_block_is_run_on_startup(
         hour=12,
     )
 
-def test_trigger_event_module_action(conf_path):
+def test_trigger_event_module_action(conf_path, default_global_options):
     application_config = {
         'module/A': {
             'timer': {'type': 'weekday'},
@@ -1132,6 +1153,7 @@ def test_trigger_event_module_action(conf_path):
             'temp_directory': Path('/tmp/astrality'),
         },
     }
+    application_config.update(default_global_options)
     module_manager = ModuleManager(application_config)
 
     # Check that all run commands have been imported into startup block
@@ -1171,7 +1193,10 @@ def test_trigger_event_module_action(conf_path):
         ),
     )
 
-def test_not_using_list_when_specifiying_trigger_action(conf_path):
+def test_not_using_list_when_specifiying_trigger_action(
+    conf_path,
+    default_global_options,
+):
     application_config = {
         'module/A': {
             'on_startup': {
@@ -1186,6 +1211,7 @@ def test_not_using_list_when_specifiying_trigger_action(conf_path):
             'temp_directory': Path('/tmp/astrality'),
         },
     }
+    application_config.update(default_global_options)
     module_manager = ModuleManager(application_config)
 
     # Check that all run commands have been imported into startup block

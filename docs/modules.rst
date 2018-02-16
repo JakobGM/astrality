@@ -25,7 +25,7 @@ How to define a module
 ======================
 
 Modules are defined in ``astrality.yaml``.
-They should be formated as *dictionaries* placed at the root indentation level, and **must** be named ``module/*``. 
+They should be formated as *dictionaries* placed at the root indentation level, and **must** be named ``module/*``.
 Choose ``*`` to be whatever you want to name your module.
 The simplest module, with no associated behaviour, is:
 
@@ -35,7 +35,36 @@ The simplest module, with no associated behaviour, is:
         enabled: true
 
 Astrality skips parsing any modules which contain the option :code:`enabled: false`.
-The default value of ``enabled`` is ``true``.
+The default value of ``enabled`` is ``true``, so you do not have to specify it.
+
+
+.. _module_requires:
+
+Module dependencies
+-------------------
+
+You can specify conditionals that must be satisfied in order to consider a module enabled.
+It can be useful if a module requires certain dependencies in order to work correctly
+
+This is done by setting the module option ``requires`` equal to a shell command, or a list of shell commands,
+*all* of which must be successfully executed (i.e. return a ``0`` exit code) in order to enable the module.
+
+For example, if your module depends on the ``docker`` and ``docker-machine`` shell commands being available, you can check if they are available with the POSIX command ``command -v``:
+
+.. code-block:: yaml
+
+    module/docker:
+        requires:
+            - command -v docker
+            - command -v docker-machine
+
+If ``docker`` *or* ``docker-machine`` is not in your shell ``PATH``, this module will be disabled.
+
+If one of the shell commands use more than 1 second to return, it will be considered failed. You can change the default time out by setting the :ref:`requires_timeout <configuration_options_requires_timeout>` configuration option.
+
+.. hint::
+    ``requires`` can be useful if you want to use Astrality to manage your `dotfiles <https://medium.com/@webprolific/getting-started-with-dotfiles-43c3602fd789>`_. You can use module dependencies in order to only compile configuration templates to their respective directories if the dependent application is available on the system. This way, Astrality becomes a "conditional symlinker" for your dotfiles.
+
 
 .. _module_templates:
 
@@ -53,7 +82,7 @@ Each template item has the following available attributes:
         Path to the template.
     ``target``: *[Optional]*
         Path which specifies where to put the *compiled* template.
-        
+
         You can skip this option if you do not care where the compiled template is placed, and what it is named.
         You can still use the compiled result by writing ``{shortname}`` in the rest of your module. This placeholder will be replaced with the absolute path of the compiled template. You can for instance refer to the file in :ref:`a shell command <run_action>`.
 
