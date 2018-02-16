@@ -30,13 +30,7 @@ module/wallpaper:
         # force_period: morning
 
     on_startup:
-        import_context:
-            - from_file: wallpaper_themes/default/colors.yaml
-              from_section: '{period}'
-              to_section: colors
-        compile:
-            - conky.time
-            - conky.performance
+        trigger: on_period_change
 
     on_period_change:
         run:
@@ -52,18 +46,6 @@ module/wallpaper:
     on_exit:
         run:
             - feh --bg-fill wallpaper_themes/default/solid_black_background.jpeg
-
-    # `import_section_on_period_change` can specify a string list with the format:
-    # "section file_path {period}". It does the following after each "timer" period
-    # change:
-    #     - Find the yaml formatted file located at "file_path".
-    #     - Retrieve the values defined in the section named the same as the
-    #       current period, e.g. night.
-    #     - Load the values into the section "section" of this configuration.
-    #     - Recompile all templates with new values for ${ast:section:*}
-    #
-    # Here we change the colors of other templates based on the current wallpaper
-
 
 module/conky:
     enabled: true
