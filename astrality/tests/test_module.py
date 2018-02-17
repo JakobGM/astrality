@@ -606,7 +606,7 @@ def module_manager(config_with_modules):
 def test_import_sections_on_period_change(config_with_modules, freezer):
     config_with_modules['module/weekday_module']['on_period_change']['import_context'] = [{
         'to_section': 'week',
-        'from_file': 'astrality/tests/templates/weekday.yaml',
+        'from_path': 'astrality/tests/templates/weekday.yaml',
         'from_section': '{period}',
     }]
     config_with_modules.pop('module/solar_module')
@@ -679,14 +679,14 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     # Insert day the module was started into 'start day'
     config_with_modules['module/weekday_module']['on_startup']['import_context'] = [{
         'to_section': 'start_day',
-        'from_file': 'astrality/tests/templates/weekday.yaml',
+        'from_path': 'astrality/tests/templates/weekday.yaml',
         'from_section': '{period}',
     }]
 
     # Insert the current day into 'day_now'
     config_with_modules['module/weekday_module']['on_period_change']['import_context'] = [{
         'to_section': 'day_now',
-        'from_file': 'astrality/tests/templates/weekday.yaml',
+        'from_path': 'astrality/tests/templates/weekday.yaml',
         'from_section': '{period}',
     }]
     config_with_modules.pop('module/solar_module')
@@ -724,7 +724,7 @@ def test_context_section_imports(folders):
             'on_startup': {
                 'import_context': [
                     {
-                        'from_file': '/testfile',
+                        'from_path': '/testfile',
                         'from_section': 'source_section',
                         'to_section': 'target_section',
                     }
@@ -733,7 +733,7 @@ def test_context_section_imports(folders):
             'on_period_change': {
                 'import_context': [
                     {
-                        'from_file': '/testfile',
+                        'from_path': '/testfile',
                         'from_section': 'source_section',
                     }
                 ]
@@ -1134,7 +1134,7 @@ def test_trigger_event_module_action(conf_path, default_global_options):
             'on_period_change': {
                 'run': ['echo period_change'],
                 'import_context': [{
-                    'from_file': 'contexts/file.yaml',
+                    'from_path': 'contexts/file.yaml',
                     'from_section': 'section',
                 }],
             },

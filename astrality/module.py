@@ -300,7 +300,7 @@ class Module:
 
         for context_import in import_config:
             # Insert placeholders
-            from_file = self.interpolate_string(context_import['from_file'])
+            from_path = self.interpolate_string(context_import['from_path'])
 
             from_section: Optional[str]
             to_section: Optional[str]
@@ -320,7 +320,7 @@ class Module:
                 to_section = None
 
             # Get the absolute path
-            config_path = self.expand_path(Path(from_file))
+            config_path = self.expand_path(Path(from_path))
 
             # Isert a ContextSectionImport tuple into the return value
             context_section_imports.append(

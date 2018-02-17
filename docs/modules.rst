@@ -216,7 +216,7 @@ Then let us import the gruvbox color scheme into the "colors" :ref:`context <con
     module/color_scheme:
         on_startup:
             import_context:
-                - from_file: contexts/color_schemes.yaml
+                - from_path: contexts/color_schemes.yaml
                   from_section: gruvbox_dark
                   to_section: colors
 
@@ -239,13 +239,13 @@ This is functionally equivalent to writing:
 
 The available attributes for ``import_context`` are:
 
-    ``from_file``:
+    ``from_path``:
         A YAML formatted file containing :ref:`context sections <context>`.
 
     ``from_section``: *[Optional]*
-        Which context section to import from the file specified in ``from_file``.
+        Which context section to import from the file specified in ``from_path``.
 
-        If none is specified, all sections defined in ``from_file`` will be
+        If none is specified, all sections defined in ``from_path`` will be
         imported.
 
     ``to_section``: *[Optional]*
@@ -360,7 +360,7 @@ An example of a module using ``trigger`` actions:
 
             on_period_change:
                 import_context:
-                    - from_file: contexts/A.yaml
+                    - from_path: contexts/A.yaml
                       from_section: '{period}'
                       to_section: a_stuff
                 trigger: on_modified.templateA
@@ -386,7 +386,7 @@ This is equivalent to writing the following module:
 
             on_startup:
                 import_context:
-                    - from_file: contexts/A.yaml
+                    - from_path: contexts/A.yaml
                       from_section: '{period}'
                       to_section: a_stuff
                 compile:
@@ -397,7 +397,7 @@ This is equivalent to writing the following module:
 
             on_period_change:
                 import_context:
-                    - from_file: contexts/A.yaml
+                    - from_path: contexts/A.yaml
                       from_section: '{period}'
                       to_section: a_stuff
                 compile:

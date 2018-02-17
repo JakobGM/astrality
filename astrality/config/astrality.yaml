@@ -52,7 +52,7 @@ module/solar_wallpaper:
         # e.g. `night`, into the global context section named `colors`,
         # from the file: wallpaper_themes/default/colors.yaml.
         import_context:
-            - from_file: modules/solar_wallpaper/solar_colors.yaml
+            - from_path: modules/solar_wallpaper/solar_colors.yaml
               from_section: '{period}'
               to_section: colors
 

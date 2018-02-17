@@ -24,7 +24,7 @@ def test_importing_all_context_sections_from_file(
         'module/A': {
             'on_startup': {
                 'import_context': [
-                    {'from_file': str(context_file)}
+                    {'from_path': str(context_file)}
                 ]
             },
         },
