@@ -301,13 +301,23 @@ class Module:
         for context_import in import_config:
             # Insert placeholders
             from_file = self.interpolate_string(context_import['from_file'])
-            from_section = self.interpolate_string(context_import['from_section'])
 
-            # If no `to_section` is specified, use the same section as
-            # `from_section`
-            to_section = self.interpolate_string(
-                context_import.get('to_section', from_section),
-            )
+            from_section: Optional[str]
+            to_section: Optional[str]
+
+            if 'from_section' in context_import:
+                from_section = self.interpolate_string(context_import['from_section'])
+
+                # If no `to_section` is specified, use the same section as
+                # `from_section`
+                to_section = self.interpolate_string(
+                    context_import.get('to_section', from_section),
+                )
+            else:
+                # From section is not specified, so set both to None, indicating
+                # a wish to import *all* sections
+                from_section = None
+                to_section = None
 
             # Get the absolute path
             config_path = self.expand_path(Path(from_file))
@@ -477,8 +487,8 @@ class ModuleManager:
         Import context sections defined by the managed modules.
 
         Trigger is one of 'on_startup', 'on_period_change', or 'on_exit'.
-        This determines which section of the module is used to get the context
-        import specification from.
+        This determines which event block of the module is used to get the
+        context import specification from.
         """
         assert trigger in ('on_startup', 'on_period_change', 'on_exit',)
 

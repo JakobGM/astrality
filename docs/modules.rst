@@ -242,11 +242,16 @@ The available attributes for ``import_context`` are:
     ``from_file``:
         A YAML formatted file containing :ref:`context sections <context>`.
 
-    ``from_section``:
+    ``from_section``: *[Optional]*
         Which context section to import from the file specified in ``from_file``.
+
+        If none is specified, all sections defined in ``from_file`` will be
+        imported.
 
     ``to_section``: *[Optional]*
         What you want to name the imported context section. If this attribute is omitted, Astrality will use the same name as ``from_section``.
+
+        This option will only have an effect if ``from_section`` is specified.
 
 .. _compile_action:
 

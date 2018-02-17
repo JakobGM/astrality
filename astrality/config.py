@@ -269,9 +269,9 @@ def generate_expanded_env_dict() -> Dict[str, str]:
 
 def insert_into(
     context: Context,
-    section: str,
     from_config_file: Path,
-    from_section: str,
+    section: Optional[str],
+    from_section: Optional[str],
 ) -> Context:
     """
     Import section from config file into config dictionary.
@@ -287,7 +287,13 @@ def insert_into(
         from_config_file,
         with_env=False,
     ))
-    context[section] = contexts[from_section]
+
+    if section and from_section:
+        # A specific source and target section has been specified
+        context[section] = contexts[from_section]
+    else:
+        # All sections should be merged into the context
+        context.update(contexts)
 
     return context
 
