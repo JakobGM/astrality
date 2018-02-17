@@ -8,7 +8,7 @@ from pathlib import Path
 from freezegun import freeze_time
 import pytest
 
-from astrality import timer
+from astrality import event_listener
 from astrality.config import dict_from_config_file, generate_expanded_env_dict
 from astrality.module import ContextSectionImport, Module, ModuleManager
 from astrality.resolver import Resolver
@@ -19,7 +19,7 @@ def valid_module_section():
     return {
         'module/test_module': {
             'enabled': True,
-            'timer': {'type': 'weekday'},
+            'event_listener': {'type': 'weekday'},
             'templates': {
                 'template_name': {
                     'source': '../tests/templates/test_template.conf',
@@ -27,10 +27,10 @@ def valid_module_section():
                 }
             },
             'on_startup': {
-                'run': ['echo {period}'],
+                'run': ['echo {event}'],
                 'compile': ['template_name'],
             },
-            'on_period_change': {'run': ['echo {template_name}']},
+            'on_event': {'run': ['echo {template_name}']},
             'on_exit': {'run': ['echo exit']},
         }
     }
@@ -86,7 +86,7 @@ class TestModuleClass:
             'module/disabled_test_module': {
                 'enabled': False,
                 'on_startup': {'run': ['test']},
-                'on_period_change': {'run': ['']},
+                'on_event': {'run': ['']},
                 'on_exit': {'run': ['whatever']},
             }
         }
@@ -122,12 +122,12 @@ class TestModuleClass:
     def test_module_name(self, module):
         assert module.name == 'test_module'
 
-    def test_module_timer_class(self, module):
-        assert isinstance(module.timer, timer.Weekday)
+    def test_module_event_listener_class(self, module):
+        assert isinstance(module.event_listener, event_listener.Weekday)
 
-    def test_using_default_static_timer_when_no_timer_is_given(self, folders):
+    def test_using_default_static_event_listener_when_no_event_listener_is_given(self, folders):
         static_module = Module({'module/static': {}}, *folders)
-        assert isinstance(static_module.timer, timer.Static)
+        assert isinstance(static_module.event_listener, event_listener.Static)
 
     @freeze_time('2018-01-27')
     def test_get_shell_commands_with_special_interpolations(
@@ -138,7 +138,7 @@ class TestModuleClass:
         assert module.startup_commands() == ('echo saturday',)
 
         compilation_target = '/tmp/compiled_result'
-        assert module.period_change_commands() == (
+        assert module.on_event_commands() == (
             f'echo {compilation_target}',
         )
 
@@ -161,7 +161,7 @@ class TestModuleClass:
         ) in caplog.record_tuples
 
         caplog.clear()
-        single_module_manager.period_change()
+        single_module_manager.on_event()
         compilation_target = '/tmp/compiled_result'
         assert (
             'astrality',
@@ -272,13 +272,13 @@ class TestModuleClass:
             ),
         ]
 
-    def test_running_module_period_change_command(
+    def test_running_module_on_event_command(
         self,
         single_module_manager,
         module,
         caplog,
     ):
-        single_module_manager.period_change()
+        single_module_manager.on_event()
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -287,7 +287,7 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
-                '[module/test_module] Running period change command.',
+                '[module/test_module] Running event command.',
             ),
             (
                 'astrality',
@@ -301,17 +301,17 @@ class TestModuleClass:
             )
         ]
 
-    def test_running_module_period_change_command_when_no_command_is_specified(
+    def test_running_module_on_event_command_when_no_command_is_specified(
         self,
         simple_application_config,
         module,
         conf,
         caplog,
     ):
-        simple_application_config['module/test_module']['on_period_change'].pop('run')
+        simple_application_config['module/test_module']['on_event'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
-        module_manager.period_change()
+        module_manager.on_event()
 
         template_file = str(module.templates['template_name']['source'])
         compiled_template = str(module.templates['template_name']['target'])
@@ -320,7 +320,7 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.DEBUG,
-                '[module/test_module] No period change command specified.',
+                '[module/test_module] No event command specified.',
             ),
         ]
 
@@ -435,7 +435,7 @@ class TestModuleClass:
         conf,
         caplog,
     ):
-        simple_application_config['module/test_module']['timer']['type'] = 'solar'
+        simple_application_config['module/test_module']['event_listener']['type'] = 'solar'
         compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font'
         module_manager = ModuleManager(simple_application_config)
         module_manager.compile_templates('on_startup')
@@ -497,7 +497,7 @@ def test_running_finished_tasks_command(
         ),
     ]
 
-    # Now move one day ahead, and observe if period change commands are run
+    # Now move one day ahead, and observe if event commands are run
     caplog.clear()
     friday = datetime(
         year=2018,
@@ -511,7 +511,7 @@ def test_running_finished_tasks_command(
         (
             'astrality',
             logging.INFO,
-            '[module/test_module] Running period change command.',
+            '[module/test_module] Running event command.',
         ),
         (
             'astrality',
@@ -539,13 +539,13 @@ def test_has_unfinished_tasks(simple_application_config, freezer):
     weekday_module.finish_tasks()
     assert weekday_module.has_unfinished_tasks() == False
 
-    # If we move the time forwards, but not to a new period, there should still
+    # If we move the time forwards, but not to a new event, there should still
     # not be any unfinished tasks
     before_midnight = datetime.now().replace(hour=23, minute=59)
     freezer.move_to(before_midnight)
     assert weekday_module.has_unfinished_tasks() == False
 
-    # But right after a period change (new weekday), there should be unfinished
+    # But right after a event (new weekday), there should be unfinished
     # tasks
     two_minutes = timedelta(minutes=2)
     freezer.move_to(before_midnight + two_minutes)
@@ -564,7 +564,7 @@ def config_with_modules(default_global_options):
         'context/env': generate_expanded_env_dict(),
         'module/solar_module': {
             'enabled': True,
-            'timer': {
+            'event_listener': {
                 'type': 'solar',
                 'longitude': 0,
                 'latitude': 0,
@@ -577,19 +577,19 @@ def config_with_modules(default_global_options):
                 }
             },
             'on_startup': {'run': ['echo solar compiling {template_name}']},
-            'on_period_change': {'run': ['echo solar {period}']},
+            'on_event': {'run': ['echo solar {event}']},
             'on_exit': {'run': ['echo solar exit']},
         },
         'module/weekday_module': {
             'enabled': True,
-            'timer': {'type': 'weekday'},
+            'event_listener': {'type': 'weekday'},
             'on_startup': {'run': ['echo weekday startup']},
-            'on_period_change': {'run': ['echo weekday {period}']},
+            'on_event': {'run': ['echo weekday {event}']},
             'on_exit': {'run': ['echo weekday exit']},
         },
         'module/disabled_module': {
             'enabled': False,
-            'timer': 'static',
+            'event_listener': 'static',
         },
         'context/fonts': {1: 'FuraCode Nerd Font'},
         '_runtime': {
@@ -603,11 +603,11 @@ def module_manager(config_with_modules):
     return ModuleManager(config_with_modules)
 
 
-def test_import_sections_on_period_change(config_with_modules, freezer):
-    config_with_modules['module/weekday_module']['on_period_change']['import_context'] = [{
+def test_import_sections_on_event(config_with_modules, freezer):
+    config_with_modules['module/weekday_module']['on_event']['import_context'] = [{
         'to_section': 'week',
         'from_path': 'astrality/tests/templates/weekday.yaml',
-        'from_section': '{period}',
+        'from_section': '{event}',
     }]
     config_with_modules.pop('module/solar_module')
     module_manager = ModuleManager(config_with_modules)
@@ -621,7 +621,7 @@ def test_import_sections_on_period_change(config_with_modules, freezer):
     # Make application_context comparisons easier
     module_manager.application_context.pop('env')
 
-    # Startup does not count as a period change, so no context has been imported
+    # Startup does not count as a event, so no context has been imported
     assert module_manager.application_context == {
         'fonts': Resolver({1: 'FuraCode Nerd Font'}),
     }
@@ -630,7 +630,7 @@ def test_import_sections_on_period_change(config_with_modules, freezer):
     freezer.move_to(monday)
     module_manager.finish_tasks()
 
-    # The period has now changed, so context should be imported
+    # The event has now changed, so context should be imported
     assert module_manager.application_context == {
         'fonts': Resolver({1: 'FuraCode Nerd Font'}),
         'week': Resolver({'day': 'monday'}),
@@ -680,14 +680,14 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     config_with_modules['module/weekday_module']['on_startup']['import_context'] = [{
         'to_section': 'start_day',
         'from_path': 'astrality/tests/templates/weekday.yaml',
-        'from_section': '{period}',
+        'from_section': '{event}',
     }]
 
     # Insert the current day into 'day_now'
-    config_with_modules['module/weekday_module']['on_period_change']['import_context'] = [{
+    config_with_modules['module/weekday_module']['on_event']['import_context'] = [{
         'to_section': 'day_now',
         'from_path': 'astrality/tests/templates/weekday.yaml',
-        'from_section': '{period}',
+        'from_section': '{event}',
     }]
     config_with_modules.pop('module/solar_module')
     module_manager = ModuleManager(config_with_modules)
@@ -730,7 +730,7 @@ def test_context_section_imports(folders):
                     }
                 ]
             },
-            'on_period_change': {
+            'on_event': {
                 'import_context': [
                     {
                         'from_path': '/testfile',
@@ -751,7 +751,7 @@ def test_context_section_imports(folders):
     )
     assert startup_csis == expected
 
-    period_change_csis = module.context_section_imports('on_period_change')
+    on_event_csis = module.context_section_imports('on_event')
     expected = (
         ContextSectionImport(
             from_config_file=Path('/testfile'),
@@ -759,7 +759,7 @@ def test_context_section_imports(folders):
             into_section='source_section',
         ),
     )
-    assert period_change_csis == expected
+    assert on_event_csis == expected
 
 
 class TestModuleManager:
@@ -775,35 +775,35 @@ class TestModuleManager:
         assert len(module_manager) == 2
 
 
-def test_time_until_next_period_of_several_modules(config_with_modules, module_manager, freezer):
-    solar_timer = timer.Solar(config_with_modules)
-    noon = solar_timer.location.sun()['noon']
+def test_time_until_next_event_of_several_modules(config_with_modules, module_manager, freezer):
+    solar_event_listener = event_listener.Solar(config_with_modules)
+    noon = solar_event_listener.location.sun()['noon']
 
     one_minute = timedelta(minutes=1)
     freezer.move_to(noon - one_minute)
 
-    assert module_manager.time_until_next_period() == one_minute
+    assert module_manager.time_until_next_event() == one_minute
     two_minutes_before_midnight = datetime.now().replace(hour=23, minute=58)
     freezer.move_to(two_minutes_before_midnight)
 
-    assert module_manager.time_until_next_period().total_seconds() == \
+    assert module_manager.time_until_next_event().total_seconds() == \
                               timedelta(minutes=2).total_seconds()
 
-def test_detection_of_new_period_involving_several_modules(
+def test_detection_of_new_event_involving_several_modules(
     config_with_modules,
     freezer,
 ):
     # Move time to right before noon
-    solar_timer = timer.Solar(config_with_modules)
-    noon = solar_timer.location.sun()['noon']
+    solar_event_listener = event_listener.Solar(config_with_modules)
+    noon = solar_event_listener.location.sun()['noon']
     one_minute = timedelta(minutes=1)
     freezer.move_to(noon - one_minute)
     module_manager = ModuleManager(config_with_modules)
 
-    # All modules should now considered period changed
+    # All modules should now considered to have now events
     assert module_manager.has_unfinished_tasks() == True
 
-    # Running period change method for all the period changed modules
+    # Running on event method for all the event changed modules
     module_manager.finish_tasks()
 
     # After running these methods, they should all be reverted to not changed
@@ -812,10 +812,11 @@ def test_detection_of_new_period_involving_several_modules(
     # Move time to right after noon
     freezer.move_to(noon + one_minute)
 
-    # The solar timer should now be considered to have been period changed
+    # The solar event listener should now be considered to have been event
+    # changed
     assert module_manager.has_unfinished_tasks() == True
 
-    # Again, check if period_change() method makes them unchanged
+    # Again, check if on_event() method makes them unchanged
     module_manager.finish_tasks()
     assert module_manager.has_unfinished_tasks() == False
 
@@ -823,7 +824,7 @@ def test_detection_of_new_period_involving_several_modules(
     two_days = timedelta(days=2)
     freezer.move_to(noon + two_days)
 
-    # Now both timers should be considered period changed
+    # Now both event listeners should be considered to have new events
     assert module_manager.has_unfinished_tasks() == True
 
 def test_that_shell_filter_is_run_from_config_directory(
@@ -1090,11 +1091,11 @@ def test_that_only_startup_event_block_is_run_on_startup(
     test_file1, test_file2 = two_test_file_paths
     application_config = {
         'module/A': {
-            'timer': {'type': 'weekday'},
+            'event_listener': {'type': 'weekday'},
             'on_startup': {
                 'run': ['touch ' + str(test_file1)],
             },
-            'on_period_change': {
+            'on_event': {
                 'run': ['touch ' + str(test_file2)],
             },
         },
@@ -1126,13 +1127,13 @@ def test_that_only_startup_event_block_is_run_on_startup(
 def test_trigger_event_module_action(conf_path, default_global_options):
     application_config = {
         'module/A': {
-            'timer': {'type': 'weekday'},
+            'event_listener': {'type': 'weekday'},
             'on_startup': {
-                'trigger': ['on_period_change', 'on_exit', 'on_modified.templateA'],
+                'trigger': ['on_event', 'on_exit', 'on_modified.templateA'],
                 'run': ['echo startup'],
             },
-            'on_period_change': {
-                'run': ['echo period_change'],
+            'on_event': {
+                'run': ['echo on_event'],
                 'import_context': [{
                     'from_path': 'contexts/file.yaml',
                     'from_section': 'section',
@@ -1159,7 +1160,7 @@ def test_trigger_event_module_action(conf_path, default_global_options):
     # Check that all run commands have been imported into startup block
     assert module_manager.modules['A'].startup_commands() == (
         'echo startup',
-        'echo period_change',
+        'echo on_event',
         'echo exit',
         'echo modified.templateA',
     )
@@ -1178,14 +1179,14 @@ def test_trigger_event_module_action(conf_path, default_global_options):
         ['templateA']
 
     # Double check that the other sections are not affected
-    assert module_manager.modules['A'].period_change_commands() == (
-        'echo period_change',
+    assert module_manager.modules['A'].on_event_commands() == (
+        'echo on_event',
     )
     assert module_manager.modules['A'].exit_commands() == (
         'echo exit',
     )
 
-    assert module_manager.modules['A'].context_section_imports('on_period_change') == (
+    assert module_manager.modules['A'].context_section_imports('on_event') == (
         ContextSectionImport(
             into_section='section',
             from_section='section',
@@ -1200,10 +1201,10 @@ def test_not_using_list_when_specifiying_trigger_action(
     application_config = {
         'module/A': {
             'on_startup': {
-                'trigger': 'on_period_change',
+                'trigger': 'on_event',
             },
-            'on_period_change': {
-                'run': ['echo period_change'],
+            'on_event': {
+                'run': ['echo on_event'],
             },
         },
         '_runtime': {
@@ -1216,5 +1217,5 @@ def test_not_using_list_when_specifiying_trigger_action(
 
     # Check that all run commands have been imported into startup block
     assert module_manager.modules['A'].startup_commands() == (
-        'echo period_change',
+        'echo on_event',
     )

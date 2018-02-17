@@ -13,8 +13,8 @@ These modules are used to define:
 :ref:`module_templates`
     Configuration file templates that are available for compilation.
 
-:doc:`timers`
-    Timers can trigger events when certain predefined :ref:`periods <timer_periods>` occur.
+:doc:`event_listeners`
+    Event listeners can listen to predefined :ref:`events <event_listener_events>`.
 
 :ref:`actions`
     Tasks to be performed when :ref:`events` occur.
@@ -126,13 +126,13 @@ When you want to assign :ref:`tasks <actions>` for Astrality to perform, you hav
         Tasks to be performed when you kill the Astrality process.
         Useful for cleaning up any unwanted clutter.
 
-    .. _module_events_on_period_change:
+    .. _module_events_on_event:
 
-    ``on_period_change``:
-        Tasks to be performed when the specified module ``timer`` detects a new ``period``.
+    ``on_event``:
+        Tasks to be performed when the specified module ``event listener`` detects a new ``event``.
         Useful for dynamic behaviour, periodic tasks, and templates that should change during runtime.
-        This event will never be triggered when no module timer is defined.
-        More on timers follows in :ref:`the next section <timers>`.
+        The ``on_event`` block will never be triggered when no module event listener is defined.
+        More on event listeners follows in :ref:`the next section <event_listeners>`.
 
     ``on_modified``:
         Tasks to be performed when specific templates are modified on disk.
@@ -157,8 +157,8 @@ Example of module event blocks:
         on_startup:
             ...startup actions...
 
-        on_period_change:
-            ...period change actions...
+        on_event:
+            ...event actions...
 
         on_exit:
             ...shutdow actions...
@@ -168,7 +168,7 @@ Example of module event blocks:
                 ...some_template modified actions...
 
 .. note::
-    On Astrality startup, the ``on_startup`` event will be triggered, but **not** ``on_period_change``. The ``on_period_change`` event will only be triggered when the ``timer`` defined ``period`` changes *after* Astrality startup.
+    On Astrality startup, the ``on_startup`` event will be triggered, but **not** ``on_event``. The ``on_event`` event will only be triggered when the ``event listener`` detects a new ``event`` *after* Astrality startup.
 
 .. _actions:
 
@@ -184,7 +184,7 @@ Actions are tasks for Astrality to perform, and are placed within :ref:`event bl
         Compile a specific :ref:`template <module_templates>` to its target destination.
 
     :ref:`run <run_action>`:
-        Execute a shell command, possibly referring to any compiled template and/or the current :ref:`period <timer_periods>` defined by the :ref:`module timer <timers>`.
+        Execute a shell command, possibly referring to any compiled template and/or the last detected :ref:`event <event_listener_events>` defined by the :ref:`module event listener <event_listeners>`.
 
     :ref:`trigger <trigger_action>`:
         Perform *all* actions specified within another :ref:`event block <events>`. With other words, this action *appends* all the actions within another event block to the actions already specified in the event block. Useful for not having to repeat yourself when you want the same actions to be performed during different events.
@@ -235,7 +235,7 @@ This is functionally equivalent to writing:
 
         * You can now use ``{{ colors.foreground }}`` in all your templates instead of ``{{ gruvbox_dark.foreground }}``. Since your templates do not know exactly *which* color scheme you are using, you can easily change it in the future by editing only one line in ``astrality.yaml``.
 
-        * You can use ``import_context`` in a ``on_period_change`` event block in order to change your colorscheme based on the time of day. Perhaps you want to use "gruvbox light" during daylight, but change to "gruvbox dark" after dusk?
+        * You can use ``import_context`` in a ``on_event`` event block in order to change your colorscheme based on the time of day. Perhaps you want to use "gruvbox light" during daylight, but change to "gruvbox dark" after dusk?
 
 The available attributes for ``import_context`` are:
 
@@ -287,7 +287,7 @@ If you need to compile a template from another module, you can refer to it by us
                 source: /what/ever
 
     module/B:
-        on_period_change:
+        on_event:
             compile:
                 - A.template_A
 
@@ -301,8 +301,8 @@ Place each command as a list item under the ``run`` option of an :ref:`event blo
 
 You can place the following placeholders within your shell commands:
 
-    ``{period}``:
-        The current period defined by the :ref:`module timer <timers>`.
+    ``{event}``:
+        The last event detected by the :ref:`module event listener <event_listeners>`.
 
     ``{template_shortname}``:
         The absolute path of the *compiled* template specified in the module option ``templates``.
@@ -312,22 +312,22 @@ Example:
 .. code-block:: yaml
 
     module/weekday_module:
-        timer:
+        event_listener:
             type: weekday
 
         on_startup:
             run:
-                - notify-send "You just started Astrality, and the day is {period}"
+                - notify-send "You just started Astrality, and the day is {event}"
 
-        on_period_change:
+        on_event:
             run:
-                - notify-send "It is now midnight, have a great {period}! I'm creating a notes document for this day."
-                - touch ~/notes/notes_for_{period}.txt
+                - notify-send "It is now midnight, have a great {event}! I'm creating a notes document for this day."
+                - touch ~/notes/notes_for_{event}.txt
 
         on_exit:
             run:
                 - echo "Deleting today's notes!"
-                - rm ~/notes/notes_for_{period}.txt
+                - rm ~/notes/notes_for_{event}.txt
 
 
 .. _trigger_action:
@@ -337,7 +337,7 @@ Trigger events
 
 You can trigger another module :ref:`event <events>` by specifying the ``trigger`` action.
 
-The ``trigger`` option accepts ``on_startup``, ``on_period_change``, ``on_exit``, and ``on_modified.template_shortname``, either as a single string, or a list with any combination of these.
+The ``trigger`` option accepts ``on_startup``, ``on_event``, ``on_exit``, and ``on_modified.template_shortname``, either as a single string, or a list with any combination of these.
 
 An example of a module using ``trigger`` actions:
 
@@ -345,7 +345,7 @@ An example of a module using ``trigger`` actions:
 
     module/module_using_triggers:
         templates:
-            timer:
+            event_listener:
                 type: weekday
 
             templateA:
@@ -355,13 +355,13 @@ An example of a module using ``trigger`` actions:
                 run:
                     - startup_command
                 trigger:
-                    - on_period_change
+                    - on_event
                     - on_modified.templateA
 
-            on_period_change:
+            on_event:
                 import_context:
                     - from_path: contexts/A.yaml
-                      from_section: '{period}'
+                      from_section: '{event}'
                       to_section: a_stuff
                 trigger: on_modified.templateA
 
@@ -378,7 +378,7 @@ This is equivalent to writing the following module:
 
     module/module_using_triggers:
         templates:
-            timer:
+            event_listener:
                 type: weekday
 
             templateA:
@@ -387,7 +387,7 @@ This is equivalent to writing the following module:
             on_startup:
                 import_context:
                     - from_path: contexts/A.yaml
-                      from_section: '{period}'
+                      from_section: '{event}'
                       to_section: a_stuff
                 compile:
                     - templateA
@@ -395,10 +395,10 @@ This is equivalent to writing the following module:
                     - startup_command
                     - shell_command_dependent_on_templateA
 
-            on_period_change:
+            on_event:
                 import_context:
                     - from_path: contexts/A.yaml
-                      from_section: '{period}'
+                      from_section: '{event}'
                       to_section: a_stuff
                 compile:
                     - templateA
@@ -414,7 +414,7 @@ This is equivalent to writing the following module:
 
 
 .. hint::
-    You can use ``trigger: on_period_change`` in order to consider Astrality startup as a ``period change`` event.
+    You can use ``trigger: on_event`` in the ``on_startup`` block in order to consider the event detected on Astrality startup as a new ``event``.
 
     The ``trigger`` action can also help you reduce the degree of repetition in your configuration.
 

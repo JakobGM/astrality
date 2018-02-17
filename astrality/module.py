@@ -11,7 +11,7 @@ from astrality import compiler
 from astrality.compiler import context
 from astrality.config import ApplicationConfig, insert_into, user_configuration
 from astrality.filewatcher import DirectoryWatcher
-from astrality.timer import Timer, timer_factory
+from astrality.event_listener import EventListener, event_listener_factory
 from astrality.utils import run_shell
 
 ModuleConfig = Dict[str, Any]
@@ -30,10 +30,10 @@ class Module:
     perform them. That is the responsibility of a ModuleManager instance.
 
     A module can define a set of commands to be run on astrality startup, and
-    exit, in addition to every time a given type of period changes.
+    exit, in addition to every time a given type of event changes.
 
     Commands are run in the users shell, and can use the following placeholders:
-    - {period}: The period specified by the timer instance.
+    - {event}: The event specified by the event_listener instance.
     - {name_of_template}: The path to the compiled template specified in the
                           'target' option, or if not specified, a created
                           temporary file.
@@ -55,8 +55,8 @@ class Module:
         module_config example:
         {'module/name':
             'enabled': True,
-            'timer': {'type': 'weekday'},
-            'on_startup': {'run': ['echo weekday is {period}']},
+            'event_listener': {'type': 'weekday'},
+            'on_startup': {'run': ['echo weekday is {event}']},
         }
         """
         # Can only initialize one module at a time
@@ -74,9 +74,9 @@ class Module:
         self.config_directory = config_directory
         self.temp_directory = temp_directory
 
-        # Use static timer if no timer is specified
-        self.timer: Timer = timer_factory(
-            self.module_config.get('timer', {'type': 'static'}),
+        # Use static event_listener if no event_listener is specified
+        self.event_listener: EventListener = event_listener_factory(
+            self.module_config.get('event_listener', {'type': 'static'}),
         )
 
         # Find and prepare templates and compilation targets
@@ -88,7 +88,7 @@ class Module:
 
         This prevents us from having to use .get() all over the Module.
         """
-        for event_block in ('on_startup', 'on_period_change', 'on_exit', ):
+        for event_block in ('on_startup', 'on_event', 'on_exit', ):
             configured_event_block = self.module_config.get(event_block, {})
             self.module_config[event_block] = {
                 'import_context': [],
@@ -113,7 +113,7 @@ class Module:
         """If an event block defines trigger events, import those actions."""
         event_blocks = (
             self.module_config['on_startup'],
-            self.module_config['on_period_change'],
+            self.module_config['on_event'],
             self.module_config['on_exit'],
             self.module_config['on_modified'].values(),
         )
@@ -227,21 +227,21 @@ class Module:
                 in startup_commands
             )
 
-    def period_change_commands(self) -> Tuple[str, ...]:
-        """Commands to be run when self.timer period changes."""
-        period_change_commands: List[str] = self.module_config.get(
-            'on_period_change',
+    def on_event_commands(self) -> Tuple[str, ...]:
+        """Commands to be run when self.event_listener event changes."""
+        on_event_commands: List[str] = self.module_config.get(
+            'on_event',
             {},
         ).get('run', [])
 
-        if len(period_change_commands) == 0:
-            logger.debug(f'[module/{self.name}] No period change command specified.')
+        if len(on_event_commands) == 0:
+            logger.debug(f'[module/{self.name}] No event command specified.')
             return ()
         else:
             return tuple(
                 self.interpolate_string(command)
                 for command
-                in period_change_commands
+                in on_event_commands
             )
 
     def exit_commands(self) -> Tuple[str, ...]:
@@ -286,11 +286,11 @@ class Module:
         """
         Return what to import into the global application_context.
 
-        Trigger is one of 'on_startup', 'on_period_change', or 'on_exit'.
+        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
         This determines which section of the module is used to get the context
         import specification from.
         """
-        assert trigger in ('on_startup', 'on_period_change', 'on_startup',)
+        assert trigger in ('on_startup', 'on_event', 'on_startup',)
 
         context_section_imports = []
         import_config = self.module_config.get(
@@ -337,8 +337,8 @@ class Module:
     def interpolate_string(self, string: str) -> str:
         """Replace all module placeholders in string."""
         string = string.format(
-            # {period} -> current period defined by module timer
-            period=self.timer.period(),
+            # {event} -> current event defined by module event_listener
+            event=self.event_listener.event(),
             # {name_of_template} -> string path to compiled template
             **{
                 name: str(template['target'])
@@ -400,7 +400,7 @@ class ModuleManager:
         self.application_context = context(config)
         self.modules: Dict[str, Module] = {}
         self.startup_done = False
-        self.last_module_periods: Dict[str, str] = {}
+        self.last_module_events: Dict[str, str] = {}
 
         # Create a dictionary containing all managed templates, mapping to
         # the tuple (module, template_shortname)
@@ -434,13 +434,13 @@ class ModuleManager:
         """Return the number of managed modules."""
         return len(self.modules)
 
-    def module_periods(self) -> Dict[str, str]:
-        """Return dict containing the period of all modules."""
-        module_periods = {}
+    def module_events(self) -> Dict[str, str]:
+        """Return dict containing the event of all modules."""
+        module_events = {}
         for module_name, module in self.modules.items():
-            module_periods[module_name] = module.timer.period()
+            module_events[module_name] = module.event_listener.event()
 
-        return module_periods
+        return module_events
 
     def finish_tasks(self) -> None:
         """
@@ -450,34 +450,34 @@ class ModuleManager:
             1) Import any relevant context sections.
             2) Compile all templates with the new section.
             3) Run startup commands, if it is not already done.
-            4) Run period change commands, if it is not already done for this
-               module periods combination.
+            4) Run on_event commands, if it is not already done for this
+               module events combination.
         """
         if not self.startup_done:
-            # Save the last period configuration, such that period_change
-            # is only run when the period *changes*
-            self.last_module_periods = self.module_periods()
+            # Save the last event configuration, such that on_event
+            # is only run when the event *changes*
+            self.last_module_events = self.module_events()
 
             # Perform all startup actions
             self.import_context_sections('on_startup')
             self.compile_templates('on_startup')
             self.startup()
-        elif self.last_module_periods != self.module_periods():
-            self.import_context_sections('on_period_change')
-            self.compile_templates('on_period_change')
-            self.period_change()
+        elif self.last_module_events != self.module_events():
+            self.import_context_sections('on_event')
+            self.compile_templates('on_event')
+            self.on_event()
 
     def has_unfinished_tasks(self) -> bool:
         """Return True if there are any module tasks due."""
         if not self.startup_done:
             return True
         else:
-            return self.last_module_periods != self.module_periods()
+            return self.last_module_events != self.module_events()
 
-    def time_until_next_period(self) -> timedelta:
-        """Time left until first period change of any of the modules managed."""
+    def time_until_next_event(self) -> timedelta:
+        """Time left until first event change of any of the modules managed."""
         return min(
-            module.timer.time_until_next_period()
+            module.event_listener.time_until_next_event()
             for module
             in self.modules.values()
         )
@@ -486,11 +486,11 @@ class ModuleManager:
         """
         Import context sections defined by the managed modules.
 
-        Trigger is one of 'on_startup', 'on_period_change', or 'on_exit'.
+        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
         This determines which event block of the module is used to get the
         context import specification from.
         """
-        assert trigger in ('on_startup', 'on_period_change', 'on_exit',)
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
         for module in self.modules.values():
             context_section_imports = module.context_section_imports(trigger)
@@ -507,11 +507,11 @@ class ModuleManager:
         """
         Compile the module templates specified by the `templates` option.
 
-        Trigger is one of 'on_startup', 'on_period_change', or 'on_exit'.
+        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
         This determines which section of the module is used to get the compile
         specification from.
         """
-        assert trigger in ('on_startup', 'on_period_change', 'on_exit',)
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
         for module in self.modules.values():
             for shortname in module.module_config[trigger]['compile']:
@@ -557,19 +557,19 @@ class ModuleManager:
         # Start watching config directory for file changes
         self.directory_watcher.start()
 
-    def period_change(self):
-        """Run all period change commands specified by the managed modules."""
+    def on_event(self):
+        """Run all event change commands specified by the managed modules."""
         for module in self.modules.values():
-            period_change_commands = module.period_change_commands()
-            for command in period_change_commands:
-                logger.info(f'[module/{module.name}] Running period change command.')
+            on_event_commands = module.on_event_commands()
+            for command in on_event_commands:
+                logger.info(f'[module/{module.name}] Running event command.')
                 self.run_shell(
                     command=command,
                     timeout=self.application_config['settings/astrality']['run_timeout'],
                     module_name=module.name,
                 )
 
-        self.last_module_periods = self.module_periods()
+        self.last_module_events = self.module_events()
 
     def exit(self):
         """

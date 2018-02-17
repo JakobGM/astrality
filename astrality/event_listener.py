@@ -1,4 +1,4 @@
-"""Module for all timer classes, keeping track of certain events for modules."""
+"""Module for all event_listener classes, keeping track of certain events for modules."""
 
 import abc
 from collections import namedtuple
@@ -12,99 +12,99 @@ import pytz
 from astral import Location
 
 
-TimerConfig = Dict[str, Union[str, int, float, None]]
+EventListenerConfig = Dict[str, Union[str, int, float, None]]
 logger = logging.getLogger('astrality')
 
 
-class Timer(abc.ABC):
-    """Class which defines different periods."""
+class EventListener(abc.ABC):
+    """Class which defines different events."""
 
-    periods: Tuple[str, ...]
-    default_timer_config: TimerConfig
+    events: Tuple[str, ...]
+    default_event_listener_config: EventListenerConfig
 
-    def __init__(self, timer_config: TimerConfig) -> None:
-        """Initialize a period timer based on the configuration of the user."""
+    def __init__(self, event_listener_config: EventListenerConfig) -> None:
+        """Initialize an event listener based on the configuration of the user."""
         self.name = self.__class__.__name__.lower()
 
-        # Use default values for timer configuration options that are not
+        # Use default values for event listener configuration options that are not
         # specified
-        self.timer_config = self.default_timer_config.copy()
-        self.timer_config.update(timer_config)
+        self.event_listener_config = self.default_event_listener_config.copy()
+        self.event_listener_config.update(event_listener_config)
 
-    def period(self) -> str:
+    def event(self) -> str:
         """
-        Return the current determined period.
+        Return the current determined event.
 
-        If the timer option `force_period` is set, this value will always be
-        returned instead of the correct period.
+        If the event_listener option `force_event` is set, this value will always be
+        returned instead of the correct event.
         """
-        if self.timer_config.get('force_period', False):
-            force_period = self.timer_config['force_period']
+        if self.event_listener_config.get('force_event', False):
+            force_event = self.event_listener_config['force_event']
 
-            if not force_period in self.periods:
+            if not force_event in self.events:
                 logger.warning(
-                    f'[timer/{self.name}] option `force_period` set to '
-                    f'{force_period}, which is not a valid period type for '
-                    f'the timer type "{self.name}": {self.periods}. Still using'
+                    f'[event_listener/{self.name}] option `force_event` set to '
+                    f'{force_event}, which is not a valid event type for '
+                    f'the event_listener type "{self.name}": {self.events}. Still using'
                     ' the option in case it is intentional.'
                 )
 
-            return force_period  # type: ignore
+            return force_event  # type: ignore
 
-        return self._period()
+        return self._event()
 
 
     @abc.abstractmethod
-    def _period(self) -> str:
-        """Return the current determined period."""
+    def _event(self) -> str:
+        """Return the current determined event."""
         pass
 
     @abc.abstractmethod
-    def time_until_next_period(self) -> timedelta:
-        """Return the time remaining until the next period in seconds."""
+    def time_until_next_event(self) -> timedelta:
+        """Return the time remaining until the next event in seconds."""
         pass
 
 
-class Solar(Timer):
+class Solar(EventListener):
     """
-    Timer subclass which keeps track of the suns position in the sky.
+    EventListener subclass which keeps track of the suns position in the sky.
 
-    It changes period after dawn, sunrise, morning, afternoon, sunset, dusk.
+    It changes event after dawn, sunrise, morning, afternoon, sunset, dusk.
     """
-    periods = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
-    default_timer_config = {
+    events = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
+    default_event_listener_config = {
         'type': 'solar',
         'longitude': 0,
         'latitude': 0,
         'elevation': 0,
     }
 
-    def __init__(self, timer_config: TimerConfig) -> None:
-        super().__init__(timer_config)
+    def __init__(self, event_listener_config: EventListenerConfig) -> None:
+        super().__init__(event_listener_config)
         self.location = self.construct_astral_location()
 
-    def _period(self) -> str:
+    def _event(self) -> str:
         now = self.now()
 
         if now < self.location.sun()['dawn']:
-            period = 'night'
+            event = 'night'
         elif now < self.location.sun()['sunrise']:
-            period = 'sunrise'
+            event = 'sunrise'
         elif now < self.location.sun()['noon']:
-            period = 'morning'
+            event = 'morning'
         elif now < self.location.sun()['sunset']:
-            period = 'afternoon'
+            event = 'afternoon'
         elif now < self.location.sun()['dusk']:
-            period = 'sunset'
+            event = 'sunset'
         else:
-            period = 'night'
+            event = 'night'
 
-        return period
+        return event
 
-    def time_until_next_period(self) -> timedelta:
+    def time_until_next_event(self) -> timedelta:
         now = self.now()
         try:
-            next_period = min(
+            next_event = min(
                 utc_time
                 for utc_time
                 in self.location.sun().values()
@@ -112,19 +112,19 @@ class Solar(Timer):
             )
         except ValueError as exception:
             if str(exception) == 'min() arg is an empty sequence':
-                # None of the solar periods this current day are in the future,
-                # so we need to compare with solar periods tomorrow instead.
+                # None of the solar events this current day are in the future,
+                # so we need to compare with solar events tomorrow instead.
                 tomorrow = now + timedelta(days=1, seconds=-1)
-                next_period = min(
+                next_event = min(
                     utc_time
                     for utc_time
                     in self.location.sun(tomorrow).values()
                     if now < utc_time
                 )
             else:
-                raise RuntimeError('Could not find the time of the next period')
+                raise RuntimeError('Could not find the time of the next event')
 
-        return next_period - now
+        return next_event - now
 
     def now(self) -> datetime:
         """Return the current UTC time."""
@@ -143,18 +143,18 @@ class Solar(Timer):
         location.region = 'RegionIsNotImportantEither'
 
         # But these are important, and should be provided by the user
-        location.latitude = self.timer_config['latitude']
-        location.longitude = self.timer_config['longitude']
-        location.elevation = self.timer_config['elevation']
+        location.latitude = self.event_listener_config['latitude']
+        location.longitude = self.event_listener_config['longitude']
+        location.elevation = self.event_listener_config['elevation']
         location.timezone = 'UTC'
 
         return location
 
 
-class Weekday(Timer):
-    """Timer subclass which keeps track of the weekdays."""
+class Weekday(EventListener):
+    """EventListener subclass which keeps track of the weekdays."""
 
-    periods = (
+    events = (
         'monday',
         'tuesday',
         'wednesday',
@@ -163,26 +163,26 @@ class Weekday(Timer):
         'saturday',
         'sunday',
     )
-    default_timer_config = {'type': 'weekday'}
+    default_event_listener_config = {'type': 'weekday'}
 
-    weekdays = dict(zip(range(0,7), periods))
+    weekdays = dict(zip(range(0,7), events))
 
     @classmethod
-    def _period(cls) -> str:
-        """Return the current determined period."""
+    def _event(cls) -> str:
+        """Return the current determined event."""
         return cls.weekdays[datetime.today().weekday()]
 
-    def time_until_next_period(self) -> timedelta:
-        """Return the time remaining until the next period in seconds."""
+    def time_until_next_event(self) -> timedelta:
+        """Return the time remaining until the next event in seconds."""
         tomorrow = datetime.today() + timedelta(days=1)
         tomorrow = tomorrow.replace(hour=0, minute=0)
         return tomorrow - datetime.now()
 
 
-class Periodic(Timer):
-    """Constant frequency Timer subclass."""
+class Periodic(EventListener):
+    """Constant frequency EventListener subclass."""
 
-    class Periods(tuple):
+    class Events(tuple):
         def __contains__(self, item) -> bool:
             try:
                 if float(item) - int(item) != 0:
@@ -192,8 +192,8 @@ class Periodic(Timer):
             except ValueError:
                 return False
 
-    periods = Periods()
-    default_timer_config = {
+    events = Events()
+    default_event_listener_config = {
         'type': 'periodic',
         'seconds': 0,
         'minutes': 0,
@@ -201,17 +201,17 @@ class Periodic(Timer):
         'days': 0,
     }
 
-    def __init__(self, timer_config: TimerConfig) -> None:
-        """Initialize a constant frequency timer."""
+    def __init__(self, event_listener_config: EventListenerConfig) -> None:
+        """Initialize a constant frequency event listener."""
 
-        super().__init__(timer_config)
+        super().__init__(event_listener_config)
 
         # Period specified by the user
         self.timedelta = timedelta(  # type: ignore
-            seconds=self.timer_config['seconds'],
-            minutes=self.timer_config['minutes'],
-            hours=self.timer_config['hours'],
-            days=self.timer_config['days'],
+            seconds=self.event_listener_config['seconds'],
+            minutes=self.event_listener_config['minutes'],
+            hours=self.event_listener_config['hours'],
+            days=self.event_listener_config['days'],
         )
 
         if self.timedelta.total_seconds() == 0.0:
@@ -220,28 +220,28 @@ class Periodic(Timer):
 
         self.initialization_time = datetime.now()
 
-    def _period(self) -> str:
+    def _event(self) -> str:
         return str(int(
             (datetime.now() - self.initialization_time) / self.timedelta
         ))
 
-    def time_until_next_period(self) -> timedelta:
+    def time_until_next_event(self) -> timedelta:
         """Return the time remaining until the next period in seconds."""
         return self.timedelta - (datetime.now() - self.initialization_time) % self.timedelta
 
 
 WorkDay = namedtuple('WorkDay', ('start', 'end',))
 
-class TimeOfDay(Timer):
+class TimeOfDay(EventListener):
     """
-    Timer which keeps track of time intervals each day of the week.
+    EventListener which keeps track of time intervals each day of the week.
 
     The variable names used in the implementation, assumes that the 'on'
-    periods are referring to worktime.
+    events are referring to worktime.
     """
 
-    periods = ('on', 'off',)
-    default_timer_config = {
+    events = ('on', 'off',)
+    default_event_listener_config = {
         'type': 'time_of_day',
         'monday': '09:00-17:00',
         'tuesday': '09:00-17:00',
@@ -252,8 +252,8 @@ class TimeOfDay(Timer):
         'sunday': '',
     }
 
-    def __init__(self, timer_config: TimerConfig) -> None:
-        super().__init__(timer_config)
+    def __init__(self, event_listener_config: EventListenerConfig) -> None:
+        super().__init__(event_listener_config)
         self.weekdays = (
             'monday',
             'tuesday',
@@ -266,7 +266,7 @@ class TimeOfDay(Timer):
         self.workdays: Dict[str, WorkDay] = {}
 
         for weekday_num, weekday_name in enumerate(self.weekdays):
-            work_period = self.timer_config[weekday_name]
+            work_period = self.event_listener_config[weekday_name]
             if not work_period:
                 continue
 
@@ -277,9 +277,9 @@ class TimeOfDay(Timer):
             )
             self.workdays[weekday_name] = workday
 
-    def _period(self) -> str:
+    def _event(self) -> str:
         """Return the current determined period."""
-        weekday_name = Weekday({'type': 'weekday'}).period()
+        weekday_name = Weekday({'type': 'weekday'}).event()
         if weekday_name not in self.workdays:
             return 'off'
         else:
@@ -301,15 +301,15 @@ class TimeOfDay(Timer):
                 return 'off'
 
 
-    def time_until_next_period(self) -> timedelta:
-        """Return the time remaining until the next period in seconds."""
-        weekday_name = Weekday({'type': 'weekday'}).period()
+    def time_until_next_event(self) -> timedelta:
+        """Return the time remaining until the next event in seconds."""
+        weekday_name = Weekday({'type': 'weekday'}).event()
 
         now = datetime.now()
         now_hour = now.hour
         now_minute = now.minute
 
-        if self._period() == 'on':
+        if self._event() == 'on':
             # We are within work hours, and it is easy to find the work end for
             # the same day.
             return timedelta(
@@ -356,24 +356,24 @@ class TimeOfDay(Timer):
             )
 
 
-class Static(Timer):
-    """Timer subclass which never changes period."""
+class Static(EventListener):
+    """EventListener subclass which never changes event."""
 
-    periods = ('static',)
-    default_timer_config = {'type': 'static'}
+    events = ('static',)
+    default_event_listener_config = {'type': 'static'}
 
-    def _period(self) -> str:
-        """Static timer asways returns the period 'static'."""
+    def _event(self) -> str:
+        """Static event listener asways returns the event 'static'."""
 
         return 'static'
 
-    def time_until_next_period(self) -> timedelta:
+    def time_until_next_event(self) -> timedelta:
         """Returns a 100 year timedelta as an infinite approximation."""
 
         return timedelta(days=36500)
 
 
-TIMERS = {
+EVENT_LISTENERS = {
         'periodic': Periodic,
         'solar': Solar,
         'static': Static,
@@ -381,6 +381,6 @@ TIMERS = {
         'weekday': Weekday,
 }
 
-def timer_factory(timer_config: Dict[str, Union[str, int]]) -> Timer:
-    timer_type = timer_config['type']
-    return TIMERS[timer_type](timer_config)  # type: ignore
+def event_listener_factory(event_listener_config: Dict[str, Union[str, int]]) -> EventListener:
+    event_listener_type = event_listener_config['type']
+    return EVENT_LISTENERS[event_listener_type](event_listener_config)  # type: ignore

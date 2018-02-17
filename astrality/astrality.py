@@ -35,13 +35,15 @@ def main(logging_level: str = 'INFO', test: bool = False):
 
     # How to quit this process
     def exit_handler(signal=None, frame=None) -> None:
-        """Cleanup all temporary files and run module exit handlers."""
+        """
+        Cleanup all temporary files and run module exit handlers.
 
-        # The temp directory is left alone, for two reasons:
-        # 1: An empty directory uses neglible disk space.
-        # 2: If this process is interrupted by another Astrality instance,
-        #    we might experience race conditions when the exit handler deletes
-        #    the temporary directory *after* the new Astrality instance creates it.
+        The temp directory is left alone, for two reasons:
+        1: An empty directory uses neglible disk space.
+        2: If this process is interrupted by another Astrality instance,
+           we might experience race conditions when the exit handler deletes
+           the temporary directory *after* the new Astrality instance creates it.
+        """
 
         logger.critical('Astrality was interrupted')
         logger.info('Cleaning up temporary files before exiting...')
@@ -79,21 +81,21 @@ def main(logging_level: str = 'INFO', test: bool = False):
 
         while True:
             if module_manager.has_unfinished_tasks():
-                # TODO: Log which new period which has been detected
-                logger.info('New timer period detected.')
+                # TODO: Log which new event which has been detected
+                logger.info('New event detected.')
                 module_manager.finish_tasks()
-                logger.info(f'Period change routine finished.')
+                logger.info(f'Event change routine finished.')
 
             if test:
                 logger.debug('Main loop interupted since argument test=True.')
                 return
             else:
                 logger.info(
-                    f'Waiting {module_manager.time_until_next_period()} '
-                    'until next period change and ensuing update.'
+                    f'Waiting {module_manager.time_until_next_event()} '
+                    'until next event change and ensuing update.'
                 )
                 time.sleep(
-                    module_manager.time_until_next_period().total_seconds()
+                    module_manager.time_until_next_event().total_seconds()
                 )
 
     except KeyboardInterrupt:  # pragma: no cover

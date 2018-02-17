@@ -143,6 +143,6 @@ What you should read of the documentation from here on depends on what you inten
 
 * :doc:`templating` explains how to write configuration file templates.
 * :doc:`modules` specify which templates to compile, when to compile them, and which commands to run after they have been compiled.
-* :doc:`timers` define when modules should change their behaviour.
+* :doc:`event_listeners` define types of events when modules should change their behaviour.
 
 These concepts are relatively interdependent, and each documentation section assumes knowledge of concepts explained in earlier sections. If this is the first time you are reading this documentation, you should probably just continue reading the documentation in chronological order.

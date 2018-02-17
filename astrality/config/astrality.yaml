@@ -25,8 +25,8 @@ module/solar_wallpaper:
     # enable the module. Here, we check if `feh` is installed.
     requires: command -v feh
 
-    timer:
-        # The solar timer provides the following periods:
+    event_listener:
+        # The solar event listener provides the following events:
         # sunrise, morning, afternoon, sunset, and night.
         type: solar
 
@@ -37,23 +37,23 @@ module/solar_wallpaper:
         longitude: 10.421906
         elevation: 0
 
-        # You can force a timer to always return the same period for debugging.
+        # You can force a event listener to always return the same event for debugging.
         # For example, if you want to check if all your periodic color schemes
         # fit your the respective periodic wallpapers, without waiting for sunset,
         # etc..
-        # force_period: sunrise
+        # force_event: sunrise
 
     on_startup:
-        # Execute all actions specified in `on_period_change` on Astrality startup
-        trigger: on_period_change
+        # Execute all actions specified in `on_event` on Astrality startup
+        trigger: on_event
 
-    on_period_change:
-        # Import the context section named the same as the current period,
+    on_event:
+        # Import the context section named the same as the current event,
         # e.g. `night`, into the global context section named `colors`,
         # from the file: wallpaper_themes/default/colors.yaml.
         import_context:
             - from_path: modules/solar_wallpaper/solar_colors.yaml
-              from_section: '{period}'
+              from_section: '{event}'
               to_section: colors
 
         # Compile the templates specified in the conky module, as their
@@ -63,9 +63,9 @@ module/solar_wallpaper:
             - conky.performance
 
         # Run shell command to change the desktop wallpaper named the same
-        # as the current period.
+        # as the current event.
         run:
-            - feh --bg-fill modules/solar_wallpaper/{period}.*
+            - feh --bg-fill modules/solar_wallpaper/{event}.*
 
 
 module/conky:

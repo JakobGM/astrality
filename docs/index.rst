@@ -17,7 +17,7 @@ Table of Contents
     configuration
     templating
     modules
-    timers
+    event_listeners
     examples
     tips_and_tricks
     attributions
