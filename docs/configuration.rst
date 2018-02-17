@@ -110,7 +110,7 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
 
     Ironically requires restart if enabled.
 
-    *Useful for quick feedback when editing :ref:`templates <templating>`.*
+    *Useful for quick feedback when editing* :ref:`templates <templating>`.
 
 ``startup_delay:``
     *Default:* ``0``

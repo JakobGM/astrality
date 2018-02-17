@@ -274,10 +274,14 @@ def insert_into(
     from_section: Optional[str],
 ) -> Context:
     """
-    Import section from config file into config dictionary.
+    Import section(s) from config file into config dictionary.
 
+    If `section` and `from_section` are given:
     The method overwrites `config[section]` with the values from [from_section]
     defined in `from_config_file`.
+
+    Else:
+    All sections are imported from `from_config_file`.
     """
     logger.info(
         f'Importing context section {section} from {str(from_config_file)}',
