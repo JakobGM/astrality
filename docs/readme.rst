@@ -34,6 +34,8 @@ You can create templates for your configuration files, and Astrality will replac
 * Configure dynamic behaviour for applications that do not support it. For example, set your desktop wallpaper based on the sun's position in the sky at your location.
 * Couple configurations across your applications. When you change your desktop wallpaper, automatically change the font type and color of your `conky modules <https://github.com/brndnmtthws/conky>`_.
 * Insert environment variables (e.g. ``$USER``) and command substitutions (e.g. ``$(xrandr | grep -cw connected)``) into configuration files that do not support them.
+* Modularize your desktop configuration, allowing you to switch between different combinations of applications and/or configurations by only editing one line. With Astrality you can, for example, quickly switch between `different <https://github.com/jaagr/polybar>`_ `status <https://github.com/LemonBoy/bar>`_ `bars <https://i3wm.org/i3bar/>`_ with little effort.
+* Share ``modules`` with others who can effortlessly try out your configuration, and easily switch back to their old configuration if they wish, making experimentation frictionless.
 * And much more...  An example configuration with several examples is included.
 
 The configuration format uses the flexible `YAML <http://docs.ansible.com/ansible/latest/YAMLSyntax.html#yaml-basics>`_ format, and the template language uses the `Jinja2 syntax <http://jinja.pocoo.org/docs/2.10/>`_, which is easy to get started with, but allows complex templating for those who need it.
