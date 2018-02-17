@@ -374,10 +374,11 @@ class Static(Timer):
 
 
 TIMERS = {
-        'solar': Solar,
-        'weekday': Weekday,
         'periodic': Periodic,
+        'solar': Solar,
         'static': Static,
+        'time_of_day': TimeOfDay,
+        'weekday': Weekday,
 }
 
 def timer_factory(timer_config: Dict[str, Union[str, int]]) -> Timer:
