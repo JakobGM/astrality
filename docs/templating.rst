@@ -235,7 +235,7 @@ How to compile templates
 Now that you know how to write Astrality templates, you might wonder how to actually *compile* these templates. In order to do this, you need to:
 
     #. Create an Astrality :ref:`module <modules>`.
-    #. Specify the template as an :ref:`available module template <module_templates>`.
-    #. Specify when to :ref:`compile <compile_action>` the template, by using an :ref:`event block <events>`.
+    #. Specify when to compile the template, by using an :ref:`event block <events>` within the module.
+    #. Inserting a :ref:`compile action <compile_action>` into such an event block, telling Astrality to compile your template.
 
 This is probably a bit overwhelming. I recommend to just continue to the next page to get a more gentle introduction to these concepts.

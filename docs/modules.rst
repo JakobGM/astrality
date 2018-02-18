@@ -10,14 +10,11 @@ What are modules?
 Tasks to be performed by Astrality are grouped into so-called ``modules``.
 These modules are used to define:
 
-:ref:`module_templates`
-    Configuration file templates that are available for compilation.
+:ref:`actions`
+    Tasks to be performed when :ref:`events <events>` occur, for example :ref:`compiling a template <compile_action>`.
 
 :doc:`event_listeners`
     Event listeners can listen to predefined :ref:`events <event_listener_events>`.
-
-:ref:`actions`
-    Tasks to be performed when :ref:`events` occur.
 
 .. _modules_how_to_define:
 
@@ -66,47 +63,6 @@ If one of the shell commands use more than 1 second to return, it will be consid
     ``requires`` can be useful if you want to use Astrality to manage your `dotfiles <https://medium.com/@webprolific/getting-started-with-dotfiles-43c3602fd789>`_. You can use module dependencies in order to only compile configuration templates to their respective directories if the dependent application is available on the system. This way, Astrality becomes a "conditional symlinker" for your dotfiles.
 
 
-.. _module_templates:
-
-Templates
-=========
-
-Modules define which templates that are *available* for compilation.
-Templates are defined on a per-module-basis, using the ``templates`` keyword.
-
-Each *key* in the ``templates`` dictionary becomes a ``shortname`` for that specific template, used to refer to that template in other parts of your Astrality configuration. More on that later in the :ref:`actions` section of this page.
-
-Each template item has the following available attributes:
-
-    ``source``
-        Path to the template.
-    ``target``: *[Optional]*
-        Path which specifies where to put the *compiled* template.
-
-        You can skip this option if you do not care where the compiled template is placed, and what it is named.
-        You can still use the compiled result by writing ``{shortname}`` in the rest of your module. This placeholder will be replaced with the absolute path of the compiled template. You can for instance refer to the file in :ref:`a shell command <run_action>`.
-
-        .. warning::
-            When you do not provide Astrality with a ``target`` path for a template, Astrality will create a *temporary* file as the target for compilation. This file will be automatically deleted when you quit Astrality.
-
-An example of module templates syntax:
-
-.. code-block:: yaml
-
-    module/module_name:
-        templates:
-            template_A:
-                source: templates/A.conf
-            template_B:
-                source: /absolute/path/B.conf
-                target: ${XDG_CONFIG_HOME}/B/config
-
-.. note::
-    All relative file paths are interpreted relative to the :ref:`config directory<config_directory>` of Astrality.
-
-.. caution::
-    Defining a ``templates`` section in a module will make those templates *available* for compilation. It will **not** automatically compile them. That must be additionaly specified as an action. See the :ref:`compilation action <compile_action>` documentation.
-
 .. _events:
 
 Events
@@ -135,12 +91,12 @@ When you want to assign :ref:`tasks <actions>` for Astrality to perform, you hav
         More on event listeners follows in :ref:`the next section <event_listeners>`.
 
     ``on_modified``:
-        Tasks to be performed when specific templates are modified on disk.
-        You specify a set of tasks to performed on a *per-template-basis*.
+        Tasks to be performed when specific files are modified on disk.
+        You specify a set of tasks to performed on a *per-file-basis*.
         Useful for quick feedback when editing template files.
 
         .. caution::
-            Only templates within ``$ASTRALITY_CONFIG_HOME/**/*`` are observed for modifications.
+            Only files within ``$ASTRALITY_CONFIG_HOME/**/*`` are observed for modifications.
             Also, :ref:`context imports <context_import_action>` are currently not supported in ``on_modified`` event blocks.
 
             If any of this is a use case for you, please open an `issue <https://github.com/jakobgm/astrality/issues>`_!
@@ -164,8 +120,8 @@ Example of module event blocks:
             ...shutdow actions...
 
         on_modified:
-            some_template:
-                ...some_template modified actions...
+            some_template_path:
+                ...some_template_path modified actions...
 
 .. note::
     On Astrality startup, the ``on_startup`` event will be triggered, but **not** ``on_event``. The ``on_event`` event will only be triggered when the ``event listener`` detects a new ``event`` *after* Astrality startup.
@@ -178,10 +134,10 @@ Actions
 Actions are tasks for Astrality to perform, and are placed within :ref:`event blocks <events>` in order to specify *when* to perform them. There are four available ``action`` types:
 
     :ref:`import_context <context_import_action>`:
-        Import a ``context`` section from a YAML formatted file. ``context`` variables are used as replacement values for placeholders in your :ref:`templates <module_templates>`. See :ref:`context <context>` for more information.
+        Import a ``context`` section from a YAML formatted file. ``context`` variables are used as replacement values for placeholders in your :ref:`templates <templating>`. See :ref:`context <context>` for more information.
 
     :ref:`compile <compile_action>`:
-        Compile a specific :ref:`template <module_templates>` to its target destination.
+        Compile a specific template to a target path.
 
     :ref:`run <run_action>`:
         Execute a shell command, possibly referring to any compiled template and/or the last detected :ref:`event <event_listener_events>` defined by the :ref:`module event listener <event_listeners>`.
@@ -253,43 +209,48 @@ The available attributes for ``import_context`` are:
 
         This option will only have an effect if ``from_section`` is specified.
 
+
 .. _compile_action:
 
 Compile templates
 -----------------
 
-In order to compile a configuration file template, you first need to :ref:`give it a shortname <module_templates>`.
-After having done that, you can compile it in an :ref:`event block <events>`. Put the ``shortname`` of the template as a list item within the ``compile`` option.
+Template compilations are defined as a list of dictionaries under the ``compile`` keyword in an :ref:`event block <events>` of a module.
+
+Each template compilation action has the following available attributes:
+
+    ``template``
+        Path to the template.
+    ``target``: *[Optional]*
+        Path which specifies where to put the *compiled* template.
+
+        You can skip this option if you do not care where the compiled template is placed, and what it is named.
+        You can still use the compiled result by writing ``{template_path}`` in the rest of your module. This placeholder will be replaced with the absolute path of the compiled template. You can for instance refer to the file in :ref:`a shell command <run_action>`.
+
+        .. warning::
+            When you do not provide Astrality with a ``target`` path for a template, Astrality will create a *temporary* file as the target for compilation. This file will be automatically deleted when you quit Astrality.
+
+
 Here is an example:
 
 .. code-block:: yaml
 
-    module/polybar:
-        templates:
-            polybar:
-                source: templates/polybar
-                target: ${XDG_CONFIG_HOME}/polybar/config
-
+    module/desktop:
         on_startup:
             compile:
-                - polybar
+                - source: modules/desktop/polybar.template
+                  target: ${XDG_CONFIG_HOME}/polybar/config
+                - source: modules/desktop/conky_module.template
 
-Compiling templates from another module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            run:
+                - conky -c {modules/desktop/conky_module.template}
+                - polybar bar
 
-If you need to compile a template from another module, you can refer to it by using the syntax ``module_name.template_shortname``. For instance:
+Notice that the shell command ``conky -c {modules/desktop/conky_module.template}`` is replaced with something like ``conky -c /path/to/compiled/template.temp``.
 
-.. code-block:: yaml
+.. note::
+    All relative file paths are interpreted relative to the :ref:`config directory<config_directory>` of Astrality.
 
-    module/A:
-        templates:
-            template_A:
-                source: /what/ever
-
-    module/B:
-        on_event:
-            compile:
-                - A.template_A
 
 .. _run_action:
 
@@ -304,8 +265,8 @@ You can place the following placeholders within your shell commands:
     ``{event}``:
         The last event detected by the :ref:`module event listener <event_listeners>`.
 
-    ``{template_shortname}``:
-        The absolute path of the *compiled* template specified in the module option ``templates``.
+    ``{template_path}``:
+        Replaced with the absolute path of the *compiled* version of the template placed at the path ``template_path``.
 
 Example:
 
@@ -337,7 +298,7 @@ Trigger events
 
 You can trigger another module :ref:`event <events>` by specifying the ``trigger`` action.
 
-The ``trigger`` option accepts ``on_startup``, ``on_event``, ``on_exit``, and ``on_modified.template_shortname``, either as a single string, or a list with any combination of these.
+The ``trigger`` option accepts ``on_startup``, ``on_event``, ``on_exit``, and ``on_modified.file_path``, either as a single string, or a list with any combination of these.
 
 An example of a module using ``trigger`` actions:
 
@@ -348,27 +309,27 @@ An example of a module using ``trigger`` actions:
             event_listener:
                 type: weekday
 
-            templateA:
-                source: templates/A.template
-
             on_startup:
                 run:
                     - startup_command
+
                 trigger:
                     - on_event
-                    - on_modified.templateA
+                    - on_modified.templates/templateA
 
             on_event:
                 import_context:
                     - from_path: contexts/A.yaml
                       from_section: '{event}'
                       to_section: a_stuff
-                trigger: on_modified.templateA
+
+                trigger: on_modified.templates/templateA
 
             on_modified:
-                templateA:
+                templates/A.template:
                     compile:
-                        - templateA
+                        - template: templates/A.template
+
                     run:
                         - shell_command_dependent_on_templateA
 
@@ -381,16 +342,15 @@ This is equivalent to writing the following module:
             event_listener:
                 type: weekday
 
-            templateA:
-                source: templates/A.template
-
             on_startup:
                 import_context:
                     - from_path: contexts/A.yaml
                       from_section: '{event}'
                       to_section: a_stuff
+
                 compile:
-                    - templateA
+                    - template: templates/templateA
+
                 run:
                     - startup_command
                     - shell_command_dependent_on_templateA
@@ -400,15 +360,18 @@ This is equivalent to writing the following module:
                     - from_path: contexts/A.yaml
                       from_section: '{event}'
                       to_section: a_stuff
+
                 compile:
-                    - templateA
+                    - template: templateA
+
                 run:
                     - shell_command_dependent_on_templateA
 
             on_modified:
-                templateA:
+                templates/templateA:
                     compile:
-                        - templateA
+                        - template: templates/templateA
+
                     run:
                         - shell_command_dependent_on_templateA
 
