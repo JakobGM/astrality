@@ -20,17 +20,16 @@ def valid_module_section():
         'module/test_module': {
             'enabled': True,
             'event_listener': {'type': 'weekday'},
-            'templates': {
-                'template_name': {
-                    'source': '../tests/templates/test_template.conf',
-                    'target': '/tmp/compiled_result',
-                }
-            },
             'on_startup': {
                 'run': ['echo {event}'],
-                'compile': ['template_name'],
+                'compile': [
+                    {
+                        'template': '../templates/test_template.conf',
+                        'target': '/tmp/compiled_result',
+                    },
+                ],
             },
-            'on_event': {'run': ['echo {template_name}']},
+            'on_event': {'run': ['echo {../templates/test_template.conf}']},
             'on_exit': {'run': ['echo exit']},
         }
     }
@@ -46,17 +45,16 @@ def folders(conf):
 @pytest.fixture
 def simple_application_config(
     valid_module_section,
-    folders,
     expanded_env_dict,
     default_global_options,
+    _runtime,
 ):
     config = valid_module_section.copy()
-    config['_runtime'] = {}
-    config['_runtime']['config_directory'], \
-        config['_runtime']['temp_directory'] = folders
+    config.update(default_global_options)
+    config.update(_runtime)
+
     config['context/env'] = expanded_env_dict
     config['context/fonts'] = {1: 'FuraMono Nerd Font'}
-    config.update(default_global_options)
 
     # Increase run timeout, so that we can inspect the shell results
     config['settings/astrality']['run_timeout'] = 2
@@ -64,8 +62,8 @@ def simple_application_config(
 
 
 @pytest.fixture
-def module(valid_module_section, folders):
-    return Module(valid_module_section, *folders)
+def module(valid_module_section):
+    return Module(valid_module_section)
 
 @pytest.fixture
 def single_module_manager(simple_application_config):
@@ -125,22 +123,23 @@ class TestModuleClass:
     def test_module_event_listener_class(self, module):
         assert isinstance(module.event_listener, event_listener.Weekday)
 
-    def test_using_default_static_event_listener_when_no_event_listener_is_given(self, folders):
-        static_module = Module({'module/static': {}}, *folders)
+    def test_using_default_static_event_listener_when_no_event_listener_is_given(self):
+        static_module = Module({'module/static': {}})
         assert isinstance(static_module.event_listener, event_listener.Static)
 
     @freeze_time('2018-01-27')
     def test_get_shell_commands_with_special_interpolations(
         self,
         module,
+        single_module_manager,
         caplog,
     ):
         assert module.startup_commands() == ('echo saturday',)
 
         compilation_target = '/tmp/compiled_result'
-        assert module.on_event_commands() == (
-            f'echo {compilation_target}',
-        )
+        assert single_module_manager.interpolate_string(
+            module.on_event_commands()[0],
+        ) == f'echo {compilation_target}'
 
     @freeze_time('2018-01-27')
     def test_running_module_manager_commands_with_special_interpolations(
@@ -229,9 +228,6 @@ class TestModuleClass:
     ):
         single_module_manager.startup()
 
-        template_file = str(module.templates['template_name']['source'])
-        compiled_template = str(module.templates['template_name']['target'])
-
         assert caplog.record_tuples == [
             (
                 'astrality',
@@ -261,9 +257,6 @@ class TestModuleClass:
 
         module_manager.startup()
 
-        template_file = str(module.templates['template_name']['source'])
-        compiled_template = str(module.templates['template_name']['target'])
-
         assert caplog.record_tuples == [
             (
                 'astrality',
@@ -280,8 +273,9 @@ class TestModuleClass:
     ):
         single_module_manager.on_event()
 
-        template_file = str(module.templates['template_name']['source'])
-        compiled_template = str(module.templates['template_name']['target'])
+        compiled_template = str(
+            single_module_manager.templates['../templates/test_template.conf'].target,
+        )
 
         assert caplog.record_tuples == [
             (
@@ -312,9 +306,6 @@ class TestModuleClass:
         module_manager = ModuleManager(simple_application_config)
 
         module_manager.on_event()
-
-        template_file = str(module.templates['template_name']['source'])
-        compiled_template = str(module.templates['template_name']['target'])
 
         assert caplog.record_tuples == [
             (
@@ -361,9 +352,13 @@ class TestModuleClass:
             ),
         ]
 
-    def test_location_of_template_file_defined_relatively(self, module):
-        template_file = module.templates['template_name']['source']
-        compiled_template = module.templates['template_name']['target']
+    def test_location_of_template_file_defined_relatively(
+        self,
+        single_module_manager,
+        test_config_directory
+    ):
+        template_file = single_module_manager.templates['../templates/test_template.conf'].source
+        compiled_template = single_module_manager.templates['../templates/test_template.conf'].target
 
         assert template_file.resolve() == Path(__file__).parent / 'templates' / 'test_template.conf'
         assert compiled_template == Path('/tmp/compiled_result')
@@ -372,61 +367,74 @@ class TestModuleClass:
         self,
         valid_module_section,
         folders,
+        default_global_options,
+        _runtime,
     ):
         absolute_path = Path(__file__).parent / 'templates' / 'test_template.conf'
-        valid_module_section['module/test_module']['templates']['template_name']['source'] = absolute_path
+        valid_module_section['module/test_module']['on_startup']['compile'][0]['template'] = absolute_path
 
-        module = Module(valid_module_section, *folders)
-        template_file = module.templates['template_name']['source']
+        valid_module_section.update(default_global_options)
+        valid_module_section.update(_runtime)
+
+        module_manager = ModuleManager(valid_module_section)
+        template_file = module_manager.templates[absolute_path].source
 
         assert template_file == absolute_path
 
     def test_missing_template_file(
         self,
-        valid_module_section,
-        folders,
+        default_global_options,
+        _runtime,
         caplog,
     ):
-        valid_module_section['module/test_module']['templates']['template_name']['source'] = \
-            '/not/existing'
+        application_config = {
+            'module/test_module': {
+                'on_startup': {
+                    'compile': [
+                        {'template': '/not/existing'},
+                    ],
+                },
+            },
+        }
 
-        module = Module(valid_module_section, *folders)
-        assert module.templates == {}
-        assert caplog.record_tuples == [
-            (
+        application_config.update(default_global_options)
+        application_config.update(_runtime)
+
+        module_manager = ModuleManager(application_config)
+        assert len(module_manager.templates) == 1
+        template_target = module_manager.templates['/not/existing'].target
+
+        module_manager.finish_tasks()
+        assert (
                 'astrality',
                 logging.ERROR,
-                '[module/test_module] Template "template_name": source "/not/existing" does'
-                ' not exist. Skipping compilation of this file.'
-            ),
-        ]
+                f'Could not compile template "/not/existing" to target "{template_target}".'
+                ' Template does not exist.'
+        ) in caplog.record_tuples
 
-    def test_expand_path_method(self, module, conf):
+
+    def test_expand_path_method(
+        self,
+        single_module_manager,
+        test_config_directory,
+    ):
         absolute_path = Path('/tmp/ast')
         tilde_path = Path('~/dir')
         relative_path = Path('test')
-        assert module.expand_path(absolute_path) == absolute_path
-        assert module.expand_path(tilde_path) == Path.home() / 'dir'
-        assert module.expand_path(relative_path) == \
-            conf['_runtime']['config_directory'] / 'test'
+        assert single_module_manager.expand_path(absolute_path) == absolute_path
+        assert single_module_manager.expand_path(tilde_path) == Path.home() / 'dir'
+        assert single_module_manager.expand_path(relative_path) == \
+            test_config_directory / 'test'
 
-    def test_create_temp_file_method(self, module):
-        temp_file = module.create_temp_file()
+    def test_create_temp_file_method(self, single_module_manager):
+        temp_file = single_module_manager.create_temp_file('whatever')
         assert temp_file.is_file()
 
     def test_cleanup_of_tempfile_on_exit(self, single_module_manager):
-        temp_file = single_module_manager.modules['test_module'].create_temp_file()
+        temp_file = single_module_manager.create_temp_file('whatever')
         assert temp_file.is_file()
         single_module_manager.exit()
         assert not temp_file.is_file()
-
-    def test_creation_of_temporary_file_when_compiled_template_is_not_defined(
-        self,
-        simple_application_config,
-    ):
-        simple_application_config['module/test_module']['templates']['template_name'].pop('target')
-        module_manager = ModuleManager(simple_application_config)
-        assert module_manager.modules['test_module'].templates['template_name']['target'].is_file()
 
     def test_compilation_of_template(
         self,
@@ -440,8 +448,12 @@ class TestModuleClass:
         module_manager = ModuleManager(simple_application_config)
         module_manager.compile_templates('on_startup')
 
-        template_file = str(module.templates['template_name']['source'])
-        compiled_template = str(module.templates['template_name']['target'])
+        template_file = str(
+            module_manager.templates['../templates/test_template.conf'].source,
+        )
+        compiled_template = str(
+            module_manager.templates['../templates/test_template.conf'].target,
+        )
 
         with open('/tmp/compiled_result', 'r') as file:
             compiled_result = file.read()
@@ -473,7 +485,9 @@ def test_running_finished_tasks_command(
     module_manager.finish_tasks()
 
     # Only startup commands should be finished at first
-    template = str(module_manager.modules['test_module'].templates['template_name']['source'])
+    template = str(
+        module_manager.templates['../templates/test_template.conf'].source,
+    )
     assert caplog.record_tuples == [
         (
             'astrality',
@@ -636,44 +650,6 @@ def test_import_sections_on_event(config_with_modules, freezer):
         'week': Resolver({'day': 'monday'}),
     }
 
-def test_compiling_templates_on_cross_of_module_boundries(default_global_options):
-    module_A = {
-        'templates': {
-            'template_A': {
-                'source': '../tests/templates/no_context.template',
-            },
-        },
-    }
-    modules_config = {
-        'module/A': module_A,
-        '_runtime': {
-            'config_directory': Path(__file__).parent,
-            'temp_directory': Path('/tmp'),
-        },
-    }
-    modules_config.update(default_global_options)
-
-    module_manager = ModuleManager(modules_config)
-    module_manager.finish_tasks()
-
-    # Modules should not compile their templates unless they explicitly
-    # define a compile string in a on_* block.
-    with open(module_manager.modules['A'].templates['template_A']['target']) as compilation:
-        assert compilation.read() == ''
-
-    # We now insert another module, B, which compiles the template of the
-    # previous module, A
-    module_B = {
-        'on_startup': {
-            'compile': ['A.template_A'],
-        },
-    }
-    modules_config['module/B'] = module_B
-    module_manager = ModuleManager(modules_config)
-    module_manager.finish_tasks()
-    with open(module_manager.modules['A'].templates['template_A']['target']) as compilation:
-        assert compilation.read() == 'one\ntwo\nthree'
-
 
 def test_import_sections_on_startup(config_with_modules, freezer):
     # Insert day the module was started into 'start day'
@@ -718,7 +694,7 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     }
 
 
-def test_context_section_imports(folders):
+def test_context_section_imports():
     module_config = {
         'module/name': {
             'on_startup': {
@@ -740,7 +716,7 @@ def test_context_section_imports(folders):
             },
         },
     }
-    module = Module(module_config, *folders)
+    module = Module(module_config)
     startup_csis = module.context_section_imports('on_startup')
     expected = (
         ContextSectionImport(
@@ -828,77 +804,71 @@ def test_detection_of_new_event_involving_several_modules(
     assert module_manager.has_unfinished_tasks() == True
 
 def test_that_shell_filter_is_run_from_config_directory(
-    conf_path,
     default_global_options,
+    _runtime,
+    test_config_directory,
 ):
     shell_filter_template = Path(__file__).parent / 'templates' / 'shell_filter_working_directory.template'
     shell_filter_template_target = Path('/tmp/astrality/shell_filter_working_directory.template')
     config = {
         'module/A': {
-            'templates': {
-                'shell_filter_template': {
-                    'source': str(shell_filter_template),
-                    'target': str(shell_filter_template_target),
-                },
-            },
             'on_startup': {
-                'compile': ['shell_filter_template'],
+                'compile': [
+                    {
+                        'template': str(shell_filter_template),
+                        'target': str(shell_filter_template_target),
+                    }
+                ],
             },
-        },
-        '_runtime': {
-            'config_directory': conf_path,
-            'temp_directory': Path('/tmp/astrality'),
         },
     }
     config.update(default_global_options)
+    config.update(_runtime)
     module_manager = ModuleManager(config)
     module_manager.compile_templates('on_startup')
 
     with open(shell_filter_template_target) as compiled:
-        assert compiled.read() == str(conf_path)
+        assert compiled.read() == str(test_config_directory)
 
     os.remove(shell_filter_template_target)
 
 
 @pytest.yield_fixture
-def modules_config(conf_path, default_global_options):
-    empty_template = Path(__file__).parent / 'templates' / 'empty.template'
+def modules_config(
+    test_config_directory,
+    default_global_options,
+    _runtime,
+    temp_directory,
+):
+    empty_template = test_config_directory / 'templates' / 'empty.template'
     empty_template_target = Path('/tmp/astrality/empty_temp_template')
-    temp_directory = Path('/tmp/astrality')
     touch_target = temp_directory / 'touched'
 
-    secondary_template = Path(__file__).parent / 'templates' / 'no_context.template'
+    secondary_template = test_config_directory / 'templates' / 'no_context.template'
     secondary_template_target = temp_directory / 'secondary_template.tmp'
 
     config = {
         'module/A': {
-            'templates': {
-                'template1': {
-                    'source': str(empty_template),
-                    'target': str(empty_template_target),
-                },
-            },
             'on_modified': {
-                'template1': {
-                    'compile': ['template1', 'B.template1'],
+                str(empty_template): {
+                    'compile': [
+                        {
+                            'template' : str(empty_template),
+                            'target': str(empty_template_target),
+                        },
+                        {
+                            'template': str(secondary_template),
+                            'target': str(secondary_template_target),
+                        },
+                    ],
                     'run': ['touch ' + str(touch_target)],
                 },
             },
         },
-        'module/B': {
-            'templates': {
-                'template1': {
-                    'source': str(secondary_template),
-                    'target': str(secondary_template_target),
-                },
-            },
-        },
-        '_runtime': {
-            'config_directory': Path(__file__).parent,
-            'temp_directory': temp_directory,
-        }
+        'module/B': {},
     }
     config.update(default_global_options)
+    config.update(_runtime)
     yield (
         config,
         empty_template,
@@ -922,7 +892,7 @@ class TestModuleFileWatching:
     def test_modified_commands_of_module(self, modules_config):
         config, empty_template, empty_template_target, touch_target, *_= modules_config
         module_manager = ModuleManager(config)
-        assert module_manager.modules['A'].modified_commands('template1') == \
+        assert module_manager.modules['A'].modified_commands(str(empty_template)) == \
             ('touch ' + str(touch_target), )
 
     def test_direct_invocation_of_modifed_method_of_module_manager(self, modules_config):
@@ -1008,23 +978,25 @@ class TestModuleFileWatching:
             os.remove(template_target2)
 
     @pytest.mark.slow
-    def test_hot_reloading(self, test_template_targets, default_global_options):
+    def test_hot_reloading(
+        self,
+        test_template_targets,
+        default_global_options,
+        _runtime,
+        test_config_directory
+    ):
         template_target1, template_target2 = test_template_targets
-        config_dir = Path(__file__).parent / 'test_config'
-        config1 = config_dir / 'astrality1.yaml'
-        config2 = config_dir / 'astrality2.yaml'
-        target_config = config_dir / 'astrality.yaml'
+        config1 = test_config_directory / 'astrality1.yaml'
+        config2 = test_config_directory / 'astrality2.yaml'
+        target_config = test_config_directory / 'astrality.yaml'
         temp_directory = Path('/tmp/astrality')
 
         # Copy the first configuration into place
         shutil.copy(str(config1), str(target_config))
 
         application_config1 = dict_from_config_file(config1)
-        application_config1['_runtime'] = {
-            'config_directory': config_dir,
-            'temp_directory': temp_directory,
-        }
         application_config1.update(default_global_options)
+        application_config1.update(_runtime)
         application_config1['settings/astrality']['hot_reload'] = True
 
         module_manager = ModuleManager(application_config1)
@@ -1076,8 +1048,9 @@ def two_test_file_paths():
 
 def test_that_only_startup_event_block_is_run_on_startup(
     two_test_file_paths,
-    conf_path,
+    test_config_directory,
     default_global_options,
+    _runtime,
     freezer,
 ):
     thursday = datetime(
@@ -1099,12 +1072,9 @@ def test_that_only_startup_event_block_is_run_on_startup(
                 'run': ['touch ' + str(test_file2)],
             },
         },
-        '_runtime': {
-            'config_directory': conf_path,
-            'temp_directory': Path('/tmp/astrality'),
-        },
     }
     application_config.update(default_global_options)
+    application_config.update(_runtime)
     module_manager = ModuleManager(application_config)
 
     # Before call to finish_tasks, no actions should have been performed
@@ -1124,7 +1094,11 @@ def test_that_only_startup_event_block_is_run_on_startup(
         hour=12,
     )
 
-def test_trigger_event_module_action(conf_path, default_global_options):
+def test_trigger_event_module_action(
+    test_config_directory,
+    default_global_options,
+    _runtime,
+):
     application_config = {
         'module/A': {
             'event_listener': {'type': 'weekday'},
@@ -1145,16 +1119,15 @@ def test_trigger_event_module_action(conf_path, default_global_options):
             'on_modified': {
                 'templateA': {
                     'run': ['echo modified.templateA'],
-                    'compile': ['templateA'],
+                    'compile': [
+                        {'template': 'templateA'}
+                    ],
                 },
             },
         },
-        '_runtime': {
-            'config_directory': conf_path,
-            'temp_directory': Path('/tmp/astrality'),
-        },
     }
     application_config.update(default_global_options)
+    application_config.update(_runtime)
     module_manager = ModuleManager(application_config)
 
     # Check that all run commands have been imported into startup block
@@ -1170,13 +1143,13 @@ def test_trigger_event_module_action(conf_path, default_global_options):
         ContextSectionImport(
             into_section='section',
             from_section='section',
-            from_config_file=conf_path / 'contexts' / 'file.yaml',
+            from_config_file=Path('contexts/file.yaml'),
         ),
     )
 
     # Check that all compile actions have been merged into startup block
     assert module_manager.modules['A'].module_config['on_startup']['compile'] ==\
-        ['templateA']
+        [{'template': 'templateA'}]
 
     # Double check that the other sections are not affected
     assert module_manager.modules['A'].on_event_commands() == (
@@ -1190,7 +1163,7 @@ def test_trigger_event_module_action(conf_path, default_global_options):
         ContextSectionImport(
             into_section='section',
             from_section='section',
-            from_config_file=conf_path / 'contexts' / 'file.yaml',
+            from_config_file=Path('contexts/file.yaml'),
         ),
     )
 

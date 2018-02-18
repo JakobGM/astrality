@@ -5,7 +5,9 @@ from datetime import timedelta
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+
+from jinja2.exceptions import TemplateNotFound
 
 from astrality import compiler
 from astrality.compiler import context
@@ -14,11 +16,22 @@ from astrality.filewatcher import DirectoryWatcher
 from astrality.event_listener import EventListener, event_listener_factory
 from astrality.utils import run_shell
 
+
 ModuleConfig = Dict[str, Any]
+
 ContextSectionImport = namedtuple(
     'ContextSectionImport',
     ['into_section', 'from_section', 'from_config_file'],
 )
+Template = namedtuple(
+    'Template',
+    ['source', 'target'],
+)
+WatchedFile = namedtuple(
+    'WatchedFile',
+    ['path', 'module', 'specified_path'],
+)
+
 logger = logging.getLogger('astrality')
 
 
@@ -32,19 +45,11 @@ class Module:
     A module can define a set of commands to be run on astrality startup, and
     exit, in addition to every time a given type of event changes.
 
-    Commands are run in the users shell, and can use the following placeholders:
+    Commands are run in the users shell, and can use the following placeholder:
     - {event}: The event specified by the event_listener instance.
-    - {name_of_template}: The path to the compiled template specified in the
-                          'target' option, or if not specified, a created
-                          temporary file.
     """
 
-    def __init__(
-        self,
-        module_config: ModuleConfig,
-        config_directory: Path,
-        temp_directory: Path,
-    ) -> None:
+    def __init__(self, module_config: ModuleConfig) -> None:
         """
         Initialize Module object with a section from a config dictionary.
 
@@ -71,16 +76,10 @@ class Module:
         # Import trigger actions into their respective event blocks
         self.import_trigger_actions()
 
-        self.config_directory = config_directory
-        self.temp_directory = temp_directory
-
         # Use static event_listener if no event_listener is specified
         self.event_listener: EventListener = event_listener_factory(
             self.module_config.get('event_listener', {'type': 'static'}),
         )
-
-        # Find and prepare templates and compilation targets
-        self._prepare_templates()
 
     def populate_event_blocks(self) -> None:
         """
@@ -145,77 +144,9 @@ class Module:
         into['import_context'].extend(from_event_block_dict['import_context'])
         into['compile'].extend(from_event_block_dict['compile'])
 
-    def _prepare_templates(self) -> None:
-        """Determine template sources and compilation targets."""
-        # config['templates'] is a dictionary with keys naming each template,
-        # and values containing another dictionary containing the mandatory
-        # key `source`, and the optional key `target`.
-        templates: Dict[str, Dict[str, str]] = self.module_config.get(
-            'templates',
-            {},
-        )
-        self.templates: Dict[str, Dict[str, Path]] = {}
-
-        for name, template in templates.items():
-            source = self.expand_path(Path(template['source']))
-
-            if not source.is_file():
-                logger.error(\
-                    f'[module/{self.name}] Template "{name}": source "{source}"'
-                    ' does not exist. Skipping compilation of this file.'
-                )
-                continue
-
-            config_target = template.get('target')
-            if config_target:
-                target = self.expand_path(Path(config_target))
-            else:
-                target = self.create_temp_file()
-
-            self.templates[name] = {'source': source, 'target': target}
-
-    def create_temp_file(self) -> Path:
-        """Create a temp file used as a compilation target, returning its path."""
-
-        temp_file = NamedTemporaryFile(  # type: ignore
-            prefix=self.name + '-',
-            dir=self.temp_directory,
-        )
-
-        # NB: These temporary files need to be persisted during the entirity of
-        # the scripts runtime, since the files are deleted when they go out of
-        # scope.
-        if not hasattr(self, 'temp_files'):
-            self.temp_files = [temp_file]
-        else:
-            self.temp_files.append(temp_file)
-
-        return Path(temp_file.name)
-
-    def expand_path(self, path: Path) -> Path:
-        """
-        Return an absolute path from a (possibly) relative path.
-
-        Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
-        expanded to the home directory of $USER.
-        """
-
-        path = Path.expanduser(path)
-
-        if not path.is_absolute():
-            path = Path(
-                self.config_directory,
-                path,
-            )
-
-        return path
-
     def startup_commands(self) -> Tuple[str, ...]:
         """Return commands to be run on Module instance startup."""
-        startup_commands: List[str] = self.module_config.get(
-            'on_startup',
-            {},
-        ).get('run', [])
+        startup_commands: List[str] = self.module_config['on_startup']['run']
 
         if len(startup_commands) == 0:
             logger.debug(f'[module/{self.name}] No startup command specified.')
@@ -229,10 +160,7 @@ class Module:
 
     def on_event_commands(self) -> Tuple[str, ...]:
         """Commands to be run when self.event_listener event changes."""
-        on_event_commands: List[str] = self.module_config.get(
-            'on_event',
-            {},
-        ).get('run', [])
+        on_event_commands: List[str] = self.module_config['on_event']['run']
 
         if len(on_event_commands) == 0:
             logger.debug(f'[module/{self.name}] No event command specified.')
@@ -246,10 +174,7 @@ class Module:
 
     def exit_commands(self) -> Tuple[str, ...]:
         """Commands to be run on Module instance shutdown."""
-        exit_commands: List[str] = self.module_config.get(
-            'on_exit',
-            {},
-        ).get('run', [])
+        exit_commands: List[str] = self.module_config['on_exit']['run']
 
         if len(exit_commands) == 0:
             logger.debug(f'[module/{self.name}] No exit command specified.')
@@ -263,10 +188,7 @@ class Module:
 
     def modified_commands(self, template_name: str) -> Tuple[str, ...]:
         """Commands to be run when a module template is modified."""
-        modified_commands: List[str] = self.module_config.get(
-            'on_modified',
-            {},
-        ).get(template_name, {}).get('run', [])
+        modified_commands: List[str] = self.module_config['on_modified'][template_name]['run']
 
         if len(modified_commands) == 0:
             logger.debug(f'[module/{self.name}] No modified command specified.')
@@ -320,7 +242,7 @@ class Module:
                 to_section = None
 
             # Get the absolute path
-            config_path = self.expand_path(Path(from_path))
+            config_path = Path(from_path)
 
             # Isert a ContextSectionImport tuple into the return value
             context_section_imports.append(
@@ -335,18 +257,12 @@ class Module:
 
 
     def interpolate_string(self, string: str) -> str:
-        """Replace all module placeholders in string."""
-        string = string.format(
-            # {event} -> current event defined by module event_listener
-            event=self.event_listener.event(),
-            # {name_of_template} -> string path to compiled template
-            **{
-                name: str(template['target'])
-                for name, template
-                in self.templates.items()
-            }
-        )
-        return string
+        """
+        Replace all module placeholders in string.
+
+        For now, the module only replaces {event} placeholders.
+        """
+        return string.replace('{event}', self.event_listener.event())
 
     @staticmethod
     def valid_class_section(
@@ -397,14 +313,13 @@ class ModuleManager:
 
     def __init__(self, config: ApplicationConfig) -> None:
         self.application_config = config
+        self.config_directory = Path(config['_runtime']['config_directory'])
+        self.temp_directory = Path(config['_runtime']['temp_directory'])
+
         self.application_context = context(config)
         self.modules: Dict[str, Module] = {}
         self.startup_done = False
         self.last_module_events: Dict[str, str] = {}
-
-        # Create a dictionary containing all managed templates, mapping to
-        # the tuple (module, template_shortname)
-        self.managed_templates: Dict[Path, Tuple[Module, str]] = {}
 
         for section, options in config.items():
             module_config = {section: options}
@@ -413,16 +328,12 @@ class ModuleManager:
                 requires_timeout=self.application_config['settings/astrality']['requires_timeout'],
                 requires_working_directory=self.application_config['_runtime']['config_directory'],
             ):
-                module = Module(
-                    module_config=module_config,
-                    config_directory=self.application_config['_runtime']['config_directory'],
-                    temp_directory=self.application_config['_runtime']['temp_directory'],
-                )
+                module = Module(module_config=module_config)
                 self.modules[module.name] = module
 
-                # Insert the modules templates into the template Path map
-                for shortname, template in module.templates.items():
-                    self.managed_templates[template['source']] = (module, shortname)
+        self.templates = self.prepare_templates(self.modules.values())
+        self.string_replacements = self.generate_string_replacements(self.templates)
+        self.on_modified_paths = self.find_on_modified_paths(self.modules.values())
 
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
@@ -433,6 +344,87 @@ class ModuleManager:
     def __len__(self) -> int:
         """Return the number of managed modules."""
         return len(self.modules)
+
+    def prepare_templates(
+        self,
+        modules: Iterable[Module],
+    ) -> Dict[str, Template]:
+        """
+        Prepare the use of templates that could be compiled by `modules`.
+
+        Returns a dictionary where the user provided path to the template is
+        the key, and the value is a Template NamedTuple instance, containing
+        the source and target Paths of the template.
+        """
+        templates: Dict[str, Template] = {}
+
+        for module in modules:
+            # All the module blocks which can contain compile actions
+            for block in (
+                    module.module_config['on_startup'],
+                    module.module_config['on_event'],
+                    module.module_config['on_exit'],
+                    *module.module_config['on_modified'].values(),
+            ):
+                for compile_action in block['compile']:
+                    specified_source = compile_action['template']
+                    absolute_source = self.expand_path(Path(specified_source))
+
+                    if 'target' in compile_action:
+                        target = self.expand_path(Path(compile_action['target']))
+                    else:
+                        target = self.create_temp_file(name=module.name)
+
+                    templates[specified_source] = Template(
+                        source=absolute_source,
+                        target=target,
+                    )
+
+        return templates
+
+
+    def find_on_modified_paths(
+        self,
+        modules: Iterable[Module],
+    ) -> Dict[Path, WatchedFile]:
+        """
+        Return a dictionary keyed to all modification watched file paths.
+
+        Return a dictionary with the paths to watched files as the keys and
+        WatchedFile instances as values.
+        """
+        on_modified_paths: Dict[Path, WatchedFile] = {}
+
+        for module in modules:
+            for watched_for_modification in module.module_config['on_modified'].keys():
+                on_modified_path = self.expand_path(
+                    Path(watched_for_modification),
+                )
+                on_modified_paths[on_modified_path] = WatchedFile(
+                    path=on_modified_path,
+                    module=module,
+                    specified_path=watched_for_modification,
+                )
+
+        return on_modified_paths
+
+    def generate_string_replacements(
+        self,
+        templates: Dict[str, Template],
+    ) -> Dict[str, str]:
+        """
+        Returns a dictionary containing all string replacements keyed to their
+        placeholders.
+
+        Includes template path placeholders replaced with the compilation
+        target path.
+        """
+        string_replacements: Dict[str, str] = {}
+
+        for specified_path, template in templates.items():
+            string_replacements[specified_path] = str(template.target)
+
+        return string_replacements
 
     def module_events(self) -> Dict[str, str]:
         """Return dict containing the event of all modules."""
@@ -500,7 +492,7 @@ class ModuleManager:
                     context=self.application_context,
                     section=csi.into_section,
                     from_section=csi.from_section,
-                    from_config_file=csi.from_config_file,
+                    from_config_file=self.expand_path(csi.from_config_file),
                 )
 
     def compile_templates(self, trigger: str) -> None:
@@ -514,31 +506,34 @@ class ModuleManager:
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
         for module in self.modules.values():
-            for shortname in module.module_config[trigger]['compile']:
-                self.compile_template(module=module, shortname=shortname)
+            for compilation in module.module_config[trigger]['compile']:
+                specified_path = compilation['template']
+                template = self.templates[specified_path]
+                self.compile_template(
+                    source=template.source,
+                    target=template.target,
+                )
 
 
-    def compile_template(self, module: Module, shortname: str) -> None:
+    def compile_template(self, source: Path, target: Path) -> None:
         """
         Compile a single template given by its shortname.
 
         A shortname is given either by shortname, implying that the module given
         defines that template, or by module_name.shortname, making it explicit.
         """
-        *_module, template_name = shortname.split('.')
-        if len(_module) == 1:
-            # Explicit module has been specified
-            module_name = _module[0]
-        else:
-            # No module has been specified, use the module itself
-            module_name = module.name
-
-        compiler.compile_template(  # type: ignore
-            template=self.modules[module_name].templates[template_name]['source'],
-            target=self.modules[module_name].templates[template_name]['target'],
-            context=self.application_context,
-            shell_command_working_directory=self.application_config['_runtime']['config_directory'],
-        )
+        try:
+            compiler.compile_template(
+                template=source,
+                target=target,
+                context=self.application_context,
+                shell_command_working_directory=self.config_directory,
+            )
+        except TemplateNotFound:
+            logger.error(
+                f'Could not compile template "{source}" to target "{target}". '
+                'Template does not exist.'
+            )
 
     def startup(self):
         """Run all startup commands specified by the managed modules."""
@@ -587,9 +582,9 @@ class ModuleManager:
                     module_name=module.name,
                 )
 
-            if hasattr(module, 'temp_files'):
-                for temp_file in module.temp_files:
-                    temp_file.close()
+        if hasattr(self, 'temp_files'):
+            for temp_file in self.temp_files:
+                temp_file.close()
 
         # Stop watching config directory for file changes
         self.directory_watcher.stop()
@@ -636,20 +631,23 @@ class ModuleManager:
 
             return
 
-        if not modified in self.managed_templates:
+        if not modified in self.on_modified_paths:
             # The modified file is not specified in any of the modules
             return
 
-        module, template_shortname = self.managed_templates[modified]
+        watched_file = self.on_modified_paths[modified]
+        module = watched_file.module
+        specified_path = watched_file.specified_path
+        template = self.templates[specified_path]
 
-        if template_shortname in module.module_config.get('on_modified', {}):
-            for shortname in module.module_config['on_modified'][template_shortname].get('compile', []):
-                self.compile_template(
-                    shortname=shortname,
-                    module=module,
-                )
+        for compilation in module.module_config['on_modified'][specified_path]['compile']:
+            template = self.templates[compilation['template']]
+            self.compile_template(
+                source=template.source,
+                target=template.target,
+            )
 
-        modified_commands = module.modified_commands(template_shortname)
+        modified_commands = module.modified_commands(specified_path)
         for command in modified_commands:
             logger.info(f'[module/{module.name}] Running modified command.')
             self.run_shell(
@@ -665,6 +663,9 @@ class ModuleManager:
         module_name: Optional[str] = None,
     ) -> None:
         """Run a shell command defined by a managed module."""
+
+        command = self.interpolate_string(command)
+
         if module_name:
             logger.info(f'[module/{module_name}] Running command "{command}".')
 
@@ -674,3 +675,48 @@ class ModuleManager:
             working_directory=self.application_config['_runtime']['config_directory'],
         )
 
+    def expand_path(self, path: Path) -> Path:
+        """
+        Return an absolute path from a (possibly) relative path.
+
+        Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
+        expanded to the home directory of $USER.
+        """
+
+        path = Path.expanduser(path)
+
+        if not path.is_absolute():
+            path = Path(
+                self.config_directory,
+                path,
+            )
+
+        return path
+
+    def interpolate_string(self, string: str) -> str:
+        """Replace all template placeholders with the compilation path."""
+
+        for specified_path, template in self.templates.items():
+            string = string.replace(
+                '{' + specified_path + '}',
+                str(template.target),
+            )
+        return string
+
+    def create_temp_file(self, name) -> Path:
+        """Create a temp file used as a compilation target, returning its path."""
+
+        temp_file = NamedTemporaryFile(  # type: ignore
+            prefix=name + '-',
+            # dir=Path(self.temp_directory),
+        )
+
+        # NB: These temporary files need to be persisted during the entirity of
+        # the scripts runtime, since the files are deleted when they go out of
+        # scope.
+        if not hasattr(self, 'temp_files'):
+            self.temp_files = [temp_file]
+        else:
+            self.temp_files.append(temp_file)
+
+        return Path(temp_file.name)

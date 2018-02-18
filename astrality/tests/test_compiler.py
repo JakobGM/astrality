@@ -1,6 +1,7 @@
 """Tests for the compiler module."""
 
 import logging
+import os
 from pathlib import Path
 
 import pytest
@@ -69,6 +70,8 @@ def test_cast_to_numeric(string, cast, resulting_type):
 def test_run_shell_template_filter(test_templates_folder):
     shell_template_path = test_templates_folder / 'shell_filter.template'
     compiled_shell_template_path = Path('/tmp/astrality') / shell_template_path.name
+    compiled_shell_template_path.touch()
+
     context = {}
     compile_template(
         template=shell_template_path,
@@ -79,6 +82,9 @@ def test_run_shell_template_filter(test_templates_folder):
 
     with open(compiled_shell_template_path) as target:
         assert target.read() == 'quick\nanother_quick\nslow_but_allowed\n\nfallback'
+
+    if compiled_shell_template_path.is_file():
+        os.remove(compiled_shell_template_path)
 
 def test_working_directory_of_shell_command_filter(test_templates_folder):
     shell_template_path = test_templates_folder / 'shell_filter_working_directory.template'
