@@ -52,3 +52,10 @@ def test_that_module_configuration_is_processed_correctly_before_use():
         },
     }
     assert module.module_config == processed_config
+
+def test_that_all_context_files_are_correctly_identified(
+    default_global_options,
+    _runtime,
+):
+    # TODO
+    pass

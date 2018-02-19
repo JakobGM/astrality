@@ -454,9 +454,27 @@ class ModuleManager:
             self.compile_templates('on_startup')
             self.startup()
         elif self.last_module_events != self.module_events():
-            self.import_context_sections('on_event')
-            self.compile_templates('on_event')
-            self.on_event()
+            # One or more module events have changed, execute the event blocks
+            # of these modules.
+
+            for module_name, event in self.module_events().items():
+                if not self.last_module_events[module_name] == event:
+                    # This module has a new event
+
+                    self.import_context_sections(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
+                    self.compile_templates(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
+                    self.run_on_event_commands(
+                        module=self.modules[module_name],
+                    )
+
+                    # Save the event
+                    self.last_module_events[module_name] = event
 
     def has_unfinished_tasks(self) -> bool:
         """Return True if there are any module tasks due."""
@@ -473,7 +491,11 @@ class ModuleManager:
             in self.modules.values()
         )
 
-    def import_context_sections(self, trigger: str) -> None:
+    def import_context_sections(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
         """
         Import context sections defined by the managed modules.
 
@@ -483,7 +505,13 @@ class ModuleManager:
         """
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
-        for module in self.modules.values():
+        modules: Iterable[Module]
+        if isinstance(module, Module):
+            modules = (module, )
+        else:
+            modules = self.modules.values()
+
+        for module in modules:
             context_section_imports = module.context_section_imports(trigger)
 
             for csi in context_section_imports:
@@ -494,7 +522,11 @@ class ModuleManager:
                     from_config_file=self.expand_path(csi.from_config_file),
                 )
 
-    def compile_templates(self, trigger: str) -> None:
+    def compile_templates(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
         """
         Compile the module templates specified by the `templates` option.
 
@@ -503,6 +535,13 @@ class ModuleManager:
         specification from.
         """
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
+
+        modules: Iterable[Module]
+        if isinstance(module, Module):
+            modules = (module, )
+        else:
+            modules = self.modules.values()
+
 
         for module in self.modules.values():
             for compilation in module.module_config[trigger]['compile']:
@@ -551,19 +590,19 @@ class ModuleManager:
         # Start watching config directory for file changes
         self.directory_watcher.start()
 
-    def on_event(self):
-        """Run all event change commands specified by the managed modules."""
-        for module in self.modules.values():
-            on_event_commands = module.on_event_commands()
-            for command in on_event_commands:
-                logger.info(f'[module/{module.name}] Running event command.')
-                self.run_shell(
-                    command=command,
-                    timeout=self.application_config['settings/astrality']['run_timeout'],
-                    module_name=module.name,
-                )
-
-        self.last_module_events = self.module_events()
+    def run_on_event_commands(
+        self,
+        module: Module,
+    ):
+        """Run all event change commands specified by a managed module."""
+        on_event_commands = module.on_event_commands()
+        for command in on_event_commands:
+            logger.info(f'[module/{module.name}] Running event command.')
+            self.run_shell(
+                command=command,
+                timeout=self.application_config['settings/astrality']['run_timeout'],
+                module_name=module.name,
+            )
 
     def exit(self):
         """

@@ -30,7 +30,12 @@ def run_shell(
         stderr=subprocess.PIPE,
     )
     try:
-        process.wait(timeout=timeout)
+        # We add just a small extra wait in case users specify 0 seconds,
+        # in order to not print an error when a command is really quick.
+        if timeout == 0:
+            process.wait(timeout=timeout + 0.1)
+        else:
+            process.wait(timeout=timeout)
 
         for error_line in process.stderr:
             logger.error(str(error_line))

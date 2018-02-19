@@ -97,9 +97,8 @@ When you want to assign :ref:`tasks <actions>` for Astrality to perform, you hav
 
         .. caution::
             Only files within ``$ASTRALITY_CONFIG_HOME/**/*`` are observed for modifications.
-            Also, :ref:`context imports <context_import_action>` are currently not supported in ``on_modified`` event blocks.
 
-            If any of this is a use case for you, please open an `issue <https://github.com/jakobgm/astrality/issues>`_!
+            If this is a use case for you, please open an `issue <https://github.com/jakobgm/astrality/issues>`_!
 
 Example of module event blocks:
 

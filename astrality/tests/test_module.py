@@ -153,7 +153,9 @@ class TestModuleClass:
         ) in caplog.record_tuples
 
         caplog.clear()
-        single_module_manager.on_event()
+        single_module_manager.run_on_event_commands(
+            single_module_manager.modules['test_module'],
+        )
         compilation_target = '/tmp/compiled_result'
         assert (
             'astrality',
@@ -264,7 +266,9 @@ class TestModuleClass:
         module,
         caplog,
     ):
-        single_module_manager.on_event()
+        single_module_manager.run_on_event_commands(
+            single_module_manager.modules['test_module'],
+        )
 
         compiled_template = str(
             single_module_manager.templates['../templates/test_template.conf'].target,
@@ -298,7 +302,9 @@ class TestModuleClass:
         simple_application_config['module/test_module']['on_event'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
-        module_manager.on_event()
+        module_manager.run_on_event_commands(
+            module=module_manager.modules['test_module'],
+        )
 
         assert caplog.record_tuples == [
             (
