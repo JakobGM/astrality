@@ -1,0 +1,1 @@
+My car is a {{ car.manufacturer }}

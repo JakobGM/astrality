@@ -224,7 +224,7 @@ class Module:
         This determines which section of the module is used to get the context
         import specification from.
         """
-        assert trigger in ('on_startup', 'on_event', 'on_startup',)
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
         context_section_imports = []
         import_config = self.module_config[trigger]['import_context']
@@ -577,10 +577,15 @@ class ModuleManager:
 
     def exit(self):
         """
-        Run all exit commands specified by the managed modules.
+        Run all exit tasks specified by the managed modules.
 
         Also close all temporary file handlers created by the modules.
         """
+        # First import context and compile templates
+        self.import_context_sections('on_exit')
+        self.compile_templates('on_exit')
+
+        # Then run all shell commands
         for module in self.modules.values():
             exit_commands = module.exit_commands()
             for command in exit_commands:
