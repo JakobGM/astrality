@@ -108,6 +108,19 @@ class Module:
                 }
                 self.module_config['on_modified'][template_name].update(configured_event_block)
 
+        # Convert any single actions into a list of that action, allowing
+        # users to not use lists in their configuration if they only have one
+        # action
+        for event_block in (
+            self.module_config['on_startup'],
+            self.module_config['on_event'],
+            self.module_config['on_exit'],
+            *self.module_config['on_modified'].values(),
+        ):
+            for action in ('import_context', 'compile', 'run',):
+                if not isinstance(event_block[action], list):  # type: ignore
+                    event_block[action] = [event_block[action]]  # type: ignore
+
     def import_trigger_actions(self) -> None:
         """If an event block defines trigger events, import those actions."""
         event_blocks = (

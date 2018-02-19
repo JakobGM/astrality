@@ -69,9 +69,9 @@ module/solar_desktop:
         # e.g. `night`, into the global context section named `colors`,
         # from the file: modules/solar_desktop/solar_colors.yaml.
         import_context:
-            - from_path: modules/solar_desktop/solar_colors.yaml
-              from_section: '{event}'
-              to_section: colors
+            from_path: modules/solar_desktop/solar_colors.yaml
+            from_section: '{event}'
+            to_section: colors
 
         # Compile the templates specified in the conky module, as their
         # context values have changed due to the import_context action above.
@@ -81,13 +81,11 @@ module/solar_desktop:
 
         # Run shell command to change the desktop wallpaper named the same
         # as the current event.
-        run:
-            - feh --bg-fill modules/solar_desktop/{event}.*
+        run: feh --bg-fill modules/solar_desktop/{event}.*
 
     on_exit:
         # Kill the conky processes on Astrality shutdown.
-        run:
-            - pkill -f conky
+        run: pkill -f conky
 
 
 context/general:
