@@ -206,3 +206,80 @@ def test_hot_reloading(
     if target_config.is_file():
         os.remove(target_config)
 
+@pytest.yield_fixture
+def three_watchable_files(test_config_directory):
+    file1 = test_config_directory / 'file1.tmp'
+    file2 = test_config_directory / 'file2.tmp'
+    file3 = test_config_directory / 'file3.tmp'
+
+    yield file1, file2, file3
+
+    if file1.is_file():
+        os.remove(file1)
+    if file2.is_file():
+        os.remove(file2)
+    if file3.is_file():
+        os.remove(file3)
+
+def test_all_three_actions_in_on_modified_block(
+    three_watchable_files,
+    default_global_options,
+    _runtime,
+    test_config_directory,
+):
+    file1, file2, file3 = three_watchable_files
+    car_template = test_config_directory / 'templates' / 'a_car.template'
+    mercedes_context = test_config_directory / 'context' / 'mercedes.yaml'
+    tesla_context = test_config_directory / 'context' / 'tesla.yaml'
+
+    application_config = {
+        'module/car': {
+            'on_startup': {
+                'import_context': {
+                    'from_path': str(mercedes_context),
+                },
+                'compile': {
+                    'template': str(car_template),
+                    'target': str(file1),
+                },
+            },
+            'on_modified': {
+                str(file2): {
+                    'import_context': {
+                        'from_path': str(tesla_context),
+                    },
+                    'compile': {
+                        'template': str(car_template),
+                        'target': str(file1),
+                    },
+                    'run': 'touch ' + str(file3),
+                },
+            },
+        },
+    }
+    application_config.update(default_global_options)
+    application_config.update(_runtime)
+
+    module_manager = ModuleManager(application_config)
+
+    # Sanity check before beginning testing
+    assert not file1.is_file()
+    assert not file2.is_file()
+    assert not file3.is_file()
+
+    # Now finish tasks, i.e. on_startup block
+    module_manager.finish_tasks()
+    assert file1.is_file()
+    assert not file2.is_file()
+    assert not file3.is_file()
+
+    # Check that the correct context is inserted
+    with open(file1) as file:
+        assert file.read() == 'My car is a Mercedes'
+
+    # Now modify file2 such that the on_modified block is triggered
+    file2.write_text('some new content')
+    time.sleep(0.7)
+
+    # The on_modified run command should now have been executed
+    assert file3.is_file()

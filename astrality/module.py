@@ -600,7 +600,6 @@ class ModuleManager:
         watched_file = self.on_modified_paths[modified]
         module = watched_file.module
         specified_path = watched_file.specified_path
-        template = self.templates[specified_path]
 
         for compilation in module.module_config['on_modified'][specified_path]['compile']:
             template = self.templates[compilation['template']]
