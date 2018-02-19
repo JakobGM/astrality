@@ -156,12 +156,29 @@ class Module:
         into['import_context'].extend(from_event_block_dict['import_context'])
         into['compile'].extend(from_event_block_dict['compile'])
 
-    def startup_commands(self) -> Tuple[str, ...]:
-        """Return commands to be run on Module instance startup."""
-        startup_commands: List[str] = self.module_config['on_startup']['run']
+    def commands(
+        self,
+        block: str,
+        modified_file: Optional[str] = None,
+    ) -> Tuple[str, ...]:
+        """
+        Return all shell commands to be run for a specific block, i.e.
+        any of on_startup, on_event, on_exit, or on_modified.
+
+        A modified file action block is given by block='on_modified:file/path'.
+        """
+
+        startup_commands: List[str]
+
+        if modified_file:
+            assert block == 'on_modified'
+            startup_commands = self.module_config['on_modified'][modified_file]['run']
+        else:
+            assert block in ('on_startup', 'on_event', 'on_exit',)
+            startup_commands = self.module_config[block]['run']
 
         if len(startup_commands) == 0:
-            logger.debug(f'[module/{self.name}] No startup command specified.')
+            logger.debug(f'[module/{self.name}] No {block} command specified.')
             return ()
         else:
             return tuple(
@@ -170,48 +187,21 @@ class Module:
                 in startup_commands
             )
 
+    def startup_commands(self) -> Tuple[str, ...]:
+        """Return commands to be run on Module instance startup."""
+        return self.commands('on_startup')
+
     def on_event_commands(self) -> Tuple[str, ...]:
         """Commands to be run when self.event_listener event changes."""
-        on_event_commands: List[str] = self.module_config['on_event']['run']
-
-        if len(on_event_commands) == 0:
-            logger.debug(f'[module/{self.name}] No event command specified.')
-            return ()
-        else:
-            return tuple(
-                self.interpolate_string(command)
-                for command
-                in on_event_commands
-            )
+        return self.commands('on_event')
 
     def exit_commands(self) -> Tuple[str, ...]:
         """Commands to be run on Module instance shutdown."""
-        exit_commands: List[str] = self.module_config['on_exit']['run']
+        return self.commands('on_exit')
 
-        if len(exit_commands) == 0:
-            logger.debug(f'[module/{self.name}] No exit command specified.')
-            return ()
-        else:
-            return tuple(
-                self.interpolate_string(command)
-                for command
-                in exit_commands
-            )
-
-    def modified_commands(self, template_name: str) -> Tuple[str, ...]:
+    def modified_commands(self, specified_path: str) -> Tuple[str, ...]:
         """Commands to be run when a module template is modified."""
-        modified_commands: List[str] = self.module_config['on_modified'][template_name]['run']
-
-        if len(modified_commands) == 0:
-            logger.debug(f'[module/{self.name}] No modified command specified.')
-            return ()
-        else:
-            return tuple(
-                self.interpolate_string(command)
-                for command
-                in modified_commands
-            )
-
+        return self.commands('on_modified', specified_path)
 
     def context_section_imports(
         self,
@@ -347,7 +337,7 @@ class ModuleManager:
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
             directory=self.application_config['_runtime']['config_directory'],
-            on_modified=self.modified,
+            on_modified=self.file_system_modified,
         )
 
     def __len__(self) -> int:
@@ -603,52 +593,10 @@ class ModuleManager:
         # Stop watching config directory for file changes
         self.directory_watcher.stop()
 
-    def modified(self, modified: Path):
+    def on_modified(self, modified: Path) -> None:
         """
-        Callback for when files within the config directory are modified.
-
-        Run any context imports, compilations, and shell commands specified
-        within the on_modified event block of each module.
-
-        Also, if hot_reload is True, we reinstantiate the ModuleManager object
-        if the application configuration has been modified.
+        Perform actions when a watched file is modified.
         """
-        if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yaml':
-            # The application configuration file has been modified
-
-            if not self.application_config['settings/astrality']['hot_reload_config']:
-                # Hot reloading is not enabled, so we return early
-                return
-
-            # Hot reloading is enabled, get the new configuration dict
-            new_application_config = user_configuration(
-                config_directory=modified.parent,
-            )
-
-            try:
-                # Reinstantiate this object
-                new_module_manager = ModuleManager(new_application_config)
-
-                # Run all old exit actions, since the new config is valid
-                self.exit()
-
-                # Swap place with the new configuration
-                self = new_module_manager
-
-                # Run startup commands from the new configuration
-                self.finish_tasks()
-            except:
-                # New configuration is invalid, just keep the old one
-                # TODO: Test this behaviour
-                logger.error('New configuration detected, but it is invalid!')
-                pass
-
-            return
-
-        if not modified in self.on_modified_paths:
-            # The modified file is not specified in any of the modules
-            return
-
         watched_file = self.on_modified_paths[modified]
         module = watched_file.module
         specified_path = watched_file.specified_path
@@ -669,6 +617,61 @@ class ModuleManager:
                 timeout=self.application_config['settings/astrality']['run_timeout'],
                 module_name=module.name,
             )
+
+
+    def file_system_modified(self, modified: Path) -> None:
+        """
+        Callback for when files within the config directory are modified.
+
+        Run any context imports, compilations, and shell commands specified
+        within the on_modified event block of each module.
+
+        Also, if hot_reload is True, we reinstantiate the ModuleManager object
+        if the application configuration has been modified.
+        """
+        if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yaml':
+            self.on_application_config_modified()
+            return
+
+        if modified in self.on_modified_paths:
+            # The modified file is specified in one of the modules
+            self.on_modified(modified)
+            return
+
+    def on_application_config_modified(self):
+        """
+        Reload the ModuleManager if astrality.yaml has been modified.
+
+        Reloadnig the module manager only occurs if the user has configured
+        `hot_reload_config`.
+        """
+        if not self.application_config['settings/astrality']['hot_reload_config']:
+            # Hot reloading is not enabled, so we return early
+            return
+
+        # Hot reloading is enabled, get the new configuration dict
+        new_application_config = user_configuration(
+            config_directory=self.config_directory,
+        )
+
+        try:
+            # Reinstantiate this object
+            new_module_manager = ModuleManager(new_application_config)
+
+            # Run all old exit actions, since the new config is valid
+            self.exit()
+
+            # Swap place with the new configuration
+            self = new_module_manager
+
+            # Run startup commands from the new configuration
+            self.finish_tasks()
+        except:
+            # New configuration is invalid, just keep the old one
+            # TODO: Test this behaviour
+            logger.error('New configuration detected, but it is invalid!')
+            pass
+
 
     def run_shell(
         self,

@@ -261,7 +261,7 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.DEBUG,
-                '[module/test_module] No startup command specified.',
+                '[module/test_module] No on_startup command specified.',
             ),
         ]
 
@@ -311,7 +311,7 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.DEBUG,
-                '[module/test_module] No event command specified.',
+                '[module/test_module] No on_event command specified.',
             ),
         ]
 
@@ -348,7 +348,7 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.DEBUG,
-                '[module/test_module] No exit command specified.',
+                '[module/test_module] No on_exit command specified.',
             ),
         ]
 
@@ -913,7 +913,7 @@ class TestModuleFileWatching:
         empty_template.write_text('new content')
 
         # And trigger the modified method manually
-        module_manager.modified(empty_template)
+        module_manager.file_system_modified(empty_template)
 
         # And assert that the new template has been compiled
         assert empty_template_target.is_file()
