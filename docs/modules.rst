@@ -151,7 +151,15 @@ Actions are tasks for Astrality to perform, and are placed within :ref:`event bl
 Context imports
 ---------------
 
-Context imports are defined as a dictionary, or a list of dictionaries, under the ``import_context`` keyword in an :ref:`event block <events>` of a module.
+The simplest way to define :ref:`context values <context>` is to just define their values in ``astrality.yaml``.
+Those context values are available for insertion into all your templates.
+
+But you can also import context values from arbitrary YAML files. Among other use cases, this allows you to:
+
+* Split context definitions into separate files in order to clean up your configuration. You can, for instance, create one dedicated context file for each of your modules.
+* Combine context imports with :ref:`on_event <events>` blocks in order to dynamically change how templates compile. This allows quite complex behaviour.
+
+Context imports are defined as a dictionary, or a list of dictionaries if you need several imports, under the ``import_context`` keyword in an :ref:`event block <events>` of a module.
 
 This is best explained with an example. Let us create a color schemes file:
 
