@@ -1103,7 +1103,7 @@ def test_trigger_event_module_action(
         'module/A': {
             'event_listener': {'type': 'weekday'},
             'on_startup': {
-                'trigger': ['on_event', 'on_exit', 'on_modified.templateA'],
+                'trigger': ['on_event', 'on_exit', 'on_modified:templateA'],
                 'run': ['echo startup'],
             },
             'on_event': {

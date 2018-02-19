@@ -129,19 +129,16 @@ class Module:
             self.module_config['on_startup'],
             self.module_config['on_event'],
             self.module_config['on_exit'],
-            self.module_config['on_modified'].values(),
+            *self.module_config['on_modified'].values(),
         )
         for event_block in event_blocks:
-            if 'trigger' in event_block:
-                event_blocks_to_import = event_block['trigger']
-                if isinstance(event_blocks_to_import, str):
-                    event_blocks_to_import = [event_blocks_to_import]
+            event_blocks_to_import = event_block['trigger']
 
-                for event_block_to_import in event_blocks_to_import:
-                    self._import_event_block(
-                        from_event_block=event_block_to_import,
-                        into=event_block,
-                    )
+            for event_block_to_import in event_blocks_to_import:
+                self._import_event_block(
+                    from_event_block=event_block_to_import,
+                    into=event_block,
+                )
 
     def _import_event_block(
         self,
@@ -149,7 +146,7 @@ class Module:
         into: Dict[str, Any],
     ) -> None:
         """Merge one event block with another one."""
-        if 'on_modified.' in from_event_block:
+        if 'on_modified:' in from_event_block:
             template = from_event_block[12:]
             from_event_block_dict = self.module_config['on_modified'].get(template, {})
         else:
@@ -230,10 +227,7 @@ class Module:
         assert trigger in ('on_startup', 'on_event', 'on_startup',)
 
         context_section_imports = []
-        import_config = self.module_config.get(
-            trigger,
-            {},
-        ).get('import_context', [])
+        import_config = self.module_config[trigger]['import_context']
 
         for context_import in import_config:
             # Insert placeholders

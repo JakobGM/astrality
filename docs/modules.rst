@@ -305,7 +305,7 @@ Trigger events
 
 You can trigger another module :ref:`event <events>` by specifying the ``trigger`` action.
 
-The ``trigger`` option accepts ``on_startup``, ``on_event``, ``on_exit``, and ``on_modified.file_path``, either as a single string, or a list with any combination of these.
+The ``trigger`` option accepts ``on_startup``, ``on_event``, ``on_exit``, and ``on_modified:file_path``, either as a single string, or a list with any combination of these.
 
 An example of a module using ``trigger`` actions:
 
@@ -321,7 +321,7 @@ An example of a module using ``trigger`` actions:
 
                 trigger:
                     - on_event
-                    - on_modified.templates/templateA
+                    - on_modified:templates/templateA
 
             on_event:
                 import_context:
@@ -329,7 +329,7 @@ An example of a module using ``trigger`` actions:
                       from_section: '{event}'
                       to_section: a_stuff
 
-                trigger: on_modified.templates/templateA
+                trigger: on_modified:templates/templateA
 
             on_modified:
                 templates/A.template:
