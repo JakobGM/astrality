@@ -616,7 +616,7 @@ class ModuleManager:
         if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yaml':
             # The application configuration file has been modified
 
-            if not self.application_config['settings/astrality']['hot_reload']:
+            if not self.application_config['settings/astrality']['hot_reload_config']:
                 # Hot reloading is not enabled, so we return early
                 return
 

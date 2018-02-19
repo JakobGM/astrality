@@ -101,7 +101,7 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
 
 **Avalable configuration options**:
 
-``hot_reload:``
+``hot_reload_config:``
     *Default:* ``false``
 
     If enabled, Astrality will watch for modifications to ``astrality.yaml``.

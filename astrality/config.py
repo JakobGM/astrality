@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
 ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'settings/astrality': {
-    'hot_reload': False,
+    'hot_reload_config': False,
     'startup_delay': 0,
     'run_timeout': 0,
     'requires_timeout': 1,

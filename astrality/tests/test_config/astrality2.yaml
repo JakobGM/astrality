@@ -1,5 +1,5 @@
 settings/astrality:
-    hot_reload: true
+    hot_reload_config: true
 
 module/A:
     on_startup:

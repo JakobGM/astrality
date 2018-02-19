@@ -1,9 +1,9 @@
 settings/astrality:
-    # If hot_reload is enabled, modifications to this file automatically runs:
+    # If hot_reload_config is enabled, modifications to this file automatically runs:
     #       1) exit actions from the old configuration
     #       2) startup actions from the new configuration
     # Requires restart if enabled
-    hot_reload: false
+    hot_reload_config: false
 
     # You can delay astrality on startup. The delay is given in seconds.
     startup_delay: 0

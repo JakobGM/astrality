@@ -997,7 +997,7 @@ class TestModuleFileWatching:
         application_config1 = dict_from_config_file(config1)
         application_config1.update(default_global_options)
         application_config1.update(_runtime)
-        application_config1['settings/astrality']['hot_reload'] = True
+        application_config1['settings/astrality']['hot_reload_config'] = True
 
         module_manager = ModuleManager(application_config1)
 
