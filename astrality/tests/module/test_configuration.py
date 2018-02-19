@@ -1,8 +1,9 @@
 from astrality.module import Module
 
-def test_that_all_arguments_are_converted_to_lists():
+def test_that_module_configuration_is_processed_correctly_before_use():
     """
-    Test that all list item configurations can be given as single strings.
+    Test that all list item configurations can be given as single strings,
+    and that missing configuration options are inserted.
     """
     module_config = {'module/A': {
         'on_startup': {
@@ -11,6 +12,7 @@ def test_that_all_arguments_are_converted_to_lists():
         'on_event': {
             'import_context': {'from_file': '/test'},
             'run': ['echo 1', 'echo 2'],
+            'trigger': 'on_modified./some/file',
         },
         'on_modified': {
             '/some/file': {
@@ -26,22 +28,26 @@ def test_that_all_arguments_are_converted_to_lists():
             'run': ['echo hi!'],
             'compile': [],
             'import_context': [],
+            'trigger': [],
         },
         'on_event': {
             'import_context': [{'from_file': '/test'}],
             'run': ['echo 1', 'echo 2'],
-            'compile': [],
+            'compile': [{'template': '/some/template'}],
+            'trigger': ['on_modified./some/file'],
         },
         'on_exit': {
             'run': [],
             'compile': [],
             'import_context': [],
+            'trigger': [],
         },
         'on_modified': {
             '/some/file': {
                 'compile': [{'template': '/some/template'}],
                 'run': [],
                 'import_context': [],
+                'trigger': [],
             },
         },
     }

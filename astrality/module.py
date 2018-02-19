@@ -93,6 +93,7 @@ class Module:
                 'import_context': [],
                 'compile': [],
                 'run': [],
+                'trigger': [],
             }
             self.module_config[event_block].update(configured_event_block)
 
@@ -105,6 +106,7 @@ class Module:
                     'import_context': [],
                     'compile': [],
                     'run': [],
+                    'trigger': [],
                 }
                 self.module_config['on_modified'][template_name].update(configured_event_block)
 
@@ -117,7 +119,7 @@ class Module:
             self.module_config['on_exit'],
             *self.module_config['on_modified'].values(),
         ):
-            for action in ('import_context', 'compile', 'run',):
+            for action in ('import_context', 'compile', 'run', 'trigger',):
                 if not isinstance(event_block[action], list):  # type: ignore
                     event_block[action] = [event_block[action]]  # type: ignore
 

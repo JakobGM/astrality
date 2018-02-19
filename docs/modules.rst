@@ -151,7 +151,7 @@ Actions are tasks for Astrality to perform, and are placed within :ref:`event bl
 Context imports
 ---------------
 
-Context imports are defined as a list of dictionaries under the ``import_context`` keyword in an :ref:`event block <events>` of a module.
+Context imports are defined as a dictionary, or a list of dictionaries, under the ``import_context`` keyword in an :ref:`event block <events>` of a module.
 
 This is best explained with an example. Let us create a color schemes file:
 
@@ -172,9 +172,9 @@ Then let us import the gruvbox color scheme into the "colors" :ref:`context <con
     module/color_scheme:
         on_startup:
             import_context:
-                - from_path: contexts/color_schemes.yaml
-                  from_section: gruvbox_dark
-                  to_section: colors
+                from_path: contexts/color_schemes.yaml
+                from_section: gruvbox_dark
+                to_section: colors
 
 This is functionally equivalent to writing:
 
@@ -215,7 +215,7 @@ The available attributes for ``import_context`` are:
 Compile templates
 -----------------
 
-Template compilations are defined as a list of dictionaries under the ``compile`` keyword in an :ref:`event block <events>` of a module.
+Template compilations are defined as a dictionary, or a list of dictionaries, under the ``compile`` keyword in an :ref:`event block <events>` of a module.
 
 Each template compilation action has the following available attributes:
 
@@ -277,8 +277,7 @@ Example:
             type: weekday
 
         on_startup:
-            run:
-                - notify-send "You just started Astrality, and the day is {event}"
+            run: notify-send "You just started Astrality, and the day is {event}"
 
         on_event:
             run:
@@ -310,8 +309,7 @@ An example of a module using ``trigger`` actions:
                 type: weekday
 
             on_startup:
-                run:
-                    - startup_command
+                run: startup_command
 
                 trigger:
                     - on_event
@@ -328,10 +326,9 @@ An example of a module using ``trigger`` actions:
             on_modified:
                 templates/A.template:
                     compile:
-                        - template: templates/A.template
+                        template: templates/A.template
 
-                    run:
-                        - shell_command_dependent_on_templateA
+                    run: shell_command_dependent_on_templateA
 
 This is equivalent to writing the following module:
 
@@ -349,7 +346,7 @@ This is equivalent to writing the following module:
                       to_section: a_stuff
 
                 compile:
-                    - template: templates/templateA
+                    template: templates/templateA
 
                 run:
                     - startup_command
@@ -357,23 +354,21 @@ This is equivalent to writing the following module:
 
             on_event:
                 import_context:
-                    - from_path: contexts/A.yaml
-                      from_section: '{event}'
-                      to_section: a_stuff
+                    from_path: contexts/A.yaml
+                    from_section: '{event}'
+                    to_section: a_stuff
 
                 compile:
-                    - template: templateA
+                    template: templateA
 
-                run:
-                    - shell_command_dependent_on_templateA
+                run: shell_command_dependent_on_templateA
 
             on_modified:
                 templates/templateA:
                     compile:
-                        - template: templates/templateA
+                        template: templates/templateA
 
-                    run:
-                        - shell_command_dependent_on_templateA
+                    run: shell_command_dependent_on_templateA
 
 
 .. hint::
