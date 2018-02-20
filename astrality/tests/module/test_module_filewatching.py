@@ -398,3 +398,43 @@ def test_recompile_templates_when_modified_overridden(
     assert touch_target.is_file()
 
     module_manager.exit()
+
+
+def test_importing_context_on_modification(
+    three_watchable_files,
+    default_global_options,
+    _runtime,
+    test_config_directory,
+):
+    """Test that context values are imported in on_modified blocks."""
+    file1, *_ = three_watchable_files
+    mercedes_context = test_config_directory / 'context' / 'mercedes.yaml'
+
+    application_config = {
+        'module/module_name': {
+            'on_modified': {
+                str(file1): {
+                    'import_context': {
+                        'from_path': str(mercedes_context),
+                    },
+                },
+            },
+        },
+        'context/car': {
+            'manufacturer': 'Tesla',
+        },
+    }
+    application_config.update(default_global_options)
+    application_config.update(_runtime)
+
+    module_manager = ModuleManager(application_config)
+    module_manager.finish_tasks()
+
+    # Sanity check before modifying file1
+    assert module_manager.application_context['car']['manufacturer'] == 'Tesla'
+
+    # After modifying file1, Mercedes should have been imported
+    file1.touch()
+    file1.write_text('new content, resulting in importing Mercedes')
+    time.sleep(0.7)
+    assert module_manager.application_context['car']['manufacturer'] == 'Mercedes'

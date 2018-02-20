@@ -206,19 +206,27 @@ class Module:
     def context_section_imports(
         self,
         trigger: str,
+        modified: Optional[str] = None,
     ) -> Tuple[ContextSectionImport, ...]:
         """
         Return what to import into the global application_context.
 
-        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
+        Trigger is one of 'on_startup', 'on_event', 'on_modified, or 'on_exit'.
         This determines which section of the module is used to get the context
         import specification from.
+
+        If trigger is 'on_modified', you also need to specify which file is
+        modified, in order to get the correct section.
         """
-        assert trigger in ('on_startup', 'on_event', 'on_exit',)
+        import_config: List[Dict[str, str]]
+        if modified:
+            assert trigger == 'on_modified'
+            import_config = self.module_config[trigger][modified]['import_context']
+        else:
+            assert trigger in ('on_startup', 'on_event', 'on_exit',)
+            import_config = self.module_config[trigger]['import_context']
 
         context_section_imports = []
-        import_config = self.module_config[trigger]['import_context']
-
         for context_import in import_config:
             # Insert placeholders
             from_path = self.interpolate_string(context_import['from_path'])
@@ -643,6 +651,19 @@ class ModuleManager:
         module = watched_file.module
         specified_path = watched_file.specified_path
 
+        # First import context sections in on_modified block
+        for csi in module.context_section_imports(
+            trigger='on_modified',
+            modified=specified_path,
+        ):
+            self.application_context = insert_into(
+                context=self.application_context,
+                section=csi.into_section,
+                from_section=csi.from_section,
+                from_config_file=self.expand_path(csi.from_config_file),
+            )
+
+        # Now compile templates specified in on_modified block
         for compilation in module.module_config['on_modified'][specified_path]['compile']:
             template = self.templates[compilation['template']]
             self.compile_template(
@@ -650,6 +671,8 @@ class ModuleManager:
                 target=template.target,
             )
 
+
+        # Lastly, run commands specified in on_modified block
         modified_commands = module.modified_commands(specified_path)
         for command in modified_commands:
             logger.info(f'[module/{module.name}] Running modified command.')
