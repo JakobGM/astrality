@@ -629,6 +629,9 @@ class ModuleManager:
             for temp_file in self.temp_files:
                 temp_file.close()
 
+            # Prevent files from being closed again
+            del self.temp_files
+
         # Stop watching config directory for file changes
         self.directory_watcher.stop()
 
@@ -669,12 +672,14 @@ class ModuleManager:
         """
         if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yaml':
             self.on_application_config_modified()
-            return
-
-        if modified in self.on_modified_paths:
+        elif modified in self.on_modified_paths:
             # The modified file is specified in one of the modules
             self.on_modified(modified)
-            return
+        else:
+            # Check if the modified path is a template which is supposed to
+            # be recompiled.
+            self.recompile_modified_template(modified=modified)
+
 
     def on_application_config_modified(self):
         """
@@ -710,6 +715,23 @@ class ModuleManager:
             logger.error('New configuration detected, but it is invalid!')
             pass
 
+
+    def recompile_modified_template(self, modified: Path):
+        """
+        Recompile any modified template if configured.
+
+        This requires setting the global setting:
+        recompile_modified_templates: true
+        """
+        if not self.application_config['settings/astrality']['recompile_modified_templates']:
+            return
+
+        for template in self.templates.values():
+            if template.source == modified:
+                self.compile_template(
+                    source=template.source,
+                    target=template.target,
+                )
 
     def run_shell(
         self,

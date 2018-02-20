@@ -1,7 +1,8 @@
 """Module for compilation of templates."""
 
-from functools import partial
 import logging
+import os
+from functools import partial
 from pathlib import Path
 from typing import Any, Dict, Union
 
@@ -110,6 +111,9 @@ def compile_template(
     )
     jinja_template = env.get_template(name=template.name)
     result = jinja_template.render(context)
+
+    # Create parent directories if they do not exist
+    os.makedirs(target.parent, exist_ok=True)
 
     with open(target, 'w') as target_file:
         target_file.write(result)

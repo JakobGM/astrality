@@ -32,6 +32,7 @@ ApplicationConfig = Dict[str, Dict[str, Any]]
 
 ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'settings/astrality': {
     'hot_reload_config': False,
+    'recompile_modified_templates': False,
     'startup_delay': 0,
     'run_timeout': 0,
     'requires_timeout': 1,

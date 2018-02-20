@@ -212,8 +212,17 @@ def three_watchable_files(test_config_directory):
     file2 = test_config_directory / 'file2.tmp'
     file3 = test_config_directory / 'file3.tmp'
 
+    # Delete files if they are present
+    if file1.is_file():
+        os.remove(file1)
+    if file2.is_file():
+        os.remove(file2)
+    if file3.is_file():
+        os.remove(file3)
+
     yield file1, file2, file3
 
+    # Delete files on cleanup
     if file1.is_file():
         os.remove(file1)
     if file2.is_file():
@@ -283,3 +292,109 @@ def test_all_three_actions_in_on_modified_block(
 
     # The on_modified run command should now have been executed
     assert file3.is_file()
+
+    module_manager.exit()
+
+def test_recompile_templates_when_modified(
+    three_watchable_files,
+    default_global_options,
+    _runtime,
+):
+    template, target, _ = three_watchable_files
+    template.touch()
+
+    application_config = {
+        'module/module_name': {
+            'on_startup': {
+                'compile': {
+                    'template': str(template),
+                    'target': str(target),
+                },
+            },
+        },
+        'context/section': {
+            1: 'value',
+        },
+    }
+    application_config.update(default_global_options)
+    application_config.update(_runtime)
+    application_config['settings/astrality']['recompile_modified_templates'] = True
+
+    module_manager = ModuleManager(application_config)
+
+    # Sanity check before beginning testing
+    with open(template) as file:
+        assert file.read() == ''
+
+    assert not target.is_file()
+
+    # Compile the template
+    module_manager.finish_tasks()
+    with open(target) as file:
+        assert file.read() == ''
+
+    # Now write to the template and see if it is recompiled
+    template.write_text('{{ section.2 }}')
+    time.sleep(0.7)
+    with open(target) as file:
+        assert file.read() == 'value'
+
+    module_manager.exit()
+
+
+def test_recompile_templates_when_modified_overridden(
+    three_watchable_files,
+    default_global_options,
+    _runtime,
+):
+    """
+    If a file is watched in a on_modified block, it should override the
+    recompile_modified_templates option.
+    """
+    template, target, touch_target = three_watchable_files
+    template.touch()
+
+    application_config = {
+        'module/module_name': {
+            'on_startup': {
+                'compile': {
+                    'template': str(template),
+                    'target': str(target),
+                },
+            },
+            'on_modified': {
+                str(template): {
+                    'run': 'touch ' + str(touch_target),
+                },
+            },
+        },
+        'context/section': {
+            1: 'value',
+        },
+    }
+    application_config.update(default_global_options)
+    application_config.update(_runtime)
+    application_config['settings/astrality']['recompile_modified_templates'] = True
+
+    module_manager = ModuleManager(application_config)
+
+    # Sanity check before beginning testing
+    with open(template) as file:
+        assert file.read() == ''
+
+    assert not target.is_file()
+
+    # Compile the template
+    module_manager.finish_tasks()
+    with open(target) as file:
+        assert file.read() == ''
+
+    # Now write to the template and see if it is *compiled*, but the on_modified
+    # command is run instead
+    template.write_text('{{ section.2 }}')
+    time.sleep(0.7)
+    with open(target) as file:
+        assert file.read() == ''
+    assert touch_target.is_file()
+
+    module_manager.exit()

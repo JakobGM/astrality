@@ -112,6 +112,30 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
 
     *Useful for quick feedback when editing* :ref:`templates <templating>`.
 
+``recompile_modified_templates:``
+    *Defualt:* ``false``
+
+    If enabled, Astrality will watch for modifications to all templates sources :ref:`specified <compile_action>` in ``astrality.yaml``.
+    If a template is modified, it will be recompiled to its specified target path(s).
+
+    .. note::
+        With this option enabled, any modified template will be recompiled as long
+        as it is specified within a :ref:`compile action <compile_action>`, regardless of
+        exactly *when* you intended the template to be compiled in the first place.
+
+        For instance, if a template is configured to be compiled on Astrality exit,
+        and not sooner, it will still be recompiled when it is modified, even though
+        Astrality has not exited.
+
+        You can have more fine-grained control over exactly *what* happens when
+        a file is modified by using the ``on_modified`` :ref:`module event <events>`.
+        This way you can run shell commands, import context values, and compile
+        arbitrary templates when specific files are modified on disk.
+
+    .. caution::
+        At the moment, Astrality only watches for file changes recursively within
+        ``$ASTRALITY_CONFIG_HOME``.
+
 ``startup_delay:``
     *Default:* ``0``
 

@@ -3,7 +3,10 @@ settings/astrality:
     #       1) exit actions from the old configuration
     #       2) startup actions from the new configuration
     # Requires restart if enabled
-    hot_reload_config: false
+    hot_reload_config: true
+
+    # Modified templates can be automatically recompiled
+    recompile_modified_templates: false
 
     # You can delay astrality on startup. The delay is given in seconds.
     startup_delay: 0
