@@ -52,15 +52,6 @@ def test_name_of_config_file(conf):
     assert '/astrality.yaml' in str(conf['_runtime']['config_file'])
 
 
-@pytest.mark.slow
-def test_that_colors_are_correctly_imported_based_on_wallpaper_theme(conf, freezer):
-    midnight = datetime(year=2018, month=1, day=31, hour=0, minute=0)
-    freezer.move_to(midnight)
-    module_manager = ModuleManager(conf)
-    assert 'colors' not in module_manager.application_context
-    module_manager.finish_tasks()
-    assert module_manager.application_context['colors'] == {1: 'CACCFD', 2: '3F72E8'}
-
 def test_environment_variable_interpolation_by_preprocessing_conf_yaml_file():
     test_conf = Path(__file__).parent / 'test.yaml'
     result = preprocess_configuration_file(test_conf)
@@ -83,6 +74,7 @@ context/section4:
     1: primary_value
 '''
     assert expected_result == result
+
 
 @pytest.mark.slow
 def test_command_substition_by_preprocessing_yaml_file():

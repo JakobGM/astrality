@@ -1,29 +1,120 @@
 settings/astrality:
-    # If hot_reload_config is enabled, modifications to this file automatically runs:
+    # If hot_reload_config is enabled, modifications to this file automatically
+    # runs:
     #       1) exit actions from the old configuration
     #       2) startup actions from the new configuration
     # Requires restart if enabled
     hot_reload_config: true
 
     # Modified templates can be automatically recompiled
-    recompile_modified_templates: false
+    recompile_modified_templates: true
 
     # You can delay astrality on startup. The delay is given in seconds.
     startup_delay: 0
 
-    # Astrality can wait for shell commands to complete in their specified order.
-    # You can set the number of seconds Astrality waits for the shell commands to exit.
+    # Astrality can wait for shell commands to complete in their specified
+    # order. You can set the number of seconds Astrality waits for the shell
+    # commands to exit.
     run_timeout: 0
 
-    # Modules can require successfull shell commands (non-zero exit codes) in order
-    # to be enabled. You can specify the timeout for such checks, given in seconds.
+    # Modules can require successfull shell commands (non-zero exit codes) in
+    # order to be enabled. You can specify the timeout for such checks, given
+    # in seconds.
     requires_timeout: 1
+
+
+context/host:
+    # Here we define some context values which often change between host
+    # computers, and are therefore practical to use in our templates.
+    displays:
+        # All displays defined here are used in the polybar module. It creates
+        # one bar for each of the display handles, where the bar identifier is
+        # the same as the display handle. This way you can start a polybar for
+        # the primary screen by running:
+        #     polybar --config {modules/polybar/config.template} HDMI2
+        primary:
+            handle: HDMI2
+            dpi: 96
+
+        secondary:
+            handle: eDP1
+            dpi: 96
+
+
+    interfaces:
+        wlan:
+            # You can also use command substitution in order to insert the
+            # standard output of a shell command into a configuration option. 
+            #
+            # This is also used by the polybar template to point the
+            # wireless-internet polybar module to the correct interface.
+            handle: $( iwconfig 2>/dev/null | grep -o "^\w*" )
+
+        ethernet:
+            handle: eno0
+
+
+context/fonts:
+    # Here we define some context values for fonts that we want to use in
+    # several different configurations, another common use case for context
+    # values in templates.
+
+    # You can use integer indexed variables in order to have fallback values.
+    # If {{ fonts:4/5/6 on so an }} is used in a template, but it is not
+    # defined, it will be replaced with {{ ast:fonts:3 }} instead. This is
+    # useful when you dont want to assume how many fonts you want to use when
+    # you write your templates.
+    1:
+        name: FuraCode Nerd Font
+        size: 8
+
+    2:
+        name: FuraMono Nerd Font
+        size: 8
+
+    3:
+        name: RobotoMono Nerd Font
+        size: 8
+
+
+module/colors:
+    # This module is used to import a color scheme into the `color` context
+    # section. This makes it easy to change color schemes by changing the
+    # `from_section` option below. Take a look at the color_schemes.yaml file
+    # to see how to use color scheme context values in your templates.
+    on_startup:
+        import_context:
+            - from_path: modules/colors/color_schemes.yaml
+              from_section: gruvbox_dark
+              to_section: colors
+
+
+module/polybar:
+    enabled: true
+    requires: command -v polybar
+
+    on_startup:
+        compile:
+            - template: modules/polybar/config.template
+
+        run:
+            - killall -q polybar
+            - polybar --config={modules/polybar/config.template} --reload HDMI2
+            - polybar --config={modules/polybar/config.template} --reload eDP1
+
+    on_modified:
+        modules/polybar/config.template:
+            compile:
+                - template: modules/polybar/config.template
 
 
 module/solar_desktop:
     # A module for changing your wallpaper based on the suns position in the
     # sky, while changing the font color of two conky modules to fit the
-    # wallpaper's colors
+    # wallpaper's colors. This module demonstrates more advanced features.
+    #
+    # I reccomend you to read the docs at https://astrality.readthedocs.io
+    # if you want to understand something that seems unclear.
     enabled: true
 
     # A module can require shell commands to return successfully in order to
@@ -37,17 +128,17 @@ module/solar_desktop:
         # sunrise, morning, afternoon, sunset, and night.
         type: solar
 
-        # Since this is dependent on your exact location, you have to specify your
-        # GPS coordinates. They are can be easily obtained from:
+        # Since this is dependent on your exact location, you have to specify
+        # your GPS coordinates. They are can be easily obtained from:
         # https://www.latlong.net/
         latitude: 63.446827
         longitude: 10.421906
         elevation: 0
 
-        # You can force a event listener to always return the same event for debugging.
-        # For example, if you want to check if all your periodic color schemes
-        # fit your the respective periodic wallpapers, without waiting for sunset,
-        # etc..
+        # You can force a event listener to always return the same event for
+        # debugging. For example, if you want to check if all your periodic
+        # color schemes fit your the respective periodic wallpapers, without
+        # waiting for sunset, etc..
         # force_event: sunrise
 
     on_startup:
@@ -69,12 +160,12 @@ module/solar_desktop:
 
     on_event:
         # Import the context section named the same as the current event,
-        # e.g. `night`, into the global context section named `colors`,
+        # e.g. `night`, into the global context section named `wallpaper_colors`,
         # from the file: modules/solar_desktop/solar_colors.yaml.
         import_context:
             from_path: modules/solar_desktop/solar_colors.yaml
             from_section: '{event}'
-            to_section: colors
+            to_section: wallpaper_colors
 
         # Compile the templates specified in the conky module, as their
         # context values have changed due to the import_context action above.
@@ -90,24 +181,5 @@ module/solar_desktop:
         # Kill the conky processes on Astrality shutdown.
         run: pkill -f conky
 
-
-context/general:
-    # We can define context values used when compiling templates.
-    # For instance, with this option set, you can use {{ general.display }} in all
-    # your templates, and it will be replaced with eDP1
-    display: eDP1
-
-    # You can also use command substitution in order to insert the standard
-    # output of a shell command into a configuration option.
-    HDMI: $(xrandr | grep "HDMI2 connected")
-
-
-context/fonts:
-    # You can use integer indexed variables in order to have fallback values. If
-    # ${ast:fonts:4} is used in a template, but it is not defined, it will be
-    # replaced with ${ast:fonts:3} instead.
-    1: FuraCode Nerd Font
-    2: FuraMono Nerd Font
-    3: RobotoMono Nerd Font
 
 # vim:filetype=yaml

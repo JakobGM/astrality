@@ -1,0 +1,149 @@
+# Here we define a set of color values for different color schemes.
+# The color schemes are supposed to be usable in several different applications,
+# and should be be mutually interchangable.
+#
+# Each color scheme should provide the following:
+#     * A set of integer indexed background colors
+#     * A set of integer indexed foreground colors
+#     * The primary colors which the color scheme uses besides foreground
+#       and background colors. Also integer indexed.
+#     * The exact prefered shade of each common color, such as:
+#       white, red, green, yellow, blue, black.
+
+# Morhetz' gruvbox color schemes: https://github.com/morhetz/gruvbox
+context/gruvbox_dark:
+
+    background:
+        1: 282828
+        2: 3c3836
+        3: 504945
+        4: 665c54
+        5: 7c6f64
+
+    foreground:
+        1: fbf1c7
+        2: ebdbb2
+        3: d5c4a1
+        4: bdae93
+        5: a89984
+
+    primary:
+        1: 98971a
+        2: 458588
+        3: d79921
+        4: d65d0e
+        5: cc249d
+
+    white: fbf1c7
+    red: cc241d
+    green: 98971a
+    yellow: d79921
+    blue: 458588
+    purple: b16286
+    aqua: 689d6a
+    gray: 928374
+    orange: d65d0e
+
+
+context/gruvbox_light:
+
+    background:
+        1: fbf1c7
+        2: ebdbb2
+        3: d5c4a1
+        4: bdae93
+        5: a89984
+
+    foreground:
+        1: 3c3836
+        2: 3c3836
+        3: 504945
+        4: 665c54
+        5: 7c6f64
+
+    primary:
+        1: 98971a
+        2: 458588
+        3: d79921
+        4: d65d0e
+        5: cc249d
+
+    white: fbf1c7
+    red: cc241d
+    green: 98971a
+    yellow: d79921
+    blue: 458588
+    purple: b16286
+    aqua: 689d6a
+    gray: 928374
+    orange: d65d0e
+
+
+# The Solarized dark/light color schemes made by Ethan Schoonover
+# Source: http://ethanschoonover.com/solarized
+context/solarized_dark:
+    background:
+        1: 002b36
+        2: 073642
+        3: 586e75
+        4: 657b83
+        5: 839496
+        6: 93a1a1
+
+    foreground:
+        1: fdf6e3
+        2: eee8d5
+        3: 93a1a1
+        4: 839496
+        5: 657b83
+        6: 586e75
+
+    primary:
+        1: 859900
+        2: b58900
+        3: cb4b16
+        4: 2aa198
+        5: 268bd2
+        6: dc322f
+
+    yellow: b58900
+    orange: cb4b16
+    red: dc322f
+    magenta: d33682
+    violet: 6c71c4
+    blue: 268bd2
+    cyan: 2aa198
+    green: 859900
+
+context/solarized_light:
+    background:
+        1: fdf6e3
+        2: eee8d5
+        3: 93a1a1
+        4: 839496
+        5: 657b83
+        6: 586e75
+
+    foreground:
+        1: 002b36
+        2: 073642
+        3: 586e75
+        4: 657b83
+        5: 839496
+        6: 93a1a1
+
+    primary:
+        1: 859900
+        2: b58900
+        3: 2aa198
+        4: 268bd2
+        5: dc322f
+
+    yellow: b58900
+    orange: cb4b16
+    red: dc322f
+    magenta: d33682
+    violet: 6c71c4
+    blue: 268bd2
+    cyan: 2aa198
+    green: 859900

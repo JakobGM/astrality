@@ -4,6 +4,7 @@ from typing import (
     Any,
     Dict,
     ItemsView,
+    Iterable,
     KeysView,
     ValuesView,
     Optional,
@@ -111,6 +112,10 @@ class Resolver:
             return self.__getitem__(key)
         except KeyError:
             return defualt
+
+    def __iter__(self) -> Iterable[Value]:
+        """Return iterable of Resolver object."""
+        return self._dict.__iter__()
 
     def __repr__(self) -> str:
         """Return human-readable representation of Resolver object."""

@@ -2,7 +2,7 @@
 
 conky.config = {
 	use_xft = true,
-	font = '{{ fonts.1 }}',
+	font = '{{ fonts.1.name }}',
 	xftalpha = 0.1,
 	update_interval = 5,
 	total_run_times = 0,
@@ -40,7 +40,7 @@ conky.config = {
 };
 
 conky.text = [[
-    ${voffset 10}${color {{ colors.1 }}}${font {{ fonts.1 }}:pixelsize=120}${time %H:%M}${font}${font {{ fonts.1 }}:pixelsize=15}${voffset -85}${offset 5}${color {{ colors.1 }}} ${voffset 10}${color {{ colors.1 }}}${font {{ fonts.1 }}:pixelsize=22}${time %d}.${time %B} ${time %Y}${color {{ colors.1 }}}${font}${voffset 24}${font}${font {{ fonts.1 }}:pixelsize=45}${offset -182}${voffset -10}${time %A}${font}
+    ${voffset 10}${color {{ wallpaper_colors.1 }}}${font {{ fonts.1.name }}:pixelsize=120}${time %H:%M}${font}${font {{ fonts.1.name }}:pixelsize=15}${voffset -85}${offset 5}${color {{ wallpaper_colors.1 }}} ${voffset 10}${color {{ wallpaper_colors.1 }}}${font {{ fonts.1.name }}:pixelsize=22}${time %d}.${time %B} ${time %Y}${color {{ wallpaper_colors.1 }}}${font}${voffset 24}${font}${font {{ fonts.1.name }}:pixelsize=45}${offset -182}${voffset -10}${time %A}${font}
 ]];
 
 -- vim:filetype=lua
