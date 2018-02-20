@@ -3,7 +3,7 @@ background = #{{ colors.background.1 }}
 background-alt = #{{ colors.background.2 }}
 foreground = #{{ colors.foreground.1 }}
 foreground-alt = #{{ colors.foreground.2 }}
-alert = #{{ colors.red }}
+alert = #{{ colors.normal.red }}
 
 {# Here we create one bar for each output device specified in the host context section #}
 {% for display in host.displays.values() %}
@@ -46,7 +46,7 @@ font-0 = {{ fonts.1.name }}:pixelsize={{ fonts.1.size }};1
 
 modules-left = i3
 modules-center = volume now_playing
-modules-right = filesystem xbacklight wireless-network wired-network xkeyboard memory cpu temperature battery date powermenu
+modules-right = xbacklight filesystem wireless-network wired-network xkeyboard memory cpu temperature battery date powermenu
 
 tray-position = right
 tray-padding = 2
@@ -77,7 +77,7 @@ blacklist-0 = num lock
 
 format-prefix = "  "
 format-prefix-foreground = ${colors.foreground-alt}
-format-prefix-underline = #{{ colors.aqua }}
+format-prefix-underline = #{{ colors.normal.aqua }}
 
 label-layout = %layout%
 label-layout-underline = #{{ colors.primary.2 }}
@@ -190,7 +190,7 @@ label-unfocused-padding = 2
 ;   %index%
 ; Default: %icon%  %name%
 label-visible = [%index%]  %name%
-label-visible-underline = #{{ colors.grey }}
+label-visible-underline = #{{ colors.normal.gray }}
 label-visible-padding = 4
 
 ; Available tokens:
@@ -200,7 +200,7 @@ label-visible-padding = 4
 ; Default: %icon%  %name%
 label-urgent = %icon%
 label-urgent-foreground = #000000
-label-urgent-background = #{{ colors.red }}
+label-urgent-background = #{{ colors.normal.red }}
 label-urgent-padding = 4
 
 [module/mpd]
@@ -228,7 +228,7 @@ bar-indicator-foreground = #ff
 bar-indicator-font = 2
 bar-fill = ─
 bar-fill-font = 2
-bar-fill-foreground = #{{ colors.primary.5 }}
+bar-fill-foreground = #{{ colors.primary.2 }}
 bar-empty = ─
 bar-empty-font = 2
 bar-empty-foreground = ${colors.foreground-alt}
@@ -325,8 +325,8 @@ bar-volume-foreground-1 = #{{ colors.primary.1 }}
 bar-volume-foreground-2 = #{{ colors.primary.1 }}
 bar-volume-foreground-3 = #{{ colors.primary.1 }}
 bar-volume-foreground-4 = #{{ colors.primary.1 }}
-bar-volume-foreground-5 = #{{ colors.orange }}
-bar-volume-foreground-6 = #{{ colors.red }}
+bar-volume-foreground-5 = #{{ colors.normal.orange }}
+bar-volume-foreground-6 = #{{ colors.normal.red }}
 bar-volume-gradient = false
 bar-volume-indicator = |
 bar-volume-indicator-font = 2
@@ -390,9 +390,9 @@ expand-right = true
 format-spacing = 1
 
 label-open = 
-label-open-foreground = #{{ colors.red or 'cc231d' }}
+label-open-foreground = #{{ colors.normal.red or 'cc231d' }}
 label-close =  cancel
-label-close-foreground = #{{ colors.red or 'cc231d' }}
+label-close-foreground = #{{ colors.normal.red or 'cc231d' }}
 label-separator = |
 label-separator-foreground = ${colors.foreground-alt}
 

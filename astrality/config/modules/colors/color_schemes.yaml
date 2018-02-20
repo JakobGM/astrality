@@ -14,136 +14,204 @@
 context/gruvbox_dark:
 
     background:
-        1: 282828
-        2: 3c3836
-        3: 504945
-        4: 665c54
-        5: 7c6f64
+        1: '282828'
+        2: '3c3836'
+        3: '504945'
+        4: '665c54'
+        5: '7c6f64'
 
     foreground:
-        1: fbf1c7
-        2: ebdbb2
-        3: d5c4a1
-        4: bdae93
-        5: a89984
+        1: 'fbf1c7'
+        2: 'ebdbb2'
+        3: 'd5c4a1'
+        4: 'bdae93'
+        5: 'a89984'
 
     primary:
-        1: 98971a
-        2: 458588
-        3: d79921
-        4: d65d0e
-        5: cc249d
+        1: '98971a'
+        2: '458588'
+        3: 'd79921'
+        4: 'd65d0e'
+        5: 'cc249d'
 
-    white: fbf1c7
-    red: cc241d
-    green: 98971a
-    yellow: d79921
-    blue: 458588
-    purple: b16286
-    aqua: 689d6a
-    gray: 928374
-    orange: d65d0e
+    normal:
+        black:   '282828'
+        red:     'cc241d'
+        green:   '98971a'
+        yellow:  'd79921'
+        blue:    '458588'
+        purple:  'b16286'
+        aqua:    '689d6a'
+        gray:    '928374'
+        magenta: 'b16286'
+        cyan:    '689d6a'
+        orange:  'd65d0e'
+        white:   'a89984'
 
+    bright:
+        black:   '928374'
+        red:     'fb4934'
+        green:   'b8bb26'
+        yellow:  'fabd2f'
+        blue:    '83a598'
+        purple:  'd3869b'
+        aqua:    '8ec07c'
+        gray:    'a89984'
+        magenta: 'd3869b'
+        cyan:    '8ec07c'
+        orange:  'd65d0e'
+        white:   'ebdbb2'
 
 context/gruvbox_light:
 
     background:
-        1: fbf1c7
-        2: ebdbb2
-        3: d5c4a1
-        4: bdae93
-        5: a89984
+        1: 'fbf1c7'
+        2: 'ebdbb2'
+        3: 'd5c4a1'
+        4: 'bdae93'
+        5: 'a89984'
 
     foreground:
-        1: 3c3836
-        2: 3c3836
-        3: 504945
-        4: 665c54
-        5: 7c6f64
+        1: '3c3836'
+        2: '3c3836'
+        3: '504945'
+        4: '665c54'
+        5: '7c6f64'
 
     primary:
-        1: 98971a
-        2: 458588
-        3: d79921
-        4: d65d0e
-        5: cc249d
+        1: '98971a'
+        2: '458588'
+        3: 'd79921'
+        4: 'd65d0e'
+        5: 'cc249d'
 
-    white: fbf1c7
-    red: cc241d
-    green: 98971a
-    yellow: d79921
-    blue: 458588
-    purple: b16286
-    aqua: 689d6a
-    gray: 928374
-    orange: d65d0e
+    normal:
+        black:   '282828'
+        red:     'cc241d'
+        green:   '98971a'
+        yellow:  'd79921'
+        blue:    '458588'
+        purple:  'b16286'
+        aqua:    '689d6a'
+        gray:    '928374'
+        magenta: 'b16286'
+        cyan:    '689d6a'
+        orange:  'd65d0e'
+        white:   'a89984'
 
+    bright:
+        black:   '928374'
+        red:     'fb4934'
+        green:   'b8bb26'
+        yellow:  'fabd2f'
+        blue:    '83a598'
+        purple:  'd3869b'
+        aqua:    '8ec07c'
+        gray:    'a89984'
+        magenta: 'd3869b'
+        cyan:    '8ec07c'
+        orange:  'd65d0e'
+        white:   'ebdbb2'
 
 # The Solarized dark/light color schemes made by Ethan Schoonover
 # Source: http://ethanschoonover.com/solarized
 context/solarized_dark:
     background:
-        1: 002b36
-        2: 073642
-        3: 586e75
-        4: 657b83
-        5: 839496
-        6: 93a1a1
+        1: '002b36'
+        2: '073642'
+        3: '586e75'
+        4: '657b83'
+        5: '839496'
+        6: '93a1a1'
 
     foreground:
-        1: fdf6e3
-        2: eee8d5
-        3: 93a1a1
-        4: 839496
-        5: 657b83
-        6: 586e75
+        1: 'fdf6e3'
+        2: 'eee8d5'
+        3: '93a1a1'
+        4: '839496'
+        5: '657b83'
+        6: '586e75'
 
     primary:
-        1: 859900
-        2: b58900
-        3: cb4b16
-        4: 2aa198
-        5: 268bd2
-        6: dc322f
+        1: '859900'
+        2: 'b58900'
+        3: 'cb4b16'
+        4: '2aa198'
+        5: '268bd2'
+        6: 'dc322f'
 
-    yellow: b58900
-    orange: cb4b16
-    red: dc322f
-    magenta: d33682
-    violet: 6c71c4
-    blue: 268bd2
-    cyan: 2aa198
-    green: 859900
+    normal:
+        black:   '073642'
+        red:     'dc322f'
+        green:   '859900'
+        yellow:  'b58900'
+        blue:    '268bd2'
+        magenta: 'd33682'
+        cyan:    '2aa198'
+        white:   'eee8d5'
+        orange:  'cb4b16'
+        violet:  '6c71c4'
+        white: '000000'
+
+    bright:
+        black:   '002b36'
+        red:     'cb4b16'
+        green:   '586e75'
+        yellow:  '657b83'
+        blue:    '839496'
+        magenta: '6c71c4'
+        cyan:    '93a1a1'
+        white:   'fdf6e3'
+        orange:  'cb4b16'
+        violet:  '6c71c4'
+        white: '000000'
 
 context/solarized_light:
     background:
-        1: fdf6e3
-        2: eee8d5
-        3: 93a1a1
-        4: 839496
-        5: 657b83
-        6: 586e75
+        1: 'fdf6e3'
+        2: 'eee8d5'
+        3: '93a1a1'
+        4: '839496'
+        5: '657b83'
+        6: '586e75'
 
     foreground:
-        1: 002b36
-        2: 073642
-        3: 586e75
-        4: 657b83
-        5: 839496
-        6: 93a1a1
+        1: '002b36'
+        2: '073642'
+        3: '586e75'
+        4: '657b83'
+        5: '839496'
+        6: '93a1a1'
 
     primary:
-        1: 859900
-        2: b58900
-        3: 2aa198
-        4: 268bd2
-        5: dc322f
+        1: '859900'
+        2: 'b58900'
+        3: '2aa198'
+        4: '268bd2'
+        5: 'dc322f'
 
-    yellow: b58900
-    orange: cb4b16
-    red: dc322f
-    magenta: d33682
-    violet: 6c71c4
-    blue: 268bd2
-    cyan: 2aa198
-    green: 859900
+    normal:
+        black:   '073642'
+        red:     'dc322f'
+        green:   '859900'
+        yellow:  'b58900'
+        blue:    '268bd2'
+        magenta: 'd33682'
+        cyan:    '2aa198'
+        white:   'eee8d5'
+        orange:  'cb4b16'
+        violet:  '6c71c4'
+        white: '000000'
+
+    bright:
+        black:   '002b36'
+        red:     'cb4b16'
+        green:   '586e75'
+        yellow:  '657b83'
+        blue:    '839496'
+        magenta: '6c71c4'
+        cyan:    '93a1a1'
+        white:   'fdf6e3'
+        orange:  'cb4b16'
+        violet:  '6c71c4'
+        white: '000000'

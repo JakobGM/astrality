@@ -76,6 +76,14 @@ context/fonts:
         name: RobotoMono Nerd Font
         size: 8
 
+    # We also add some configurations which are specific for some application
+    # types.
+    terminal:
+        size: 12
+
+    status_bar:
+        size: 8
+
 
 module/colors:
     # This module is used to import a color scheme into the `color` context
@@ -87,6 +95,18 @@ module/colors:
             - from_path: modules/colors/color_schemes.yaml
               from_section: gruvbox_dark
               to_section: colors
+
+
+module/alacritty:
+    # Use the colors defined in the `colors` module for the color scheme
+    # in Alacritty, a terminal emulator: https://github.com/jwilm/alacritty
+    enabled: false
+    requires: command -v alacritty
+
+    on_startup:
+        compile:
+            - template: modules/alacritty/alacritty.yaml.template
+              target: ${XDG_CONFIG_HOME}/alacritty/alacritty.yml
 
 
 module/polybar:
