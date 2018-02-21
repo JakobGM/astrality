@@ -64,6 +64,9 @@ context/fonts:
     # defined, it will be replaced with {{ ast:fonts:3 }} instead. This is
     # useful when you dont want to assume how many fonts you want to use when
     # you write your templates.
+    #
+    # Here we define the main fonts used across our applications. Where 1
+    # is the primary font, 2 the secondary font, and so on.
     1:
         name: FuraCode Nerd Font
         size: 8
@@ -97,16 +100,25 @@ module/colors:
               to_section: colors
 
 
-module/alacritty:
+module/terminals:
     # Use the colors defined in the `colors` module for the color scheme
-    # in Alacritty, a terminal emulator: https://github.com/jwilm/alacritty
+    # for all the terminals you might use. Making it easy to switch color
+    # schemes for all your terminals at the same time.
+    #
+    # Alacritty: https://github.com/jwilm/alacritty
+    # Kitty: https://github.com/kovidgoyal/kitty
+
     enabled: false
-    requires: command -v alacritty
+    requires: 
+        - command -v alacritty
+        - command -v kitty
 
     on_startup:
         compile:
-            - template: modules/alacritty/alacritty.yaml.template
+            - template: modules/terminals/alacritty.yaml.template
               target: ${XDG_CONFIG_HOME}/alacritty/alacritty.yml
+            - template: modules/terminals/kitty.conf.template
+              target: ${XDG_CONFIG_HOME}/kitty/kitty.conf
 
 
 module/polybar:

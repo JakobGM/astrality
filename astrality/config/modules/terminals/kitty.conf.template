@@ -1,0 +1,188 @@
+# vim:fileencoding=utf-8:ft=conf
+
+# Fully featured
+font_family      {{ fonts.1.name }}
+italic_font      auto
+bold_font        auto
+bold_italic_font auto
+
+# Font size (in pts)
+font_size        {{ fonts.terminal.size }}
+
+# The amount the font size is changed by (in pts) when increasing/decreasing
+# the font size in a running terminal.
+font_size_delta 2
+
+# Nord theme - ported from https://github.com/arcticicestudio/nord-hyper
+foreground            #{{ colors.foreground.1 | upper }}
+background            #{{ colors.background.1 | upper }}
+selection_foreground  #{{ colors.foreground.4 | upper }}
+selection_background  #{{ colors.background.4 | upper }}
+url_color             #{{ colors.bright.blue | upper }}
+cursor                #{{ colors.primary.1 | upper }}
+
+# black
+color0   #{{ colors.normal.black | upper }}
+color8   #{{ colors.bright.black | upper }}
+
+# red
+color1   #{{ colors.normal.red | upper }}
+color9   #{{ colors.normal.red | upper }}
+
+# green
+color2   #{{ colors.normal.green | upper }}
+color10  #{{ colors.bright.green | upper }}
+
+# yellow
+color3   #{{ colors.normal.yellow | upper }}
+color11  #{{ colors.bright.yellow | upper }}
+
+# blue
+color4  #{{ colors.normal.blue | upper }}
+color12 #{{ colors.bright.blue | upper }}
+
+# magenta
+color5   #{{ colors.normal.magenta | upper }}
+color13  #{{ colors.bright.magenta | upper }}
+
+# cyan
+color6   #{{ colors.normal.cyan | upper }}
+color14  #{{ colors.bright.cyan | upper }}
+
+# white
+color7   #{{ colors.normal.white | upper }}
+color15  #{{ colors.bright.white | upper }}
+
+# Mouse & cursor
+cursor_blink_interval     0.4
+cursor_stop_blinking_after 4.0
+# one of (block, beam, underline)
+cursor_shape     beam
+mouse_hide_wait 3.0
+
+scrollback_lines 10000
+scrollback_pager less +G -R
+scrollback_in_new_tab no
+
+# Wheel scroll multiplier (modify the amount scrolled by the mouse wheel). Use negative
+# numbers to change scroll direction.
+wheel_scroll_multiplier 5.0
+
+# The interval between successive clicks to detect double/triple clicks (in seconds)
+click_interval 0.5
+
+#Select for double clicking
+select_by_word_characters :@-./_~?&=%+#
+
+#don't care, use i3.
+focus_follows_mouse yes
+remember_window_size   no
+enabled_layouts *
+initial_window_width   640
+initial_window_height  400
+
+# 10 yields ~100 FPS which is more than sufficient for most uses.
+repaint_delay    10
+
+# Delay (in milliseconds) before input from the program running in the terminal
+# is processed.
+input_delay 3
+
+#bell
+visual_bell_duration 0.1
+enable_audio_bell no
+
+# The modifier keys to press when clicking with the mouse on URLs to open the URL
+open_url_modifiers ctrl+shift
+open_url_with default
+
+# Choose whether to use the system implementation of wcwidth() (used to
+# control how many cells a character is rendered in).  If you use the system
+# implementation, then kitty and any programs running in it will agree. The
+# problem is that system implementations often are based on outdated unicode
+# standards and get the width of many characters, such as emoji, wrong. So if
+# you are using kitty with programs that have their own up-to-date wcwidth()
+# implementation, set this option to no.
+use_system_wcwidth yes
+
+# The value of the TERM environment variable to set
+term xterm-kitty
+
+#window decorations
+window_border_width 0
+window_padding_width 0
+active_border_color #{{ colors.bright.green }}
+inactive_border_color #cccccc
+
+# Tab-bar colors
+active_tab_foreground #000
+active_tab_background #eee
+inactive_tab_foreground #444
+inactive_tab_background #999
+
+
+# Key mappings
+
+# Clipboard
+map ctrl+shift+v        paste_from_clipboard
+map ctrl+shift+s        paste_from_selection
+map ctrl+shift+c        copy_to_clipboard
+map shift+insert        paste_from_selection
+map ctrl+shift+o      pass_selection_to_program google-chrome
+# map ctrl+shift+o        pass_selection_to_program
+
+# Scrolling
+map ctrl+shift+up        scroll_line_up
+map ctrl+shift+down      scroll_line_down
+map ctrl+shift+k         scroll_line_up
+map ctrl+shift+j         scroll_line_down
+map ctrl+shift+page_up   scroll_page_up
+map ctrl+shift+page_down scroll_page_down
+map ctrl+shift+home      scroll_home
+map ctrl+shift+end       scroll_end
+map ctrl+shift+h         show_scrollback
+
+# Window management
+map ctrl+shift+enter    new_window
+map ctrl+shift+w        close_window
+map ctrl+shift+]        next_window
+map ctrl+shift+[        previous_window
+map ctrl+shift+f        move_window_forward
+map ctrl+shift+b        move_window_backward
+map ctrl+shift+`        move_window_to_top
+map ctrl+shift+1        first_window
+map ctrl+shift+2        second_window
+map ctrl+shift+3        third_window
+map ctrl+shift+4        fourth_window
+map ctrl+shift+5        fifth_window
+map ctrl+shift+6        sixth_window
+map ctrl+shift+7        seventh_window
+map ctrl+shift+8        eighth_window
+map ctrl+shift+9        ninth_window
+map ctrl+shift+0        tenth_window
+# You can also open a new window running an arbitrary program, for example:
+# map ctrl+shift+y      new_window mutt
+# You can also pass the current selection to the new program by using the @selection placeholder
+# map ctrl+shift+y      new_window less @selection
+# Finally, you can even send the contents of the current screen + history buffer as stdin using
+# the placeholders @text (which is the plain text) and @ansi (which includes text styling escape codes)
+# For example, the following command opens the scrollback buffer in less in a new window.
+# map ctrl+shift+y      new_window @ansi less +G -R
+
+
+# Tab management
+map ctrl+shift+right    next_tab
+map ctrl+shift+left     previous_tab
+map ctrl+shift+t        new_tab
+map ctrl+shift+q        close_tab
+map ctrl+shift+l        next_layout
+map ctrl+shift+.        move_tab_forward
+map ctrl+shift+,        move_tab_backward
+# Just as with new_window above, you can also pass the name of arbitrary
+# commands to run when using new_tab.
+
+# Miscellaneous
+map ctrl+shift+equal    increase_font_size
+map ctrl+shift+minus    decrease_font_size
+map ctrl+shift+backspace restore_font_size
+map ctrl+shift+f11      toggle_fullscreen

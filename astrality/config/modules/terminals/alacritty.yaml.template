@@ -26,8 +26,8 @@ window:
   # Units are physical pixels; this is not DPI aware.
   # (change requires restart)
   padding:
-    x: 2
-    y: 2
+    x: 0
+    y: 0
 
   # Window decorations
   # Setting this to false will result in window without borders and title bar.
@@ -141,15 +141,15 @@ colors:
     white:   '0x{{ colors.bright.white }}'
 
   # Dim colors (Optional)
-  dim:
-    # black:   '0x{{ colors.black }}'
-    # red:     '0x{{ colors.red }}'
-    # green:   '0x{{ colors.green }}'
-    # yellow:  '0x{{ colors.yellow }}'
-    # blue:    '0x{{ colors.blue }}'
-    # magenta: '0x{{ colors.magenta or colors.purple }}'
-    # cyan:    '0x{{ colors.cyan or colors.blue }}'
-    # white:   '0x{{ colors.white }}'
+  # dim:
+    # black:   '0x{{ colors.normal.black }}'
+    # red:     '0x{{ colors.normal.red }}'
+    # green:   '0x{{ colors.normal.green }}'
+    # yellow:  '0x{{ colors.normal.yellow }}'
+    # blue:    '0x{{ colors.normal.blue }}'
+    # magenta: '0x{{ colors.normal.magenta or colors.normal.purple }}'
+    # cyan:    '0x{{ colors.normal.cyan or colors.normal.blue }}'
+    # white:   '0x{{ colors.normal.white }}'
 
 
 # Visual Bell
