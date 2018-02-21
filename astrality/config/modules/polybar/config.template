@@ -11,12 +11,12 @@ alert = #{{ colors.normal.red }}
 monitor = {{ display.handle }}
 ; monitor = eDP1
 width = 100%
-height = 20
+height = {{ (fonts.status_bar.size * 2.5) | int }}
 ;offset-x = 1%
 ;offset-y = 1%
 
 ; HiDPI support
-dpi = {{ host.displays.primary.dpi }}
+dpi = {{ display.dpi }}
 tray-maxsize = 1000
 
 ; No rounded corner
@@ -42,7 +42,7 @@ module-margin-right = 2
 
 ; font-0 = fixed:pixelsize=10;1
 ; font-1 = unifont:fontformat=truetype:size=8:antialias=false;0
-font-0 = {{ fonts.1.name }}:pixelsize={{ fonts.1.size }};1
+font-0 = {{ fonts.1.name }}:pixelsize={{ fonts.status_bar.size }};1
 
 modules-left = i3
 modules-center = volume now_playing
