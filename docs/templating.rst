@@ -238,4 +238,52 @@ Now that you know how to write Astrality templates, you might wonder how to actu
     #. Specify when to compile the template, by using an :ref:`event block <events>` within the module.
     #. Inserting a :ref:`compile action <compile_action>` into such an event block, telling Astrality to compile your template.
 
+Here is a very simple example that demonstrate how to compile a template to a target path.
+Let us assume that you have written the following template:
+
+.. code-block:: dosini
+
+    # Source: $ASTRALITY_CONFIG_HOME/modules/test/template
+    
+    current_user={{ host.user }}
+
+Where you want to replace ``{{ host.user }}`` with your username. Let us define the context value used for insertion:
+
+.. code-block:: yaml
+
+    # Source: $ASTRALITY_CONFIG_HOME/astrality.yaml
+
+    context/host:
+        user=${USER}
+
+In order to compile this template to ``/tmp/config.ini`` we write the following module, 
+which will compile the template on Astrality startup:
+
+.. code-block:: yaml
+
+    # Source: $ASTRALITY_CONFIG_HOME/astrality.yaml
+
+    context/host:
+        user=${USER}
+
+    module/some_name:
+        on_startup:
+            compile:
+                template: modules/test/template
+                target: /tmp/config.ini
+
+Now we can compile the template by starting Astrality:
+
+.. code-block:: console
+
+    $ astrality
+
+The result should be:
+
+.. code-block:: dosini
+
+    # Source: /tmp/config.ini
+    
+    current_user=yourusername
+
 This is probably a bit overwhelming. I recommend to just continue to the next page to get a more gentle introduction to these concepts.
