@@ -214,7 +214,15 @@ def insert_environment_values(
     env_variable_pattern = re.compile(r'\$\{(\w+)\}')
 
     def expand_environment_variable(match: Match[str]) -> str:
-        return env_dict[match.groups()[0]]
+        env_variable = match.groups()[0]
+        try:
+            return env_dict[env_variable]
+        except KeyError:
+            logging.error(
+                f'Could not insert environment variable {env_variable}. '
+                'It is not defined. Leaving it as is in the configuration.'
+            )
+            return '${' + env_variable + '}'
 
     return env_variable_pattern.sub(
         expand_environment_variable,

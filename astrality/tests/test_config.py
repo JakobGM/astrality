@@ -134,6 +134,14 @@ def test_insert_environment_variables():
     expected = 'value2'
     assert insert_environment_values(upper_case_conficting_key) == expected
 
+def test_inserting_environment_variable_that_does_not_exist(caplog):
+    config_line= 'key=value-${DOES_NOT_EXIST}'
+    assert insert_environment_values(config_line) == config_line
+
+    assert caplog.record_tuples[0][2] == \
+        'Could not insert environment variable DOES_NOT_EXIST. ' \
+        'It is not defined. Leaving it as is in the configuration.'
+
 def test_insert_context_section():
     context = compiler.context({'context/section1': {'key_one': 'value_one'}})
     assert context['section1']['key_one'] == 'value_one'
