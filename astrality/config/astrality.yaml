@@ -53,6 +53,16 @@ context/host:
         ethernet:
             handle: eno0
 
+    commands:
+        # Here we define some commands that might change between hosts
+        # with different stacks, i.e. systemd vs init, or wayland vs Xorg
+        shutdown: systemctl poweroff -i
+        reboot: systemctl reboot -i
+
+        # In order to insert our global IP into a template, we can now do:
+        # {{ host.commands.global_ip | shell }}
+        global_ip: 'wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1 | xargs'
+
 
 context/fonts:
     # Here we define some context values for fonts that we want to use in

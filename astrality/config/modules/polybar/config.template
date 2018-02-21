@@ -259,7 +259,7 @@ type = internal/network
 interface = {{ host.interfaces.wlan.handle }}
 interval = 3.0
 
-format-connected = <ramp-signal> <label-connected>
+format-connected = <ramp-signal> <label-connected> [{{ host.commands.global_ip | shell(timeout=2) }}]
 format-connected-underline = #{{ colors.primary.2 }}
 label-connected = %essid%
 
@@ -397,9 +397,9 @@ label-separator = |
 label-separator-foreground = ${colors.foreground-alt}
 
 menu-0-0 = reboot
-menu-0-0-exec = systemctl reboot -i
+menu-0-0-exec = {{ host.commands.reboot }}
 menu-0-1 = power off
-menu-0-1-exec = systemctl poweroff -i
+menu-0-1-exec = {{ host.commands.shutdown }}
 
 [settings]
 screenchange-reload = true
