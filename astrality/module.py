@@ -11,9 +11,15 @@ from jinja2.exceptions import TemplateNotFound
 
 from astrality import compiler
 from astrality.compiler import context
-from astrality.config import ApplicationConfig, insert_into, user_configuration
-from astrality.filewatcher import DirectoryWatcher
+from astrality.config import (
+    ApplicationConfig,
+    GlobalModulesConfig,
+    expand_path,
+    insert_into,
+    user_configuration,
+)
 from astrality.event_listener import EventListener, event_listener_factory
+from astrality.filewatcher import DirectoryWatcher
 from astrality.utils import run_shell
 
 
@@ -68,7 +74,7 @@ class Module:
         assert len(module_config) == 1
 
         section = next(iter(module_config.keys()))
-        self.name: str = section.split('/')[1]
+        self.name: str = section[7:]
 
         self.module_config = module_config[section]
         self.populate_event_blocks()
@@ -287,7 +293,7 @@ class Module:
 
         try:
             module_name = next(iter(section.keys()))
-            valid_module_name = module_name.split('/')[0] == 'module'  # type: ignore
+            valid_module_name = module_name.split('/')[0].lower() == 'module'  # type: ignore
             enabled = section[module_name].get('enabled', True)
             if not (valid_module_name and enabled):
                 return False
@@ -319,9 +325,23 @@ class ModuleManager:
     """A manager for operating on a set of modules."""
 
     def __init__(self, config: ApplicationConfig) -> None:
-        self.application_config = config
+        """Initialize a ModuleManager object from `astrality.yaml` dict."""
+
         self.config_directory = Path(config['_runtime']['config_directory'])
         self.temp_directory = Path(config['_runtime']['temp_directory'])
+
+        # Get module configurations which are externally defined
+        global_modules_config = GlobalModulesConfig(  # type: ignore
+            config=config.get('config/modules', {}),
+            config_directory=self.config_directory,
+        ).module_configs_dict()
+
+        # Variables in `astrality.yaml` should have preference if naming conflicts
+        # occur.
+        global_modules_config.update(config)
+        config = global_modules_config
+
+        self.application_config = config
 
         self.application_context = context(config)
         self.modules: Dict[str, Module] = {}
@@ -782,16 +802,10 @@ class ModuleManager:
         Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
         expanded to the home directory of $USER.
         """
-
-        path = Path.expanduser(path)
-
-        if not path.is_absolute():
-            path = Path(
-                self.config_directory,
-                path,
-            )
-
-        return path
+        return expand_path(
+            path=path,
+            config_directory=self.config_directory,
+        )
 
     def interpolate_string(self, string: str) -> str:
         """Replace all template placeholders with the compilation path."""

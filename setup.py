@@ -14,9 +14,10 @@ setup(
     version='0.4.2',
     packages=find_packages(),
     install_requires=[
-        'astral',
-        'pyyaml',
         'Jinja2',
+        'astral',
+        'mypy_extensions',
+        'pyyaml',
         'watchdog',
     ],
     python_requires='>=3.6',

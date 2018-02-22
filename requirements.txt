@@ -20,6 +20,7 @@ imagesize==0.7.1          # via sphinx
 jinja2==2.10
 livereload==2.5.1         # via sphinx-autobuild
 markupsafe==1.0           # via jinja2
+mypy-extensions==0.3.0
 mypy==0.560
 packaging==16.8           # via sphinx
 pathtools==0.1.2          # via sphinx-autobuild, watchdog

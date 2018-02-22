@@ -16,6 +16,9 @@ pytest-mypy
 # For typing
 mypy
 
+# For TypedDict
+mypy_extensions
+
 # Needed in order to get the time of dawn, noon, sunset, and dusk
 astral
 

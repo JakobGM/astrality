@@ -1,0 +1,3 @@
+module/thailand:
+    enabled: True
+    safe: True
