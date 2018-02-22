@@ -359,7 +359,7 @@ class TestModuleClass:
         template_file = single_module_manager.templates['../templates/test_template.conf'].source
         compiled_template = single_module_manager.templates['../templates/test_template.conf'].target
 
-        assert template_file.resolve() == Path(__file__).parent / 'templates' / 'test_template.conf'
+        assert template_file.resolve() == Path(__file__).parents[1] / 'templates' / 'test_template.conf'
         assert compiled_template == Path('/tmp/compiled_result')
 
     def test_location_of_template_file_defined_absolutely(
@@ -368,7 +368,7 @@ class TestModuleClass:
         default_global_options,
         _runtime,
     ):
-        absolute_path = Path(__file__).parent / 'templates' / 'test_template.conf'
+        absolute_path = Path(__file__).parents[1] / 'templates' / 'test_template.conf'
         valid_module_section['module/test_module']['on_startup']['compile'][0]['template'] = absolute_path
 
         valid_module_section.update(default_global_options)
@@ -605,7 +605,7 @@ def config_with_modules(default_global_options):
         },
         'context/fonts': {1: 'FuraCode Nerd Font'},
         '_runtime': {
-            'config_directory': Path(__file__).parents[2],
+            'config_directory': Path(__file__).parents[3],
             'temp_directory': '/tmp',
         }
     }
@@ -806,7 +806,7 @@ def test_that_shell_filter_is_run_from_config_directory(
     _runtime,
     test_config_directory,
 ):
-    shell_filter_template = Path(__file__).parent / 'templates' / 'shell_filter_working_directory.template'
+    shell_filter_template = Path(__file__).parents[1] / 'templates' / 'shell_filter_working_directory.template'
     shell_filter_template_target = Path('/tmp/astrality/shell_filter_working_directory.template')
     config = {
         'module/A': {
