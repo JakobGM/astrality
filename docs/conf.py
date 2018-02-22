@@ -125,7 +125,7 @@ html_sidebars = {
 }
 
 # Logo for the documentation
-html_logo = 'astrality_logo.png'
+html_logo = 'images/astrality_logo.png'
 
 
 # -- Options for HTMLHelp output ------------------------------------------

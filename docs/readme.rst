@@ -13,7 +13,7 @@
     :target: http://astrality.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. |logo| image:: https://github.com/JakobGM/astrality/raw/master/docs/astrality_logo.png
+.. |logo| image:: https://github.com/JakobGM/astrality/raw/master/docs/images/astrality_logo.png
 
 =====================================================================================================
 |logo| Astrality - A Dynamic Configuration File Manager |pypi_version| |travis-ci| |rtfd| |coveralls|
@@ -25,6 +25,14 @@ What does it do?
 Astrality is a tool for managing configuration files and scheduling tasks related to those files.
 
 You can create templates for your configuration files, and Astrality will replace placeholders within those templates with ``context`` values defined in a central configuration file. Furthermore, you can dynamically manipulate that ``context`` at predefined times and events.
+
+**Here is gif demonstrating how Astrality is used to**:
+
+#) Automatically change the desktop wallpaper based on the sun's position in the sky.
+#) Dynamically change the font size of Polybar.
+#) Change to the same color scheme of `alacritty <https://github.com/jwilm/alacritty>`_, `kitty <https://github.com/kovidgoyal/kitty>`_, and `polybar <https://github.com/jaagr/polybar>`_ at the same time.
+
+.. image:: https://user-images.githubusercontent.com/10655778/36535609-934488ec-17ca-11e8-860e-4af5e1464997.gif
 
 **Possible use cases are:**
 
