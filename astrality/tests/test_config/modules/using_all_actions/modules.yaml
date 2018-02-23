@@ -1,0 +1,20 @@
+module/vietnam:
+    on_startup:
+        import_context:
+            from_path: south_context.yaml
+        compile:
+            template: module.template
+            target: compiled.tmp
+        run:
+            - touch touched.tmp
+
+    on_modified:
+        watched_for_modifications:
+            import_context:
+                from_path: north_context.yaml
+            compile:
+                template: module.template
+                target: compiled.tmp
+            run:
+                - touch watch_touched.tmp
+

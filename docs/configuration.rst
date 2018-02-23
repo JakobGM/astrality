@@ -88,13 +88,13 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 Astrality configuration options
 ===============================
 
-Global Astrality configuration options are specified in ``astrality.yaml`` within a dictionary named ``settings/astrality``, i.e.:
+Global Astrality configuration options are specified in ``astrality.yaml`` within a dictionary named ``config/astrality``, i.e.:
 
 .. code-block:: yaml
 
     # Source file: $ASTRALITY_CONFIG_HOME/astrality.yaml
 
-    settings/astrality:
+    config/astrality:
         option1: value1
         option2: value2
         ...

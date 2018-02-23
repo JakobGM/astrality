@@ -173,7 +173,7 @@ def test_hot_reloading(
     application_config1 = dict_from_config_file(config1)
     application_config1.update(default_global_options)
     application_config1.update(_runtime)
-    application_config1['settings/astrality']['hot_reload_config'] = True
+    application_config1['config/astrality']['hot_reload_config'] = True
 
     module_manager = ModuleManager(application_config1)
 
@@ -318,7 +318,9 @@ def test_recompile_templates_when_modified(
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
-    application_config['settings/astrality']['recompile_modified_templates'] = True
+    application_config['config/modules'] = {
+        'recompile_modified_templates': True,
+    }
 
     module_manager = ModuleManager(application_config)
 
@@ -374,7 +376,9 @@ def test_recompile_templates_when_modified_overridden(
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
-    application_config['settings/astrality']['recompile_modified_templates'] = True
+    application_config['config/modules'] = {
+        'recompile_modified_templates': True,
+    }
 
     module_manager = ModuleManager(application_config)
 

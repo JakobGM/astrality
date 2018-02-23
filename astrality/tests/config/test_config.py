@@ -9,6 +9,7 @@ from astrality import compiler
 from astrality.config import (
     create_config_directory,
     dict_from_config_file,
+    expand_path,
     generate_expanded_env_dict,
     insert_environment_values,
     insert_command_substitutions,
@@ -240,3 +241,23 @@ class TestCreateConfigDirectory:
         assert 'astrality.yaml' in dir_contents
         assert 'modules' in dir_contents
         rmtree(created_config_dir)
+
+def test_expand_path_method(test_config_directory):
+    absolute_path = Path('/tmp/ast')
+    tilde_path = Path('~/dir')
+    relative_path = Path('test')
+
+    assert expand_path(
+        path=absolute_path,
+        config_directory=Path('/what/ever'),
+    ) == absolute_path
+
+    assert expand_path(
+        path=tilde_path,
+        config_directory=Path('/what/ever'),
+    ) == Path.home() / 'dir'
+
+    assert expand_path(
+        path=relative_path,
+        config_directory=test_config_directory,
+    ) == test_config_directory / 'test'

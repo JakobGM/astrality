@@ -6,8 +6,8 @@ from astrality.config import GlobalModulesConfig, ExternalModuleSource
 @pytest.fixture
 def modules_application_config():
     return {
-        'modules_directory_path': 'test_modules',
-        'enabled': [
+        'modules_directory': 'test_modules',
+        'enabled_modules': [
             {'name': 'oslo', 'safe': False},
             {'name': 'trondheim'},
         ],
@@ -24,7 +24,7 @@ def test_default_options_for_modules(conf_path):
 
 def test_custom_modules_folder(conf_path):
     modules_config = GlobalModulesConfig(
-        config={'modules_directory_path': 'test_modules'},
+        config={'modules_directory': 'test_modules'},
         config_directory=conf_path,
     )
 
@@ -33,7 +33,7 @@ def test_custom_modules_folder(conf_path):
 
 def test_enabled_modules(conf_path):
     modules_config = GlobalModulesConfig({
-        'enabled': [
+        'enabled_modules': [
             {'name': 'oslo', 'safe': True},
             {'name': 'trondheim'},
         ],
@@ -86,10 +86,9 @@ def test_retrieval_of_external_module_config(test_config_directory):
         modules_directory_path=test_config_directory / 'modules',
         config_directory=test_config_directory,
     )
-    burma_path = test_config_directory / 'modules' / 'burma'
 
     assert external_module_source.module_config_dict() == {
-        f'module/burma[{burma_path}]': {
+        f'module/burma.burma': {
             'enabled': True,
             'safe': False,
         },
@@ -98,7 +97,7 @@ def test_retrieval_of_external_module_config(test_config_directory):
 
 def test_retrieval_of_merged_module_configs(test_config_directory):
     modules_application_config = {
-        'enabled': [
+        'enabled_modules': [
             {'name': 'burma'},
             {'name': 'thailand'},
         ],
@@ -111,11 +110,11 @@ def test_retrieval_of_merged_module_configs(test_config_directory):
     thailand_path = test_config_directory / 'modules' / 'thailand'
 
     assert modules_config.module_configs_dict() == {
-        f'module/burma[{burma_path}]': {
+        f'module/burma.burma': {
             'enabled': True,
             'safe': False,
         },
-        f'module/thailand[{thailand_path}]': {
+        f'module/thailand.thailand': {
             'enabled': True,
             'safe': True,
         },

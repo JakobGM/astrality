@@ -1,6 +1,8 @@
 from astrality.module import Module
 
-def test_that_module_configuration_is_processed_correctly_before_use():
+def test_that_module_configuration_is_processed_correctly_before_use(
+    test_config_directory,
+):
     """
     Test that all list item configurations can be given as single strings,
     and that missing configuration options are inserted.
@@ -21,7 +23,10 @@ def test_that_module_configuration_is_processed_correctly_before_use():
         },
     }}
 
-    module = Module(module_config)
+    module = Module(
+        module_config=module_config,
+        module_directory=test_config_directory,
+    )
 
     processed_config = {
         'on_startup': {

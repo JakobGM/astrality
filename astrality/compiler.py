@@ -46,7 +46,7 @@ def context(config: ApplicationConfig) -> Context:
     for section_name, section in config.items():
         if not isinstance(section_name, str) or \
            not len(section_name) > 8 or \
-           not section_name[:8] == 'context/':
+           not section_name[:8].lower() == 'context/':
             continue
         else:
             category = section_name[8:]

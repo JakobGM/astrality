@@ -18,10 +18,26 @@ These modules are used to define:
 
 .. _modules_how_to_define:
 
-How to define a module
-======================
+How to define modules
+=====================
 
-Modules are defined in ``astrality.yaml``.
+There are two types of places where you can define your modules:
+
+Directly in ``$ASTRALITY_CONFIG_HOME/astrality.yaml``:
+    Useful if you don't have too many modules, and you want to keep everything easily accessible in one file.
+
+In a file named ``modules.yaml`` within a :ref:`modules directory <modules_directory>`:
+    Useful if you have lots of modules, and want to separate them into separate directories with common responsibilities.
+
+    See the :ref:`documentation <modules_external_modules>` for external modules for how to define modules this way.
+
+.. hint::
+    A useful configuration structure is to define modules with "global responsibilities" in ``astrality.yaml``, and group the remaining modules in seperate module directories by their categorical responsibilites (for example "terminals").
+
+    Here "global responsibility" means having the responsibility to satisfy the dependecies of several other modules, such as defining context values used in several templates, creating directories, or installing common dependencies.
+
+Module definition syntax
+------------------------
 They should be formated as *dictionaries* placed at the root indentation level, and **must** be named ``module/*``.
 Choose ``*`` to be whatever you want to name your module.
 The simplest module, with no associated behaviour, is:
@@ -403,3 +419,68 @@ This ensures the following invariants:
 
     * When you compile templates, all ``context`` imports have been performed, and are available for placeholder substitution.
     * When you run shell commands, all templates have been compiled, and are available for reference.
+
+
+.. _modules_global_config:
+
+Global configuration options for modules
+========================================
+
+Global configuration options for all your modules are specified in ``astrality.yaml`` within a dictionary named ``config/modules`` at root indentation, i.e.:
+
+.. code-block:: yaml
+
+    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yaml
+
+    config/modules:
+        option1: value1
+        option2: value2
+        ...
+
+**Avalable modules configuration options**:
+
+``recompile_modified_templates:``
+    *Defualt:* ``false``
+
+    If enabled, Astrality will watch for modifications to all templates sources :ref:`specified <compile_action>` in your enabled modules.
+    If a template is modified, it will be recompiled to its specified target path(s).
+
+    .. note::
+        With this option enabled, any modified template will be recompiled as long
+        as it is specified within a :ref:`compile action <compile_action>`, regardless of
+        exactly *when* you intended the template to be compiled in the first place.
+
+        For instance, if a template is configured to be compiled on Astrality exit,
+        and not sooner, it will still be recompiled when it is modified, even though
+        Astrality has not exited.
+
+        You can have more fine-grained control over exactly *what* happens when
+        a file is modified by using the ``on_modified`` :ref:`module event <events>`.
+        This way you can run shell commands, import context values, and compile
+        arbitrary templates when specific files are modified on disk.
+
+    .. caution::
+        At the moment, Astrality only watches for file changes recursively within
+        ``$ASTRALITY_CONFIG_HOME``.
+
+.. _modules_directory:
+
+``modules_directory:``
+    *default:* ``modules``
+
+    Where Astrality looks for externally defined configurations directories.
+
+.. _modules_enabled_modules:
+
+``enabled_modules:``
+    *default* ``empty list []``
+
+    TODO:
+
+
+.. _modules_external_modules:
+
+External modules
+================
+
+TODO:

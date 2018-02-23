@@ -50,13 +50,19 @@ def simple_application_config(
     config['context/fonts'] = {1: 'FuraMono Nerd Font'}
 
     # Increase run timeout, so that we can inspect the shell results
-    config['settings/astrality']['run_timeout'] = 2
+    config['config/astrality']['run_timeout'] = 2
     return config
 
 
 @pytest.fixture
-def module(valid_module_section):
-    return Module(valid_module_section)
+def module(
+    valid_module_section,
+    test_config_directory,
+):
+    return Module(
+        module_config=valid_module_section,
+        module_directory=test_config_directory,
+    )
 
 @pytest.fixture
 def single_module_manager(simple_application_config):
@@ -116,8 +122,14 @@ class TestModuleClass:
     def test_module_event_listener_class(self, module):
         assert isinstance(module.event_listener, event_listener.Weekday)
 
-    def test_using_default_static_event_listener_when_no_event_listener_is_given(self):
-        static_module = Module({'module/static': {}})
+    def test_using_default_static_event_listener_when_no_event_listener_is_given(
+        self,
+        test_config_directory
+    ):
+        static_module = Module(
+            module_config={'module/static': {}},
+            module_directory=test_config_directory,
+        )
         assert isinstance(static_module.event_listener, event_listener.Static)
 
     @freeze_time('2018-01-27')
@@ -173,6 +185,7 @@ class TestModuleClass:
         single_module_manager.run_shell(
             command='sleep 2.1',
             timeout=2,
+            working_directory=Path('/'),
             module_name='name',
         )
         assert 'used more than 2 seconds' in caplog.record_tuples[1][2]
@@ -185,6 +198,7 @@ class TestModuleClass:
         single_module_manager.run_shell(
             command='thiscommandshould not exist',
             timeout=2,
+            working_directory=Path('/'),
             module_name='name',
         )
         assert 'not found' in caplog.record_tuples[1][2]
@@ -198,6 +212,7 @@ class TestModuleClass:
         single_module_manager.run_shell(
             command='echo $USER',
             timeout=2,
+            working_directory=Path('/'),
             module_name='name',
         )
         assert caplog.record_tuples == [
@@ -250,6 +265,7 @@ class TestModuleClass:
         simple_application_config['module/test_module']['on_startup'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
+        caplog.clear()
         module_manager.startup()
 
         assert caplog.record_tuples == [
@@ -302,6 +318,7 @@ class TestModuleClass:
         simple_application_config['module/test_module']['on_event'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
+        caplog.clear()
         module_manager.run_on_event_commands(
             module=module_manager.modules['test_module'],
         )
@@ -342,6 +359,7 @@ class TestModuleClass:
         simple_application_config['module/test_module']['on_exit'].pop('run')
         module_manager = ModuleManager(simple_application_config)
 
+        caplog.clear()
         module_manager.exit()
         assert caplog.record_tuples == [
             (
@@ -402,6 +420,7 @@ class TestModuleClass:
         assert len(module_manager.templates) == 1
         template_target = module_manager.templates['/not/existing'].target
 
+        caplog.clear()
         module_manager.finish_tasks()
         assert (
                 'astrality',
@@ -410,19 +429,6 @@ class TestModuleClass:
                 ' Template does not exist.'
         ) in caplog.record_tuples
 
-
-    def test_expand_path_method(
-        self,
-        single_module_manager,
-        test_config_directory,
-    ):
-        absolute_path = Path('/tmp/ast')
-        tilde_path = Path('~/dir')
-        relative_path = Path('test')
-        assert single_module_manager.expand_path(absolute_path) == absolute_path
-        assert single_module_manager.expand_path(tilde_path) == Path.home() / 'dir'
-        assert single_module_manager.expand_path(relative_path) == \
-            test_config_directory / 'test'
 
     def test_create_temp_file_method(self, single_module_manager):
         temp_file = single_module_manager.create_temp_file('whatever')
@@ -444,6 +450,8 @@ class TestModuleClass:
         simple_application_config['module/test_module']['event_listener']['type'] = 'solar'
         compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font'
         module_manager = ModuleManager(simple_application_config)
+
+        caplog.clear()
         module_manager.compile_templates('on_startup')
 
         template_file = str(
@@ -480,6 +488,8 @@ def test_running_finished_tasks_command(
     )
     freezer.move_to(thursday)
     module_manager = ModuleManager(simple_application_config)
+
+    caplog.clear()
     module_manager.finish_tasks()
 
     # Only startup commands should be finished at first
@@ -572,7 +582,7 @@ def test_has_unfinished_tasks(simple_application_config, freezer):
 @pytest.fixture
 def config_with_modules(default_global_options):
     return {
-        'settings/astrality': default_global_options['settings/astrality'],
+        'config/astrality': default_global_options['config/astrality'],
         'context/env': generate_expanded_env_dict(),
         'module/solar_module': {
             'enabled': True,
@@ -714,7 +724,10 @@ def test_context_section_imports():
             },
         },
     }
-    module = Module(module_config)
+    module = Module(
+        module_config=module_config,
+        module_directory=Path('/'),
+    )
     startup_csis = module.context_section_imports('on_startup')
     expected = (
         ContextSectionImport(

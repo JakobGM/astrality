@@ -16,8 +16,7 @@ from astrality.config import (
 @pytest.fixture
 def conf_path():
     """Return str path to configuration directory."""
-    this_test_file = os.path.abspath(__file__)
-    conf_path = Path(this_test_file).parents[1] / 'config'
+    conf_path = Path(__file__).parents[1] / 'config'
     return conf_path
 
 

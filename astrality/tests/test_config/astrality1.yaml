@@ -1,4 +1,4 @@
-settings/astrality:
+config/astrality:
     hot_reload_config: true
 
 module/A:

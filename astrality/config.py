@@ -41,9 +41,8 @@ except ImportError:  # pragma: no cover
 
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
-ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'settings/astrality': {
+ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'config/astrality': {
     'hot_reload_config': False,
-    'recompile_modified_templates': False,
     'startup_delay': 0,
     'run_timeout': 0,
     'requires_timeout': 1,
@@ -183,9 +182,9 @@ def user_configuration(config_directory: Optional[Path] = None) -> ApplicationCo
     ))
 
     # Insert default global settings that are not specified
-    user_settings = config.get('settings/astrality', {})
-    config['settings/astrality'] = ASTRALITY_DEFAULT_GLOBAL_SETTINGS['settings/astrality'].copy()
-    config['settings/astrality'].update(user_settings)
+    user_settings = config.get('config/astrality', {})
+    config['config/astrality'] = ASTRALITY_DEFAULT_GLOBAL_SETTINGS['config/astrality'].copy()
+    config['config/astrality'].update(user_settings)
 
     return config
 
@@ -419,14 +418,14 @@ class ExternalModuleSource:
             with_env=False,
         )
 
-        # We rename each module to module/module_name[path_to_module_directory]
+        # We rename each module to module/{self.name}.module_name
         # in order to prevent naming conflicts when using modules provided
         # from a third party with the same name as another managed module.
         # This way you can use a module named "conky" from two third parties,
         # in addition to providing your own.
         for section in tuple(modules_dict.keys()):
             if len(section) > 7 and section[:7].lower() == 'module/':
-                non_conflicting_module_name = str(section) + f'[{self.directory}]'
+                non_conflicting_module_name = 'module/' + '.'.join((self.name, section[7:],))
                 module_section = modules_dict.pop(section)
                 modules_dict[non_conflicting_module_name] = module_section
 
@@ -450,12 +449,17 @@ class ExternalModuleSource:
 
 class GlobalModulesConfigDict(TypedDict, total=False):
     """Dictionary defining configuration options for Modules."""
-    modules_directory_path: str
-    enabled: List[ExternalModuleDict]
+    recompile_modified_templates: bool
+    modules_directory: str
+    enabled_modules: List[ExternalModuleDict]
 
 
 class GlobalModulesConfig:
     """User modules configuration."""
+
+    # If modified templates should be automatically recompiled when the user
+    # edits the template
+    recompile_modified_templates: bool
 
     # The path to the modules directory, by default:
     # $ASTRALITY_CONFIG_HOME/modules
@@ -474,11 +478,16 @@ class GlobalModulesConfig:
     ) -> None:
         """Initialize a GlobalModulesConfig object from a dictionary."""
 
+        self.recompile_modified_templates = config.get(
+            'recompile_modified_templates',
+            False,
+        )
+
         # Determine the directory which contains external modules
-        if 'modules_directory_path' in config:
+        if 'modules_directory' in config:
             # Custom modules folder
             modules_path = expand_path(
-                path=Path(config['modules_directory_path']),
+                path=Path(config['modules_directory']),
                 config_directory=config_directory,
             )
             self.modules_directory_path = modules_path
@@ -488,7 +497,7 @@ class GlobalModulesConfig:
 
         # Initialize all the external module sources
         self._external_module_sources: Dict[Path, ExternalModuleSource] = {}
-        for external_module_dict in config.get('enabled', []):
+        for external_module_dict in config.get('enabled_modules', []):
             external_module_source = ExternalModuleSource(
                 config=external_module_dict,
                 modules_directory_path=self.modules_directory_path,

@@ -1,13 +1,10 @@
-settings/astrality:
+config/astrality:
     # If hot_reload_config is enabled, modifications to this file automatically
     # runs:
     #       1) exit actions from the old configuration
     #       2) startup actions from the new configuration
     # Requires restart if enabled
     hot_reload_config: true
-
-    # Modified templates can be automatically recompiled
-    recompile_modified_templates: true
 
     # You can delay astrality on startup. The delay is given in seconds.
     startup_delay: 0
@@ -21,6 +18,22 @@ settings/astrality:
     # order to be enabled. You can specify the timeout for such checks, given
     # in seconds.
     requires_timeout: 1
+
+config/modules:
+    # Modified templates can be automatically recompiled
+    recompile_modified_templates: true
+
+    # There are two possible ways to define modules. Either in this file, as
+    # shown further below, or in separate external module directories within the
+    # following specified directory, relatively interpreted as:
+    # $ASTRALITY_CONFIG_HOME/modules
+    modules_directory: modules
+
+    # You enable external modules by specifying the <name> of each external
+    # module. The result is that the configurations contained in the following
+    # files are merged into this file: <modules_directory>/<name>/modules.yaml
+    enabled:
+        - name: solar_desktop
 
 
 context/host:
@@ -44,7 +57,7 @@ context/host:
     interfaces:
         wlan:
             # You can also use command substitution in order to insert the
-            # standard output of a shell command into a configuration option. 
+            # standard output of a shell command into a configuration option.
             #
             # This is also used by the polybar template to point the
             # wireless-internet polybar module to the correct interface.
@@ -119,7 +132,7 @@ module/terminals:
     # Kitty: https://github.com/kovidgoyal/kitty
 
     enabled: false
-    requires: 
+    requires:
         - command -v alacritty
         - command -v kitty
 
@@ -148,80 +161,3 @@ module/polybar:
         modules/polybar/config.template:
             compile:
                 - template: modules/polybar/config.template
-
-
-module/solar_desktop:
-    # A module for changing your wallpaper based on the suns position in the
-    # sky, while changing the font color of two conky modules to fit the
-    # wallpaper's colors. This module demonstrates more advanced features.
-    #
-    # I reccomend you to read the docs at https://astrality.readthedocs.io
-    # if you want to understand something that seems unclear.
-    enabled: true
-
-    # A module can require shell commands to return successfully in order to
-    # enable the module. Here, we check if `feh` and `conky` are installed.
-    requires:
-        - command -v feh
-        - command -v conky
-
-    event_listener:
-        # The solar event listener provides the following events:
-        # sunrise, morning, afternoon, sunset, and night.
-        type: solar
-
-        # Since this is dependent on your exact location, you have to specify
-        # your GPS coordinates. They are can be easily obtained from:
-        # https://www.latlong.net/
-        latitude: 63.446827
-        longitude: 10.421906
-        elevation: 0
-
-        # You can force a event listener to always return the same event for
-        # debugging. For example, if you want to check if all your periodic
-        # color schemes fit your the respective periodic wallpapers, without
-        # waiting for sunset, etc..
-        # force_event: sunrise
-
-    on_startup:
-        # Execute all actions specified in `on_event` on Astrality startup,
-        # since the conky templates are compiled in that block, and we need
-        # those compiled templates in the run actions below.
-        trigger: on_event
-
-        # Start conky modules on startup.
-        # We do not have to restart conky when we recompile the templates,
-        # since conky automatically reloads when the -c source changes
-        # change.
-        #
-        # We surround the template paths with {} since we want to refer to the
-        # *compiled* templates, and not the template sources.
-        run:
-            - conky -c {modules/solar_desktop/time.template}
-            - conky -c {modules/solar_desktop/performance.template}
-
-    on_event:
-        # Import the context section named the same as the current event,
-        # e.g. `night`, into the global context section named `wallpaper_colors`,
-        # from the file: modules/solar_desktop/solar_colors.yaml.
-        import_context:
-            from_path: modules/solar_desktop/solar_colors.yaml
-            from_section: '{event}'
-            to_section: wallpaper_colors
-
-        # Compile the templates specified in the conky module, as their
-        # context values have changed due to the import_context action above.
-        compile:
-            - template: modules/solar_desktop/time.template
-            - template: modules/solar_desktop/performance.template
-
-        # Run shell command to change the desktop wallpaper named the same
-        # as the current event.
-        run: feh --bg-fill modules/solar_desktop/{event}.*
-
-    on_exit:
-        # Kill the conky processes on Astrality shutdown.
-        run: pkill -f conky
-
-
-# vim:filetype=yaml

@@ -20,6 +20,7 @@ from astrality.config import (
 )
 from astrality.event_listener import EventListener, event_listener_factory
 from astrality.filewatcher import DirectoryWatcher
+from astrality.resolver import Resolver
 from astrality.utils import run_shell
 
 
@@ -55,7 +56,11 @@ class Module:
     - {event}: The event specified by the event_listener instance.
     """
 
-    def __init__(self, module_config: ModuleConfig) -> None:
+    def __init__(
+        self,
+        module_config: ModuleConfig,
+        module_directory: Path,
+    ) -> None:
         """
         Initialize Module object with a section from a config dictionary.
 
@@ -75,6 +80,10 @@ class Module:
 
         section = next(iter(module_config.keys()))
         self.name: str = section[7:]
+
+        # The source directory for the module, determining how to interpret
+        # relative paths in the module config
+        self.directory = module_directory
 
         self.module_config = module_config[section]
         self.populate_event_blocks()
@@ -254,7 +263,7 @@ class Module:
                 from_section = None
                 to_section = None
 
-            # Get the absolute path
+            # Get the relative path to file containing the context
             config_path = Path(from_path)
 
             # Isert a ContextSectionImport tuple into the return value
@@ -329,33 +338,59 @@ class ModuleManager:
 
         self.config_directory = Path(config['_runtime']['config_directory'])
         self.temp_directory = Path(config['_runtime']['temp_directory'])
+        self.application_config = config
+        self.application_context: Dict[str, Resolver] = {}
+
+        self.startup_done = False
+        self.last_module_events: Dict[str, str] = {}
 
         # Get module configurations which are externally defined
         global_modules_config = GlobalModulesConfig(  # type: ignore
             config=config.get('config/modules', {}),
             config_directory=self.config_directory,
-        ).module_configs_dict()
+        )
+        self.recompile_modified_templates = global_modules_config.recompile_modified_templates
 
-        # Variables in `astrality.yaml` should have preference if naming conflicts
-        # occur.
-        global_modules_config.update(config)
-        config = global_modules_config
-
-        self.application_config = config
-
-        self.application_context = context(config)
         self.modules: Dict[str, Module] = {}
-        self.startup_done = False
-        self.last_module_events: Dict[str, str] = {}
 
+        # Insert externally managed modules
+        for external_module_source in global_modules_config.external_module_sources:
+            module_directory = external_module_source.directory
+
+            module_configs = external_module_source.module_config_dict()
+
+            # Insert context defined in external configuration
+            self.application_context.update(context(module_configs))
+
+            for section, options in module_configs.items():
+                module_config = {section: options}
+                if Module.valid_class_section(
+                    section=module_config,
+                    requires_timeout=self.application_config['config/astrality']['requires_timeout'],
+                    requires_working_directory=module_directory,
+                ):
+                    module = Module(
+                        module_config=module_config,
+                        module_directory=module_directory,
+                    )
+                    self.modules[module.name] = module
+
+        # Update the context from `astrality.yaml`, overwriting any defined
+        # contexts in external modules in the case of naming conflicts
+        self.application_context.update(context(config))
+
+        # Insert modules defined in `astrality.yaml`
         for section, options in config.items():
             module_config = {section: options}
             if Module.valid_class_section(
                 section=module_config,
-                requires_timeout=self.application_config['settings/astrality']['requires_timeout'],
-                requires_working_directory=self.application_config['_runtime']['config_directory'],
+                requires_timeout=self.application_config['config/astrality']['requires_timeout'],
+                requires_working_directory=self.config_directory,
             ):
-                module = Module(module_config=module_config)
+                module = Module(
+                    module_config=module_config,
+                    module_directory=self.config_directory,
+                )
                 self.modules[module.name] = module
 
         self.templates = self.prepare_templates(self.modules.values())
@@ -364,9 +399,11 @@ class ModuleManager:
 
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
-            directory=self.application_config['_runtime']['config_directory'],
+            directory=self.config_directory,
             on_modified=self.file_system_modified,
         )
+
+        logger.info('Enabled modules: ' + ', '.join(self.modules.keys()))
 
     def __len__(self) -> int:
         """Return the number of managed modules."""
@@ -395,10 +432,16 @@ class ModuleManager:
             ):
                 for compile_action in block['compile']:
                     specified_source = compile_action['template']
-                    absolute_source = self.expand_path(Path(specified_source))
+                    absolute_source = expand_path(
+                        path=Path(specified_source),
+                        config_directory=module.directory,
+                    )
 
                     if 'target' in compile_action:
-                        target = self.expand_path(Path(compile_action['target']))
+                        target = expand_path(
+                            path=Path(compile_action['target']),
+                            config_directory=module.directory,
+                        )
                     else:
                         target = self.create_temp_file(name=module.name)
 
@@ -424,8 +467,9 @@ class ModuleManager:
 
         for module in modules:
             for watched_for_modification in module.module_config['on_modified'].keys():
-                on_modified_path = self.expand_path(
-                    Path(watched_for_modification),
+                on_modified_path = expand_path(
+                    path=Path(watched_for_modification),
+                    config_directory=module.directory,
                 )
                 on_modified_paths[on_modified_path] = WatchedFile(
                     path=on_modified_path,
@@ -547,7 +591,10 @@ class ModuleManager:
                     context=self.application_context,
                     section=csi.into_section,
                     from_section=csi.from_section,
-                    from_config_file=self.expand_path(csi.from_config_file),
+                    from_config_file=expand_path(
+                        path=csi.from_config_file,
+                        config_directory=module.directory,
+                    ),
                 )
 
     def compile_templates(
@@ -609,7 +656,8 @@ class ModuleManager:
                 logger.info(f'[module/{module.name}] Running startup command.')
                 self.run_shell(
                     command=command,
-                    timeout=self.application_config['settings/astrality']['run_timeout'],
+                    timeout=self.application_config['config/astrality']['run_timeout'],
+                    working_directory=module.directory,
                     module_name=module.name,
                 )
 
@@ -628,7 +676,8 @@ class ModuleManager:
             logger.info(f'[module/{module.name}] Running event command.')
             self.run_shell(
                 command=command,
-                timeout=self.application_config['settings/astrality']['run_timeout'],
+                timeout=self.application_config['config/astrality']['run_timeout'],
+                working_directory=module.directory,
                 module_name=module.name,
             )
 
@@ -649,7 +698,8 @@ class ModuleManager:
                 logger.info(f'[module/{module.name}] Running exit command.')
                 self.run_shell(
                     command=command,
-                    timeout=self.application_config['settings/astrality']['run_timeout'],
+                    timeout=self.application_config['config/astrality']['run_timeout'],
+                    working_directory=module.directory,
                     module_name=module.name,
                 )
 
@@ -680,7 +730,10 @@ class ModuleManager:
                 context=self.application_context,
                 section=csi.into_section,
                 from_section=csi.from_section,
-                from_config_file=self.expand_path(csi.from_config_file),
+                from_config_file=expand_path(
+                    path=csi.from_config_file,
+                    config_directory=module.directory,
+                ),
             )
 
         # Now compile templates specified in on_modified block
@@ -698,7 +751,8 @@ class ModuleManager:
             logger.info(f'[module/{module.name}] Running modified command.')
             self.run_shell(
                 command=command,
-                timeout=self.application_config['settings/astrality']['run_timeout'],
+                timeout=self.application_config['config/astrality']['run_timeout'],
+                working_directory=module.directory,
                 module_name=module.name,
             )
 
@@ -731,7 +785,7 @@ class ModuleManager:
         Reloadnig the module manager only occurs if the user has configured
         `hot_reload_config`.
         """
-        if not self.application_config['settings/astrality']['hot_reload_config']:
+        if not self.application_config['config/astrality']['hot_reload_config']:
             # Hot reloading is not enabled, so we return early
             return
 
@@ -766,7 +820,7 @@ class ModuleManager:
         This requires setting the global setting:
         recompile_modified_templates: true
         """
-        if not self.application_config['settings/astrality']['recompile_modified_templates']:
+        if not self.recompile_modified_templates:
             return
 
         for template in self.templates.values():
@@ -780,6 +834,7 @@ class ModuleManager:
         self,
         command: str,
         timeout: Union[int, float],
+        working_directory: Path,
         module_name: Optional[str] = None,
     ) -> None:
         """Run a shell command defined by a managed module."""
@@ -792,19 +847,7 @@ class ModuleManager:
         run_shell(
             command=command,
             timeout=timeout,
-            working_directory=self.application_config['_runtime']['config_directory'],
-        )
-
-    def expand_path(self, path: Path) -> Path:
-        """
-        Return an absolute path from a (possibly) relative path.
-
-        Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
-        expanded to the home directory of $USER.
-        """
-        return expand_path(
-            path=path,
-            config_directory=self.config_directory,
+            working_directory=working_directory,
         )
 
     def interpolate_string(self, string: str) -> str:

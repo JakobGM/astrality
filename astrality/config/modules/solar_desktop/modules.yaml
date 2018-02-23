@@ -1,0 +1,72 @@
+module/solar_desktop:
+    # A module for changing your wallpaper based on the suns position in the
+    # sky, while changing the font color of two conky modules to fit the
+    # wallpaper's colors. This module demonstrates more advanced features.
+    #
+    # I reccomend you to read the docs at https://astrality.readthedocs.io
+    # if you want to understand something that seems unclear.
+    enabled: true
+
+    # A module can require shell commands to return successfully in order to
+    # enable the module. Here, we check if `feh` and `conky` are installed.
+    requires:
+        - command -v feh
+        - command -v conky
+
+    event_listener:
+        # The solar event listener provides the following events:
+        # sunrise, morning, afternoon, sunset, and night.
+        type: solar
+
+        # Since this is dependent on your exact location, you have to specify
+        # your GPS coordinates. They are can be easily obtained from:
+        # https://www.latlong.net/
+        latitude: 63.446827
+        longitude: 10.421906
+        elevation: 0
+
+        # You can force a event listener to always return the same event for
+        # debugging. For example, if you want to check if all your periodic
+        # color schemes fit your the respective periodic wallpapers, without
+        # waiting for sunset, etc..
+        # force_event: sunrise
+
+    on_startup:
+        # Execute all actions specified in `on_event` on Astrality startup,
+        # since the conky templates are compiled in that block, and we need
+        # those compiled templates in the run actions below.
+        trigger: on_event
+
+        # Start conky modules on startup.
+        # We do not have to restart conky when we recompile the templates,
+        # since conky automatically reloads when the -c source changes
+        # change.
+        #
+        # We surround the template paths with {} since we want to refer to the
+        # *compiled* templates, and not the template sources.
+        run:
+            - conky -c {time.template}
+            - conky -c {performance.template}
+
+    on_event:
+        # Import the context section named the same as the current event,
+        # e.g. `night`, into the global context section named `wallpaper_colors`,
+        # from the file: modules/solar_desktop/solar_colors.yaml.
+        import_context:
+            from_path: solar_colors.yaml
+            from_section: '{event}'
+            to_section: wallpaper_colors
+
+        # Compile the templates specified in the conky module, as their
+        # context values have changed due to the import_context action above.
+        compile:
+            - template: time.template
+            - template: performance.template
+
+        # Run shell command to change the desktop wallpaper named the same
+        # as the current event.
+        run: feh --bg-fill {event}.*
+
+    on_exit:
+        # Kill the conky processes on Astrality shutdown.
+        run: pkill -f conky
