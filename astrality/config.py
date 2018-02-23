@@ -30,7 +30,7 @@ logger = logging.getLogger('astrality')
 from yaml import load, dump
 try:
     from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore
-    logger.info('Using LibYAML bindings for faster .yaml parsing.')
+    logger.info('Using LibYAML bindings for faster .yml parsing.')
 except ImportError:  # pragma: no cover
     from yaml import Loader, Dumper
     logger.warning(
@@ -83,7 +83,7 @@ def infer_config_location(
     """
     if not config_directory:
         config_directory = resolve_config_directory()
-    config_file = Path(config_directory, 'astrality.yaml')
+    config_file = Path(config_directory, 'astrality.yml')
 
     if not config_file.is_file():
         logger.warning(
@@ -92,7 +92,7 @@ def infer_config_location(
             '.'
         )
         config_directory = Path(__file__).parent.absolute() / 'config'
-        config_file = config_directory / 'astrality.yaml'
+        config_file = config_directory / 'astrality.yml'
         logger.warning(f'Using example configuration instead: "{config_file}"')
     else:
         logging.info(f'Using configuration file "{config_file}"')
@@ -157,7 +157,7 @@ def user_configuration(config_directory: Optional[Path] = None) -> ApplicationCo
     Return Resolver object containing the users configuration.
 
     Create a configuration dictionary which should directly reflect the
-    hierarchy of a typical `astrality.yaml` file. Users should be able to insert
+    hierarchy of a typical `astrality.yml` file. Users should be able to insert
     elements from their configuration directly into conky module templates. The
     mapping should be:
 
@@ -375,7 +375,7 @@ ModuleConfig = Dict[str, Any]
 
 class ExternalModuleSource:
     """
-    Module defined outside of `$ASTRALITY_CONFIG_HOME/astrality.yaml.
+    Module defined outside of `$ASTRALITY_CONFIG_HOME/astrality.yml.
 
     The module is represented by a directory, and possibly in the future by
     an url.
@@ -388,7 +388,7 @@ class ExternalModuleSource:
     directory: Path
 
     # Path to the YAML configuration of the module:
-    # Default: {directory}/modules.yaml
+    # Default: {directory}/modules.yml
     config_file: Path
 
     # If the module is considered safe (i.e. allows shell execution)
@@ -408,11 +408,11 @@ class ExternalModuleSource:
             path=modules_directory_path / Path(self.name),
             config_directory=config_directory,
         )
-        self.config_file = self.directory / 'modules.yaml'
+        self.config_file = self.directory / 'modules.yml'
         self.safe = config.get('safe', False)
 
     def module_config_dict(self) -> ModuleConfig:
-        """Return the contents of `modules.yaml` as a dictionary."""
+        """Return the contents of `modules.yml` as a dictionary."""
         modules_dict = dict_from_config_file(
             config_file=self.config_file,
             with_env=False,
@@ -468,7 +468,7 @@ class GlobalModulesConfig:
     # All extenally managed modules
     external_module_sources: Iterable[ExternalModuleSource]
 
-    # The absolute path to all module config files of name `modules.yaml`
+    # The absolute path to all module config files of name `modules.yml`
     external_module_config_files: Iterable[Path]
 
     def __init__(

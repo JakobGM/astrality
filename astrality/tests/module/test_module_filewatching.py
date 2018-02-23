@@ -162,9 +162,9 @@ def test_hot_reloading(
     test_config_directory
 ):
     template_target1, template_target2 = test_template_targets
-    config1 = test_config_directory / 'astrality1.yaml'
-    config2 = test_config_directory / 'astrality2.yaml'
-    target_config = test_config_directory / 'astrality.yaml'
+    config1 = test_config_directory / 'astrality1.yml'
+    config2 = test_config_directory / 'astrality2.yml'
+    target_config = test_config_directory / 'astrality.yml'
     temp_directory = Path('/tmp/astrality')
 
     # Copy the first configuration into place
@@ -238,8 +238,8 @@ def test_all_three_actions_in_on_modified_block(
 ):
     file1, file2, file3 = three_watchable_files
     car_template = test_config_directory / 'templates' / 'a_car.template'
-    mercedes_context = test_config_directory / 'context' / 'mercedes.yaml'
-    tesla_context = test_config_directory / 'context' / 'tesla.yaml'
+    mercedes_context = test_config_directory / 'context' / 'mercedes.yml'
+    tesla_context = test_config_directory / 'context' / 'tesla.yml'
 
     application_config = {
         'module/car': {
@@ -412,7 +412,7 @@ def test_importing_context_on_modification(
 ):
     """Test that context values are imported in on_modified blocks."""
     file1, *_ = three_watchable_files
-    mercedes_context = test_config_directory / 'context' / 'mercedes.yaml'
+    mercedes_context = test_config_directory / 'context' / 'mercedes.yml'
 
     application_config = {
         'module/module_name': {

@@ -14,7 +14,7 @@ The use of Astrality templates allows you to:
 * Insert :ref:`environment variables <parameter_expansion>` and :ref:`command substitutions <command_substitution>` in configuration files that otherwise can not support them.
 * Insert replacements for placeholders which are :ref:`dynamically manipulated <context_import_action>` by Astrality :ref:`modules <modules>`.
 * Making configurations more portable. Any references to display devices, network interfaces, usernames, etc., can be quickly changed when deploying on a new machine.
-* Making it easier to switch between blocks of configurations, like quickly changing the color scheme of your terminal emulator, desktop manager and/or other desktop applications. This can be done by changing only one line of ``astrality.yaml``.
+* Making it easier to switch between blocks of configurations, like quickly changing the color scheme of your terminal emulator, desktop manager and/or other desktop applications. This can be done by changing only one line of ``astrality.yml``.
 
 
 .. _template_files:
@@ -30,14 +30,14 @@ Templates can be of any file type, named whatever you want, and placed at any de
 Context
 =======
 
-When you write templates, you use ``placeholders`` which Astrality replaces with values defined in so-called ``context`` sections defined in ``astrality.yaml``. 
-Context sections **must** be named ``context/descriptive_name`` and placed at the root indentation level of ``astrality.yaml``.
+When you write templates, you use ``placeholders`` which Astrality replaces with values defined in so-called ``context`` sections defined in ``astrality.yml``. 
+Context sections **must** be named ``context/descriptive_name`` and placed at the root indentation level of ``astrality.yml``.
 
 An example:
 
 .. code-block:: yaml
 
-    # $ASTRALITY_CONFIG_HOME/astrality.yaml
+    # $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/machine:
         user: $USER
@@ -213,7 +213,7 @@ Astrality provides an additional ``shell`` template filter in addition to the st
 .. note::
     Shell commands are run from ``$ASTRALITY_CONFIG_HOME``. If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``{{ 'cat ~/.bashrc' | shell }}``.
 
-You can use the :ref:`command substitution <command_substitution>` syntax in a context section of ``astrality.yaml`` and get much of the same functionality, but with the ``shell`` filter you can specify a timeout in seconds::
+You can use the :ref:`command substitution <command_substitution>` syntax in a context section of ``astrality.yml`` and get much of the same functionality, but with the ``shell`` filter you can specify a timeout in seconds::
 
     {{ 'shell command' | shell(5) }}
 
@@ -251,7 +251,7 @@ Where you want to replace ``{{ host.user }}`` with your username. Let us define 
 
 .. code-block:: yaml
 
-    # Source: $ASTRALITY_CONFIG_HOME/astrality.yaml
+    # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/host:
         user=${USER}
@@ -261,7 +261,7 @@ which will compile the template on Astrality startup:
 
 .. code-block:: yaml
 
-    # Source: $ASTRALITY_CONFIG_HOME/astrality.yaml
+    # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/host:
         user=${USER}

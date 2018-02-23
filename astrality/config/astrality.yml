@@ -31,7 +31,7 @@ config/modules:
 
     # You enable external modules by specifying the <name> of each external
     # module. The result is that the configurations contained in the following
-    # files are merged into this file: <modules_directory>/<name>/modules.yaml
+    # files are merged into this file: <modules_directory>/<name>/modules.yml
     enabled:
         - name: solar_desktop
 
@@ -114,11 +114,11 @@ context/fonts:
 module/colors:
     # This module is used to import a color scheme into the `color` context
     # section. This makes it easy to change color schemes by changing the
-    # `from_section` option below. Take a look at the color_schemes.yaml file
+    # `from_section` option below. Take a look at the color_schemes.yml file
     # to see how to use color scheme context values in your templates.
     on_startup:
         import_context:
-            - from_path: modules/colors/color_schemes.yaml
+            - from_path: modules/colors/color_schemes.yml
               from_section: gruvbox_dark
               to_section: colors
 
@@ -138,7 +138,7 @@ module/terminals:
 
     on_startup:
         compile:
-            - template: modules/terminals/alacritty.yaml.template
+            - template: modules/terminals/alacritty.yml.template
               target: ${XDG_CONFIG_HOME}/alacritty/alacritty.yml
             - template: modules/terminals/kitty.conf.template
               target: ${XDG_CONFIG_HOME}/kitty/kitty.conf

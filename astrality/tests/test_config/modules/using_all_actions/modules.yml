@@ -1,7 +1,7 @@
 module/vietnam:
     on_startup:
         import_context:
-            from_path: south_context.yaml
+            from_path: south_context.yml
         compile:
             template: module.template
             target: compiled.tmp
@@ -11,7 +11,7 @@ module/vietnam:
     on_modified:
         watched_for_modifications:
             import_context:
-                from_path: north_context.yaml
+                from_path: north_context.yml
             compile:
                 template: module.template
                 target: compiled.tmp

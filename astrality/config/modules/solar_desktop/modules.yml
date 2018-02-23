@@ -51,9 +51,9 @@ module/solar_desktop:
     on_event:
         # Import the context section named the same as the current event,
         # e.g. `night`, into the global context section named `wallpaper_colors`,
-        # from the file: modules/solar_desktop/solar_colors.yaml.
+        # from the file: modules/solar_desktop/solar_colors.yml.
         import_context:
-            from_path: solar_colors.yaml
+            from_path: solar_colors.yml
             from_section: '{event}'
             to_section: wallpaper_colors
 

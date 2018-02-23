@@ -22,7 +22,7 @@ from astrality.module import ModuleManager
 
 @pytest.fixture
 def dummy_config():
-    test_conf = Path(__file__).parents[1] / 'test_config' / 'test.yaml'
+    test_conf = Path(__file__).parents[1] / 'test_config' / 'test.yml'
     return dict_from_config_file(test_conf)
 
 
@@ -50,11 +50,11 @@ def test_config_directory_name(conf):
 
 
 def test_name_of_config_file(conf):
-    assert '/astrality.yaml' in str(conf['_runtime']['config_file'])
+    assert '/astrality.yml' in str(conf['_runtime']['config_file'])
 
 
 def test_environment_variable_interpolation_by_preprocessing_conf_yaml_file():
-    test_conf = Path(__file__).parents[1] / 'test_config' / 'test.yaml'
+    test_conf = Path(__file__).parents[1] / 'test_config' / 'test.yml'
     result = preprocess_configuration_file(test_conf)
 
     expected_result = \
@@ -79,7 +79,7 @@ context/section4:
 
 @pytest.mark.slow
 def test_command_substition_by_preprocessing_yaml_file():
-    test_conf = Path(__file__).parents[1] / 'test_config' / 'commands.yaml'
+    test_conf = Path(__file__).parents[1] / 'test_config' / 'commands.yml'
     result = preprocess_configuration_file(test_conf)
 
     expected_result = \
@@ -147,7 +147,7 @@ def test_insert_context_section():
     context = compiler.context({'context/section1': {'key_one': 'value_one'}})
     assert context['section1']['key_one'] == 'value_one'
 
-    test_config_file = Path(__file__).parents[1] / 'test_config' / 'test.yaml'
+    test_config_file = Path(__file__).parents[1] / 'test_config' / 'test.yml'
     context = insert_into(
         context=context,
         section='new_section',
@@ -238,7 +238,7 @@ class TestCreateConfigDirectory:
 
         # Test presence of content in created folder
         dir_contents = tuple(file.name for file in created_config_dir.iterdir())
-        assert 'astrality.yaml' in dir_contents
+        assert 'astrality.yml' in dir_contents
         assert 'modules' in dir_contents
         rmtree(created_config_dir)
 

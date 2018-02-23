@@ -24,7 +24,7 @@ def test_that_all_exit_actions_are_correctly_performed(
         'module/car': {
             'on_startup': {
                 'import_context': {
-                    'from_path': 'context/mercedes.yaml',
+                    'from_path': 'context/mercedes.yml',
                 },
                 'compile': {
                     'template': 'templates/a_car.template',
@@ -33,7 +33,7 @@ def test_that_all_exit_actions_are_correctly_performed(
             },
             'on_exit': {
                 'import_context': {
-                    'from_path': 'context/tesla.yaml',
+                    'from_path': 'context/tesla.yml',
                 },
                 'compile': {
                     'template': 'templates/a_car.template',

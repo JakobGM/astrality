@@ -628,7 +628,7 @@ def module_manager(config_with_modules):
 def test_import_sections_on_event(config_with_modules, freezer):
     config_with_modules['module/weekday_module']['on_event']['import_context'] = [{
         'to_section': 'week',
-        'from_path': 'astrality/tests/templates/weekday.yaml',
+        'from_path': 'astrality/tests/templates/weekday.yml',
         'from_section': '{event}',
     }]
     config_with_modules.pop('module/solar_module')
@@ -663,14 +663,14 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     # Insert day the module was started into 'start day'
     config_with_modules['module/weekday_module']['on_startup']['import_context'] = [{
         'to_section': 'start_day',
-        'from_path': 'astrality/tests/templates/weekday.yaml',
+        'from_path': 'astrality/tests/templates/weekday.yml',
         'from_section': '{event}',
     }]
 
     # Insert the current day into 'day_now'
     config_with_modules['module/weekday_module']['on_event']['import_context'] = [{
         'to_section': 'day_now',
-        'from_path': 'astrality/tests/templates/weekday.yaml',
+        'from_path': 'astrality/tests/templates/weekday.yml',
         'from_section': '{event}',
     }]
     config_with_modules.pop('module/solar_module')
@@ -920,7 +920,7 @@ def test_trigger_event_module_action(
             'on_event': {
                 'run': ['echo on_event'],
                 'import_context': [{
-                    'from_path': 'contexts/file.yaml',
+                    'from_path': 'contexts/file.yml',
                     'from_section': 'section',
                 }],
             },
@@ -954,7 +954,7 @@ def test_trigger_event_module_action(
         ContextSectionImport(
             into_section='section',
             from_section='section',
-            from_config_file=Path('contexts/file.yaml'),
+            from_config_file=Path('contexts/file.yml'),
         ),
     )
 
@@ -974,7 +974,7 @@ def test_trigger_event_module_action(
         ContextSectionImport(
             into_section='section',
             from_section='section',
-            from_config_file=Path('contexts/file.yaml'),
+            from_config_file=Path('contexts/file.yml'),
         ),
     )
 

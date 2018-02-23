@@ -30,7 +30,7 @@ This directory path will be referred to as ``$ASTRALITY_CONFIG_HOME`` in the res
 The Astrality configuration file
 ================================
 
-The configuration file for astrality should be named ``astrality.yaml`` and placed at the root of the Astrality configuration directory. If ``$ASTRALITY_CONFIG_HOME/astrality.yaml`` does not exist, an `example configuration directory <https://github.com/JakobGM/astrality/blob/master/astrality/config>`_ will be used instead.
+The configuration file for astrality should be named ``astrality.yml`` and placed at the root of the Astrality configuration directory. If ``$ASTRALITY_CONFIG_HOME/astrality.yml`` does not exist, an `example configuration directory <https://github.com/JakobGM/astrality/blob/master/astrality/config>`_ will be used instead.
 
 You can also copy over this example configuration directory as a starting point for your configuration by running:
 
@@ -39,12 +39,12 @@ You can also copy over this example configuration directory as a starting point 
     $ astrality --create-example-config
     Copying over example config directory to "/home/example_username/.config/astrality".
 
-You should now edit ``$ASTRALITY_CONFIG_HOME/astrality.yaml`` to fit your needs.
+You should now edit ``$ASTRALITY_CONFIG_HOME/astrality.yml`` to fit your needs.
 
 The configuration file syntax
 =============================
 
-``astrality.yaml`` uses the ``YAML`` format. The syntax should be relatively self-explanatory when looking at the `example configuration <https://github.com/JakobGM/astrality/blob/master/astrality/config/astrality.yaml>`_. If you still want a basic overview, take a look at the `Ansible YAML syntax documentation <https://github.com/JakobGM/astrality/blob/master/astrality/config>`_ for a quick primer.
+``astrality.yml`` uses the ``YAML`` format. The syntax should be relatively self-explanatory when looking at the `example configuration <https://github.com/JakobGM/astrality/blob/master/astrality/config/astrality.yml>`_. If you still want a basic overview, take a look at the `Ansible YAML syntax documentation <https://github.com/JakobGM/astrality/blob/master/astrality/config>`_ for a quick primer.
 
 Value interpolation in the configuration file
 ---------------------------------------------
@@ -64,7 +64,7 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
         export VAR1 = run $var2
         export VAR2 = command
 
-    Then the occurrence of ``${VAR1}`` in ``astrality.yaml`` will be replaced with ``run command`` and **not** ``run $VAR2``.
+    Then the occurrence of ``${VAR1}`` in ``astrality.yml`` will be replaced with ``run command`` and **not** ``run $VAR2``.
     If you want the ability to turn off this "recursive expansion" feature, `open an issue <https://github.com/JakobGM/astrality/issues>`_, and I will add configuration option for it.
 
     .. caution::
@@ -80,7 +80,7 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 
 .. note::
 
-    Interpolations in ``astrality.yaml`` occur on Astrality startup, and will not reflect changes to environment variables and shell commands after startup.
+    Interpolations in ``astrality.yml`` occur on Astrality startup, and will not reflect changes to environment variables and shell commands after startup.
 
 
 .. _configuration_options:
@@ -88,11 +88,11 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
 Astrality configuration options
 ===============================
 
-Global Astrality configuration options are specified in ``astrality.yaml`` within a dictionary named ``config/astrality``, i.e.:
+Global Astrality configuration options are specified in ``astrality.yml`` within a dictionary named ``config/astrality``, i.e.:
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yaml
+    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     config/astrality:
         option1: value1
@@ -104,9 +104,9 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
 ``hot_reload_config:``
     *Default:* ``false``
 
-    If enabled, Astrality will watch for modifications to ``astrality.yaml``.
+    If enabled, Astrality will watch for modifications to ``astrality.yml``.
 
-    When ``astrality.yaml`` is modified, Astrality will perform all :ref:`exit actions <module_events_on_exit>` in the old configuration, and then all :ref:`startup actions <module_events_on_startup>` from the new configuration.
+    When ``astrality.yml`` is modified, Astrality will perform all :ref:`exit actions <module_events_on_exit>` in the old configuration, and then all :ref:`startup actions <module_events_on_startup>` from the new configuration.
 
     Ironically requires restart if enabled.
 
@@ -115,7 +115,7 @@ Global Astrality configuration options are specified in ``astrality.yaml`` withi
 ``recompile_modified_templates:``
     *Defualt:* ``false``
 
-    If enabled, Astrality will watch for modifications to all templates sources :ref:`specified <compile_action>` in ``astrality.yaml``.
+    If enabled, Astrality will watch for modifications to all templates sources :ref:`specified <compile_action>` in ``astrality.yml``.
     If a template is modified, it will be recompiled to its specified target path(s).
 
     .. note::

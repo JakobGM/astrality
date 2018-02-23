@@ -23,16 +23,16 @@ How to define modules
 
 There are two types of places where you can define your modules:
 
-Directly in ``$ASTRALITY_CONFIG_HOME/astrality.yaml``:
+Directly in ``$ASTRALITY_CONFIG_HOME/astrality.yml``:
     Useful if you don't have too many modules, and you want to keep everything easily accessible in one file.
 
-In a file named ``modules.yaml`` within a :ref:`modules directory <modules_directory>`:
+In a file named ``modules.yml`` within a :ref:`modules directory <modules_directory>`:
     Useful if you have lots of modules, and want to separate them into separate directories with common responsibilities.
 
     See the :ref:`documentation <modules_external_modules>` for external modules for how to define modules this way.
 
 .. hint::
-    A useful configuration structure is to define modules with "global responsibilities" in ``astrality.yaml``, and group the remaining modules in seperate module directories by their categorical responsibilites (for example "terminals").
+    A useful configuration structure is to define modules with "global responsibilities" in ``astrality.yml``, and group the remaining modules in seperate module directories by their categorical responsibilites (for example "terminals").
 
     Here "global responsibility" means having the responsibility to satisfy the dependecies of several other modules, such as defining context values used in several templates, creating directories, or installing common dependencies.
 
@@ -166,7 +166,7 @@ Actions are tasks for Astrality to perform, and are placed within :ref:`event bl
 Context imports
 ---------------
 
-The simplest way to define :ref:`context values <context>` is to just define their values in ``astrality.yaml``.
+The simplest way to define :ref:`context values <context>` is to just define their values in ``astrality.yml``.
 Those context values are available for insertion into all your templates.
 
 But you can also import context values from arbitrary YAML files. Among other use cases, this allows you to:
@@ -180,7 +180,7 @@ This is best explained with an example. Let us create a color schemes file:
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/contexts/color_schemes.yaml
+    # Source file: $ASTRALITY_CONFIG_HOME/contexts/color_schemes.yml
 
     context/gruvbox_dark:
         background: 282828
@@ -190,12 +190,12 @@ Then let us import the gruvbox color scheme into the "colors" :ref:`context <con
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yaml
+    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     module/color_scheme:
         on_startup:
             import_context:
-                from_path: contexts/color_schemes.yaml
+                from_path: contexts/color_schemes.yml
                 from_section: gruvbox_dark
                 to_section: colors
 
@@ -203,7 +203,7 @@ This is functionally equivalent to writing:
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yaml
+    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/colors:
         background: 282828
@@ -212,7 +212,7 @@ This is functionally equivalent to writing:
 .. hint::
     You may wonder why you would want to use this kind of redirection when definining context variables. The advantages are:
 
-        * You can now use ``{{ colors.foreground }}`` in all your templates instead of ``{{ gruvbox_dark.foreground }}``. Since your templates do not know exactly *which* color scheme you are using, you can easily change it in the future by editing only one line in ``astrality.yaml``.
+        * You can now use ``{{ colors.foreground }}`` in all your templates instead of ``{{ gruvbox_dark.foreground }}``. Since your templates do not know exactly *which* color scheme you are using, you can easily change it in the future by editing only one line in ``astrality.yml``.
 
         * You can use ``import_context`` in a ``on_event`` event block in order to change your colorscheme based on the time of day. Perhaps you want to use "gruvbox light" during daylight, but change to "gruvbox dark" after dusk?
 
@@ -340,7 +340,7 @@ An example of a module using ``trigger`` actions:
 
             on_event:
                 import_context:
-                    - from_path: contexts/A.yaml
+                    - from_path: contexts/A.yml
                       from_section: '{event}'
                       to_section: a_stuff
 
@@ -364,7 +364,7 @@ This is equivalent to writing the following module:
 
             on_startup:
                 import_context:
-                    - from_path: contexts/A.yaml
+                    - from_path: contexts/A.yml
                       from_section: '{event}'
                       to_section: a_stuff
 
@@ -377,7 +377,7 @@ This is equivalent to writing the following module:
 
             on_event:
                 import_context:
-                    from_path: contexts/A.yaml
+                    from_path: contexts/A.yml
                     from_section: '{event}'
                     to_section: a_stuff
 
@@ -414,7 +414,7 @@ The order of action execution is as follows:
     #. :ref:`compile <compile_action>` for each module.
     #. :ref:`run <run_action>` for each module.
 
-Modules are iterated over from top to bottom such that they appear in ``astrality.yaml``.
+Modules are iterated over from top to bottom such that they appear in ``astrality.yml``.
 This ensures the following invariants:
 
     * When you compile templates, all ``context`` imports have been performed, and are available for placeholder substitution.
@@ -426,11 +426,11 @@ This ensures the following invariants:
 Global configuration options for modules
 ========================================
 
-Global configuration options for all your modules are specified in ``astrality.yaml`` within a dictionary named ``config/modules`` at root indentation, i.e.:
+Global configuration options for all your modules are specified in ``astrality.yml`` within a dictionary named ``config/modules`` at root indentation, i.e.:
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yaml
+    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     config/modules:
         option1: value1

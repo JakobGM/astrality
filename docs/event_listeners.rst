@@ -45,7 +45,7 @@ Most event listeners provide you with additional options in order to tweak their
 Events
 ======
 
-Module event listeners keep track of some type of ``event`` and trigger the ``event`` :ref:`event <events>` whenever it enters a new event. You can refer to the current event in your module configuration (in ``astrality.yaml``) with the ``{event}`` placeholder.
+Module event listeners keep track of some type of ``event`` and trigger the ``event`` :ref:`event <events>` whenever it enters a new event. You can refer to the current event in your module configuration (in ``astrality.yml``) with the ``{event}`` placeholder.
 
 .. caution::
 
@@ -143,7 +143,7 @@ Or, alternatively, we can just :ref:`trigger <trigger_action>` startup event whe
 
 
 Event listener types
-===========
+====================
 
 Here is a list of all available Astrality module event listeners and their configuration options. If what you need is not available, feel free to `open an issue <https://github.com/JakobGM/astrality/issues>`_ with a event listener request!
 

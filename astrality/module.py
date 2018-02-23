@@ -334,7 +334,7 @@ class ModuleManager:
     """A manager for operating on a set of modules."""
 
     def __init__(self, config: ApplicationConfig) -> None:
-        """Initialize a ModuleManager object from `astrality.yaml` dict."""
+        """Initialize a ModuleManager object from `astrality.yml` dict."""
 
         self.config_directory = Path(config['_runtime']['config_directory'])
         self.temp_directory = Path(config['_runtime']['temp_directory'])
@@ -375,11 +375,11 @@ class ModuleManager:
                     )
                     self.modules[module.name] = module
 
-        # Update the context from `astrality.yaml`, overwriting any defined
+        # Update the context from `astrality.yml`, overwriting any defined
         # contexts in external modules in the case of naming conflicts
         self.application_context.update(context(config))
 
-        # Insert modules defined in `astrality.yaml`
+        # Insert modules defined in `astrality.yml`
         for section, options in config.items():
             module_config = {section: options}
             if Module.valid_class_section(
@@ -767,7 +767,7 @@ class ModuleManager:
         Also, if hot_reload is True, we reinstantiate the ModuleManager object
         if the application configuration has been modified.
         """
-        if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yaml':
+        if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yml':
             self.on_application_config_modified()
         elif modified in self.on_modified_paths:
             # The modified file is specified in one of the modules
@@ -780,7 +780,7 @@ class ModuleManager:
 
     def on_application_config_modified(self):
         """
-        Reload the ModuleManager if astrality.yaml has been modified.
+        Reload the ModuleManager if astrality.yml has been modified.
 
         Reloadnig the module manager only occurs if the user has configured
         `hot_reload_config`.

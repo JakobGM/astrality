@@ -8,7 +8,7 @@ def test_importing_all_context_sections_from_file(
     default_global_options,
     _runtime,
 ):
-    context_file = test_config_directory / 'context' / 'several_sections.yaml'
+    context_file = test_config_directory / 'context' / 'several_sections.yml'
     original_context = {
         'context/section2': {
             'k2_1': 'original_v2_1',

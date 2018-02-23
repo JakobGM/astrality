@@ -23,7 +23,7 @@ def conf_path():
 @pytest.fixture
 def conf_file_path(conf_path):
     """Return path to example configuration."""
-    return conf_path / 'astrality.yaml'
+    return conf_path / 'astrality.yml'
 
 
 @pytest.fixture(scope='session', autouse=True)
