@@ -502,7 +502,7 @@ class DirectoryModuleSource(ModuleSource):
         assert modules_directory.is_absolute()
         self.directory = modules_directory / self.category
 
-        self.config_file = self.directory / 'modules.yml'
+        self.config_file = self.directory / 'config.yml'
         self.trusted = enabling_statement.get('trusted', True)
         self.config = self._process_modules_config_dict(
             config_path=self.config_file,

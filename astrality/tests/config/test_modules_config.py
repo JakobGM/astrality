@@ -70,8 +70,8 @@ def test_enabled_modules(test_config_directory):
     assert trondheim in tuple(modules_config.external_module_sources)
 
     # Test that all module config files are correctly set
-    assert oslo_path / 'modules.yml' in modules_config.external_module_config_files
-    assert trondheim_path / 'modules.yml' in modules_config.external_module_config_files
+    assert oslo_path / 'config.yml' in modules_config.external_module_config_files
+    assert trondheim_path / 'config.yml' in modules_config.external_module_config_files
 
 def test_external_module(test_config_directory):
     modules_directory_path = test_config_directory / 'test_modules'
@@ -84,7 +84,7 @@ def test_external_module(test_config_directory):
     assert oslo.directory == oslo_path
     assert oslo.trusted == True
     assert oslo.category == 'oslo'
-    assert oslo.config_file == oslo_path / 'modules.yml'
+    assert oslo.config_file == oslo_path / 'config.yml'
 
 
 def test_retrieval_of_external_module_config(test_config_directory):
