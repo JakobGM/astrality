@@ -1,0 +1,7 @@
+module/USA:
+    on_startup:
+        run: echo Greetings from the USA!
+
+context/geography:
+    USA:
+        capitol: Washington D.C.

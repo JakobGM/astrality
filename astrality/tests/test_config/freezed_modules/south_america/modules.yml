@@ -1,0 +1,16 @@
+module/brazil:
+    on_startup:
+        run: echo Greetings from Brazil!
+
+
+module/argentina:
+    on_startup:
+        run: echo Greetings from Argentina
+
+
+context/geography:
+    brazil:
+        capitol: Brasilia
+
+    argentina:
+        capitol: Buenos Aires

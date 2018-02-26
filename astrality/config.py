@@ -1,8 +1,10 @@
 """Specifies everything related to application spanning configuration."""
 
+import copy
 import logging
 import os
 import re
+from abc import ABC, abstractclassmethod, abstractmethod
 from distutils.dir_util import copy_tree
 from io import StringIO
 from pathlib import Path
@@ -13,13 +15,20 @@ from typing import (
     Match,
     MutableMapping,
     Optional,
+    Pattern,
     Tuple,
+    Type,
     Iterable,
 )
+import re
 
 from mypy_extensions import TypedDict
 
 from astrality import compiler
+from astrality.exceptions import (
+    MisconfiguredConfigurationFile,
+    NonExistentEnabledModule,
+)
 from astrality.resolver import Resolver
 from astrality.utils import run_shell
 
@@ -117,7 +126,7 @@ def dict_from_config_file(
     if not config_file.is_file():  # pragma: no cover
         error_msg = f'Could not load config file "{config_file}".'
         logger.critical(error_msg)
-        raise RuntimeError(error_msg)
+        raise FileNotFoundError(error_msg)
 
     expanded_env_dict = generate_expanded_env_dict()
     config_string = preprocess_configuration_file(
@@ -337,7 +346,7 @@ def create_config_directory(path: Optional[Path]=None, empty=False) -> Path:
                 src=str(example_config_dir),
                 dst=str(path),
             )
-    else:
+    else:  # pragma: no cover
         logger.warning(f'Path "{str(path)}" already exists! Delete it first.')
 
     return path
@@ -361,115 +370,359 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     return path
 
 
-class ExternalModuleDictRequired(TypedDict):
+class EnablingStatementRequired(TypedDict):
     name: str
 
 
-class ExternalModuleDict(ExternalModuleDictRequired, total=False):
+class EnablingStatement(EnablingStatementRequired, total=False):
     """Dictionary defining an externally defined module."""
-    safe: bool
+    trusted: bool
 
 
 ModuleConfig = Dict[str, Any]
 
 
-class ExternalModuleSource:
-    """
-    Module defined outside of `$ASTRALITY_CONFIG_HOME/astrality.yml.
+class ModuleSource(ABC):
 
-    The module is represented by a directory, and possibly in the future by
-    an url.
-    """
-    # The name of the module
-    name: str
+    @abstractmethod
+    def __init__(
+        self,
+        enabling_statement: EnablingStatement,
+        modules_directory: Path,
+    ) -> None:
+        """Initialize a module source from an enabling statement."""
+        raise NotImplementedError
 
-    # The directory containing all the files which represent the module,
-    # by default $ASTRALITY_CONFIG_HOME/modules/{name}
-    directory: Path
+    @property
+    @abstractmethod
+    def name_syntax(self) -> Pattern:
+        """Regular expression defining how to name this type of module source."""
+        raise NotImplementedError
 
-    # Path to the YAML configuration of the module:
-    # Default: {directory}/modules.yml
-    config_file: Path
+    @classmethod
+    def represented_by(cls, module_name: str) -> bool:
+        """Return True if name represents module source type."""
+        return bool(cls.name_syntax.match(module_name))
 
-    # If the module is considered safe (i.e. allows shell execution)
-    safe: bool
+    @classmethod
+    def type(cls, of: str) -> Optional['ModuleSource']:
+        """
+        Return the source subclass which is responsible for the module name.
+        """
+        for source_type in cls.__subclasses__():
+            if source_type.represented_by(module_name=of):
+                return source_type
+
+        raise MisconfiguredConfigurationFile(  # pragma: no cover
+            f'Tried to enable invalid module name syntax "{of}".',
+        )
+
+    @abstractmethod
+    def __contains__(self, module_name: str) -> bool:
+        """Return True module source contains module with name `module_name`."""
+        raise NotImplementedError
+
+
+class GlobalModuleSource(ModuleSource):
+    """Module defined in `astrality.yml`."""
+    name_syntax = re.compile('^(\w+|\*)$')
 
     def __init__(
         self,
-        config: ExternalModuleDict,
-        config_directory: Path,
-        modules_directory_path: Path,
+        enabling_statement: EnablingStatement,
+        modules_directory: Path,
+    ) -> None:
+        """Initialize enabled module defined in `astrality.yml`."""
+        self.enabled_module = enabling_statement['name']
+        assert self.represented_by(module_name=self.enabled_module)
+
+        assert modules_directory.is_absolute()
+        self.directory = modules_directory
+
+    def __contains__(self, module_name: str) -> bool:
+        """Return True if the module name is enabled."""
+        if self.enabled_module == '*' and self.represented_by(module_name):
+            return True
+        else:
+            return module_name == self.enabled_module
+
+    def __repr__(self) -> str:
+        return f"GlobalModuleSource('{self.enabled_module}')"
+
+
+class GithubModuleSource(ModuleSource):
+    """Module defined in a GitHub repository."""
+    name_syntax = re.compile('.+/.+')
+
+    def __init__(
+        self,
+        enabling_statement: EnablingStatement,
+        modules_directory: Path,
+    ) -> None:
+        """Initialize enabled module defined at https://github.com/{name}"""
+        assert self.represented_by(
+            module_name=enabling_statement['name'],
+        )
+        self.enabled_module = enabling_statement['name']
+        self.github_user, self.github_repo = enabling_statement['name'].split('/')
+
+    def __contains__(self, module_name: str) -> bool:
+        """Return True if GitHub module repo is enabled."""
+        if self.represented_by(module_name=module_name):
+            return module_name == self.enabled_module
+        else:
+            return False
+
+    def __repr__(self) -> str:
+        return f"GithubModuleSource('{self.github_user}/{self.github_repo}')"
+
+
+class DirectoryModuleSource(ModuleSource):
+    """
+    Module(s) defined in a directory.
+
+    Specifically: `$ASTRALITY_CONFIG_HOME/{modules_directory}/config.yml
+    """
+
+    name_syntax = re.compile('^\w+\.(\w+|\*)$')
+
+    def __init__(
+        self,
+        enabling_statement: EnablingStatement,
+        modules_directory: Path,
     ) -> None:
         """
         Initialize an ExternalModule object.
         """
-        self.name = config['name']
-        self.directory = expand_path(
-            path=modules_directory_path / Path(self.name),
-            config_directory=config_directory,
+        assert self.represented_by(
+            module_name=enabling_statement['name'],
         )
-        self.config_file = self.directory / 'modules.yml'
-        self.safe = config.get('safe', False)
+        self.category, self.enabled_module_name = enabling_statement['name'].split('.')
 
-    def module_config_dict(self) -> ModuleConfig:
-        """Return the contents of `modules.yml` as a dictionary."""
-        modules_dict = dict_from_config_file(
-            config_file=self.config_file,
-            with_env=False,
+        assert modules_directory.is_absolute()
+        self.directory = modules_directory / self.category
+
+        self.config_file = self.directory / 'modules.yml'
+        self.trusted = enabling_statement.get('trusted', True)
+        self.config = self._process_modules_config_dict(
+            config_path=self.config_file,
         )
+
+    def _process_modules_config_dict(self, config_path: Path) -> ModuleConfig:
+        """
+        Return the contents of `modules.yml` as a dictionary.
+
+        Remove any defined modules which are not enabled by the
+        enabling_statement.
+        """
+        try:
+            modules_dict = dict_from_config_file(
+                config_file=self.config_file,
+                with_env=False,
+            )
+        except FileNotFoundError:
+            logger.warning(
+                f'Non-existent module configuration file "{self.config_file}"'
+                'Skipping enabled module '
+                f'"{self.category}.{self.enabled_module_name}"'
+            )
+            return {}
+        if not modules_dict:  # pragma: no cover
+            logger.warning(
+                f'Empty modules configuration "{self.config_file}".',
+            )
+            return {}
+        elif not isinstance(modules_dict, dict):  # pragma: no cover
+            logger.critical(
+                f'Configuration file "{self.config_file}" not formated as '
+                'a dictionary at root indentation.'
+            )
+            raise MisconfiguredConfigurationFile
+
+        sections = tuple(modules_dict.keys())
+        if self.enabled_module_name != '*' \
+                and 'module/' + self.enabled_module_name not in sections:
+            raise NonExistentEnabledModule
 
         # We rename each module to module/{self.name}.module_name
         # in order to prevent naming conflicts when using modules provided
         # from a third party with the same name as another managed module.
         # This way you can use a module named "conky" from two third parties,
         # in addition to providing your own.
-        for section in tuple(modules_dict.keys()):
+        for section in sections:
             if len(section) > 7 and section[:7].lower() == 'module/':
-                non_conflicting_module_name = 'module/' + '.'.join((self.name, section[7:],))
+                # This section defines a module
+
+                module_name = section[7:]
+                if not self.enabled_module_name == '*' \
+                   and self.enabled_module_name != module_name:
+                    # The module is not enabled, remove the module
+                    modules_dict.pop(section)
+                    continue
+
+                # Replace the module name with folder_name.module_name
+                non_conflicting_module_name = \
+                    'module/' + self.category + '.' + module_name
                 module_section = modules_dict.pop(section)
                 modules_dict[non_conflicting_module_name] = module_section
 
         return modules_dict
 
     def __repr__(self):
-        """Human-readable representation of a ExternalModuleSource object."""
-        return f'ExternalModuleSource(name={self.name}, directory={self.directory}, safe={self.safe})'
+        """Human-readable representation of a DirectoryModuleSource object."""
+        return f'DirectoryModuleSource(name={self.category}.{self.enabled_module_name}, directory={self.directory}, trusted={self.trusted})'
 
     def __eq__(self, other) -> bool:
         """
-        Return true if two ExternalModuleSource objects represents the same Module.
+        Return true if two DirectoryModuleSource objects represents the same Module.
 
         Entirily determined by the source directory of the module.
         """
         try:
             return self.directory == other.directory
-        except:
+        except AttributeError:  # pragma: no cover
             return False
+
+    def __contains__(self, module_name: str) -> bool:
+        """Return True if source contains module named `module_name`."""
+        return 'module/' + module_name in self.config
+
+
+class EnabledModules:
+    """
+    Object which keeps track of all enabled modules.
+
+    Also allows fetching of configurations defined externally.
+    """
+
+    def __init__(
+        self,
+        enabling_statements: List[EnablingStatement],
+        config_directory: Path,
+        modules_directory: Path,
+    ) -> None:
+        """Determine exactly which modules are enabled from user config."""
+        enabling_statements = self.process_enabling_statements(
+            enabling_statements=enabling_statements,
+            modules_directory=modules_directory,
+        )
+
+        self.source_types: Dict[Type[ModuleSource], List[ModuleSource]] = {
+            GlobalModuleSource: [],
+            DirectoryModuleSource: [],
+            GithubModuleSource: [],
+        }
+
+        for enabling_statement in enabling_statements:
+            if GlobalModuleSource.represented_by(
+                module_name=enabling_statement['name']
+            ):
+                self.source_types[GlobalModuleSource].append(
+                    GlobalModuleSource(
+                        enabling_statement=enabling_statement,
+                        modules_directory=config_directory,
+                    ),
+                )
+            elif DirectoryModuleSource.represented_by(
+                module_name=enabling_statement['name'],
+            ):
+                self.source_types[DirectoryModuleSource].append(
+                    DirectoryModuleSource(
+                        enabling_statement=enabling_statement,
+                        modules_directory=modules_directory,
+                    ),
+                )
+            elif GithubModuleSource.represented_by(
+                module_name=enabling_statement['name'],
+            ):
+                self.source_types[GithubModuleSource].append(
+                    GithubModuleSource(
+                        enabling_statement=enabling_statement,
+                        modules_directory=modules_directory,
+                    ),
+                )
+            else:
+                logger.error(
+                    f'Invalid module name syntax {str(enabling_statement)} '
+                    'in enabled_modules configuration.'
+                )
+
+    def process_enabling_statements(
+        self,
+        enabling_statements: List[EnablingStatement],
+        modules_directory: Path,
+    ):
+        """
+        Return enabling statements where wildcards have been replaced.
+        """
+        self.all_global_modules_enabled = False
+        self.all_directory_modules_enabled = False
+
+        new_enabling_statements: List[EnablingStatement] = []
+        for enabling_statement in enabling_statements:
+            if enabling_statement['name'] == '*':
+                self.all_global_modules_enabled = True
+                new_enabling_statements.append(enabling_statement)
+
+            elif enabling_statement['name'] == '*.*':
+                self.all_directory_modules_enabled = True
+
+                for module_directory in self.directory_names(within=modules_directory):
+                    directory_module = module_directory + '.*'
+                    new_enabling_statement = copy.deepcopy(enabling_statement)
+                    new_enabling_statement['name'] = directory_module
+                    new_enabling_statements.append(new_enabling_statement)
+
+            else:
+                new_enabling_statements.append(enabling_statement)
+
+        return new_enabling_statements
+
+    @staticmethod
+    def directory_names(within: Path) -> Tuple[str, ...]:
+        try:
+            return tuple(
+                path.name
+                for path
+                in within.iterdir()
+                if path.is_dir()
+            )
+        except FileNotFoundError:
+            logger.error(
+                f'Tried to search for module directories in "{within}", '
+                'but directory does not exist!.'
+            )
+            return ()
+
+    def __contains__(self, module_name: str) -> bool:
+        """Return True if the given module name is supposed to be enabled."""
+        if module_name[:7].lower() == 'module/':
+            module_name = module_name[7:]
+
+        source_type = ModuleSource.type(of=module_name)
+        for module_source in self.source_types[source_type]:
+            if module_name in module_source:
+                return True
+
+        return False
+
+    def __repr__(self) -> str:
+        return ', '.join(
+            source.__repr__()
+            for source
+            in self.source_types.values()
+        )
 
 
 class GlobalModulesConfigDict(TypedDict, total=False):
     """Dictionary defining configuration options for Modules."""
     recompile_modified_templates: bool
     modules_directory: str
-    enabled_modules: List[ExternalModuleDict]
+    enabled_modules: List[EnablingStatement]
 
 
 class GlobalModulesConfig:
     """User modules configuration."""
-
-    # If modified templates should be automatically recompiled when the user
-    # edits the template
-    recompile_modified_templates: bool
-
-    # The path to the modules directory, by default:
-    # $ASTRALITY_CONFIG_HOME/modules
-    modules_directory_path: Path
-
-    # All extenally managed modules
-    external_module_sources: Iterable[ExternalModuleSource]
-
-    # The absolute path to all module config files of name `modules.yml`
-    external_module_config_files: Iterable[Path]
 
     def __init__(
         self,
@@ -484,44 +737,52 @@ class GlobalModulesConfig:
         )
 
         # Determine the directory which contains external modules
+        assert config_directory.is_absolute()
+        self.config_directory = config_directory
         if 'modules_directory' in config:
             # Custom modules folder
             modules_path = expand_path(
                 path=Path(config['modules_directory']),
-                config_directory=config_directory,
+                config_directory=self.config_directory,
             )
-            self.modules_directory_path = modules_path
+            self.modules_directory = modules_path
         else:
             # Default modules folder: $ASTRALITY_CONFIG_HOME/modules
-            self.modules_directory_path = config_directory / 'modules'
+            self.modules_directory = config_directory / 'modules'
 
-        # Initialize all the external module sources
-        self._external_module_sources: Dict[Path, ExternalModuleSource] = {}
-        for external_module_dict in config.get('enabled_modules', []):
-            external_module_source = ExternalModuleSource(
-                config=external_module_dict,
-                modules_directory_path=self.modules_directory_path,
-                config_directory=config_directory,
-            )
-            self._external_module_sources[external_module_source.directory] = \
-                external_module_source
+        # Enable all modules if nothing is specified
+        self.enabled_modules = EnabledModules(
+            enabling_statements=config.get(
+                'enabled_modules',
+                [
+                    {'name': '*', 'trusted': True},
+                    {'name': '*.*', 'trusted': True},
+                ]
+            ),
+            config_directory=self.config_directory,
+            modules_directory=self.modules_directory,
+        )
 
     @property
-    def external_module_sources(self) -> Iterable[ExternalModuleSource]:
-        """Return an iterator yielding all ExternalModuleSource objects."""
-        for external_module_source in self._external_module_sources.values():
-            yield external_module_source
+    def external_module_sources(self) -> List[DirectoryModuleSource]:
+        """Return an iterator yielding all DirectoryModuleSource objects."""
+        return self.enabled_modules.source_types[DirectoryModuleSource]  # type: ignore
 
     @property
     def external_module_config_files(self) -> Iterable[Path]:
         """Return an iterator yielding all absolute paths to module config files."""
-        for external_module_source in self._external_module_sources.values():
+        for external_module_source in self.external_module_sources:
             yield external_module_source.config_file
 
     def module_configs_dict(self) -> ModuleConfig:
-        """Return a merged dictionary of all the externally managed module configs."""
-        module_config_dict = {}
-        for external_module_source in self._external_module_sources.values():
-            module_config_dict.update(external_module_source.module_config_dict())
+        """
+        Return a merged dictionary of all directory module configs.
+
+        TODO: Should at some point be responsible to return *all* module
+        config dicts.
+        """
+        module_config_dict: ModuleConfig = {}
+        for external_module_source in self.external_module_sources:
+            module_config_dict.update(external_module_source.config)
 
         return module_config_dict

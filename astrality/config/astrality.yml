@@ -29,11 +29,14 @@ config/modules:
     # $ASTRALITY_CONFIG_HOME/modules
     modules_directory: modules
 
-    # You enable external modules by specifying the <name> of each external
+    # You enable directory modules by specifying the <name> of each external
     # module. The result is that the configurations contained in the following
     # files are merged into this file: <modules_directory>/<name>/modules.yml
     enabled:
         - name: solar_desktop
+        - name: polybar
+        - name: colors
+        - name: terminals
 
 
 context/host:
@@ -131,7 +134,6 @@ module/terminals:
     # Alacritty: https://github.com/jwilm/alacritty
     # Kitty: https://github.com/kovidgoyal/kitty
 
-    enabled: false
     requires:
         - command -v alacritty
         - command -v kitty
@@ -145,7 +147,6 @@ module/terminals:
 
 
 module/polybar:
-    enabled: true
     requires: command -v polybar
 
     on_startup:

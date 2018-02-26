@@ -1,0 +1,6 @@
+module/bhutan:
+    requires: []
+
+module/bangladesh:
+    on_startup:
+        run: echo Greetings from Dhaka!

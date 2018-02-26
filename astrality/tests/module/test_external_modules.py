@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from astrality.module import ModuleManager
+from astrality.module import ModuleManager, GlobalModulesConfig
 
 
 def test_that_external_modules_are_brought_in(
@@ -13,9 +13,13 @@ def test_that_external_modules_are_brought_in(
     _runtime,
 ):
     application_config = {
-        'config/modules': {'enabled_modules': [{
-            'name': 'thailand',
-        }]},
+        'config/modules': {
+            'modules_directory': 'test_modules',
+            'enabled_modules': [
+                {'name': 'thailand.thailand'},
+                {'name': '*'},
+            ],
+        },
         'module/cambodia': {
             'enabled_modules': True,
         },
@@ -25,16 +29,16 @@ def test_that_external_modules_are_brought_in(
 
     module_manager = ModuleManager(application_config)
 
-    thailand_path = test_config_directory / 'modules' / 'thailand'
+    thailand_path = test_config_directory / 'test_modules' / 'thailand'
     assert tuple(module_manager.modules.keys()) == (
-        f'thailand.thailand',
+        'thailand.thailand',
         'cambodia',
     )
 
 
 @pytest.yield_fixture
 def temp_test_files(test_config_directory):
-    module_dir = test_config_directory / 'modules' / 'using_all_actions'
+    module_dir = test_config_directory / 'test_modules' / 'using_all_actions'
     watched_file = module_dir / 'watched_for_modifications'
 
     compile_target = module_dir / 'compiled.tmp'
@@ -60,7 +64,8 @@ def test_correct_relative_paths_used_in_external_module(
 ):
     application_config = {
         'config/modules': {
-            'enabled_modules': [{'name': 'using_all_actions'}],
+            'modules_directory': 'test_modules',
+            'enabled_modules': [{'name': 'using_all_actions.*'}],
         },
     }
     application_config.update(default_global_options)
@@ -96,9 +101,10 @@ def test_that_external_module_contexts_are_imported_correctly(
     _runtime,
 ):
     application_config = {
-        'config/modules': {'enabled_modules': [{
-            'name': 'module_with_context',
-        }]},
+        'config/modules': {
+            'modules_directory': 'test_modules',
+            'enabled_modules': [{'name': 'module_with_context.*', }],
+        },
         'context/china': {
             'capitol': 'beijing',
         },

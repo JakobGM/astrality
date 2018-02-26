@@ -345,30 +345,34 @@ class ModuleManager:
         self.last_module_events: Dict[str, str] = {}
 
         # Get module configurations which are externally defined
-        global_modules_config = GlobalModulesConfig(  # type: ignore
+        self.global_modules_config = GlobalModulesConfig(  # type: ignore
             config=config.get('config/modules', {}),
             config_directory=self.config_directory,
         )
-        self.recompile_modified_templates = global_modules_config.recompile_modified_templates
+        self.recompile_modified_templates = self.global_modules_config.recompile_modified_templates
 
         self.modules: Dict[str, Module] = {}
 
         # Insert externally managed modules
-        for external_module_source in global_modules_config.external_module_sources:
+        for external_module_source in self.global_modules_config.external_module_sources:
             module_directory = external_module_source.directory
 
-            module_configs = external_module_source.module_config_dict()
+            module_configs = external_module_source.config
 
             # Insert context defined in external configuration
             self.application_context.update(context(module_configs))
 
             for section, options in module_configs.items():
                 module_config = {section: options}
-                if Module.valid_class_section(
+
+                valid_module = Module.valid_class_section(
                     section=module_config,
                     requires_timeout=self.application_config['config/astrality']['requires_timeout'],
                     requires_working_directory=module_directory,
-                ):
+                )
+                enabled_module = section in self.global_modules_config.enabled_modules
+
+                if valid_module and enabled_module:
                     module = Module(
                         module_config=module_config,
                         module_directory=module_directory,
@@ -382,11 +386,16 @@ class ModuleManager:
         # Insert modules defined in `astrality.yml`
         for section, options in config.items():
             module_config = {section: options}
-            if Module.valid_class_section(
+
+            # Check if this module should be included
+            valid_module = Module.valid_class_section(
                 section=module_config,
                 requires_timeout=self.application_config['config/astrality']['requires_timeout'],
                 requires_working_directory=self.config_directory,
-            ):
+            )
+            enabled_module = section in self.global_modules_config.enabled_modules
+
+            if valid_module and enabled_module:
                 module = Module(
                     module_config=module_config,
                     module_directory=self.config_directory,
