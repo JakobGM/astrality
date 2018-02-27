@@ -405,7 +405,7 @@ class ModuleSource(ABC):
         return bool(cls.name_syntax.match(module_name))
 
     @classmethod
-    def type(cls, of: str) -> Optional['ModuleSource']:
+    def type(cls, of: str) -> 'ModuleSource':
         """
         Return the source subclass which is responsible for the module name.
         """
@@ -614,38 +614,24 @@ class EnabledModules:
         }
 
         for enabling_statement in enabling_statements:
-            if GlobalModuleSource.represented_by(
-                module_name=enabling_statement['name']
-            ):
-                self.source_types[GlobalModuleSource].append(
-                    GlobalModuleSource(
-                        enabling_statement=enabling_statement,
-                        modules_directory=config_directory,
-                    ),
-                )
-            elif DirectoryModuleSource.represented_by(
-                module_name=enabling_statement['name'],
-            ):
-                self.source_types[DirectoryModuleSource].append(
-                    DirectoryModuleSource(
-                        enabling_statement=enabling_statement,
-                        modules_directory=modules_directory,
-                    ),
-                )
-            elif GithubModuleSource.represented_by(
-                module_name=enabling_statement['name'],
-            ):
-                self.source_types[GithubModuleSource].append(
-                    GithubModuleSource(
-                        enabling_statement=enabling_statement,
-                        modules_directory=modules_directory,
-                    ),
-                )
-            else:
+            try:
+                source_type = ModuleSource.type(of=enabling_statement['name'])
+            except MisconfiguredConfigurationFile:
                 logger.error(
                     f'Invalid module name syntax {str(enabling_statement)} '
                     'in enabled_modules configuration.'
                 )
+                continue
+
+            if source_type == GlobalModuleSource:
+                source_directory = config_directory
+            else:
+                source_directory = modules_directory
+
+            self.source_types[source_type].append(source_type(
+                enabling_statement=enabling_statement,
+                modules_directory=source_directory,
+            ))
 
     def process_enabling_statements(
         self,
