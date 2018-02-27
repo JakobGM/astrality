@@ -4,9 +4,11 @@ from pathlib import Path
 import pytest
 
 from astrality.exceptions import GithubModuleError
-from astrality.github import clone_repo
+from astrality.github import clone_or_pull_repo, clone_repo
+from astrality.utils import run_shell
 
 
+@pytest.mark.slow
 def test_clone_github_repo(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
     repo_dir = clone_repo(
@@ -23,6 +25,7 @@ def test_clone_github_repo(tmpdir):
     assert repo_dir.parent.name == 'jakobgm'
 
 
+@pytest.mark.slow
 def test_cloning_non_existent_github_repository(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
 
@@ -40,6 +43,7 @@ def test_cloning_non_existent_github_repository(tmpdir):
     assert not repository_directory.is_dir()
 
 
+@pytest.mark.slow
 def test_cloning_two_repositories(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
     repo_dir = clone_repo(
@@ -57,6 +61,7 @@ def test_cloning_two_repositories(tmpdir):
     assert len(tuple(github_user_directory.iterdir())) == 2
 
 
+@pytest.mark.slow
 def test_cloning_one_existent_and_one_non_existent_repo(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
     repo_dir = clone_repo(
@@ -76,6 +81,7 @@ def test_cloning_one_existent_and_one_non_existent_repo(tmpdir):
     assert len(tuple(github_user_directory.iterdir())) == 1
 
 
+@pytest.mark.slow
 def test_cloning_the_same_repo_twice(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
     repo_dir = clone_repo(
@@ -95,3 +101,34 @@ def test_cloning_the_same_repo_twice(tmpdir):
 
     with open(config_file) as file:
         assert file.read() == 'user edited'
+
+@pytest.mark.slow
+def test_clone_or_pull_repository_by_updating_outdated_repository(tmpdir):
+    modules_directory = Path(tmpdir.mkdir('modules'))
+    repo_dir = clone_repo(
+        user='jakobgm',
+        repository='color-schemes.astrality',
+        modules_directory=modules_directory,
+    )
+
+    # Move master to first commit in repository
+    result = run_shell(
+        command='git reset --hard 2b8941a',
+        timeout=5,
+        fallback=False,
+        working_directory=repo_dir,
+    )
+    assert result is not False
+
+    # The readme does not exist in this commit
+    readme = repo_dir / 'README.rst'
+    assert not readme.is_file()
+
+    # The following pull should reintroduce the README into the directory
+    updated_repo_dir = clone_or_pull_repo(
+        user='jakobgm',
+        repository='color-schemes.astrality',
+        modules_directory=modules_directory,
+    )
+    assert updated_repo_dir == repo_dir
+    assert readme.is_file()

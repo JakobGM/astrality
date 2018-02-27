@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Union
@@ -45,3 +46,43 @@ def clone_repo(
 
     return repository_directory
 
+
+def clone_or_pull_repo(
+    user: str,
+    repository: str,
+    modules_directory: Path,
+    timeout: Union[int, float] = 50,
+) -> Path:
+    github_repo_directory = modules_directory / user / repository
+
+    if not github_repo_directory.is_dir():
+        # The repository does not exist, so we clone it
+        return clone_repo(
+            user=user,
+            repository=repository,
+            modules_directory=modules_directory,
+            timeout=timeout,
+        )
+
+    logger = logging.getLogger(__name__)
+    if not (github_repo_directory / '.git').is_dir():
+        logger.error(
+            f'Tried to update git module directory "{github_repo_directory}", '
+            'but the directory does not contain a ".git" sub-directory.'
+        )
+        return github_repo_directory
+
+    result = run_shell(
+        command='GIT_TERMINAL_PROMPT=0 git pull',
+        timeout=timeout,
+        fallback=False,
+        working_directory=github_repo_directory,
+        allow_error_codes=True,
+    )
+    if result is False:
+        raise GithubModuleError(
+            f'Could not git pull module directory "{github_repo_directory}".\.'
+            f'Return value from git pull operation: "{result}".'
+        )
+
+    return github_repo_directory
