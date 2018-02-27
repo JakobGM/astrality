@@ -13,6 +13,7 @@ def run_shell(
     timeout: Union[int, float] = 2,
     fallback: Any = '',
     working_directory: Path = Path.home(),
+    allow_error_codes: bool = False,
 ) -> str:
     """
     Return the standard output of a shell command.
@@ -40,7 +41,7 @@ def run_shell(
         for error_line in process.stderr:
             logger.error(str(error_line))
 
-        if process.returncode != 0:
+        if process.returncode != 0 and not allow_error_codes:
             logger.error(
                 f'Command "{command}" exited with non-zero return code: ' +
                 str(process.returncode)

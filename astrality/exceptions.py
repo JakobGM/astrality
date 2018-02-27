@@ -6,3 +6,6 @@ class NonExistentEnabledModule(AstralityConfigurationError):
 
 class MisconfiguredConfigurationFile(AstralityConfigurationError):
     pass
+
+class GithubModuleError(AstralityConfigurationError):
+    pass
