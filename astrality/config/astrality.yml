@@ -33,7 +33,7 @@ config/modules:
     # module. The result is that the configurations contained in the following
     # files are merged into this file: <modules_directory>/<name>/modules.yml
     enabled_modules:
-        - name: solar_desktop.*
+        - name: solar_desktop::*
         - name: polybar
         - name: colors
         - name: terminals
