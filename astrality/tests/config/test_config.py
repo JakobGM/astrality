@@ -211,5 +211,28 @@ class TestUsingConfigFilesWithPlaceholders:
         assert user_conf['key1'] == 'test_value'
         assert user_conf['key2'] == 'test'
 
-    def test_module_source(self):
-        pass
+    def test_module_directory_source(
+        self,
+        test_config_directory,
+        default_global_options,
+        _runtime,
+    ):
+        application_config = {
+            'config/modules': {
+                'modules_directory': 'test_modules',
+                'enabled_modules': [
+                    {'name': 'module_with_placeholders::*'},
+                ],
+            },
+            'context/module': {
+                'setting': 'hi',
+            },
+        }
+        application_config.update(default_global_options)
+        application_config.update(_runtime)
+
+        module_manager = ModuleManager(application_config)
+        module_config = module_manager.modules['module_with_placeholders::placeholders'].module_config
+
+        assert module_config['hi'] == 'bye!'
+        assert module_config['test_value'] == 'test'

@@ -353,11 +353,16 @@ class ModuleManager:
 
         self.modules: Dict[str, Module] = {}
 
+        # Application context is used in compiling external config sources
+        application_context = context(config)
+
         # Insert externally managed modules
         for external_module_source in self.global_modules_config.external_module_sources:
             module_directory = external_module_source.directory
 
-            module_configs = external_module_source.config
+            module_configs = external_module_source.config(
+                context=application_context,
+            )
 
             # Insert context defined in external configuration
             self.application_context.update(context(module_configs))
@@ -380,7 +385,7 @@ class ModuleManager:
 
         # Update the context from `astrality.yml`, overwriting any defined
         # contexts in external modules in the case of naming conflicts
-        self.application_context.update(context(config))
+        self.application_context.update(application_context)
 
         # Insert modules defined in `astrality.yml`
         for section, options in config.items():

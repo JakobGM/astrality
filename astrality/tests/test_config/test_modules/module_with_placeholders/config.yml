@@ -1,0 +1,3 @@
+module/placeholders:
+    {{ module.setting }}: 'bye!'
+    {{ env.EXAMPLE_ENV_VARIABLE }}: {{ 'echo test' | shell }}

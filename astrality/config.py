@@ -213,9 +213,12 @@ def insert_into(
         f'Importing context section {section} from {str(from_config_file)}',
     )
 
+    # Context files do not insert context values, as that would cause a lot
+    # of complexity for end users. Old context values will be inserted
+    # for placeholders, etc.
     contexts = compiler.context(dict_from_config_file(
         from_config_file,
-        context={},  # TODO
+        context={},
     ))
 
     if section and from_section:
@@ -284,6 +287,7 @@ ModuleConfig = Dict[str, Any]
 class ModuleSource(ABC):
     directory: Path
     config_file: Path
+    _config: Dict[Any, Any]
 
     @abstractmethod
     def __init__(
@@ -300,9 +304,8 @@ class ModuleSource(ABC):
         """Regular expression defining how to name this type of module source."""
         raise NotImplementedError
 
-    @property
     @abstractmethod
-    def config(self) -> Dict[Any, Any]:
+    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
         """Return the dictionary containing the module configuration."""
         raise NotImplementedError
 
@@ -346,8 +349,7 @@ class GlobalModuleSource(ModuleSource):
         assert modules_directory.is_absolute()
         self.directory = modules_directory
 
-    @property
-    def config(self) -> Dict[Any, Any]:
+    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
         """Return configuration related to global module (TODO)."""
         return {}
 
@@ -402,8 +404,7 @@ class GithubModuleSource(ModuleSource):
         self.directory = modules_directory / self.github_user / self.github_repo
         self.config_file = self.directory / 'config.yml'
 
-    @property
-    def config(self) -> Dict[Any, Any]:
+    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
         """Return the contents of config.yml, filtering out disabled modules."""
         if hasattr(self, '_config'):
             return self._config
@@ -425,6 +426,7 @@ class GithubModuleSource(ModuleSource):
 
         self._config = filter_config_file(
             config_file=self.config_file,
+            context=context,
             enabled_module_name=self.enabled_module_name,
             prepend=f'github::{self.github_user}/{self.github_repo}::',
         )
@@ -433,7 +435,7 @@ class GithubModuleSource(ModuleSource):
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if GitHub module repo is enabled."""
-        return 'module/' + module_name in self.config
+        return 'module/' + module_name in self._config
 
     def __eq__(self, other) -> bool:
         """
@@ -441,7 +443,7 @@ class GithubModuleSource(ModuleSource):
         directory with identical modules enabled.
         """
         try:
-            return self.directory == other.directory and self.config == other.config
+            return self.directory == other.directory and self._config == other._config
         except AttributeError:
             return False
 
@@ -449,7 +451,7 @@ class GithubModuleSource(ModuleSource):
 
     def __repr__(self) -> str:
         return f"GithubModuleSource('{self.github_user}/{self.github_repo}')" \
-            f' = {tuple(self.config.keys())}'
+            f' = {tuple(self._config.keys())}'
 
 
 class DirectoryModuleSource(ModuleSource):
@@ -481,12 +483,12 @@ class DirectoryModuleSource(ModuleSource):
         self.config_file = self.directory / 'config.yml'
         self.trusted = enabling_statement.get('trusted', True)
 
-    @property
-    def config(self) -> Dict[Any, Any]:
+    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
         """Return the module configuration defined in directory."""
         if not hasattr(self, '_config'):
             self._config = filter_config_file(
                 config_file=self.config_file,
+                context=context,
                 enabled_module_name=self.enabled_module_name,
                 prepend=str(self.relative_directory_path) + '::',
             )
@@ -510,7 +512,7 @@ class DirectoryModuleSource(ModuleSource):
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if source contains module named `module_name`."""
-        return 'module/' + module_name in self.config
+        return 'module/' + module_name in self._config
 
 
 class EnabledModules:
@@ -605,6 +607,18 @@ class EnabledModules:
             )
             return ()
 
+    def compile_config_files(
+        self,
+        context: Dict[str, Resolver],
+    ):
+        """Compile all config templates with context."""
+        for source in (
+            *self.source_types[DirectoryModuleSource],
+            *self.source_types[GithubModuleSource],
+        ):
+            source.config(context=context)
+
+
     def __contains__(self, module_name: str) -> bool:
         """Return True if the given module name is supposed to be enabled."""
         if module_name[:7].lower() == 'module/':
@@ -697,22 +711,17 @@ class GlobalModulesConfig:
         for external_module_source in self.external_module_sources:
             yield external_module_source.config_file
 
-    def module_configs_dict(self) -> ModuleConfig:
-        """
-        Return a merged dictionary of all directory module configs.
-
-        TODO: Should at some point be responsible to return *all* module
-        config dicts.
-        """
-        module_config_dict: ModuleConfig = {}
-        for external_module_source in self.external_module_sources:
-            module_config_dict.update(external_module_source.config)
-
-        return module_config_dict
+    def compile_config_files(
+        self,
+        context: Dict[str, Resolver],
+    ):
+        """Compile all config templates with context."""
+        self.enabled_modules.compile_config_files(context)
 
 
 def filter_config_file(
     config_file: Path,
+    context: Dict[str, Resolver],
     enabled_module_name: str,
     prepend: str,
 ) -> ModuleConfig:
@@ -725,7 +734,7 @@ def filter_config_file(
     try:
         modules_dict = dict_from_config_file(
             config_file=config_file,
-            context={},  # TODO
+            context=context,
         )
     except FileNotFoundError:
         logger.warning(

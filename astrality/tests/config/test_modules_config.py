@@ -103,37 +103,10 @@ def test_retrieval_of_external_module_config(test_config_directory):
         modules_directory=test_config_directory / 'test_modules',
     )
 
-    assert external_module_source.config == {
+    assert external_module_source.config({}) == {
         f'module/burma::burma': {
             'enabled': True,
             'safe': False,
-        },
-    }
-
-
-def test_retrieval_of_merged_module_configs(test_config_directory):
-    modules_application_config = {
-        'modules_directory': 'test_modules',
-        'enabled_modules': [
-            {'name': 'burma::burma'},
-            {'name': 'thailand::thailand'},
-        ],
-    }
-    modules_config = GlobalModulesConfig(
-        config=modules_application_config,
-        config_directory=test_config_directory,
-    )
-    burma_path = test_config_directory / 'test_modules' / 'burma'
-    thailand_path = test_config_directory / 'test_modules' / 'thailand'
-
-    assert modules_config.module_configs_dict() == {
-        f'module/burma::burma': {
-            'enabled': True,
-            'safe': False,
-        },
-        f'module/thailand::thailand': {
-            'enabled': True,
-            'safe': True,
         },
     }
 
@@ -199,7 +172,7 @@ class TestDirectoryModuleSource:
                 enabling_statement=enabling_statement,
                 modules_directory=test_config_directory / 'freezed_modules',
             )
-            config = directory_module.config
+            config = directory_module.config({})
 
     def test_recursive_module_directory(
         self,
@@ -210,7 +183,7 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'test_modules',
         )
-        assert directory_module.config == {
+        assert directory_module.config({}) == {
             'module/recursive/directory::bulgaria': {
                 'on_startup': {
                     'run': "echo 'Greetings from Bulgaria!'",
@@ -227,7 +200,7 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
-        assert directory_module.config == {
+        assert directory_module.config({}) == {
             'module/north_america::USA': {
                 'on_startup': {
                     'run': 'echo Greetings from the USA!',
@@ -249,7 +222,7 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
-        assert directory_module.config == {
+        assert directory_module.config({}) == {
             'module/south_america::brazil': {
                 'on_startup': {
                     'run': 'echo Greetings from Brazil!',
@@ -274,6 +247,8 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
+        directory_module.config({})
+
         assert 'south_america::brazil' in directory_module
 
         assert 'south_america::argentina' not in directory_module
@@ -312,6 +287,7 @@ class TestGlobalModuleSource:
             enabling_statement={'name': 'enabled_module'},
             modules_directory=Path('/'),
         )
+        global_module_source.config({})
         assert 'enabled_module' in global_module_source
         assert 'disabled_module' not in global_module_source
         assert '*' not in global_module_source
@@ -378,6 +354,8 @@ class TestGithubModuleSource:
             enabling_statement={'name': 'github::jakobgm/test-module.astrality'},
             modules_directory=test_config_directory / 'test_modules',
         )
+        github_module_source.config({})
+
         assert 'github::jakobgm/test-module.astrality::botswana' in github_module_source
         assert 'github::jakobgm/test-module.astrality::ghana' in github_module_source
 
@@ -392,6 +370,8 @@ class TestGithubModuleSource:
             enabling_statement={'name': 'github::jakobgm/test-module.astrality::botswana'},
             modules_directory=test_config_directory / 'test_modules',
         )
+        github_module_source.config({})
+
         assert 'github::jakobgm/test-module.astrality::botswana' in github_module_source
         assert 'github::jakobgm/test-module.astrality::ghana' not in github_module_source
 
@@ -405,6 +385,7 @@ class TestGithubModuleSource:
             enabling_statement={'name': 'github::jakobgm/test-module.astrality'},
             modules_directory=test_config_directory / 'test_modules',
         )
+        github_module_source1.config({})
 
         # Sleep to prevent race conditions
         time.sleep(1)
@@ -413,6 +394,8 @@ class TestGithubModuleSource:
             enabling_statement={'name': 'github::jakobgm/test-module.astrality::*'},
             modules_directory=test_config_directory / 'test_modules',
         )
+        github_module_source2.config({})
+
         assert github_module_source1 == github_module_source2
 
     @pytest.mark.slow
@@ -425,7 +408,7 @@ class TestGithubModuleSource:
             },
             modules_directory=modules_directory,
         )
-        assert github_module_source.config == {
+        assert github_module_source.config({}) == {
             'module/github::jakobgm/test-module.astrality::botswana': {
                 'on_startup': {
                     'run': "echo 'Greetings from Botswana!'",
@@ -459,7 +442,7 @@ class TestGithubModuleSource:
         )
 
         # The repository is lazely cloned, so we need to get the config
-        config = github_module_source.config
+        config = github_module_source.config({})
 
         repo_dir = modules_directory / 'jakobgm' / 'test-module.astrality'
         assert repo_dir.is_dir()
@@ -485,7 +468,7 @@ class TestGithubModuleSource:
             },
             modules_directory=modules_directory,
         )
-        config = github_module_source.config
+        config = github_module_source.config({})
 
         # The autoupdating should update the module to origin/master
         # containing the README.rst file
@@ -528,10 +511,12 @@ class TestEnabledModules:
             config_directory=test_config_directory,
             modules_directory=test_config_directory / 'freezed_modules',
         )
+
         for sources in enabled_modules.source_types.values():
             assert len(sources) == 1
         assert len(caplog.record_tuples) == 1
 
+        enabled_modules.compile_config_files({})
         assert 'global' in enabled_modules
         assert 'south_america::brazil' in enabled_modules
         assert 'south_america::argentina' in enabled_modules

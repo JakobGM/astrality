@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 import pytest
-from jinja2 import Environment
+from jinja2 import Environment, UndefinedError
 
 from astrality.compiler import (
     cast_to_numeric,
@@ -146,3 +146,15 @@ def test_command_substition_by_preprocessing_yaml_file():
     key3: test_value
     key4: '''
     assert expected_result == result
+
+def test_handling_of_undefined_context(tmpdir, caplog):
+    template = Path(tmpdir) / 'template'
+    template.write_text('{{ this.is.not.defined }}')
+
+    with pytest.raises(UndefinedError):
+        string = compile_template_to_string(
+            template=template,
+            context={},
+        )
+
+    assert "'this' is undefined" in caplog.record_tuples[0][2]

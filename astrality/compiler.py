@@ -64,7 +64,7 @@ def jinja_environment(
     logger = logging.getLogger(__name__)
     LoggingUndefined = make_logging_undefined(
         logger=logger,
-        base=Undefined
+        base=Undefined,
     )
 
     env = Environment(

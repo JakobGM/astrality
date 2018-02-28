@@ -77,6 +77,7 @@ def test_modules_config_explicitly_enabled_modules(
         config=global_modules_config_dict,
         config_directory=test_config_directory,
     )
+    global_modules_config.compile_config_files({})
 
     assert 'burma::burma' in global_modules_config.enabled_modules
     assert 'india' in global_modules_config.enabled_modules
@@ -97,6 +98,7 @@ def test_modules_config_implicitly_enabled_modules(
         config=global_modules_config_dict,
         config_directory=test_config_directory,
     )
+    global_modules_config.compile_config_files({})
 
     assert 'burma::burma' in global_modules_config.enabled_modules
     assert 'india' in global_modules_config.enabled_modules
@@ -116,6 +118,7 @@ def test_modules_config_several_implicitly_enabled_modules(
         config=global_modules_config_dict,
         config_directory=test_config_directory,
     )
+    global_modules_config.compile_config_files({})
 
     assert 'two_modules::bhutan' in global_modules_config.enabled_modules
     assert 'two_modules::bangladesh' in global_modules_config.enabled_modules
@@ -133,6 +136,9 @@ def test_modules_config_where_all_modules_are_enabled(
     global_modules_config = GlobalModulesConfig(
         config=global_modules_config_dict,
         config_directory=test_config_directory,
+    )
+    global_modules_config.compile_config_files(
+        {'module': {'setting': 'whatever'}},
     )
 
     assert 'two_modules::bhutan' in global_modules_config.enabled_modules
