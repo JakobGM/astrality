@@ -1,5 +1,5 @@
 section1:
-    key1: $(echo test)
-    key2: $(echo ${EXAMPLE_ENV_VARIABLE})
-    key3: ${EXAMPLE_ENV_VARIABLE}
-    key4: $(sleep 3)
+    key1: {{ 'echo test' | shell }}
+    key2: {{ 'echo $EXAMPLE_ENV_VARIABLE' | shell }}
+    key3: {{ env.EXAMPLE_ENV_VARIABLE }}
+    key4: {{ 'sleep 3' | shell }}

@@ -31,7 +31,7 @@ from astrality.exceptions import (
 )
 from astrality.github import clone_repo, clone_or_pull_repo
 from astrality.resolver import Resolver
-from astrality.utils import run_shell
+from astrality.utils import generate_expanded_env_dict, run_shell
 
 Context = Dict[str, Resolver]
 
@@ -112,16 +112,16 @@ def infer_config_location(
 
 def dict_from_config_file(
     config_file: Path,
-    with_env: bool = True,
+    context: Dict[str, Resolver],
 ) -> ApplicationConfig:
     """
     Return a dictionary that reflects the contents of `config_file`.
 
     Environment variables are interpolated like this:
-        ${env:NAME_OF_ENV_VARIABLE} -> os.environ[NAME_OF_ENV_VARIABLE]
+        {{ env:NAME_OF_ENV_VARIABLE }} -> os.environ[NAME_OF_ENV_VARIABLE]
 
-    If with_env=True, an 'env' section is inserted into the dictionary
-    containing all the environment variables.
+    And shell commands can be inserted like this:
+        {{ 'shell command' | shell }}
     """
 
     if not config_file.is_file():  # pragma: no cover
@@ -129,15 +129,12 @@ def dict_from_config_file(
         logger.critical(error_msg)
         raise FileNotFoundError(error_msg)
 
-    expanded_env_dict = generate_expanded_env_dict()
-    config_string = preprocess_configuration_file(
-        config_file,
-        expanded_env_dict,
+    config_string = compiler.compile_template_to_string(
+        template=config_file,
+        context=context,
+        shell_command_working_directory=config_file.parent,
     )
     conf_dict = load(StringIO(config_string))
-
-    if with_env:
-        conf_dict['context/env'] = expanded_env_dict
 
     return conf_dict
 
@@ -181,10 +178,7 @@ def user_configuration(config_directory: Optional[Path] = None) -> ApplicationCo
     """
     config_directory, config_file = infer_config_location(config_directory)
 
-    config = dict_from_config_file(
-        config_file,
-        with_env=True,
-    )
+    config = dict_from_config_file(config_file=config_file, context={})
     config.update(infer_runtime_variables_from_config(
         config_directory,
         config_file,
@@ -197,103 +191,6 @@ def user_configuration(config_directory: Optional[Path] = None) -> ApplicationCo
     config['config/astrality'].update(user_settings)
 
     return config
-
-def preprocess_configuration_file(
-    conf_file: Path,
-    env_dict: MutableMapping[str, str] = os.environ,
-) -> str:
-    """
-    Interpolate environment variables and command substitutions in file.
-
-    Interpolation syntax:
-        ${name} -> os.environ[name].
-        $(command) -> stdout from shell execution.
-    """
-    working_directory = conf_file.parent
-
-    conf_text = ''
-    with open(conf_file, 'r') as file:
-        for line in file:
-            conf_text += insert_environment_values(
-                insert_command_substitutions(
-                    content=line,
-                    shell_command_working_directory=working_directory
-                ),
-                env_dict,
-            )
-
-    return conf_text
-
-def insert_environment_values(
-    content: str,
-    env_dict: MutableMapping[str, str] = os.environ,
-) -> str:
-    """Replace all occurences in string: ${name} -> env_dict[name]."""
-
-    env_dict = generate_expanded_env_dict()
-    env_variable_pattern = re.compile(r'\$\{(\w+)\}')
-
-    def expand_environment_variable(match: Match[str]) -> str:
-        env_variable = match.groups()[0]
-        try:
-            return env_dict[env_variable]
-        except KeyError:
-            logging.error(
-                f'Could not insert environment variable {env_variable}. '
-                'It is not defined. Leaving it as is in the configuration.'
-            )
-            return '${' + env_variable + '}'
-
-    return env_variable_pattern.sub(
-        expand_environment_variable,
-        content,
-    )
-
-
-def insert_command_substitutions(
-    content: str,
-    shell_command_working_directory: Path,
-) -> str:
-    """Replace all occurences in string: $(command) -> command stdout."""
-    command_substitution_pattern = re.compile(r'\$\((.*)\)')
-
-    def command_substitution(match: Match[str]) -> str:
-        command = match.groups()[0]
-        result = run_shell(
-            command=command,
-            working_directory=shell_command_working_directory,
-        )
-        if result == '':
-            logger.error(
-                f'Command substitution $({command}) returned empty stdout.'
-            )
-        return result
-
-    return command_substitution_pattern.sub(
-        command_substitution,
-        content,
-    )
-
-
-def generate_expanded_env_dict() -> Dict[str, str]:
-    """Return os.environ dict with all env variables expanded."""
-
-    env_dict = {}
-    for name, value in os.environ.items():
-        try:
-            env_dict[name] = os.path.expandvars(value)
-        except ValueError as e:
-            if 'invalid interpolation syntax' in str(e):
-                logger.warning(f'''
-                Could not use environment variable {name}={value}.
-                It is too complex for expansion, using unexpanded value
-                instead...
-                ''')
-                env_dict[name] = value
-            else:
-                raise
-
-    return env_dict
 
 
 def insert_into(
@@ -318,7 +215,7 @@ def insert_into(
 
     contexts = compiler.context(dict_from_config_file(
         from_config_file,
-        with_env=False,
+        context={},  # TODO
     ))
 
     if section and from_section:
@@ -828,7 +725,7 @@ def filter_config_file(
     try:
         modules_dict = dict_from_config_file(
             config_file=config_file,
-            with_env=False,
+            context={},  # TODO
         )
     except FileNotFoundError:
         logger.warning(

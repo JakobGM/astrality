@@ -9,7 +9,7 @@ context/section2:
     empty_string_var: ''
 
 context/section3:
-    env_variable: ${EXAMPLE_ENV_VARIABLE}, hello
+    env_variable: {{ env.EXAMPLE_ENV_VARIABLE }}, hello
 
 context/section4:
     1: primary_value

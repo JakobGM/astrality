@@ -170,7 +170,10 @@ def test_hot_reloading(
     # Copy the first configuration into place
     shutil.copy(str(config1), str(target_config))
 
-    application_config1 = dict_from_config_file(config1)
+    application_config1 = dict_from_config_file(
+        config1,
+        context={},
+    )
     application_config1.update(default_global_options)
     application_config1.update(_runtime)
     application_config1['config/astrality']['hot_reload_config'] = True

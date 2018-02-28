@@ -8,9 +8,9 @@ import pytest
 
 from astrality.config import (
     ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
-    generate_expanded_env_dict,
     user_configuration,
 )
+from astrality.utils import generate_expanded_env_dict
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def conf_file_path(conf_path):
 def conf():
     """Return the configuration object for the example configuration."""
     this_test_file = os.path.abspath(__file__)
-    conf_path = Path(this_test_file).parents[2]
+    conf_path = Path(this_test_file).parents[1] / 'config'
     return user_configuration(conf_path)
 
 

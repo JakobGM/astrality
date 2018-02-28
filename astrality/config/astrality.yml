@@ -64,7 +64,7 @@ context/host:
             #
             # This is also used by the polybar template to point the
             # wireless-internet polybar module to the correct interface.
-            handle: $( iwconfig 2>/dev/null | grep -o "^\w*" )
+            handle: {{ 'iwconfig 2>/dev/null | grep -o "^\w*"' | shell }}
 
         ethernet:
             handle: eno0
@@ -76,7 +76,7 @@ context/host:
         reboot: systemctl reboot -i
 
         # In order to insert our global IP into a template, we can now do:
-        # {{ host.commands.global_ip | shell }}
+        # host.commands.global_ip | shell within placeholder delimiters
         global_ip: 'wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1 | xargs'
 
 
@@ -86,8 +86,8 @@ context/fonts:
     # values in templates.
 
     # You can use integer indexed variables in order to have fallback values.
-    # If {{ fonts:4/5/6 on so an }} is used in a template, but it is not
-    # defined, it will be replaced with {{ ast:fonts:3 }} instead. This is
+    # If fonts:4/5/6 on so on is used in a template, but it is not
+    # defined, it will be replaced with ast:fonts:3 instead. This is
     # useful when you dont want to assume how many fonts you want to use when
     # you write your templates.
     #
@@ -141,9 +141,9 @@ module/terminals:
     on_startup:
         compile:
             - template: modules/terminals/alacritty.yml.template
-              target: ${XDG_CONFIG_HOME}/alacritty/alacritty.yml
+              target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
             - template: modules/terminals/kitty.conf.template
-              target: ${XDG_CONFIG_HOME}/kitty/kitty.conf
+              target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf
 
 
 module/polybar:

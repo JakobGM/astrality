@@ -9,9 +9,10 @@ from freezegun import freeze_time
 import pytest
 
 from astrality import event_listener
-from astrality.config import dict_from_config_file, generate_expanded_env_dict
+from astrality.config import dict_from_config_file
 from astrality.module import ContextSectionImport, Module, ModuleManager
 from astrality.resolver import Resolver
+from astrality.utils import generate_expanded_env_dict
 
 
 @pytest.fixture

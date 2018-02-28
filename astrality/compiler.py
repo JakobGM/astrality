@@ -4,7 +4,7 @@ import logging
 import os
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from jinja2 import (
     Environment,
@@ -13,6 +13,7 @@ from jinja2 import (
     make_logging_undefined,
 )
 
+from astrality.utils import generate_expanded_env_dict
 from astrality.resolver import Resolver
 from astrality.utils import run_shell
 
@@ -78,6 +79,9 @@ def jinja_environment(
         undefined=LoggingUndefined,
     )
 
+    # Add env context containing all environment variables
+    env.globals['env'] = generate_expanded_env_dict()
+
     # Add run shell command filter
     run_shell_from_working_directory = partial(
         run_shell,
@@ -96,6 +100,29 @@ def finalize_variable_expression(result: str) -> str:
         return result
 
 
+def compile_template_to_string(
+    template: Path,
+    context: Context,
+    shell_command_working_directory: Optional[Path] = None,
+) -> str:
+    """
+    Return the compiled template string.
+
+    Context placeholder replacements given by `context`, and shell filters
+    run with working directory ``shell_command_working_directory``.
+    """
+    if not shell_command_working_directory:
+        shell_command_working_directory = template.parent
+
+    env = jinja_environment(
+        templates_folder=template.parent,
+        shell_command_working_directory=shell_command_working_directory,
+    )
+    jinja_template = env.get_template(name=template.name)
+
+    return jinja_template.render(context)
+
+
 def compile_template(
     template: Path,
     target: Path,
@@ -105,12 +132,11 @@ def compile_template(
     """Compile template to target destination with specific context."""
     logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')
 
-    env = jinja_environment(
-        templates_folder=template.parent,
+    result = compile_template_to_string(
+        template=template,
+        context=context,
         shell_command_working_directory=shell_command_working_directory,
     )
-    jinja_template = env.get_template(name=template.name)
-    result = jinja_template.render(context)
 
     # Create parent directories if they do not exist
     os.makedirs(target.parent, exist_ok=True)

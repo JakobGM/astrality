@@ -7,7 +7,12 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment
 
-from astrality.compiler import cast_to_numeric, compile_template, jinja_environment
+from astrality.compiler import (
+    cast_to_numeric,
+    compile_template,
+    compile_template_to_string,
+    jinja_environment,
+)
 from astrality.resolver import Resolver
 
 
@@ -99,3 +104,45 @@ def test_working_directory_of_shell_command_filter(test_templates_folder):
 
     with open(compiled_shell_template_path) as target:
         assert target.read() == '/'
+
+def test_environment_variable_interpolation_by_preprocessing_conf_yaml_file():
+    test_conf = Path(__file__).parent / 'test_config' / 'test.yml'
+    result = compile_template_to_string(
+        template=test_conf,
+        context={},
+    )
+
+    expected_result = \
+'''context/section1:
+    var1: value1
+    var2: value1/value2
+
+
+context/section2:
+    # Comment
+    var3: value1
+    empty_string_var: ''
+
+context/section3:
+    env_variable: test_value, hello
+
+context/section4:
+    1: primary_value'''
+    assert expected_result == result
+
+
+@pytest.mark.slow
+def test_command_substition_by_preprocessing_yaml_file():
+    test_conf = Path(__file__).parent / 'test_config' / 'commands.yml'
+    result = compile_template_to_string(
+        template=test_conf,
+        context={},
+    )
+
+    expected_result = \
+'''section1:
+    key1: test
+    key2: test_value
+    key3: test_value
+    key4: '''
+    assert expected_result == result
