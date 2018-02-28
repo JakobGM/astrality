@@ -54,8 +54,8 @@ def test_enabled_modules(test_config_directory):
     modules_config = GlobalModulesConfig({
         'modules_directory': 'test_modules',
         'enabled_modules': [
-            {'name': 'oslo.*', 'safe': True},
-            {'name': 'trondheim.*'},
+            {'name': 'oslo::*', 'safe': True},
+            {'name': 'trondheim::*'},
         ],
     }, config_directory=test_config_directory)
 
@@ -65,11 +65,11 @@ def test_enabled_modules(test_config_directory):
     trondheim_path = modules_directory_path / 'trondheim'
 
     oslo = DirectoryModuleSource(
-        enabling_statement={'name': 'oslo.*', 'trusted': True},
+        enabling_statement={'name': 'oslo::*', 'trusted': True},
         modules_directory=modules_directory_path,
     )
     trondheim = DirectoryModuleSource(
-        enabling_statement={'name': 'trondheim.*', 'trusted': False},
+        enabling_statement={'name': 'trondheim::*', 'trusted': False},
         modules_directory=modules_directory_path,
     )
 
@@ -85,26 +85,26 @@ def test_enabled_modules(test_config_directory):
 def test_external_module(test_config_directory):
     modules_directory_path = test_config_directory / 'test_modules'
     oslo = DirectoryModuleSource(
-        enabling_statement={'name': 'oslo.*'},
+        enabling_statement={'name': 'oslo::*'},
         modules_directory=modules_directory_path,
     )
 
     oslo_path = test_config_directory / 'test_modules' / 'oslo'
     assert oslo.directory == oslo_path
     assert oslo.trusted == True
-    assert oslo.category == 'oslo'
+    assert oslo.relative_directory_path == Path('oslo')
     assert oslo.config_file == oslo_path / 'config.yml'
 
 
 def test_retrieval_of_external_module_config(test_config_directory):
-    external_module_source_config = {'name': 'burma.*'}
+    external_module_source_config = {'name': 'burma::*'}
     external_module_source = DirectoryModuleSource(
         enabling_statement=external_module_source_config,
         modules_directory=test_config_directory / 'test_modules',
     )
 
     assert external_module_source.config == {
-        f'module/burma.burma': {
+        f'module/burma::burma': {
             'enabled': True,
             'safe': False,
         },
@@ -115,8 +115,8 @@ def test_retrieval_of_merged_module_configs(test_config_directory):
     modules_application_config = {
         'modules_directory': 'test_modules',
         'enabled_modules': [
-            {'name': 'burma.burma'},
-            {'name': 'thailand.thailand'},
+            {'name': 'burma::burma'},
+            {'name': 'thailand::thailand'},
         ],
     }
     modules_config = GlobalModulesConfig(
@@ -127,11 +127,11 @@ def test_retrieval_of_merged_module_configs(test_config_directory):
     thailand_path = test_config_directory / 'test_modules' / 'thailand'
 
     assert modules_config.module_configs_dict() == {
-        f'module/burma.burma': {
+        f'module/burma::burma': {
             'enabled': True,
             'safe': False,
         },
-        f'module/thailand.thailand': {
+        f'module/thailand::thailand': {
             'enabled': True,
             'safe': True,
         },
@@ -142,7 +142,7 @@ class TestModuleSource:
 
     def test_finding_correct_module_source_type_from_name(self):
         assert ModuleSource.type(of='name') == GlobalModuleSource
-        assert ModuleSource.type(of='category.name') == DirectoryModuleSource
+        assert ModuleSource.type(of='category::name') == DirectoryModuleSource
         assert ModuleSource.type(of='github::user/repo') == GithubModuleSource
         assert ModuleSource.type(of='github::user/repo::module') == GithubModuleSource
         assert ModuleSource.type(of='github::user/repo::*') == GithubModuleSource
@@ -164,19 +164,23 @@ class TestDirectoryModuleSource:
 
     def test_which_enabling_statements_represents_directory_module_sources(self):
         assert DirectoryModuleSource.represented_by(
-            module_name='category.name',
+            module_name='category::name',
         )
         assert DirectoryModuleSource.represented_by(
-            module_name='category.*',
+            module_name='category/recursive::name',
+        )
+        assert DirectoryModuleSource.represented_by(
+            module_name='category::*',
+        )
+        assert DirectoryModuleSource.represented_by(
+            module_name='*::*',
+        )
+
+        assert not DirectoryModuleSource.represented_by(
+            module_name='category::*not_valid',
         )
         assert not DirectoryModuleSource.represented_by(
-            module_name='category.*not_valid',
-        )
-        assert not DirectoryModuleSource.represented_by(
-            module_name='category.not_valid*',
-        )
-        assert not DirectoryModuleSource.represented_by(
-            module_name='*.*',
+            module_name='category::not_valid*',
         )
         assert not DirectoryModuleSource.represented_by(
             module_name='name',
@@ -189,24 +193,41 @@ class TestDirectoryModuleSource:
         self,
         test_config_directory,
     ):
-        enabling_statement = {'name': 'north_america.colombia'}
+        enabling_statement = {'name': 'north_america::colombia'}
         with pytest.raises(NonExistentEnabledModule):
             directory_module = DirectoryModuleSource(
                 enabling_statement=enabling_statement,
                 modules_directory=test_config_directory / 'freezed_modules',
             )
 
+    def test_recursive_module_directory(
+        self,
+        test_config_directory,
+    ):
+        enabling_statement = {'name': 'recursive/directory::bulgaria'}
+        directory_module = DirectoryModuleSource(
+            enabling_statement=enabling_statement,
+            modules_directory=test_config_directory / 'test_modules',
+        )
+        assert directory_module.config == {
+            'module/recursive/directory::bulgaria': {
+                'on_startup': {
+                    'run': "echo 'Greetings from Bulgaria!'",
+                },
+            },
+        }
+
     def test_getting_config_dict_from_directory_module(
         self,
         test_config_directory,
     ):
-        enabling_statement = {'name': 'north_america.USA'}
+        enabling_statement = {'name': 'north_america::USA'}
         directory_module = DirectoryModuleSource(
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
         assert directory_module.config == {
-            'module/north_america.USA': {
+            'module/north_america::USA': {
                 'on_startup': {
                     'run': 'echo Greetings from the USA!',
                 },
@@ -222,13 +243,13 @@ class TestDirectoryModuleSource:
         self,
         test_config_directory,
     ):
-        enabling_statement = {'name': 'south_america.brazil'}
+        enabling_statement = {'name': 'south_america::brazil'}
         directory_module = DirectoryModuleSource(
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
         assert directory_module.config == {
-            'module/south_america.brazil': {
+            'module/south_america::brazil': {
                 'on_startup': {
                     'run': 'echo Greetings from Brazil!',
                 },
@@ -247,14 +268,14 @@ class TestDirectoryModuleSource:
         self,
         test_config_directory,
     ):
-        enabling_statement = {'name': 'south_america.brazil'}
+        enabling_statement = {'name': 'south_america::brazil'}
         directory_module = DirectoryModuleSource(
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
-        assert 'south_america.brazil' in directory_module
+        assert 'south_america::brazil' in directory_module
 
-        assert 'south_america.argentina' not in directory_module
+        assert 'south_america::argentina' not in directory_module
         assert 'brazil' not in directory_module
         assert 'argentina' not in directory_module
 
@@ -273,13 +294,13 @@ class TestGlobalModuleSource:
             module_name='w*',
         )
         assert not GlobalModuleSource.represented_by(
-            module_name='category.name',
+            module_name='category::name',
         )
         assert not GlobalModuleSource.represented_by(
-            module_name='category.*',
+            module_name='category::*',
         )
         assert not GlobalModuleSource.represented_by(
-            module_name='*.*',
+            module_name='*::*',
         )
         assert not GlobalModuleSource.represented_by(
             module_name='jakobgm/module',
@@ -302,7 +323,7 @@ class TestGlobalModuleSource:
         assert 'enabled_module1' in global_module_source
         assert 'enabled_module2' in global_module_source
 
-        assert 'directory.module' not in global_module_source
+        assert 'directory::module' not in global_module_source
         assert 'user/repo' not in global_module_source
 
 
@@ -326,13 +347,13 @@ class TestGithubModuleSource:
             module_name='w*',
         )
         assert not GithubModuleSource.represented_by(
-            module_name='category.name',
+            module_name='category::name',
         )
         assert not GithubModuleSource.represented_by(
-            module_name='category.*',
+            module_name='category::*',
         )
         assert not GithubModuleSource.represented_by(
-            module_name='*.*',
+            module_name='*::*',
         )
         assert not GithubModuleSource.represented_by(
             module_name='*',
@@ -480,10 +501,10 @@ class TestEnabledModules:
 
         assert enabled_modules.process_enabling_statements(
             enabling_statements=[
-                {'name': '*.*'}
+                {'name': '*::*'}
             ],
             modules_directory=test_config_directory / 'freezed_modules',
-        ) == [{'name': 'north_america.*'}, {'name': 'south_america.*'}]
+        ) == [{'name': 'north_america::*'}, {'name': 'south_america::*'}]
         assert enabled_modules.all_directory_modules_enabled == True
         assert enabled_modules.all_global_modules_enabled == False
 
@@ -497,7 +518,7 @@ class TestEnabledModules:
     ):
         enabling_statements = [
             {'name': 'global'},
-            {'name': 'south_america.*'},
+            {'name': 'south_america::*'},
             {'name': 'github::jakobgm/test-module.astrality'},
             {'name': 'invalid_syntax]][['},
         ]
@@ -511,13 +532,13 @@ class TestEnabledModules:
         assert len(caplog.record_tuples) == 1
 
         assert 'global' in enabled_modules
-        assert 'south_america.brazil' in enabled_modules
-        assert 'south_america.argentina' in enabled_modules
+        assert 'south_america::brazil' in enabled_modules
+        assert 'south_america::argentina' in enabled_modules
         assert 'github::jakobgm/test-module.astrality::botswana' in enabled_modules
         assert 'github::jakobgm/test-module.astrality::ghana' in enabled_modules
 
         assert 'not_enabled' not in enabled_modules
-        assert 'non_existing_folder.non_existing_module' not in enabled_modules
+        assert 'non_existing_folder::non_existing_module' not in enabled_modules
         assert 'github::user/not_enabled' not in enabled_modules
 
     def test_enabled_detection_with_global_wildcard(self):
@@ -533,6 +554,6 @@ class TestEnabledModules:
         assert 'global' in enabled_modules
         assert 'whatever' in enabled_modules
 
-        assert 'south_america.brazil' not in enabled_modules
-        assert 'south_america.argentina' not in enabled_modules
+        assert 'south_america::brazil' not in enabled_modules
+        assert 'south_america::argentina' not in enabled_modules
         assert 'github::jakobgm/color_schemes.astrality' not in enabled_modules

@@ -67,7 +67,7 @@ def test_modules_config_explicitly_enabled_modules(
     global_modules_config_dict = {
         'modules_directory': 'test_modules',
         'enabled_modules': [
-            {'name': 'burma.burma'},
+            {'name': 'burma::burma'},
             {'name': 'india'},
         ],
     }
@@ -76,7 +76,7 @@ def test_modules_config_explicitly_enabled_modules(
         config_directory=test_config_directory,
     )
 
-    assert 'burma.burma' in global_modules_config.enabled_modules
+    assert 'burma::burma' in global_modules_config.enabled_modules
     assert 'india' in global_modules_config.enabled_modules
     assert 'whatever' not in global_modules_config.enabled_modules
 
@@ -87,7 +87,7 @@ def test_modules_config_implicitly_enabled_modules(
     global_modules_config_dict = {
         'modules_directory': 'test_modules',
         'enabled_modules': [
-            {'name': 'burma.*'},
+            {'name': 'burma::*'},
             {'name': 'india'},
         ],
     }
@@ -96,9 +96,9 @@ def test_modules_config_implicitly_enabled_modules(
         config_directory=test_config_directory,
     )
 
-    assert 'burma.burma' in global_modules_config.enabled_modules
+    assert 'burma::burma' in global_modules_config.enabled_modules
     assert 'india' in global_modules_config.enabled_modules
-    assert 'burma.only_defined_accepted' not in global_modules_config.enabled_modules
+    assert 'burma::only_defined_accepted' not in global_modules_config.enabled_modules
 
 def test_modules_config_several_implicitly_enabled_modules(
     test_config_directory,
@@ -106,7 +106,7 @@ def test_modules_config_several_implicitly_enabled_modules(
     global_modules_config_dict = {
         'modules_directory': 'test_modules',
         'enabled_modules': [
-            {'name': 'two_modules.*'},
+            {'name': 'two_modules::*'},
             {'name': 'india'},
         ],
     }
@@ -115,8 +115,8 @@ def test_modules_config_several_implicitly_enabled_modules(
         config_directory=test_config_directory,
     )
 
-    assert 'two_modules.bhutan' in global_modules_config.enabled_modules
-    assert 'two_modules.bangladesh' in global_modules_config.enabled_modules
+    assert 'two_modules::bhutan' in global_modules_config.enabled_modules
+    assert 'two_modules::bangladesh' in global_modules_config.enabled_modules
 
 def test_modules_config_where_all_modules_are_enabled(
     test_config_directory,
@@ -124,7 +124,7 @@ def test_modules_config_where_all_modules_are_enabled(
     global_modules_config_dict = {
         'modules_directory': str(test_config_directory / 'test_modules'),
         'enabled_modules': [
-            {'name': '*.*'},
+            {'name': '*::*'},
             {'name': '*'},
         ],
     }
@@ -133,8 +133,8 @@ def test_modules_config_where_all_modules_are_enabled(
         config_directory=test_config_directory,
     )
 
-    assert 'two_modules.bhutan' in global_modules_config.enabled_modules
-    assert 'two_modules.bangladesh' in global_modules_config.enabled_modules
+    assert 'two_modules::bhutan' in global_modules_config.enabled_modules
+    assert 'two_modules::bangladesh' in global_modules_config.enabled_modules
 
 
 def test_enabling_of_modules_defined_different_places(
@@ -145,7 +145,7 @@ def test_enabling_of_modules_defined_different_places(
         'config/modules': {
             'modules_directory': 'freezed_modules',
             'enabled_modules': [
-                {'name': 'south_america.brazil'},
+                {'name': 'south_america::brazil'},
                 {'name': 'india'},
             ],
         },
@@ -158,7 +158,7 @@ def test_enabling_of_modules_defined_different_places(
     module_manager = ModuleManager(application_config)
 
     assert len(module_manager.modules) == 2
-    assert 'south_america.brazil' in module_manager.modules
+    assert 'south_america::brazil' in module_manager.modules
     assert 'india' in module_manager.modules
 
 def test_enabling_of_all_modules(
@@ -180,6 +180,6 @@ def test_enabling_of_all_modules(
     assert len(module_manager.modules) == 5
     assert 'india' in module_manager.modules
     assert 'pakistan' in module_manager.modules
-    assert 'north_america.USA' in module_manager.modules
-    assert 'south_america.brazil' in module_manager.modules
-    assert 'south_america.argentina' in module_manager.modules
+    assert 'north_america::USA' in module_manager.modules
+    assert 'south_america::brazil' in module_manager.modules
+    assert 'south_america::argentina' in module_manager.modules

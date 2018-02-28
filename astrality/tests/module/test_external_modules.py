@@ -16,7 +16,7 @@ def test_that_external_modules_are_brought_in(
         'config/modules': {
             'modules_directory': 'test_modules',
             'enabled_modules': [
-                {'name': 'thailand.thailand'},
+                {'name': 'thailand::thailand'},
                 {'name': '*'},
             ],
         },
@@ -31,7 +31,7 @@ def test_that_external_modules_are_brought_in(
 
     thailand_path = test_config_directory / 'test_modules' / 'thailand'
     assert tuple(module_manager.modules.keys()) == (
-        'thailand.thailand',
+        'thailand::thailand',
         'cambodia',
     )
 
@@ -65,7 +65,7 @@ def test_correct_relative_paths_used_in_external_module(
     application_config = {
         'config/modules': {
             'modules_directory': 'test_modules',
-            'enabled_modules': [{'name': 'using_all_actions.*'}],
+            'enabled_modules': [{'name': 'using_all_actions::*'}],
         },
     }
     application_config.update(default_global_options)
@@ -103,7 +103,7 @@ def test_that_external_module_contexts_are_imported_correctly(
     application_config = {
         'config/modules': {
             'modules_directory': 'test_modules',
-            'enabled_modules': [{'name': 'module_with_context.*', }],
+            'enabled_modules': [{'name': 'module_with_context::*', }],
         },
         'context/china': {
             'capitol': 'beijing',

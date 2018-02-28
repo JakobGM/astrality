@@ -550,7 +550,7 @@ class DirectoryModuleSource(ModuleSource):
     Specifically: `$ASTRALITY_CONFIG_HOME/{modules_directory}/config.yml
     """
 
-    name_syntax = re.compile('^\w+\.(\w+|\*)$')
+    name_syntax = re.compile('^.+::(\w+|\*)$')
 
     def __init__(
         self,
@@ -563,22 +563,23 @@ class DirectoryModuleSource(ModuleSource):
         assert self.represented_by(
             module_name=enabling_statement['name'],
         )
-        self.category, self.enabled_module_name = enabling_statement['name'].split('.')
+        relative_directory_path, self.enabled_module_name = enabling_statement['name'].split('::')
+        self.relative_directory_path = Path(relative_directory_path)
 
         assert modules_directory.is_absolute()
-        self.directory = modules_directory / self.category
+        self.directory = modules_directory / self.relative_directory_path
 
         self.config_file = self.directory / 'config.yml'
         self.trusted = enabling_statement.get('trusted', True)
         self.config = filter_config_file(
             config_file=self.config_file,
             enabled_module_name=self.enabled_module_name,
-            prepend=self.category + '.',
+            prepend=str(self.relative_directory_path) + '::',
         )
 
     def __repr__(self):
         """Human-readable representation of a DirectoryModuleSource object."""
-        return f'DirectoryModuleSource(name={self.category}.{self.enabled_module_name}, directory={self.directory}, trusted={self.trusted})'
+        return f'DirectoryModuleSource(name={self.relative_directory_path}::{self.enabled_module_name}, directory={self.directory}, trusted={self.trusted})'
 
     def __eq__(self, other) -> bool:
         """
@@ -658,11 +659,11 @@ class EnabledModules:
                 self.all_global_modules_enabled = True
                 new_enabling_statements.append(enabling_statement)
 
-            elif enabling_statement['name'] == '*.*':
+            elif enabling_statement['name'] == '*::*':
                 self.all_directory_modules_enabled = True
 
                 for module_directory in self.module_directories(within=modules_directory):
-                    directory_module = module_directory + '.*'
+                    directory_module = module_directory + '::*'
                     new_enabling_statement = copy.deepcopy(enabling_statement)
                     new_enabling_statement['name'] = directory_module
                     new_enabling_statements.append(new_enabling_statement)
@@ -756,7 +757,7 @@ class GlobalModulesConfig:
                 'enabled_modules',
                 [
                     {'name': '*', 'trusted': True},
-                    {'name': '*.*', 'trusted': True},
+                    {'name': '*::*', 'trusted': True},
                 ]
             ),
             config_directory=self.config_directory,

@@ -1,0 +1,3 @@
+module/bulgaria:
+    on_startup:
+        run: echo 'Greetings from Bulgaria!'
