@@ -29,6 +29,7 @@ from astrality.exceptions import (
     MisconfiguredConfigurationFile,
     NonExistentEnabledModule,
 )
+from astrality.github import clone_repo, clone_or_pull_repo
 from astrality.resolver import Resolver
 from astrality.utils import run_shell
 
@@ -377,12 +378,14 @@ class EnablingStatementRequired(TypedDict):
 class EnablingStatement(EnablingStatementRequired, total=False):
     """Dictionary defining an externally defined module."""
     trusted: bool
+    autoupdate: bool
 
 
 ModuleConfig = Dict[str, Any]
 
 
 class ModuleSource(ABC):
+    directory: Path
 
     @abstractmethod
     def __init__(
@@ -452,29 +455,92 @@ class GlobalModuleSource(ModuleSource):
 
 class GithubModuleSource(ModuleSource):
     """Module defined in a GitHub repository."""
-    name_syntax = re.compile('.+/.+')
+    name_syntax = re.compile('^github::.*/.*(::(\w+|\*))?$')
+    _config: ApplicationConfig
 
     def __init__(
         self,
         enabling_statement: EnablingStatement,
         modules_directory: Path,
     ) -> None:
-        """Initialize enabled module defined at https://github.com/{name}"""
+        """
+        Initialize enabled module defined in Github repository
+
+        A GitHub module is enabled with the name syntax:
+        github::<github_user>/<github_repo>[::<enabled_module>]
+
+        If <enabled_module> is skipped, all modules are enabled, i.e.
+        github::<github_user>/<github_repo>::*
+        """
         assert self.represented_by(
             module_name=enabling_statement['name'],
         )
-        self.enabled_module = enabling_statement['name']
-        self.github_user, self.github_repo = enabling_statement['name'].split('/')
+        specified_module = enabling_statement['name']
+        self.autoupdate = enabling_statement.get('autoupdate', False)
+
+        github_path, *enabled_modules = specified_module[8:].split('::')
+
+        if len(enabled_modules) > 0:
+            self.enabled_module_name = enabled_modules[0]
+        else:
+            # Enable all modules since all have been enabled
+            self.enabled_module_name = '*'
+
+        self.github_user, self.github_repo = github_path.split('/')
+
+        assert modules_directory.is_absolute()
+        self.modules_directory = modules_directory
+        self.directory = modules_directory / self.github_user / self.github_repo
+        self.config_file = self.directory / 'config.yml'
+
+    @property
+    def config(self) -> Dict[Any, Any]:
+        """Return the contents of config.yml, filtering out disabled modules."""
+        if hasattr(self, '_config'):
+            return self._config
+
+        # The repository already exists, so it is assumed that the user wants
+        # the repository cloned
+        if not self.directory.is_dir():
+            clone_repo(
+                user=self.github_user,
+                repository=self.github_repo,
+                modules_directory=self.modules_directory,
+            )
+        elif self.autoupdate:
+            clone_or_pull_repo(
+                user=self.github_user,
+                repository=self.github_repo,
+                modules_directory=self.modules_directory,
+            )
+
+        self._config = filter_config_file(
+            config_file=self.config_file,
+            enabled_module_name=self.enabled_module_name,
+            prepend=f'github::{self.github_user}/{self.github_repo}::',
+        )
+
+        return self._config
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if GitHub module repo is enabled."""
-        if self.represented_by(module_name=module_name):
-            return module_name == self.enabled_module
-        else:
+        return 'module/' + module_name in self.config
+
+    def __eq__(self, other) -> bool:
+        """
+        Return True if two GithubModuleSource objects represent the same
+        directory with identical modules enabled.
+        """
+        try:
+            return self.directory == other.directory and self.config == other.config
+        except AttributeError:
             return False
 
+
+
     def __repr__(self) -> str:
-        return f"GithubModuleSource('{self.github_user}/{self.github_repo}')"
+        return f"GithubModuleSource('{self.github_user}/{self.github_repo}')" \
+            f' = {tuple(self.config.keys())}'
 
 
 class DirectoryModuleSource(ModuleSource):
@@ -504,69 +570,11 @@ class DirectoryModuleSource(ModuleSource):
 
         self.config_file = self.directory / 'config.yml'
         self.trusted = enabling_statement.get('trusted', True)
-        self.config = self._process_modules_config_dict(
-            config_path=self.config_file,
+        self.config = filter_config_file(
+            config_file=self.config_file,
+            enabled_module_name=self.enabled_module_name,
+            prepend=self.category + '.',
         )
-
-    def _process_modules_config_dict(self, config_path: Path) -> ModuleConfig:
-        """
-        Return the contents of `modules.yml` as a dictionary.
-
-        Remove any defined modules which are not enabled by the
-        enabling_statement.
-        """
-        try:
-            modules_dict = dict_from_config_file(
-                config_file=self.config_file,
-                with_env=False,
-            )
-        except FileNotFoundError:
-            logger.warning(
-                f'Non-existent module configuration file "{self.config_file}"'
-                'Skipping enabled module '
-                f'"{self.category}.{self.enabled_module_name}"'
-            )
-            return {}
-        if not modules_dict:  # pragma: no cover
-            logger.warning(
-                f'Empty modules configuration "{self.config_file}".',
-            )
-            return {}
-        elif not isinstance(modules_dict, dict):  # pragma: no cover
-            logger.critical(
-                f'Configuration file "{self.config_file}" not formated as '
-                'a dictionary at root indentation.'
-            )
-            raise MisconfiguredConfigurationFile
-
-        sections = tuple(modules_dict.keys())
-        if self.enabled_module_name != '*' \
-                and 'module/' + self.enabled_module_name not in sections:
-            raise NonExistentEnabledModule
-
-        # We rename each module to module/{self.name}.module_name
-        # in order to prevent naming conflicts when using modules provided
-        # from a third party with the same name as another managed module.
-        # This way you can use a module named "conky" from two third parties,
-        # in addition to providing your own.
-        for section in sections:
-            if len(section) > 7 and section[:7].lower() == 'module/':
-                # This section defines a module
-
-                module_name = section[7:]
-                if not self.enabled_module_name == '*' \
-                   and self.enabled_module_name != module_name:
-                    # The module is not enabled, remove the module
-                    modules_dict.pop(section)
-                    continue
-
-                # Replace the module name with folder_name.module_name
-                non_conflicting_module_name = \
-                    'module/' + self.category + '.' + module_name
-                module_section = modules_dict.pop(section)
-                modules_dict[non_conflicting_module_name] = module_section
-
-        return modules_dict
 
     def __repr__(self):
         """Human-readable representation of a DirectoryModuleSource object."""
@@ -653,7 +661,7 @@ class EnabledModules:
             elif enabling_statement['name'] == '*.*':
                 self.all_directory_modules_enabled = True
 
-                for module_directory in self.directory_names(within=modules_directory):
+                for module_directory in self.module_directories(within=modules_directory):
                     directory_module = module_directory + '.*'
                     new_enabling_statement = copy.deepcopy(enabling_statement)
                     new_enabling_statement['name'] = directory_module
@@ -665,13 +673,13 @@ class EnabledModules:
         return new_enabling_statements
 
     @staticmethod
-    def directory_names(within: Path) -> Tuple[str, ...]:
+    def module_directories(within: Path) -> Tuple[str, ...]:
         try:
             return tuple(
                 path.name
                 for path
                 in within.iterdir()
-                if path.is_dir()
+                if (path / 'config.yml').is_file()
             )
         except FileNotFoundError:
             logger.error(
@@ -708,7 +716,13 @@ class GlobalModulesConfigDict(TypedDict, total=False):
 
 
 class GlobalModulesConfig:
-    """User modules configuration."""
+    """
+    User modules configuration.
+
+    The plan is to make this the input argument for ModuleManager.__init__(),
+    extracting all logic related to getting module configurations (only enebled
+    ones) from the object.
+    """
 
     def __init__(
         self,
@@ -772,3 +786,69 @@ class GlobalModulesConfig:
             module_config_dict.update(external_module_source.config)
 
         return module_config_dict
+
+
+def filter_config_file(
+    config_file: Path,
+    enabled_module_name: str,
+    prepend: str,
+) -> ModuleConfig:
+    """
+    Return a filtered dictionary representing `config_file`.
+
+    Only modules given by `enabled_module_name` are kept, and their names
+    are prepended with `prepend`.
+    """
+    try:
+        modules_dict = dict_from_config_file(
+            config_file=config_file,
+            with_env=False,
+        )
+    except FileNotFoundError:
+        logger.warning(
+            f'Non-existent module configuration file "{config_file}"'
+            'Skipping enabled module '
+            f'"{prepend}{enabled_module_name}"'
+        )
+        return {}
+
+    if not modules_dict:  # pragma: no cover
+        logger.warning(
+            f'Empty modules configuration "{config_file}".',
+        )
+        return {}
+    elif not isinstance(modules_dict, dict):  # pragma: no cover
+        logger.critical(
+            f'Configuration file "{config_file}" not formated as '
+            'a dictionary at root indentation.'
+        )
+        raise MisconfiguredConfigurationFile
+
+    sections = tuple(modules_dict.keys())
+    if enabled_module_name != '*' \
+            and 'module/' + enabled_module_name not in sections:
+        raise NonExistentEnabledModule
+
+    # We rename each module to module/{self.name}.module_name
+    # in order to prevent naming conflicts when using modules provided
+    # from a third party with the same name as another managed module.
+    # This way you can use a module named "conky" from two third parties,
+    # in addition to providing your own.
+    for section in sections:
+        if len(section) > 7 and section[:7].lower() == 'module/':
+            # This section defines a module
+
+            module_name = section[7:]
+            if not enabled_module_name == '*' \
+               and enabled_module_name != module_name:
+                # The module is not enabled, remove the module
+                modules_dict.pop(section)
+                continue
+
+            # Replace the module name with folder_name.module_name
+            non_conflicting_module_name = \
+                'module/' + prepend + module_name
+            module_section = modules_dict.pop(section)
+            modules_dict[non_conflicting_module_name] = module_section
+
+    return modules_dict

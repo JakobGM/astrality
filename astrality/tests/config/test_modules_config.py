@@ -1,4 +1,6 @@
 """Test module for global module configuration options."""
+import shutil
+import time
 from pathlib import Path
 
 import pytest
@@ -12,6 +14,7 @@ from astrality.config import (
     GlobalModulesConfig,
     ModuleSource,
 )
+from astrality.utils import run_shell
 
 @pytest.fixture
 def modules_application_config():
@@ -24,12 +27,18 @@ def modules_application_config():
     }
 
 
-def test_default_options_for_modules(conf_path):
-    modules_config = GlobalModulesConfig({}, config_directory=conf_path)
+@pytest.yield_fixture(autouse=True)
+def delete_jakobgm(test_config_directory):
+    """Delete jakobgm module directory used in testing."""
+    location1 = test_config_directory / 'freezed_modules' / 'jakobgm'
+    location2 = test_config_directory / 'test_modules' / 'jakobgm'
 
-    assert modules_config.modules_directory == conf_path / 'modules'
-    assert len(tuple(modules_config.external_module_sources)) == 4
-    assert len(tuple(modules_config.external_module_config_files)) == 4
+    yield
+
+    if location1.is_dir():
+        shutil.rmtree(location1)
+    if location2.is_dir():
+        shutil.rmtree(location2)
 
 
 def test_custom_modules_folder(conf_path):
@@ -134,13 +143,15 @@ class TestModuleSource:
     def test_finding_correct_module_source_type_from_name(self):
         assert ModuleSource.type(of='name') == GlobalModuleSource
         assert ModuleSource.type(of='category.name') == DirectoryModuleSource
-        assert ModuleSource.type(of='user/repo') == GithubModuleSource
+        assert ModuleSource.type(of='github::user/repo') == GithubModuleSource
+        assert ModuleSource.type(of='github::user/repo::module') == GithubModuleSource
+        assert ModuleSource.type(of='github::user/repo::*') == GithubModuleSource
 
-    def test_detection_of_all_directories_within_a_directory(
+    def test_detection_of_all_module_directories_within_a_directory(
         self,
         test_config_directory,
     ):
-        assert tuple(EnabledModules.directory_names(
+        assert tuple(EnabledModules.module_directories(
             within=test_config_directory / 'freezed_modules',
         )) == (
             'north_america',
@@ -297,12 +308,18 @@ class TestGlobalModuleSource:
 
 class TestGithubModuleSource:
 
-    def test_valid_names_which_indicate_globally_defined_modules(self):
+    def test_valid_names_which_indicate_github_modules(self):
         assert GithubModuleSource.represented_by(
-            module_name='jakobgm/astrality',
+            module_name='github::jakobgm/astrality',
         )
         assert GithubModuleSource.represented_by(
-            module_name='user_name./repo-git.ast',
+            module_name='github::jakobgm/astrality::module',
+        )
+        assert GithubModuleSource.represented_by(
+            module_name='github::jakobgm/astrality::*',
+        )
+        assert GithubModuleSource.represented_by(
+            module_name='github::user_name./repo-git.ast',
         )
 
         assert not GithubModuleSource.represented_by(
@@ -324,24 +341,133 @@ class TestGithubModuleSource:
             module_name='global_module',
         )
 
-    def test_that_username_and_repo_is_identified(self, test_config_directory):
+    def test_that_username_and_repo_is_identified(self, tmpdir, delete_jakobgm):
+        modules_directory = Path(tmpdir)
         github_module_source = GithubModuleSource(
-            enabling_statement={'name': 'jakobgm/astrality'},
-            modules_directory=test_config_directory / 'test_modules',
+            enabling_statement={'name': 'github::jakobgm/astrality'},
+            modules_directory=modules_directory,
         )
         assert github_module_source.github_user == 'jakobgm'
         assert github_module_source.github_repo == 'astrality'
 
-    def test_that_enabled_repos_are_found(self, test_config_directory):
+    @pytest.mark.slow
+    def test_that_enabled_repos_are_found(self, test_config_directory, delete_jakobgm):
         github_module_source = GithubModuleSource(
-            enabling_statement={'name': 'jakobgm/astrality'},
+            enabling_statement={'name': 'github::jakobgm/test-module.astrality'},
             modules_directory=test_config_directory / 'test_modules',
         )
-        assert 'jakobgm/astrality' in github_module_source
+        assert 'github::jakobgm/test-module.astrality::botswana' in github_module_source
+        assert 'github::jakobgm/test-module.astrality::ghana' in github_module_source
 
-        assert 'jakobgm/another_repo' not in github_module_source
+        assert 'github::jakobgm/test-module.astrality::non_existent' not in github_module_source
+        assert 'github::jakobgm/another_repo::ghana' not in github_module_source
         assert 'astrality' not in github_module_source
         assert 'jakobgm' not in github_module_source
+
+    @pytest.mark.slow
+    def test_specific_github_modules_enabled(self, test_config_directory, delete_jakobgm):
+        github_module_source = GithubModuleSource(
+            enabling_statement={'name': 'github::jakobgm/test-module.astrality::botswana'},
+            modules_directory=test_config_directory / 'test_modules',
+        )
+        assert 'github::jakobgm/test-module.astrality::botswana' in github_module_source
+        assert 'github::jakobgm/test-module.astrality::ghana' not in github_module_source
+
+    @pytest.mark.slow
+    def test_that_all_modules_enabled_syntaxes_behave_identically(
+        self,
+        test_config_directory,
+        delete_jakobgm,
+    ):
+        github_module_source1 = GithubModuleSource(
+            enabling_statement={'name': 'github::jakobgm/test-module.astrality'},
+            modules_directory=test_config_directory / 'test_modules',
+        )
+
+        # Sleep to prevent race conditions
+        time.sleep(1)
+
+        github_module_source2 = GithubModuleSource(
+            enabling_statement={'name': 'github::jakobgm/test-module.astrality::*'},
+            modules_directory=test_config_directory / 'test_modules',
+        )
+        assert github_module_source1 == github_module_source2
+
+    @pytest.mark.slow
+    def test_automatical_retrival_of_github_module(self, tmpdir):
+        modules_directory = Path(tmpdir)
+        github_module_source = GithubModuleSource(
+            enabling_statement={
+                'name': 'github::jakobgm/test-module.astrality::*',
+                'autoupdate': True,
+            },
+            modules_directory=modules_directory,
+        )
+        assert github_module_source.config == {
+            'module/github::jakobgm/test-module.astrality::botswana': {
+                'on_startup': {
+                    'run': "echo 'Greetings from Botswana!'",
+                },
+            },
+            'module/github::jakobgm/test-module.astrality::ghana': {
+                'on_startup': {
+                    'run': "echo 'Greetings from Ghana!'",
+                },
+            },
+            'context/geography': {
+                'botswana': {
+                    'capitol': 'Gaborone',
+                },
+                'ghana': {
+                    'capitol': 'Accra',
+                },
+            },
+        }
+
+    @pytest.mark.slow
+    def test_use_of_autoupdating_github_source(self, tmpdir):
+        modules_directory = Path(tmpdir)
+
+        github_module_source = GithubModuleSource(
+            enabling_statement={
+                'name': 'github::jakobgm/test-module.astrality',
+                'autoupdate': True,
+            },
+            modules_directory=modules_directory,
+        )
+
+        # The repository is lazely cloned, so we need to get the config
+        config = github_module_source.config
+
+        repo_dir = modules_directory / 'jakobgm' / 'test-module.astrality'
+        assert repo_dir.is_dir()
+
+        # Move master to first commit in repository
+        result = run_shell(
+            command='git reset --hard d4c9723',
+            timeout=5,
+            fallback=False,
+            working_directory=repo_dir,
+        )
+        assert result is not False
+
+        # The readme does not exist in this commit
+        readme = repo_dir / 'README.rst'
+        assert not readme.is_file()
+
+        del github_module_source
+        github_module_source = GithubModuleSource(
+            enabling_statement={
+                'name': 'github::jakobgm/test-module.astrality',
+                'autoupdate': True,
+            },
+            modules_directory=modules_directory,
+        )
+        config = github_module_source.config
+
+        # The autoupdating should update the module to origin/master
+        # containing the README.rst file
+        assert readme.is_file()
 
 
 class TestEnabledModules:
@@ -362,15 +488,17 @@ class TestEnabledModules:
         assert enabled_modules.all_global_modules_enabled == False
 
 
+    @pytest.mark.slow
     def test_enabled_detection(
         self,
         test_config_directory,
         caplog,
+        delete_jakobgm,
     ):
         enabling_statements = [
             {'name': 'global'},
             {'name': 'south_america.*'},
-            {'name': 'jakobgm/color_schemes.astrality'},
+            {'name': 'github::jakobgm/test-module.astrality'},
             {'name': 'invalid_syntax]][['},
         ]
         enabled_modules = EnabledModules(
@@ -385,11 +513,12 @@ class TestEnabledModules:
         assert 'global' in enabled_modules
         assert 'south_america.brazil' in enabled_modules
         assert 'south_america.argentina' in enabled_modules
-        assert 'jakobgm/color_schemes.astrality' in enabled_modules
+        assert 'github::jakobgm/test-module.astrality::botswana' in enabled_modules
+        assert 'github::jakobgm/test-module.astrality::ghana' in enabled_modules
 
         assert 'not_enabled' not in enabled_modules
         assert 'non_existing_folder.non_existing_module' not in enabled_modules
-        assert 'user/not_enabled' not in enabled_modules
+        assert 'github::user/not_enabled' not in enabled_modules
 
     def test_enabled_detection_with_global_wildcard(self):
         enabling_statements = [
@@ -406,4 +535,4 @@ class TestEnabledModules:
 
         assert 'south_america.brazil' not in enabled_modules
         assert 'south_america.argentina' not in enabled_modules
-        assert 'jakobgm/color_schemes.astrality' not in enabled_modules
+        assert 'github::jakobgm/color_schemes.astrality' not in enabled_modules

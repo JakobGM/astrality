@@ -365,19 +365,18 @@ class ModuleManager:
             for section, options in module_configs.items():
                 module_config = {section: options}
 
-                valid_module = Module.valid_class_section(
+                if not Module.valid_class_section(
                     section=module_config,
                     requires_timeout=self.application_config['config/astrality']['requires_timeout'],
                     requires_working_directory=module_directory,
-                )
-                enabled_module = section in self.global_modules_config.enabled_modules
+                ) or section not in self.global_modules_config.enabled_modules:
+                    continue
 
-                if valid_module and enabled_module:
-                    module = Module(
-                        module_config=module_config,
-                        module_directory=module_directory,
-                    )
-                    self.modules[module.name] = module
+                module = Module(
+                    module_config=module_config,
+                    module_directory=module_directory,
+                )
+                self.modules[module.name] = module
 
         # Update the context from `astrality.yml`, overwriting any defined
         # contexts in external modules in the case of naming conflicts
@@ -388,19 +387,18 @@ class ModuleManager:
             module_config = {section: options}
 
             # Check if this module should be included
-            valid_module = Module.valid_class_section(
+            if not Module.valid_class_section(
                 section=module_config,
                 requires_timeout=self.application_config['config/astrality']['requires_timeout'],
                 requires_working_directory=self.config_directory,
-            )
-            enabled_module = section in self.global_modules_config.enabled_modules
+            ) or section not in self.global_modules_config.enabled_modules:
+                continue
 
-            if valid_module and enabled_module:
-                module = Module(
-                    module_config=module_config,
-                    module_directory=self.config_directory,
-                )
-                self.modules[module.name] = module
+            module = Module(
+                module_config=module_config,
+                module_directory=self.config_directory,
+            )
+            self.modules[module.name] = module
 
         self.templates = self.prepare_templates(self.modules.values())
         self.string_replacements = self.generate_string_replacements(self.templates)
