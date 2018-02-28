@@ -199,6 +199,7 @@ class TestDirectoryModuleSource:
                 enabling_statement=enabling_statement,
                 modules_directory=test_config_directory / 'freezed_modules',
             )
+            config = directory_module.config
 
     def test_recursive_module_directory(
         self,

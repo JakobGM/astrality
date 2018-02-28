@@ -1,3 +1,5 @@
+import shutil
+
 import pytest
 
 from astrality.module import GlobalModulesConfig, Module, ModuleManager
@@ -183,3 +185,45 @@ def test_enabling_of_all_modules(
     assert 'north_america::USA' in module_manager.modules
     assert 'south_america::brazil' in module_manager.modules
     assert 'south_america::argentina' in module_manager.modules
+
+
+@pytest.yield_fixture
+def delete_jakobgm(test_config_directory):
+    """Delete jakobgm module directory used in testing."""
+    location = test_config_directory / 'freezed_modules' / 'jakobgm'
+
+    yield
+
+    if location.is_dir():
+        shutil.rmtree(location)
+
+def test_using_three_different_module_sources(
+    default_global_options,
+    _runtime,
+    test_config_directory,
+    delete_jakobgm,
+):
+    modules_directory = test_config_directory / 'freezed_modules'
+
+    application_config = {
+        'config/modules': {
+            'modules_directory': str(modules_directory),
+            'enabled_modules': [
+                {'name': 'north_america::*'},
+                {'name': 'github::jakobgm/test-module.astrality'},
+                {'name': 'italy'},
+            ],
+        },
+        'module/italy': {},
+        'module/spain': {},
+    }
+    application_config.update(default_global_options)
+    application_config.update(_runtime)
+
+    module_manager = ModuleManager(application_config)
+
+    assert len(module_manager.modules) == 4
+    assert 'north_america::USA' in module_manager.modules
+    assert 'github::jakobgm/test-module.astrality::botswana' in module_manager.modules
+    assert 'github::jakobgm/test-module.astrality::ghana' in module_manager.modules
+    assert 'italy' in module_manager.modules

@@ -386,6 +386,7 @@ ModuleConfig = Dict[str, Any]
 
 class ModuleSource(ABC):
     directory: Path
+    config_file: Path
 
     @abstractmethod
     def __init__(
@@ -400,6 +401,12 @@ class ModuleSource(ABC):
     @abstractmethod
     def name_syntax(self) -> Pattern:
         """Regular expression defining how to name this type of module source."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def config(self) -> Dict[Any, Any]:
+        """Return the dictionary containing the module configuration."""
         raise NotImplementedError
 
     @classmethod
@@ -428,7 +435,7 @@ class ModuleSource(ABC):
 
 class GlobalModuleSource(ModuleSource):
     """Module defined in `astrality.yml`."""
-    name_syntax = re.compile('^(\w+|\*)$')
+    name_syntax = re.compile(r'^(\w+|\*)$')
 
     def __init__(
         self,
@@ -441,6 +448,11 @@ class GlobalModuleSource(ModuleSource):
 
         assert modules_directory.is_absolute()
         self.directory = modules_directory
+
+    @property
+    def config(self) -> Dict[Any, Any]:
+        """Return configuration related to global module (TODO)."""
+        return {}
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if the module name is enabled."""
@@ -455,7 +467,7 @@ class GlobalModuleSource(ModuleSource):
 
 class GithubModuleSource(ModuleSource):
     """Module defined in a GitHub repository."""
-    name_syntax = re.compile('^github::.*/.*(::(\w+|\*))?$')
+    name_syntax = re.compile(r'^github::.+/.+(::(\w+|\*))?$')
     _config: ApplicationConfig
 
     def __init__(
@@ -550,7 +562,7 @@ class DirectoryModuleSource(ModuleSource):
     Specifically: `$ASTRALITY_CONFIG_HOME/{modules_directory}/config.yml
     """
 
-    name_syntax = re.compile('^.+::(\w+|\*)$')
+    name_syntax = re.compile(r'^(?!github::).+::(\w+|\*)$')
 
     def __init__(
         self,
@@ -571,11 +583,18 @@ class DirectoryModuleSource(ModuleSource):
 
         self.config_file = self.directory / 'config.yml'
         self.trusted = enabling_statement.get('trusted', True)
-        self.config = filter_config_file(
-            config_file=self.config_file,
-            enabled_module_name=self.enabled_module_name,
-            prepend=str(self.relative_directory_path) + '::',
-        )
+
+    @property
+    def config(self) -> Dict[Any, Any]:
+        """Return the module configuration defined in directory."""
+        if not hasattr(self, '_config'):
+            self._config = filter_config_file(
+                config_file=self.config_file,
+                enabled_module_name=self.enabled_module_name,
+                prepend=str(self.relative_directory_path) + '::',
+            )
+
+        return self._config
 
     def __repr__(self):
         """Human-readable representation of a DirectoryModuleSource object."""
@@ -765,9 +784,15 @@ class GlobalModulesConfig:
         )
 
     @property
-    def external_module_sources(self) -> List[DirectoryModuleSource]:
-        """Return an iterator yielding all DirectoryModuleSource objects."""
-        return self.enabled_modules.source_types[DirectoryModuleSource]  # type: ignore
+    def external_module_sources(
+        self,
+    ) -> Iterable[ModuleSource]:
+        """Return an iterator yielding all external module configs."""
+        for source in (
+            *self.enabled_modules.source_types[DirectoryModuleSource],
+            *self.enabled_modules.source_types[GithubModuleSource],
+        ):
+            yield source
 
     @property
     def external_module_config_files(self) -> Iterable[Path]:
