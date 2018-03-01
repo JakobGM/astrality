@@ -11,12 +11,12 @@ What are event listeners?
 
     #. Event listeners are specified on a *per-module-basis*.
     #. There are different ``types`` of event listeners.
-    #. Event listeners determine exactly *when* the :ref:`actions <actions>` you specify within a module's :ref:`on_event <module_events_on_event>` :ref:`event block <events>` are executed.
+    #. Event listeners determine exactly *when* the :ref:`actions <actions>` you specify within a module's :ref:`on_event <module_events_on_event>` :ref:`action block <events>` are executed.
     #. Event listeners are optional, you can write valid modules without specifying one. Actions specified within the ``on_event`` action block will never be executed when no module event listener is specified.
-    #. Event listeners provide the module with the ``{event}`` placeholder. It is replaced by the current ``event`` at runtime. The replacement value is specific for that specific event listener's type, and dynamically changes according to rules set by the event listener.
+    #. Event listeners provide the module with the ``{event}`` placeholder when specifying ``actions``. It is replaced by the current ``event`` at runtime. The replacement value is specific for that specific event listener's type, and dynamically changes according to rules set by the event listener.
 
-What are modules used for?
-==========================
+What are event listeners used for?
+==================================
 
 Event listeners provide you with the tools needed for *dynamic* module behaviour. Sometimes you want a module to :ref:`execute <run_action>` different shell commands, and/or :ref:`compile <compile_action>` templates with :ref:`different context values <context_import_action>`, depending on exactly *when* those :ref:`actions <actions>` are performed.
 
@@ -45,7 +45,7 @@ Most event listeners provide you with additional options in order to tweak their
 Events
 ======
 
-Module event listeners keep track of some type of ``event`` and trigger the ``event`` :ref:`event <events>` whenever it enters a new event. You can refer to the current event in your module configuration (in ``astrality.yml``) with the ``{event}`` placeholder.
+Module event listeners keep track of some type of ``event`` and trigger the ``on_event`` :ref:`action block <modules_action_block>` whenever it detects a *new* event. You can refer to the current event in your module actions with the ``{event}`` placeholder.
 
 .. caution::
 
@@ -68,78 +68,11 @@ Module event listeners keep track of some type of ``event`` and trigger the ``ev
 
         some_option: echo {event}
 
+
 An example using events
 ------------------------
 
-Let us explore the use of ``events`` with an example: we want to use a different desktop wallpaper for each day of the week.
-
-The ``weekday`` event listener type keeps track of the following events: ``monday``, ``tuesday``, ``wednesday``, ``thursday``, ``friday``, ``saturday``, and ``sunday``.
-
-After having found seven fitting wallpapers, we name them according to the weekday we want to use them, and place them in ``$ASTRALITY_CONFIG_HOME/modules/weekday_wallpaper/``:
-
-.. code-block:: console
-
-    $ ls -l $ASTRALITY_CONFIG_HOME/modules/weekday_wallpaper
-
-    monday.jpeg
-    tuesday.jpg
-    wednesday.png
-    thursday.tiff
-    friday.gif
-    saturday.jpeg
-    sunday.jpeg
-
-Now we need to create a module with a ``weekday`` event listener:
-
-.. code-block:: yaml
-
-    module/weekday_wallpaper:
-        event_listener:
-            type: weekday
-
-
-We also need a way of setting the desktop wallpaper from the shell. Here we are going to use the `feh <https://wiki.archlinux.org/index.php/feh>`_ shell utility. Alternatively, on MacOS, we can use `this script <https://apple.stackexchange.com/a/150336>`_. After having installed ``feh``, we can use it to set the appropriate wallpaper on Astrality startup:
-
-.. code-block:: yaml
-
-    module/weekday_wallpaper:
-        event_listener:
-            type: weekday
-
-        on_startup:
-            run:
-                - feh --bg-fill modules/weekday_wallpaper/{event}.*
-
-Now Astrality will set the appropriate wallpaper on startup. We still have a small bug in our module. If you do not restart Astrality the next day, yesterday's wallpaper will still be in use. We can fix this by changing the wallpaper every time the weekday *changes* by listening for the ``event`` :ref:`event <events>`.
-
-.. code-block:: yaml
-
-    module/weekday_wallpaper:
-        event_listener:
-            type: weekday
-
-        on_startup:
-            run:
-                - feh --bg-fill modules/weekday_wallpaper/{event}.*
-
-        on_event:
-            run:
-                - feh --bg-fill modules/weekday_wallpaper/{event}.*
-
-Or, alternatively, we can just :ref:`trigger <trigger_action>` startup event when the event changes:
-
-.. code-block:: yaml
-
-    module/weekday_wallpaper:
-        event_listener:
-            type: weekday
-
-        on_startup:
-            run:
-                - feh --bg-fill modules/weekday_wallpaper/{event}.*
-
-        on_event:
-            trigger: on_startup
+The use of ``events`` in modules is best explained with an example. Please take a look at :ref:`this example <examples_weekday_wallpaper>` using the ``weekday`` event listener in order to set a separate desktop wallpaper for each day of the week.
 
 
 Event listener types
@@ -179,9 +112,9 @@ These coordinates can be obtained from `this website <https://www.latlong.net/>`
     module/solar_module:
         event_listener:
             type: solar
+
             latitude: 63.446827
             longitude: 10.421906
-            elevation: 0
 
 
 .. _event_listener_types_static:
