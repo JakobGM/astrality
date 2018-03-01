@@ -41,7 +41,7 @@ Context sections **must** be named ``context/descriptive_name`` and placed at th
 
 An example:
 
-.. code-block:: yaml
+.. code-block:: none
 
     # $ASTRALITY_CONFIG_HOME/astrality.yml
 
@@ -246,7 +246,7 @@ How to compile templates
 Now that you know how to write Astrality templates, you might wonder how to actually *compile* these templates. In order to do this, you need to:
 
     #. Create an Astrality :ref:`module <modules>`.
-    #. Specify when to compile the template, by using an :ref:`event block <events>` within the module.
+    #. Specify when to compile the template, by using an :ref:`action block <modules_action_blocks>` within the module.
     #. Inserting a :ref:`compile action <compile_action>` into such an event block, telling Astrality to compile your template.
 
 Here is a very simple example that demonstrate how to compile a template to a target path.

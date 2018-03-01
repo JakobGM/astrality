@@ -11,7 +11,7 @@ What are event listeners?
 
     #. Event listeners are specified on a *per-module-basis*.
     #. There are different ``types`` of event listeners.
-    #. Event listeners determine exactly *when* the :ref:`actions <actions>` you specify within a module's :ref:`on_event <module_events_on_event>` :ref:`action block <events>` are executed.
+    #. Event listeners determine exactly *when* the :ref:`actions <actions>` you specify within a module's :ref:`on_event <module_events_on_event>` :ref:`action block <modules_action_blocks>` are executed.
     #. Event listeners are optional, you can write valid modules without specifying one. Actions specified within the ``on_event`` action block will never be executed when no module event listener is specified.
     #. Event listeners provide the module with the ``{event}`` placeholder when specifying ``actions``. It is replaced by the current ``event`` at runtime. The replacement value is specific for that specific event listener's type, and dynamically changes according to rules set by the event listener.
 
@@ -45,7 +45,7 @@ Most event listeners provide you with additional options in order to tweak their
 Events
 ======
 
-Module event listeners keep track of some type of ``event`` and trigger the ``on_event`` :ref:`action block <modules_action_block>` whenever it detects a *new* event. You can refer to the current event in your module actions with the ``{event}`` placeholder.
+Module event listeners keep track of some type of ``event`` and trigger the ``on_event`` :ref:`action block <modules_action_blocks>` whenever it detects a *new* event. You can refer to the current event in your module actions with the ``{event}`` placeholder.
 
 .. caution::
 

@@ -48,7 +48,7 @@ We also need a way of setting the desktop wallpaper from the shell. Here we are 
             run:
                 - feh --bg-fill modules/weekday_wallpaper/{event}.*
 
-Now Astrality will set the appropriate wallpaper on startup. We still have a small bug in our module. If you do not restart Astrality the next day, yesterday's wallpaper will still be in use. We can fix this by changing the wallpaper every time the weekday *changes* by listening for the ``event`` :ref:`event <events>`.
+Now Astrality will set the appropriate wallpaper on startup. We still have a small bug in our module. If you do not restart Astrality the next day, yesterday's wallpaper will still be in use. We can fix this by changing the wallpaper every time the weekday *changes* by listening for the weekday event.
 
 .. code-block:: yaml
 
