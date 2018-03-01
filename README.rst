@@ -26,11 +26,13 @@ Astrality is a tool for managing configuration files and scheduling tasks relate
 
 You can create templates for your configuration files, and Astrality will replace placeholders within those templates with ``context`` values defined in a central configuration file. Furthermore, you can dynamically manipulate that ``context`` at predefined times and events.
 
+By publishing an Astrality module to GitHub, others can try out your configuration by only pasting one line into their configuration. The use of template placeholders in your configuration files make such sharing portable on cross of different systems and user preferences.
+
 **Here is gif demonstrating how Astrality is used to**:
 
 #) Automatically change the desktop wallpaper based on the sun's position in the sky.
-#) Dynamically change the font size of Polybar.
-#) Change to the same color scheme of `alacritty <https://github.com/jwilm/alacritty>`_, `kitty <https://github.com/kovidgoyal/kitty>`_, and `polybar <https://github.com/jaagr/polybar>`_ at the same time.
+#) Dynamically change the font size, and implicitly the bar height, of `polybar <https://github.com/jaagr/polybar>`_.
+#) Simultaneously change the color scheme of `alacritty <https://github.com/jwilm/alacritty>`_, `kitty <https://github.com/kovidgoyal/kitty>`_, and polybar at the same time.
 
 .. image:: https://user-images.githubusercontent.com/10655778/36535609-934488ec-17ca-11e8-860e-4af5e1464997.gif
 
@@ -41,7 +43,7 @@ You can create templates for your configuration files, and Astrality will replac
 * Conditionally copy (or compile) configuration files to specific paths. For example, only copy `neovim's <https://neovim.io/>`_ configuration if it is available on the system.
 * Configure dynamic behaviour for applications that do not support it. For example, set your desktop wallpaper based on the sun's position in the sky at your location.
 * Couple configurations across your applications. When you change your desktop wallpaper, automatically change the font type and color of your `conky modules <https://github.com/brndnmtthws/conky>`_.
-* Insert environment variables (e.g. ``$USER``) and command substitutions (e.g. ``$(xrandr | grep -cw connected)``) into configuration files that do not support them.
+* Insert environment variables, by writing ``{{ env.USER }}``, and command substitutions, by writing ``{{ 'xrandr | grep -cw connected' | shell }}``), into configuration files that do not natively support them.
 * Modularize your desktop configuration, allowing you to switch between different combinations of applications and/or configurations by only editing one line. With Astrality you can, for example, quickly switch between `different <https://github.com/jaagr/polybar>`_ `status <https://github.com/LemonBoy/bar>`_ `bars <https://i3wm.org/i3bar/>`_ with little effort.
 * Share ``modules`` with others who can effortlessly try out your configuration, and easily switch back to their old configuration if they wish, making experimentation frictionless.
 * And much more...  An example configuration with several examples is included.
