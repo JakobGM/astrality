@@ -9,12 +9,15 @@ Use cases
 
 The use of Astrality templates allows you to:
 
-* Have one single source of truth for values that should remain equal on cross of configuration files.
+* Centralize configuration in one single file.
+* Establish a single source of truth for configuration options which are used in several configuration files.
 * Make changes that are applied to several configuration files at once, making it easier to experiment with configurations that are interdependent.
 * Insert :ref:`environment variables <parameter_expansion>` and :ref:`command substitutions <command_substitution>` in configuration files that otherwise can not support them.
-* Insert replacements for placeholders which are :ref:`dynamically manipulated <context_import_action>` by Astrality :ref:`modules <modules>`.
+* :ref:`Dynamically manipulate <context_import_action>` placeholders in your templates.
 * Making configurations more portable. Any references to display devices, network interfaces, usernames, etc., can be quickly changed when deploying on a new machine.
-* Making it easier to switch between blocks of configurations, like quickly changing the color scheme of your terminal emulator, desktop manager and/or other desktop applications. This can be done by changing only one line of ``astrality.yml``.
+* Making it easier to switch between "blocks" of configurations, like quickly changing the color scheme of your terminal emulators, desktop manager and/or other desktop applications. 
+  This can be done by changing only one line of ``astrality.yml``.
+* Use more powerful constructs, such as for-loops and if-statements, in configuration files in order to simplify configuration.
 
 
 .. _template_files:
@@ -22,7 +25,10 @@ The use of Astrality templates allows you to:
 Template files
 ==============
 
-Templates can be of any file type, named whatever you want, and placed at any desirable path. It is customary, however, to place templates within ``$ASTRALITY_CONFIG_HOME/templates/name_of_application``, where ``name_of_application`` is the application that will use the compiled template.
+Templates can be of any file type, named whatever you want, and placed at any desirable path.
+It is customary, however, to place templates within a directory named ``$ASTRALITY_CONFIG_HOME/modules/name_of_application``,
+and to use the ``.template`` filename extension.
+Replace ``name_of_application`` with the name of the application that will use the compiled template.
 
 
 .. _context:
@@ -30,7 +36,7 @@ Templates can be of any file type, named whatever you want, and placed at any de
 Context
 =======
 
-When you write templates, you use ``placeholders`` which Astrality replaces with values defined in so-called ``context`` sections defined in ``astrality.yml``. 
+When you write templates, you use ``{{ placeholders }}`` which Astrality replaces with values defined in so-called ``context`` sections defined in ``astrality.yml``. 
 Context sections **must** be named ``context/descriptive_name`` and placed at the root indentation level of ``astrality.yml``.
 
 An example:
@@ -40,9 +46,9 @@ An example:
     # $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/machine:
-        user: $USER
-        os: $( uname )
-        hostname: $( hostname )
+        user: {{ env.USER }}
+        os: {{ 'uname' | shell }}
+        hostname: {{ 'hostname' | shell }}
 
     context/fonts:
         1: FuraCode Nerd Font
@@ -52,6 +58,7 @@ An example:
 .. warning::
     Context section names, and any identifiers within a context block (i.e. anything left of a colon), must be valid Python 2.x `identifiers <http://jinja.pocoo.org/docs/2.10/api/#notes-on-identifiers>`_.
     In other words, they must match the regular expression ``[a-zA-Z_][a-zA-Z0-9_]*``, i.e. use ASCII letters, numbers, and underscores.
+    The exception is numeric names, such as in the ``context/fonts`` section above.
     **No spaces are allowed**.
 
 
@@ -60,7 +67,9 @@ An example:
 Inserting context variables into your templates
 -----------------------------------------------
 
-You should now be able to insert context values into your templates. You can refer to context variables in your templates by using the syntax ``{{ context_section.variable_name }}``. Using the contexts defined above, you could write the following template:
+You should now be able to insert context values into your templates. You can refer to context variables in your templates by using the syntax ``{{ context_section.variable_name }}``.
+
+Using the contexts defined above, you could write the following template:
 
 .. code-block:: dosini
 
@@ -128,6 +137,7 @@ Integer placeholder resolution
 
 There exists another way to define fallback values, which sometimes is much more useful.
 It can be used by naming your context sections, subsections, and/or values with numeric values.
+
 Let's define context values with integer names.
 
 .. code-block:: yaml
@@ -211,7 +221,8 @@ Astrality provides an additional ``shell`` template filter in addition to the st
     {{ 'shell command' | shell }}
 
 .. note::
-    Shell commands are run from ``$ASTRALITY_CONFIG_HOME``. If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``{{ 'cat ~/.bashrc' | shell }}``.
+    Shell commands are run from the directory which contains the configuration for the template compilation, most often ``$ASTRALITY_CONFIG_HOME``.
+    If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``{{ 'cat ~/.bashrc' | shell }}``.
 
 You can use the :ref:`command substitution <command_substitution>` syntax in a context section of ``astrality.yml`` and get much of the same functionality, but with the ``shell`` filter you can specify a timeout in seconds::
 
@@ -254,7 +265,7 @@ Where you want to replace ``{{ host.user }}`` with your username. Let us define 
     # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/host:
-        user=${USER}
+        user={{ env.USER }}
 
 In order to compile this template to ``/tmp/config.ini`` we write the following module, 
 which will compile the template on Astrality startup:
@@ -264,13 +275,13 @@ which will compile the template on Astrality startup:
     # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/host:
-        user=${USER}
+        user={{ env.USER }}
 
     module/some_name:
         on_startup:
             compile:
-                template: modules/test/template
-                target: /tmp/config.ini
+                - template: modules/test/template
+                  target: /tmp/config.ini
 
 Now we can compile the template by starting Astrality:
 
