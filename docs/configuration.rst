@@ -48,13 +48,14 @@ The configuration file syntax
 
 Value interpolation in the configuration file
 ---------------------------------------------
-Astrality makes two non-standard additions to the ``YAML`` syntax, so-called interpolations. Environment variable `parameter expansions <http://wiki.bash-hackers.org/syntax/pe?s[]=environment&s[]=variable#simple_usage>`_ and `command substitutions <http://wiki.bash-hackers.org/syntax/expansion/cmdsubst>`_. The syntax is as follows:
+
+``astrality.yml`` is in itself a template which is compiled at Astrality startup. This allows you to use environment variable `parameter expansions <http://wiki.bash-hackers.org/syntax/pe?s[]=environment&s[]=variable#simple_usage>`_ and `command substitutions <http://wiki.bash-hackers.org/syntax/expansion/cmdsubst>`_ in your configuration. The syntax is as follows:
 
 
 .. _parameter_expansion:
 
 * **Parameter expansion**:
-    ``${ENVIRONMENT_VARIABLE}`` is replaced with the value of the environment variable, i.e. the result of ``echo $ENVIRONMENT_VARIABLE``.
+    ``{{ env.ENVIRONMENT_VARIABLE }}`` is replaced with the value of the environment variable, i.e. the result of ``echo $ENVIRONMENT_VARIABLE``.
 
     If the value of an environment variable contains other environment variables, then those environment variables will also be expanded.
     Say you have defined the following environment variables:
@@ -64,19 +65,21 @@ Astrality makes two non-standard additions to the ``YAML`` syntax, so-called int
         export VAR1 = run $var2
         export VAR2 = command
 
-    Then the occurrence of ``${VAR1}`` in ``astrality.yml`` will be replaced with ``run command`` and **not** ``run $VAR2``.
+    Then the occurrence of ``{{ env.VAR1 }}`` in ``astrality.yml`` will be replaced with ``run command`` and **not** ``run $VAR2``.
     If you want the ability to turn off this "recursive expansion" feature, `open an issue <https://github.com/JakobGM/astrality/issues>`_, and I will add configuration option for it.
 
     .. caution::
-        Only ``${NAME}`` blocks are expanded. ``$NAME`` will be left in place, to allow runtime expansions of environment variables when modules define shell commands to be run.
+        Only ``{{ env.NAME }}`` variables are expanded. ``$NAME`` will be left in place, to allow runtime expansions of environment variables when modules define shell commands to be run.
 
 .. _command_substitution:
 
 * **Command substitution**:
-    ``$( some_shell_command )`` is replaced with the standard output resulting from running ``some_shell_command`` in a ``bash`` shell.
+    ``{{ 'some_shell_command' | shell }}`` is replaced with the standard output resulting from running ``some_shell_command`` in a ``bash`` shell.
+
+    You can set a timeout and/or fallback value for command substitutions. See the :ref:`documentation <shell_filter>` for the shell filter.
 
     .. note::
-        Shell commands are run from ``$ASTRALITY_CONFIG_HOME``. If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``$( cat ~/.home_directory_file )``.
+        Shell commands in ``astrality.yml`` are run from ``$ASTRALITY_CONFIG_HOME``. If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``{{ 'cat ~/.home_directory_file' | shell }}``.
 
 .. note::
 
@@ -110,31 +113,7 @@ Global Astrality configuration options are specified in ``astrality.yml`` within
 
     Ironically requires restart if enabled.
 
-    *Useful for quick feedback when editing* :ref:`templates <templating>`.
-
-``recompile_modified_templates:``
-    *Defualt:* ``false``
-
-    If enabled, Astrality will watch for modifications to all templates sources :ref:`specified <compile_action>` in ``astrality.yml``.
-    If a template is modified, it will be recompiled to its specified target path(s).
-
-    .. note::
-        With this option enabled, any modified template will be recompiled as long
-        as it is specified within a :ref:`compile action <compile_action>`, regardless of
-        exactly *when* you intended the template to be compiled in the first place.
-
-        For instance, if a template is configured to be compiled on Astrality exit,
-        and not sooner, it will still be recompiled when it is modified, even though
-        Astrality has not exited.
-
-        You can have more fine-grained control over exactly *what* happens when
-        a file is modified by using the ``on_modified`` :ref:`module event <events>`.
-        This way you can run shell commands, import context values, and compile
-        arbitrary templates when specific files are modified on disk.
-
-    .. caution::
-        At the moment, Astrality only watches for file changes recursively within
-        ``$ASTRALITY_CONFIG_HOME``.
+    *Useful for quick feedback when editing your configuration.*
 
 ``startup_delay:``
     *Default:* ``0``
@@ -149,7 +128,7 @@ Global Astrality configuration options are specified in ``astrality.yml`` within
 
     Determines how long Astrality waits for :ref:`shell commands <run_action>` to exit successfully, given in seconds.
 
-    *Useful when shell commands are dependent on earlier shell commands.*
+    *Useful when you are dependent on shell commands running sequantially.*
 
 .. _configuration_options_requires_timeout:
 
@@ -167,6 +146,6 @@ What you should read of the documentation from here on depends on what you inten
 
 * :doc:`templating` explains how to write configuration file templates.
 * :doc:`modules` specify which templates to compile, when to compile them, and which commands to run after they have been compiled.
-* :doc:`event_listeners` define types of events when modules should change their behaviour.
+* :doc:`event_listeners` define types of events which modules can listen to and change their behaviour accordingly.
 
 These concepts are relatively interdependent, and each documentation section assumes knowledge of concepts explained in earlier sections. If this is the first time you are reading this documentation, you should probably just continue reading the documentation in chronological order.
