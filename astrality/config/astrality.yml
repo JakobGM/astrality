@@ -9,6 +9,7 @@ config/astrality:
     # You can delay astrality on startup. The delay is given in seconds.
     startup_delay: 0
 
+
 config/modules:
     # Modules can require successfull shell commands (non-zero exit codes) in
     # order to be enabled. You can specify the timeout for such checks, given
@@ -29,14 +30,22 @@ config/modules:
     # $ASTRALITY_CONFIG_HOME/modules
     modules_directory: modules
 
-    # You enable directory modules by specifying the <name> of each external
-    # module. The result is that the configurations contained in the following
-    # files are merged into this file: <modules_directory>/<name>/modules.yml
+    # You enable modules by specifying the <name> of each module.
+    # Modules defined in <modules_directory>/<subdirectory>/config.yml are
+    # enabled by writing name: <subdirectory>::<name>
+    #
+    # '*' enables all modules in this file, '*::*' enables all modules defined
+    # in subdirectories of <modules_directory>.
     enabled_modules:
-        - name: solar_desktop::*
+        # Module defined in this file
         - name: polybar
-        - name: colors
-        - name: terminals
+
+        # All modules defined in <modules_directory>/solar_desktop/config.yml
+        - name: solar_desktop::*
+
+        # Module defined at https://github.com/jakobgm/color-schemes.astrality
+        - name: github::jakobgm/color-schemes.astrality
+          autoupdate: true  # Fetch new color schemes as they are added
 
 
 context/host:
@@ -114,36 +123,16 @@ context/fonts:
         size: 8
 
 
-module/colors:
-    # This module is used to import a color scheme into the `color` context
-    # section. This makes it easy to change color schemes by changing the
-    # `from_section` option below. Take a look at the color_schemes.yml file
-    # to see how to use color scheme context values in your templates.
-    on_startup:
-        import_context:
-            - from_path: modules/colors/color_schemes.yml
-              from_section: gruvbox_dark
-              to_section: colors
+context/color_schemes_config:
+    # These are context values used by the GitHub module:
+    # github.com/jakobgm/color-schemes.astrality
+    # See the README of this repository for more information.
 
+    # Enable the following color scheme:
+    enabled: gruvbox_dark
 
-module/terminals:
-    # Use the colors defined in the `colors` module for the color scheme
-    # for all the terminals you might use. Making it easy to switch color
-    # schemes for all your terminals at the same time.
-    #
-    # Alacritty: https://github.com/jwilm/alacritty
-    # Kitty: https://github.com/kovidgoyal/kitty
-
-    requires:
-        - command -v alacritty
-        - command -v kitty
-
-    on_startup:
-        compile:
-            - template: modules/terminals/alacritty.yml.template
-              target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
-            - template: modules/terminals/kitty.conf.template
-              target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf
+    # Import the color scheme into the following context section
+    context_section: colors
 
 
 module/polybar:
@@ -162,3 +151,30 @@ module/polybar:
         modules/polybar/config.template:
             compile:
                 - template: modules/polybar/config.template
+
+
+module/terminals:
+    # By default, this module is not enabled, since it overwrites possibly
+    # pre-existing configuration files. Enable it in config/modules.
+    #
+    # This module uses the color scheme context syntax from:
+    # github::jakobgm/color-schemes.astrality
+    # And the color scheme can be changed in context/color_schemes_config
+    #
+    # It makes it easy to change color schemes for all your terminals at the
+    # same time.
+    #
+    # Terminals:
+    # Alacritty: https://github.com/jwilm/alacritty
+    # Kitty: https://github.com/kovidgoyal/kitty
+
+    requires:
+        - command -v alacritty
+        - command -v kitty
+
+    on_startup:
+        compile:
+            - template: modules/terminals/alacritty.yml.template
+              target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
+            - template: modules/terminals/kitty.conf.template
+              target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf

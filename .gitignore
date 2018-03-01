@@ -1,5 +1,6 @@
 # Config files which are meant to be changed by each individual user can be safely ignored by git
 astrality.conf
+astrality/config/modules/jakobgm
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
