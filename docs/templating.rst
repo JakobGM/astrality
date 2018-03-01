@@ -265,7 +265,7 @@ Where you want to replace ``{{ host.user }}`` with your username. Let us define 
     # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/host:
-        user={{ env.USER }}
+        user: {{ env.USER }}
 
 In order to compile this template to ``/tmp/config.ini`` we write the following module, 
 which will compile the template on Astrality startup:
@@ -275,7 +275,7 @@ which will compile the template on Astrality startup:
     # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
 
     context/host:
-        user={{ env.USER }}
+        user: {{ env.USER }}
 
     module/some_name:
         on_startup:
