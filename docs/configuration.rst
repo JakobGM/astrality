@@ -130,14 +130,6 @@ Global Astrality configuration options are specified in ``astrality.yml`` within
 
     *Useful when you are dependent on shell commands running sequantially.*
 
-.. _configuration_options_requires_timeout:
-
-``requires_timeout``
-    *Default:* ``1``
-
-    Determines how long Astrality waits for :ref:`module requirements <module_requires>` to exit successfully, given in seconds. If the requirement times out, it will be considered failed.
-
-    *Useful when requirements are costly to determine, but you still do not want them to time out.*
 
 Where to go from here
 =====================

@@ -19,6 +19,7 @@ from typing import (
     Tuple,
     Type,
     Iterable,
+    Union,
 )
 import re
 
@@ -641,6 +642,7 @@ class EnabledModules:
 
 class GlobalModulesConfigDict(TypedDict, total=False):
     """Dictionary defining configuration options for Modules."""
+    requires_timeout: Union[int, float]
     recompile_modified_templates: bool
     modules_directory: str
     enabled_modules: List[EnablingStatement]
@@ -665,6 +667,10 @@ class GlobalModulesConfig:
         self.recompile_modified_templates = config.get(
             'recompile_modified_templates',
             False,
+        )
+        self.requires_timeout = config.get(
+            'requires_timeout',
+            1,
         )
 
         # Determine the directory which contains external modules

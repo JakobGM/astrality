@@ -372,7 +372,7 @@ class ModuleManager:
 
                 if not Module.valid_class_section(
                     section=module_config,
-                    requires_timeout=self.application_config['config/astrality']['requires_timeout'],
+                    requires_timeout=self.global_modules_config.requires_timeout,
                     requires_working_directory=module_directory,
                 ) or section not in self.global_modules_config.enabled_modules:
                     continue
@@ -394,7 +394,7 @@ class ModuleManager:
             # Check if this module should be included
             if not Module.valid_class_section(
                 section=module_config,
-                requires_timeout=self.application_config['config/astrality']['requires_timeout'],
+                requires_timeout=self.global_modules_config.requires_timeout,
                 requires_working_directory=self.config_directory,
             ) or section not in self.global_modules_config.enabled_modules:
                 continue

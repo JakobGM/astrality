@@ -81,7 +81,7 @@ For example, if your module depends on the ``docker`` and ``docker-machine`` she
 
 If ``docker`` *or* ``docker-machine`` is not in your shell ``PATH``, this module will be disabled.
 
-If one of the shell commands use more than 1 second to return, it will be considered failed. You can change the default time out by setting the :ref:`requires_timeout <configuration_options_requires_timeout>` configuration option.
+If one of the shell commands use more than 1 second to return, it will be considered failed. You can change the default time out by setting the :ref:`requires_timeout <modules_config_requires_timeout>` configuration option.
 
 .. hint::
     ``requires`` can be useful if you want to use Astrality to manage your `dotfiles <https://medium.com/@webprolific/getting-started-with-dotfiles-43c3602fd789>`_. You can use module dependencies in order to only compile configuration templates to their respective directories if the dependent application is available on the system. This way, Astrality becomes a "conditional symlinker" for your dotfiles.
@@ -439,10 +439,19 @@ Global configuration options for all your modules are specified in ``astrality.y
         option2: value2
         ...
 
-**Avalable modules configuration options**:
+**Available modules configuration options**:
+
+.. _modules_config_requires_timeout:
+
+``requires_timeout``
+    *Default:* ``1``
+
+    Determines how long Astrality waits for :ref:`module requirements <module_requires>` to exit successfully, given in seconds. If the requirement times out, it will be considered failed.
+
+    *Useful when requirements are costly to determine, but you still do not want them to time out.*
 
 ``recompile_modified_templates:``
-    *Defualt:* ``false``
+    *Default:* ``false``
 
     If enabled, Astrality will watch for modifications to all templates sources :ref:`specified <compile_action>` in your enabled modules.
     If a template is modified, it will be recompiled to its specified target path(s).
@@ -512,7 +521,7 @@ Astrality compiles any enabled ``config.yml`` before parsing it.
 This allows you to modify the behaviour of modules based on context, useful if you want to offer configuration options for modules.
 
 #. Define your modules in ``$ASTRALITY_CONFIG_HOME/<modules_directory>/directory/config.yml``.
-#. :ref:`Enable <enabled_modules>` modules from this config file by appending ``name: directory::module_name`` to ``enabled_modules``.
+#. :ref:`Enable <modules_enabled_modules>` modules from this config file by appending ``name: directory::module_name`` to ``enabled_modules``.
    Alternatively, you can enable *all* modules defined in a module directory by appending ``name: directory::*`` instead.
 
 By default, all module subdirectories are enabled.
