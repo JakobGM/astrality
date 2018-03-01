@@ -11,7 +11,7 @@ def readme():
 
 setup(
     name='astrality',
-    version='0.4.2',
+    version='0.5',
     packages=find_packages(),
     install_requires=[
         'Jinja2',
