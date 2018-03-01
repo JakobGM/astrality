@@ -668,7 +668,7 @@ class ModuleManager:
                 logger.info(f'[module/{module.name}] Running startup command.')
                 self.run_shell(
                     command=command,
-                    timeout=self.application_config['config/astrality']['run_timeout'],
+                    timeout=self.global_modules_config.run_timeout,
                     working_directory=module.directory,
                     module_name=module.name,
                 )
@@ -688,7 +688,7 @@ class ModuleManager:
             logger.info(f'[module/{module.name}] Running event command.')
             self.run_shell(
                 command=command,
-                timeout=self.application_config['config/astrality']['run_timeout'],
+                timeout=self.global_modules_config.run_timeout,
                 working_directory=module.directory,
                 module_name=module.name,
             )
@@ -710,7 +710,7 @@ class ModuleManager:
                 logger.info(f'[module/{module.name}] Running exit command.')
                 self.run_shell(
                     command=command,
-                    timeout=self.application_config['config/astrality']['run_timeout'],
+                    timeout=self.global_modules_config.run_timeout,
                     working_directory=module.directory,
                     module_name=module.name,
                 )
@@ -763,7 +763,7 @@ class ModuleManager:
             logger.info(f'[module/{module.name}] Running modified command.')
             self.run_shell(
                 command=command,
-                timeout=self.application_config['config/astrality']['run_timeout'],
+                timeout=self.global_modules_config.run_timeout,
                 working_directory=module.directory,
                 module_name=module.name,
             )

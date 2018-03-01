@@ -123,13 +123,6 @@ Global Astrality configuration options are specified in ``astrality.yml`` within
     *Useful when you depend on other startup scripts before Astrality startup,
     such as reordering displays.*
 
-``run_timeout``
-    *Default:* ``0``
-
-    Determines how long Astrality waits for :ref:`shell commands <run_action>` to exit successfully, given in seconds.
-
-    *Useful when you are dependent on shell commands running sequantially.*
-
 
 Where to go from here
 =====================

@@ -443,12 +443,19 @@ Global configuration options for all your modules are specified in ``astrality.y
 
 .. _modules_config_requires_timeout:
 
-``requires_timeout``
+``requires_timeout:``
     *Default:* ``1``
 
     Determines how long Astrality waits for :ref:`module requirements <module_requires>` to exit successfully, given in seconds. If the requirement times out, it will be considered failed.
 
     *Useful when requirements are costly to determine, but you still do not want them to time out.*
+
+``run_timeout:``
+    *Default:* ``0``
+
+    Determines how long Astrality waits for module :ref:`run actions <run_action>` to exit, given in seconds.
+
+    *Useful when you are dependent on shell commands running sequantially.*
 
 ``recompile_modified_templates:``
     *Default:* ``false``

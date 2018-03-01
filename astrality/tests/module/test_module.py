@@ -51,7 +51,7 @@ def simple_application_config(
     config['context/fonts'] = {1: 'FuraMono Nerd Font'}
 
     # Increase run timeout, so that we can inspect the shell results
-    config['config/astrality']['run_timeout'] = 2
+    config['config/modules'] = {'run_timeout': 2}
     return config
 
 

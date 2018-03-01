@@ -55,8 +55,6 @@ ApplicationConfig = Dict[str, Dict[str, Any]]
 ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'config/astrality': {
     'hot_reload_config': False,
     'startup_delay': 0,
-    'run_timeout': 0,
-    'requires_timeout': 1,
 }}
 
 
@@ -643,6 +641,7 @@ class EnabledModules:
 class GlobalModulesConfigDict(TypedDict, total=False):
     """Dictionary defining configuration options for Modules."""
     requires_timeout: Union[int, float]
+    run_timeout: Union[int, float]
     recompile_modified_templates: bool
     modules_directory: str
     enabled_modules: List[EnablingStatement]
@@ -671,6 +670,10 @@ class GlobalModulesConfig:
         self.requires_timeout = config.get(
             'requires_timeout',
             1,
+        )
+        self.run_timeout = config.get(
+            'run_timeout',
+            0,
         )
 
         # Determine the directory which contains external modules
