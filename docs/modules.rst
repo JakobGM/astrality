@@ -10,11 +10,16 @@ What are modules?
 Tasks to be performed by Astrality are grouped into so-called ``modules``.
 These modules are used to define:
 
+:ref:`modules_action_blocks`:
+    A grouping of :ref:`actions <actions>` which is supposed to be performed at a specific time, such as "on Astrality startup", "on Astrality exit", or "on event".
+
 :ref:`actions`
-    Tasks to be performed when :ref:`events <events>` occur, for example :ref:`compiling a template <compile_action>`.
+    Tasks to be performed by Astrality, for example :ref:`compiling templates <compile_action>` or :ref:`running shell commands <run_action>`.
 
 :doc:`event_listeners`
-    Event listeners can listen to predefined :ref:`events <event_listener_events>`.
+    Event listeners can listen to predefined :ref:`events <event_listener_events>` and trigger the "on event" action block of the module.
+
+You can easily enable and disable modules, making your configuration more modular.
 
 .. _modules_how_to_define:
 
@@ -26,10 +31,13 @@ There are two types of places where you can define your modules:
 Directly in ``$ASTRALITY_CONFIG_HOME/astrality.yml``:
     Useful if you don't have too many modules, and you want to keep everything easily accessible in one file.
 
-In a file named ``modules.yml`` within a :ref:`modules directory <modules_directory>`:
+In a file named ``config.yml`` within a :ref:`modules directory <modules_directory>`:
     Useful if you have lots of modules, and want to separate them into separate directories with common responsibilities.
 
     See the :ref:`documentation <modules_external_modules>` for external modules for how to define modules this way.
+
+    You can use templating features in ``config.yml``, since they are compiled at startup, after having parsed ``astrality.yml``.
+    All context values defined in ``astrality.yml`` are therefore available in ``config.yml``, allowing configuration of module behaviour.
 
 .. hint::
     A useful configuration structure is to define modules with "global responsibilities" in ``astrality.yml``, and group the remaining modules in seperate module directories by their categorical responsibilites (for example "terminals").
@@ -38,14 +46,14 @@ In a file named ``modules.yml`` within a :ref:`modules directory <modules_direct
 
 Module definition syntax
 ------------------------
-They should be formated as *dictionaries* placed at the root indentation level, and **must** be named ``module/*``.
+Modules are formated as *dictionaries* placed at the root indentation level, and **must** be named ``module/*``.
 Choose ``*`` to be whatever you want to name your module.
-The simplest module, with no associated behaviour, is:
+The simplest module, with no specific behaviour, is:
 
 .. code-block:: yaml
 
     module/test_module:
-        enabled: true
+        ... contents of module ...
 
 Astrality skips parsing any modules which contain the option :code:`enabled: false`.
 The default value of ``enabled`` is ``true``, so you do not have to specify it.
@@ -79,12 +87,12 @@ If one of the shell commands use more than 1 second to return, it will be consid
     ``requires`` can be useful if you want to use Astrality to manage your `dotfiles <https://medium.com/@webprolific/getting-started-with-dotfiles-43c3602fd789>`_. You can use module dependencies in order to only compile configuration templates to their respective directories if the dependent application is available on the system. This way, Astrality becomes a "conditional symlinker" for your dotfiles.
 
 
-.. _events:
+.. _modules_action_blocks:
 
-Events
-======
+Action blocks
+=============
 
-When you want to assign :ref:`tasks <actions>` for Astrality to perform, you have to define *when* to perform them. This is done by defining those ``actions`` in one of four available ``event`` blocks.
+When you want to assign :ref:`tasks <actions>` for Astrality to perform, you have to define *when* to perform them. This is done by defining those ``actions`` in one of four available ``action blocks``.
 
     .. _module_events_on_startup:
 
@@ -116,15 +124,11 @@ When you want to assign :ref:`tasks <actions>` for Astrality to perform, you hav
 
             If this is a use case for you, please open an `issue <https://github.com/jakobgm/astrality/issues>`_!
 
-Example of module event blocks:
+Demonstration of module action blocks:
 
 .. code-block:: yaml
 
     module/module_name:
-        templates:
-            some_template:
-                source: 'templates/some.template'
-
         on_startup:
             ...startup actions...
 
@@ -135,8 +139,8 @@ Example of module event blocks:
             ...shutdow actions...
 
         on_modified:
-            some_template_path:
-                ...some_template_path modified actions...
+            some/template/path:
+                ...some/template/path modified actions...
 
 .. note::
     On Astrality startup, the ``on_startup`` event will be triggered, but **not** ``on_event``. The ``on_event`` event will only be triggered when the ``event listener`` detects a new ``event`` *after* Astrality startup.
@@ -146,7 +150,7 @@ Example of module event blocks:
 Actions
 =======
 
-Actions are tasks for Astrality to perform, and are placed within :ref:`event blocks <events>` in order to specify *when* to perform them. There are four available ``action`` types:
+Actions are tasks for Astrality to perform, and are placed within :ref:`action blocks <modules_action_blocks>` in order to specify *when* to perform them. There are four available ``action`` types:
 
     :ref:`import_context <context_import_action>`:
         Import a ``context`` section from a YAML formatted file. ``context`` variables are used as replacement values for placeholders in your :ref:`templates <templating>`. See :ref:`context <context>` for more information.
@@ -158,7 +162,7 @@ Actions are tasks for Astrality to perform, and are placed within :ref:`event bl
         Execute a shell command, possibly referring to any compiled template and/or the last detected :ref:`event <event_listener_events>` defined by the :ref:`module event listener <event_listeners>`.
 
     :ref:`trigger <trigger_action>`:
-        Perform *all* actions specified within another :ref:`event block <events>`. With other words, this action *appends* all the actions within another event block to the actions already specified in the event block. Useful for not having to repeat yourself when you want the same actions to be performed during different events.
+        Perform *all* actions specified within another :ref:`action block <modules_action_blocks>`. With other words, this action *appends* all the actions within another action block to the actions already specified in the action block. Useful for not having to repeat yourself when you want the same actions to be performed during different events.
 
 
 .. _context_import_action:
@@ -172,15 +176,15 @@ Those context values are available for insertion into all your templates.
 But you can also import context values from arbitrary YAML files. Among other use cases, this allows you to:
 
 * Split context definitions into separate files in order to clean up your configuration. You can, for instance, create one dedicated context file for each of your modules.
-* Combine context imports with :ref:`on_event <events>` blocks in order to dynamically change how templates compile. This allows quite complex behaviour.
+* Combine context imports with :ref:`on_event <modules_action_blocks>` blocks in order to dynamically change how templates compile. This allows quite complex behaviour.
 
-Context imports are defined as a dictionary, or a list of dictionaries if you need several imports, under the ``import_context`` keyword in an :ref:`event block <events>` of a module.
+Context imports are defined as a dictionary, or a list of dictionaries if you need several imports, under the ``import_context`` keyword in an :ref:`action block <modules_action_blocks>` of a module.
 
 This is best explained with an example. Let us create a color schemes file:
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/contexts/color_schemes.yml
+    # Source file: $ASTRALITY_CONFIG_HOME/modules/color_schemes/color_schemes.yml
 
     context/gruvbox_dark:
         background: 282828
@@ -195,7 +199,7 @@ Then let us import the gruvbox color scheme into the "colors" :ref:`context <con
     module/color_scheme:
         on_startup:
             import_context:
-                from_path: contexts/color_schemes.yml
+                from_path: modules/color_schemes/color_schemes.yml
                 from_section: gruvbox_dark
                 to_section: colors
 
@@ -214,7 +218,7 @@ This is functionally equivalent to writing:
 
         * You can now use ``{{ colors.foreground }}`` in all your templates instead of ``{{ gruvbox_dark.foreground }}``. Since your templates do not know exactly *which* color scheme you are using, you can easily change it in the future by editing only one line in ``astrality.yml``.
 
-        * You can use ``import_context`` in a ``on_event`` event block in order to change your colorscheme based on the time of day. Perhaps you want to use "gruvbox light" during daylight, but change to "gruvbox dark" after dusk?
+        * You can use ``import_context`` in a ``on_event`` action block in order to change your colorscheme based on the time of day. Perhaps you want to use "gruvbox light" during daylight, but change to "gruvbox dark" after dusk?
 
 The available attributes for ``import_context`` are:
 
@@ -238,7 +242,7 @@ The available attributes for ``import_context`` are:
 Compile templates
 -----------------
 
-Template compilations are defined as a dictionary, or a list of dictionaries, under the ``compile`` keyword in an :ref:`event block <events>` of a module.
+Template compilations are defined as a dictionary, or a list of dictionaries, under the ``compile`` keyword in an :ref:`action block <modules_action_blocks>` of a module.
 
 Each template compilation action has the following available attributes:
 
@@ -280,8 +284,8 @@ Notice that the shell command ``conky -c {modules/desktop/conky_module.template}
 Run shell commands
 ------------------
 
-You can instruct Astrality to run an arbitrary number of shell commands when different :ref:`events <events>` occur.
-Place each command as a list item under the ``run`` option of an :ref:`event block <events>`.
+You can instruct Astrality to run an arbitrary number of shell commands when different :ref:`action blocks <modules_action_blocks>` are triggered.
+Place each command as a list item under the ``run`` option of an :ref:`action block <modules_action_blocks>`.
 
 You can place the following placeholders within your shell commands:
 
@@ -315,10 +319,10 @@ Example:
 
 .. _trigger_action:
 
-Trigger events
---------------
+Trigger action blocks
+---------------------
 
-You can trigger another module :ref:`event <events>` by specifying the ``trigger`` action.
+From one :ref:`action block <modules_action_blocks>` you can trigger another action block by specifying the ``trigger`` action.
 
 The ``trigger`` option accepts ``on_startup``, ``on_event``, ``on_exit``, and ``on_modified:file_path``, either as a single string, or a list with any combination of these.
 
@@ -327,71 +331,69 @@ An example of a module using ``trigger`` actions:
 .. code-block:: yaml
 
     module/module_using_triggers:
-        templates:
-            event_listener:
-                type: weekday
+        event_listener:
+            type: weekday
 
-            on_startup:
-                run: startup_command
+        on_startup:
+            run: startup_command
 
-                trigger:
-                    - on_event
-                    - on_modified:templates/templateA
+            trigger:
+                - on_event
+                - 'on_modified:templates/template'
 
-            on_event:
-                import_context:
-                    - from_path: contexts/A.yml
-                      from_section: '{event}'
-                      to_section: a_stuff
+        on_event:
+            import_context:
+                - from_path: contexts/A.yml
+                  from_section: '{event}'
+                  to_section: a_stuff
 
-                trigger: on_modified:templates/templateA
+            trigger: on_modified:templates/templateA
 
-            on_modified:
-                templates/A.template:
-                    compile:
-                        template: templates/A.template
+        on_modified:
+            templates/A.template:
+                compile:
+                    template: templates/A.template
 
-                    run: shell_command_dependent_on_templateA
+                run: shell_command_dependent_on_templateA
 
 This is equivalent to writing the following module:
 
 .. code-block:: yaml
 
     module/module_using_triggers:
-        templates:
-            event_listener:
-                type: weekday
+        event_listener:
+            type: weekday
 
-            on_startup:
-                import_context:
-                    - from_path: contexts/A.yml
-                      from_section: '{event}'
-                      to_section: a_stuff
+        on_startup:
+            import_context:
+                - from_path: contexts/A.yml
+                  from_section: '{event}'
+                  to_section: a_stuff
 
+            compile:
+                template: templates/templateA
+
+            run:
+                - startup_command
+                - shell_command_dependent_on_templateA
+
+        on_event:
+            import_context:
+                from_path: contexts/A.yml
+                from_section: '{event}'
+                to_section: a_stuff
+
+            compile:
+                template: templateA
+
+            run: shell_command_dependent_on_templateA
+
+        on_modified:
+            templates/templateA:
                 compile:
                     template: templates/templateA
 
-                run:
-                    - startup_command
-                    - shell_command_dependent_on_templateA
-
-            on_event:
-                import_context:
-                    from_path: contexts/A.yml
-                    from_section: '{event}'
-                    to_section: a_stuff
-
-                compile:
-                    template: templateA
-
                 run: shell_command_dependent_on_templateA
-
-            on_modified:
-                templates/templateA:
-                    compile:
-                        template: templates/templateA
-
-                    run: shell_command_dependent_on_templateA
 
 
 .. hint::
@@ -455,7 +457,7 @@ Global configuration options for all your modules are specified in ``astrality.y
         Astrality has not exited.
 
         You can have more fine-grained control over exactly *what* happens when
-        a file is modified by using the ``on_modified`` :ref:`module event <events>`.
+        a file is modified by using the ``on_modified`` :ref:`module event <modules_action_blocks>`.
         This way you can run shell commands, import context values, and compile
         arbitrary templates when specific files are modified on disk.
 
@@ -473,14 +475,89 @@ Global configuration options for all your modules are specified in ``astrality.y
 .. _modules_enabled_modules:
 
 ``enabled_modules:``
-    *default* ``empty list []``
+    *default:*
 
-    TODO:
+    .. code-block:: yaml
+
+        enabled_modules:
+            - name: '*'
+            - name: '*::*'
+
+    A list of modules which you want Astrality to use.
+    By default, Astrality enables all defined modules.
+
+    Specifying ``enabled_modules`` allows you to define a module without necessarily using it, making configuration switching easy.
+
+    Modules defined in ``astrality.yml`` are enabled by appending ``name: name_of_module`` to ``enabled_modules``.
+    If you have defined a module named ``vim`` in ``$ASTRALITY_CONFIG_HOME/<modules_directory>/text_editors/config.yml``,
+    you can enable it by writing ``name: text_editors::vim``.
+
+    **You can also use wildcards when specifying enabled modules:**
+
+    * ``name: '*'`` enables all modules defined in: ``$ASTRALITY_CONFIG_HOME/astrality.yml``.
+    * ``name: 'text_editors::*`` enables all modules defined in: ``$ASTRALITY_CONFIG_HOME/<modules_directory>/text_editors/config.yml``.
+    * ``name: '*::*`` enables all modules defined in: ``$ASTRALITY_CONFIG_HOME/<modules_directory>/*/config.yml``.
 
 
 .. _modules_external_modules:
 
-External modules
-================
+Module subdirectories
+=====================
 
-TODO:
+You can define "external modules" in files named ``config.yml`` placed within separate subdirectories of your :ref:`modules directory <modules_directory>`.
+This allows you to clean up your configuration and more easily share modules with others.
+
+Another advantage of using module directories is that all :ref:`context values <context>` defined in ``astrality.yml`` are available for placeholder substitution in ``config.yml``.
+Astrality compiles any enabled ``config.yml`` before parsing it.
+This allows you to modify the behaviour of modules based on context, useful if you want to offer configuration options for modules.
+
+#. Define your modules in ``$ASTRALITY_CONFIG_HOME/<modules_directory>/directory/config.yml``.
+#. :ref:`Enable <enabled_modules>` modules from this config file by appending ``name: directory::module_name`` to ``enabled_modules``.
+   Alternatively, you can enable *all* modules defined in a module directory by appending ``name: directory::*`` instead.
+
+By default, all module subdirectories are enabled.
+
+Context values defined in ``astrality.yml`` have preference above context values defined in module subdirectories, allowing you to define default context values, while still allowing others to override these values.
+
+.. caution::
+    All relative paths and shell commands in external modules are interpreted relative to the external module directory,
+    not ``$ASTRALITY_CONFIG_HOME``.
+    This way it is more portable between different configurations.
+
+
+.. _modules_github:
+
+GitHub modules
+==============
+
+You can share a module directory with others by publishing the module subdirectory to `GitHub <https://github.com>`_.
+Just define ``config.yml`` at the repository root, i.e. where ``.git`` exists, and include any dependent files within the repository.
+
+Others can fetch your module by appending ``name: github::<your_github_username>/<repository>`` to ``enabled_modules``.
+
+For example enabling the module named ``module_name`` defined in ``config.yml`` in the repository at https://github.com/username/repository:
+
+.. code-block:: yaml
+
+    config/modules:
+        enabled_modules:
+            - name: github::username/repository::module_name
+
+Astrality will automatically fetch the module on startup and place it within ``$ASTRALITY_CONFIG_HOME/<modules_directory>/username/repository``.
+If you want to automatically update the GitHub module, you can specify ``autoupdate: true``:
+
+.. code-block:: yaml
+
+    config/modules:
+        enabled_modules:
+            - name: github::username/repository::module_name
+              autoupdate: true
+
+If ``module_name`` is not specified, all modules will be enabled:
+
+.. code-block:: yaml
+
+    config/modules:
+        enabled_modules:
+            - name: github::username/repository
+              autoupdate: true
