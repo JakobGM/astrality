@@ -48,8 +48,12 @@ def main(logging_level: str = 'INFO', test: bool = False):
         logger.critical('Astrality was interrupted')
         logger.info('Cleaning up temporary files before exiting...')
 
-        # Run all the module exit handlers
-        module_manager.exit()
+        try:
+            # Run all the module exit handlers
+            module_manager.exit()
+        except NameError:
+            # The module_manager instance has not been assigned yet.
+            pass
 
         try:
             sys.exit(0)
