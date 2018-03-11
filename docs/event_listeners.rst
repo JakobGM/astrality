@@ -81,6 +81,43 @@ Event listener types
 Here is a list of all available Astrality module event listeners and their configuration options. If what you need is not available, feel free to `open an issue <https://github.com/JakobGM/astrality/issues>`_ with a event listener request!
 
 
+.. _event_listener_types_daylight:
+
+Daylight
+--------
+
+Description
+    Keeps track of the daylight at a specific location, i.e. if the sun is above the horizon or not.
+
+Specifier
+    ``type: daylight``
+
+Events
+    ``day``, ``night``
+
+.. csv-table:: Configuration options
+   :header: "Option", "Default", "Description"
+   :widths: 6, 5, 30
+
+   "latitude", 0, "Latitude coordinate point of your location."
+   "longitude", 0, "Longitude coordinate point of your location."
+   "elevation", 0, "Height above sea level at your location."
+
+These coordinates can be obtained from `this website <https://www.latlong.net/>`_.
+
+**Example configuration**
+
+.. code-block:: yaml
+
+    module/daylight_module:
+        event_listener:
+            type: daylight
+
+            latitude: 63.446827
+            longitude: 10.421906
+
+
+
 .. _event_listener_types_solar:
 
 Solar

@@ -71,7 +71,7 @@ class Solar(EventListener):
 
     It changes event after dawn, sunrise, morning, afternoon, sunset, dusk.
     """
-    events = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
+    events: Tuple[str, ...] = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
     default_event_listener_config = {
         'type': 'solar',
         'longitude': 0,
@@ -149,6 +149,42 @@ class Solar(EventListener):
         location.timezone = 'UTC'
 
         return location
+
+
+class Daylight(Solar):
+    """Event listener keeping track of daylight at specific location"""
+    events = ('day', 'night',)
+    default_event_listener_config = {
+        'type': 'daylight',
+        'longitude': 0,
+        'latitude': 0,
+        'elevation': 0,
+    }
+
+    def _event(self) -> str:
+        """Return 'night' if the sun is below the horizon, else 'day'."""
+        event = super()._event()
+        if event == 'night':
+            return 'night'
+        else:
+            return 'day'
+
+    def time_until_next_event(self) -> timedelta:
+        """Time left until daylight 'switches'"""
+        event = self.event()
+        now = self.now()
+
+        if event == 'night':
+            next_event = 'dawn'
+        else:
+            next_event = 'dusk'
+
+        time_of_next_event = self.location.sun()[next_event]
+        if time_of_next_event < now:
+            tomorrow = now + timedelta(days=1, seconds=-1)
+            time_of_next_event = self.location.sun(tomorrow)[next_event]
+
+        return time_of_next_event - now
 
 
 class Weekday(EventListener):
@@ -374,6 +410,7 @@ class Static(EventListener):
 
 
 EVENT_LISTENERS = {
+        'daylight': Daylight,
         'periodic': Periodic,
         'solar': Solar,
         'static': Static,
