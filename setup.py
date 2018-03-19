@@ -5,9 +5,11 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
+
 def readme():
     with open(Path(__file__).parent / 'README.rst') as file:
         return file.read()
+
 
 setup(
     name='astrality',
@@ -18,6 +20,7 @@ setup(
         'astral',
         'mypy_extensions',
         'pyyaml',
+        'requests',
         'watchdog',
     ],
     python_requires='>=3.6',
