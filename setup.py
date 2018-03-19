@@ -13,7 +13,7 @@ def readme():
 
 setup(
     name='astrality',
-    version='0.5.4',
+    version='0.5.5',
     packages=find_packages(),
     install_requires=[
         'Jinja2',

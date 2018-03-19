@@ -98,9 +98,14 @@ def main(logging_level: str = 'INFO', test: bool = False):
                     f'Waiting {module_manager.time_until_next_event()} '
                     'until next event change and ensuing update.'
                 )
-                time.sleep(
-                    module_manager.time_until_next_event().total_seconds()
-                )
+
+                # Weird bug related to sleeping more than 10e7 seconds
+                # on MacOS, causing OSError: Invalid Argument
+                wait = module_manager.time_until_next_event().total_seconds()
+                if wait >= 10e7:
+                    wait = 10e7
+
+                time.sleep(wait)
 
     except KeyboardInterrupt:  # pragma: no cover
         exit_handler()
