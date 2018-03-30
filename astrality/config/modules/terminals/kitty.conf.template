@@ -1,7 +1,7 @@
 # vim:fileencoding=utf-8:ft=conf
 
 # Fully featured
-font_family      {{ fonts.1.name }}
+font_family      {{ fonts.2.name }}
 italic_font      auto
 bold_font        auto
 bold_italic_font auto
