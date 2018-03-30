@@ -19,7 +19,7 @@ background            #{{ colors.background.1 | upper }}
 selection_foreground  #{{ colors.foreground.4 | upper }}
 selection_background  #{{ colors.background.4 | upper }}
 url_color             #{{ colors.bright.blue | upper }}
-cursor                #{{ colors.primary.1 | upper }}
+cursor                #{{ colors.foreground.1 | upper }}
 
 # black
 color0   #{{ colors.normal.black | upper }}
@@ -57,7 +57,7 @@ color15  #{{ colors.bright.white | upper }}
 cursor_blink_interval     0.4
 cursor_stop_blinking_after 4.0
 # one of (block, beam, underline)
-cursor_shape     beam
+cursor_shape     block
 mouse_hide_wait 3.0
 
 scrollback_lines 10000
