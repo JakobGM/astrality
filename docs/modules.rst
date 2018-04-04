@@ -257,6 +257,20 @@ Each template compilation action has the following available attributes:
         .. warning::
             When you do not provide Astrality with a ``target`` path for a template, Astrality will create a *temporary* file as the target for compilation. This file will be automatically deleted when you quit Astrality.
 
+    ``permissions``: *[Optional]*
+        The file mode (i.e. permission bits) assigned to the *compiled* template.
+        Given either as a string, such as ``'755'``, or as an octal integer, such as ``0o755``.
+
+        .. warning::
+            Take care when specifying permission bits using integers, as they are interpreted literally w.r.t. the indicated base.
+
+            ``permissions: 511`` is equal to running the shell command ``chmod 777 <compiled_template>``, as 511 *base 10* is equal to 777 *base 8*.
+            ``permissions: 0o511`` is most often what you intended instead.
+
+            You should therefore always prepend ``0o`` (this indicates an octal number) to the number you would usually use when using the shell command ``chmod``.
+
+            Alternatively, specify permissions using a string instead, as ``permissions: '511'`` is equal to running the shell command ``chmod 511 <compiled_template>``.
+
 
 Here is an example:
 
@@ -265,8 +279,9 @@ Here is an example:
     module/desktop:
         on_startup:
             compile:
-                - source: modules/desktop/polybar.template
-                  target: ${XDG_CONFIG_HOME}/polybar/config
+                - source: modules/scripts/executable.sh.template
+                  target: {{ env.XDG_CONFIG_HOME }}/bin/executable.sh
+                  permissions: 0o555
                 - source: modules/desktop/conky_module.template
 
             run:

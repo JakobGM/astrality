@@ -32,7 +32,7 @@ ContextSectionImport = namedtuple(
 )
 Template = namedtuple(
     'Template',
-    ['source', 'target'],
+    ['source', 'target', 'permissions'],
 )
 WatchedFile = namedtuple(
     'WatchedFile',
@@ -460,6 +460,7 @@ class ModuleManager:
                     templates[specified_source] = Template(
                         source=absolute_source,
                         target=target,
+                        permissions=compile_action.get('permissions'),
                     )
 
         return templates
@@ -637,10 +638,16 @@ class ModuleManager:
                 self.compile_template(
                     source=template.source,
                     target=template.target,
+                    permissions=template.permissions,
                 )
 
 
-    def compile_template(self, source: Path, target: Path) -> None:
+    def compile_template(
+        self,
+        source: Path,
+        target: Path,
+        permissions: Optional[Union[int, str]],
+    ) -> None:
         """
         Compile a single template given by its shortname.
 
@@ -653,6 +660,7 @@ class ModuleManager:
                 target=target,
                 context=self.application_context,
                 shell_command_working_directory=self.config_directory,
+                permissions=permissions,
             )
         except TemplateNotFound:
             logger.error(
@@ -754,6 +762,7 @@ class ModuleManager:
             self.compile_template(
                 source=template.source,
                 target=template.target,
+                permissions=template.permissions,
             )
 
 
@@ -840,6 +849,7 @@ class ModuleManager:
                 self.compile_template(
                     source=template.source,
                     target=template.target,
+                    permissions=template.permissions,
                 )
 
     def run_shell(
