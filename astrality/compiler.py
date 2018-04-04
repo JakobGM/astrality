@@ -13,6 +13,7 @@ from jinja2 import (
     make_logging_undefined,
 )
 
+from astrality.exceptions import MisconfiguredConfigurationFile
 from astrality.utils import generate_expanded_env_dict
 from astrality.resolver import Resolver
 from astrality.utils import run_shell
@@ -128,8 +129,17 @@ def compile_template(
     target: Path,
     context: Context,
     shell_command_working_directory: Path,
+    permissions: Optional[Union[int, str]] = None,
 ) -> None:
-    """Compile template to target destination with specific context."""
+    """
+    Compile template to target destination with specific context.
+
+    If `permissions` is provided, the target file will have its file mode set
+    accordingly. Take care that it is given in base-8. With other words:
+    permissions=8 -> chmod 010
+    permissons=511 -> chmod 777
+    permissions='010' -> chmod 010
+    """
     logger.info(f'[Compiling] Template: "{template}" -> Target: "{target}"')
 
     result = compile_template_to_string(
@@ -143,3 +153,17 @@ def compile_template(
 
     with open(target, 'w') as target_file:
         target_file.write(result)
+
+    if permissions:
+        mode: int
+        if isinstance(permissions, int):
+            mode = permissions
+        elif isinstance(permissions, str):
+            mode = int(permissions, base=8)
+        else:
+            raise MisconfiguredConfigurationFile(
+                f'Tried to write template "{template}" to path "{target}" '
+                f'with unsupported permission type "{permissions}".'
+            )
+
+        target.chmod(mode)
