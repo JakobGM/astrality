@@ -167,3 +167,7 @@ def compile_template(
             )
 
         target.chmod(mode)
+    else:
+        # Copy template's file permissions to compiled target file
+        default_permissions = template.stat().st_mode & 0o777
+        target.chmod(default_permissions)
