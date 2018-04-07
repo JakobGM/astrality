@@ -3,7 +3,7 @@ How to contribute
 =================
 
 First, thanks for considering contributing to Astrality, that means a lot!
-Here we describe how you can help out, either by improving the documentation, submitting issues, or commit pull requests.
+Here we describe how you can help out, either by improving the documentation, submitting issues, or creating pull requests.
 
 If you end up contributing, please consider adding yourself to the file ``CONTRIBUTORS.rst``.
 
@@ -12,7 +12,8 @@ If you end up contributing, please consider adding yourself to the file ``CONTRI
 Bug reports and feature requests
 ================================
 
-Bug reports and feature requests can be submitted in the form of a `GitHub issue <https://github.com/JakobGM/astrality/issues/new>`_.
+You can browse any existing bug reports and feature requests on Astrality's `issues page <https://github.com/JakobGM/astrality/issues>`_ on GitHub.
+New issues issues can be submitted `here <https://github.com/JakobGM/astrality/issues/new>`_.
 
 
 .. _contributing_documentation:
@@ -73,12 +74,18 @@ Installing dependencies into a virtual environment
 
 You should create a separate python3.6 "virtual environment" exclusively for Astrality.
 If this is new to you, take a look at the `official tutorial <https://docs.python.org/3/tutorial/venv.html>`_ for ``venv``.
+
 A quick summation:
 
 .. code-block:: console
 
     python3.6 -m venv astrality-env
     source astrality-env/bin/activate
+
+Your terminal prompt should now show the name of the activated virtual environment, for example ``(astrality-env) $ your_commands_here``.
+You can double check your environment by running ``echo $VIRTUAL_ENV``.
+Later you can deactivate it by running ``deactivate`` or restarting your terminal.
+The activated virtual environment is necessary in order to run the developer version of Astrality, including the test suite.
 
 Now you can install all the developer dependencies of Astrality by running:
 
