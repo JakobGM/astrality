@@ -2,6 +2,7 @@
 
 import logging
 import os
+import stat
 from functools import partial
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
@@ -154,6 +155,10 @@ def compile_template(
     with open(target, 'w') as target_file:
         target_file.write(result)
 
+    # Copy template's file permissions to compiled target file
+    template_permissions = stat.S_IMODE(template.stat().st_mode)
+    target.chmod(template_permissions)
+
     if permissions:
         mode: int
         if isinstance(permissions, int):
@@ -167,7 +172,3 @@ def compile_template(
             )
 
         target.chmod(mode)
-    else:
-        # Copy template's file permissions to compiled target file
-        default_permissions = template.stat().st_mode & 0o777
-        target.chmod(default_permissions)

@@ -171,7 +171,7 @@ def test_writing_template_file_with_default_permissions(tmpdir):
         template=template,
         target=target,
         context={},
-        shell_command_working_directory=tmpdir
+        shell_command_working_directory=tmpdir,
     )
     assert (target.stat().st_mode & 0o777) == permission
 
