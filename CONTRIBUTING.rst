@@ -233,6 +233,25 @@ It is often useful to run ``pytest-watch`` in verbose mode, stop on first test f
     ptw -- -vv -x astrality/tests/test_compiler.py
 
 
+Debugging
+~~~~~~~~~
+
+If you end up breaking any behaviour during development, it *should* often be reported by the test suite. Breaking tests will often lead you in the correct direction for fixing the problem.
+
+Some tests might be a bit too brittle, so if you change any underlying data structures it might break some badly written test(s). Sometimes the correct thing to do is to simply delete the failing test. Just ask if you are unsure.
+
+You can also look at the logging output of Astrality in order to pinpoint possible reasons for any weird behaviour. You can set the `logging level <https://docs.python.org/3/library/logging.html#logging-levels>`_ of astrality by setting the environment variable ``ASTRALITY_LOGGING_LEVEL`` to an appropriate value, for example:
+
+.. code-block:: console
+
+    # Set the appropiate logging level
+    export ASTRALITY_LOGGING_LEVEL=DEBUG
+
+    # Run the CLI entrypoint
+    ./bin/astrality
+
+If you submit a bug report, we appreciate if you include the standard output of Astrality run with ``ASTRALITY_LOGGING_LEVEL=DEBUG``.
+
 Code style
 ~~~~~~~~~~
 
