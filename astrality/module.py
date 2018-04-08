@@ -112,18 +112,21 @@ class Module:
             }
             self.module_config[event_block].update(configured_event_block)
 
-        if not 'on_modified' in self.module_config:
+        if 'on_modified' not in self.module_config:
             self.module_config['on_modified'] = {}
         else:
             for template_name in self.module_config['on_modified'].keys():
-                configured_event_block = self.module_config['on_modified'][template_name]
+                configured_event_block = \
+                    self.module_config['on_modified'][template_name]
                 self.module_config['on_modified'][template_name] = {
                     'import_context': [],
                     'compile': [],
                     'run': [],
                     'trigger': [],
                 }
-                self.module_config['on_modified'][template_name].update(configured_event_block)
+                self.module_config['on_modified'][template_name].update(
+                    configured_event_block,
+                )
 
         # Convert any single actions into a list of that action, allowing
         # users to not use lists in their configuration if they only have one
@@ -163,7 +166,10 @@ class Module:
         """Merge one event block with another one."""
         if 'on_modified:' in from_event_block:
             template = from_event_block[12:]
-            from_event_block_dict = self.module_config['on_modified'].get(template, {})
+            from_event_block_dict = self.module_config['on_modified'].get(
+                template,
+                {},
+            )
         else:
             from_event_block_dict = self.module_config[from_event_block]
 
@@ -177,17 +183,17 @@ class Module:
         modified_file: Optional[str] = None,
     ) -> Tuple[str, ...]:
         """
-        Return all shell commands to be run for a specific block, i.e.
-        any of on_startup, on_event, on_exit, or on_modified.
+        Return shell commands to be run in action block.
 
+        Valid action blocks are: on_startup, on_event, on_exit, or on_modified.
         A modified file action block is given by block='on_modified:file/path'.
         """
-
         startup_commands: List[str]
 
         if modified_file:
             assert block == 'on_modified'
-            startup_commands = self.module_config['on_modified'][modified_file]['run']
+            startup_commands = \
+                self.module_config['on_modified'][modified_file]['run']
         else:
             assert block in ('on_startup', 'on_event', 'on_exit',)
             startup_commands = self.module_config[block]['run']
@@ -236,7 +242,8 @@ class Module:
         import_config: List[Dict[str, str]]
         if modified:
             assert trigger == 'on_modified'
-            import_config = self.module_config[trigger][modified]['import_context']
+            import_config = \
+                self.module_config[trigger][modified]['import_context']
         else:
             assert trigger in ('on_startup', 'on_event', 'on_exit',)
             import_config = self.module_config[trigger]['import_context']
@@ -250,7 +257,9 @@ class Module:
             to_section: Optional[str]
 
             if 'from_section' in context_import:
-                from_section = self.interpolate_string(context_import['from_section'])
+                from_section = self.interpolate_string(
+                    context_import['from_section'],
+                )
 
                 # If no `to_section` is specified, use the same section as
                 # `from_section`
@@ -277,7 +286,6 @@ class Module:
 
         return tuple(context_section_imports)
 
-
     def interpolate_string(self, string: str) -> str:
         """
         Replace all module placeholders in string.
@@ -293,7 +301,6 @@ class Module:
         requires_working_directory: Path,
     ) -> bool:
         """Check if the given dict represents a valid enabled module."""
-
         if not len(section) == 1:
             raise RuntimeError(
                 'Tried to check module section with dict '
@@ -302,7 +309,8 @@ class Module:
 
         try:
             module_name = next(iter(section.keys()))
-            valid_module_name = module_name.split('/')[0].lower() == 'module'  # type: ignore
+            valid_module_name = \
+                module_name.split('/')[0].lower() == 'module'  # type: ignore
             enabled = section[module_name].get('enabled', True)
             if not (valid_module_name and enabled):
                 return False
@@ -321,7 +329,9 @@ class Module:
             for requirement in requires:
                 if run_shell(command=requirement, fallback=False) is False:
                     logger.warning(
-                        f'[{module_name}] Module does not satisfy requirement "{requirement}".',
+                        f'[{module_name}] '
+                        'Module does not satisfy requirement '
+                        f'"{requirement}".',
                     )
                     return False
 
@@ -330,12 +340,12 @@ class Module:
             )
             return True
 
+
 class ModuleManager:
     """A manager for operating on a set of modules."""
 
     def __init__(self, config: ApplicationConfig) -> None:
         """Initialize a ModuleManager object from `astrality.yml` dict."""
-
         self.config_directory = Path(config['_runtime']['config_directory'])
         self.temp_directory = Path(config['_runtime']['temp_directory'])
         self.application_config = config
@@ -349,7 +359,8 @@ class ModuleManager:
             config=config.get('config/modules', {}),
             config_directory=self.config_directory,
         )
-        self.recompile_modified_templates = self.global_modules_config.recompile_modified_templates
+        self.recompile_modified_templates = \
+            self.global_modules_config.recompile_modified_templates
 
         self.modules: Dict[str, Module] = {}
 
@@ -357,7 +368,8 @@ class ModuleManager:
         application_context = context(config)
 
         # Insert externally managed modules
-        for external_module_source in self.global_modules_config.external_module_sources:
+        for external_module_source \
+                in self.global_modules_config.external_module_sources:
             module_directory = external_module_source.directory
 
             module_configs = external_module_source.config(
@@ -372,7 +384,7 @@ class ModuleManager:
 
                 if not Module.valid_class_section(
                     section=module_config,
-                    requires_timeout=self.global_modules_config.requires_timeout,
+                    requires_timeout=self.global_modules_config.requires_timeout,  # noqa
                     requires_working_directory=module_directory,
                 ) or section not in self.global_modules_config.enabled_modules:
                     continue
@@ -406,8 +418,12 @@ class ModuleManager:
             self.modules[module.name] = module
 
         self.templates = self.prepare_templates(self.modules.values())
-        self.string_replacements = self.generate_string_replacements(self.templates)
-        self.on_modified_paths = self.find_on_modified_paths(self.modules.values())
+        self.string_replacements = self.generate_string_replacements(
+            self.templates,
+        )
+        self.on_modified_paths = self.find_on_modified_paths(
+            self.modules.values(),
+        )
 
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
@@ -465,7 +481,6 @@ class ModuleManager:
 
         return templates
 
-
     def find_on_modified_paths(
         self,
         modules: Iterable[Module],
@@ -479,7 +494,8 @@ class ModuleManager:
         on_modified_paths: Dict[Path, WatchedFile] = {}
 
         for module in modules:
-            for watched_for_modification in module.module_config['on_modified'].keys():
+            for watched_for_modification \
+                    in module.module_config['on_modified'].keys():
                 on_modified_path = expand_path(
                     path=Path(watched_for_modification),
                     config_directory=module.directory,
@@ -497,11 +513,10 @@ class ModuleManager:
         templates: Dict[str, Template],
     ) -> Dict[str, str]:
         """
-        Returns a dictionary containing all string replacements keyed to their
-        placeholders.
+        Return a dictionary containing all string replacements.
 
-        Includes template path placeholders replaced with the compilation
-        target path.
+        Each string replaced is keyed to their placeholders. Includes template
+        path placeholders replaced with the compilation target path.
         """
         string_replacements: Dict[str, str] = {}
 
@@ -630,8 +645,7 @@ class ModuleManager:
         else:
             modules = self.modules.values()
 
-
-        for module in self.modules.values():
+        for module in modules:
             for compilation in module.module_config[trigger]['compile']:
                 specified_path = compilation['template']
                 template = self.templates[specified_path]
@@ -640,7 +654,6 @@ class ModuleManager:
                     target=template.target,
                     permissions=template.permissions,
                 )
-
 
     def compile_template(
         self,
@@ -734,9 +747,7 @@ class ModuleManager:
         self.directory_watcher.stop()
 
     def on_modified(self, modified: Path) -> None:
-        """
-        Perform actions when a watched file is modified.
-        """
+        """Perform actions when a watched file is modified."""
         watched_file = self.on_modified_paths[modified]
         module = watched_file.module
         specified_path = watched_file.specified_path
@@ -757,14 +768,14 @@ class ModuleManager:
             )
 
         # Now compile templates specified in on_modified block
-        for compilation in module.module_config['on_modified'][specified_path]['compile']:
+        comps = module.module_config['on_modified'][specified_path]['compile']
+        for compilation in comps:
             template = self.templates[compilation['template']]
             self.compile_template(
                 source=template.source,
                 target=template.target,
                 permissions=template.permissions,
             )
-
 
         # Lastly, run commands specified in on_modified block
         modified_commands = module.modified_commands(specified_path)
@@ -777,10 +788,9 @@ class ModuleManager:
                 module_name=module.name,
             )
 
-
     def file_system_modified(self, modified: Path) -> None:
         """
-        Callback for when files within the config directory are modified.
+        Perform actions for when files within the config directory are modified.
 
         Run any context imports, compilations, and shell commands specified
         within the on_modified event block of each module.
@@ -788,7 +798,10 @@ class ModuleManager:
         Also, if hot_reload is True, we reinstantiate the ModuleManager object
         if the application configuration has been modified.
         """
-        if modified == self.application_config['_runtime']['config_directory'] / 'astrality.yml':
+        config_file = \
+            self.application_config['_runtime']['config_directory'] \
+            / 'astrality.yml'
+        if modified == config_file:
             self.on_application_config_modified()
         elif modified in self.on_modified_paths:
             # The modified file is specified in one of the modules
@@ -797,7 +810,6 @@ class ModuleManager:
             # Check if the modified path is a template which is supposed to
             # be recompiled.
             self.recompile_modified_template(modified=modified)
-
 
     def on_application_config_modified(self):
         """
@@ -827,12 +839,11 @@ class ModuleManager:
 
             # Run startup commands from the new configuration
             self.finish_tasks()
-        except:
+        except Exception:
             # New configuration is invalid, just keep the old one
             # TODO: Test this behaviour
             logger.error('New configuration detected, but it is invalid!')
             pass
-
 
     def recompile_modified_template(self, modified: Path):
         """
@@ -860,7 +871,6 @@ class ModuleManager:
         module_name: Optional[str] = None,
     ) -> None:
         """Run a shell command defined by a managed module."""
-
         command = self.interpolate_string(command)
 
         if module_name:
@@ -874,7 +884,6 @@ class ModuleManager:
 
     def interpolate_string(self, string: str) -> str:
         """Replace all template placeholders with the compilation path."""
-
         for specified_path, template in self.templates.items():
             string = string.replace(
                 '{' + specified_path + '}',
@@ -883,8 +892,7 @@ class ModuleManager:
         return string
 
     def create_temp_file(self, name) -> Path:
-        """Create a temp file used as a compilation target, returning its path."""
-
+        """Return path to temp file used as a compilation target."""
         temp_file = NamedTemporaryFile(  # type: ignore
             prefix=name + '-',
             # dir=Path(self.temp_directory),

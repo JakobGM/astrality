@@ -1,4 +1,8 @@
-"""Module for all event_listener classes, keeping track of certain events for modules."""
+"""
+Module for all event_listener classes.
+
+Event listeners keep track of certain events for modules.
+"""
 
 import abc
 from collections import namedtuple
@@ -23,11 +27,11 @@ class EventListener(abc.ABC):
     default_event_listener_config: EventListenerConfig
 
     def __init__(self, event_listener_config: EventListenerConfig) -> None:
-        """Initialize an event listener based on the configuration of the user."""
+        """Istantiate event listener based on the configuration of the user."""
         self.name = self.__class__.__name__.lower()
 
-        # Use default values for event listener configuration options that are not
-        # specified
+        # Use default values for event listener configuration options that are
+        # not specified
         self.event_listener_config = self.default_event_listener_config.copy()
         self.event_listener_config.update(event_listener_config)
 
@@ -35,24 +39,23 @@ class EventListener(abc.ABC):
         """
         Return the current determined event.
 
-        If the event_listener option `force_event` is set, this value will always be
-        returned instead of the correct event.
+        If the event_listener option `force_event` is set, this value will
+        always be returned instead of the correct event.
         """
         if self.event_listener_config.get('force_event', False):
             force_event = self.event_listener_config['force_event']
 
-            if not force_event in self.events:
+            if force_event not in self.events:
                 logger.warning(
                     f'[event_listener/{self.name}] option `force_event` set to '
                     f'{force_event}, which is not a valid event type for '
-                    f'the event_listener type "{self.name}": {self.events}. Still using'
-                    ' the option in case it is intentional.'
+                    f'the event_listener type "{self.name}": {self.events}.'
+                    'Still using the option in case it is intentional.'
                 )
 
             return force_event  # type: ignore
 
         return self._event()
-
 
     @abc.abstractmethod
     def _event(self) -> str:
@@ -71,7 +74,14 @@ class Solar(EventListener):
 
     It changes event after dawn, sunrise, morning, afternoon, sunset, dusk.
     """
-    events: Tuple[str, ...] = ('sunrise', 'morning', 'afternoon', 'sunset', 'night')
+
+    events: Tuple[str, ...] = (
+        'sunrise',
+        'morning',
+        'afternoon',
+        'sunset',
+        'night',
+    )
     default_event_listener_config = {
         'type': 'solar',
         'longitude': 0,
@@ -80,6 +90,7 @@ class Solar(EventListener):
     }
 
     def __init__(self, event_listener_config: EventListenerConfig) -> None:
+        """Initialize solar event listener object."""
         super().__init__(event_listener_config)
         self.location = self.construct_astral_location()
 
@@ -102,6 +113,7 @@ class Solar(EventListener):
         return event
 
     def time_until_next_event(self) -> timedelta:
+        """Return timedelta until next solar event."""
         now = self.now()
         try:
             next_event = min(
@@ -134,8 +146,9 @@ class Solar(EventListener):
     def construct_astral_location(
         self,
     ) -> Location:
-        # Initialize a custom location for astral, as it doesn't necessarily include
-        # your current city of residence
+        """Return astral location object based on config."""
+        # Initialize a custom location for astral, as it doesn't necessarily
+        # include your current city of residence
         location = Location()
 
         # These two doesn't really matter
@@ -152,7 +165,8 @@ class Solar(EventListener):
 
 
 class Daylight(Solar):
-    """Event listener keeping track of daylight at specific location"""
+    """Event listener keeping track of daylight at specific location."""
+
     events = ('day', 'night',)
     default_event_listener_config = {
         'type': 'daylight',
@@ -170,7 +184,7 @@ class Daylight(Solar):
             return 'day'
 
     def time_until_next_event(self) -> timedelta:
-        """Time left until daylight 'switches'"""
+        """Time left until daylight 'switches'."""
         event = self.event()
         now = self.now()
 
@@ -201,7 +215,7 @@ class Weekday(EventListener):
     )
     default_event_listener_config = {'type': 'weekday'}
 
-    weekdays = dict(zip(range(0,7), events))
+    weekdays = dict(zip(range(0, 7), events))
 
     @classmethod
     def _event(cls) -> str:
@@ -219,13 +233,19 @@ class Periodic(EventListener):
     """Constant frequency EventListener subclass."""
 
     class Events(tuple):
+        """Helper class to check for valid event values."""
+
         def __contains__(self, item) -> bool:
+            """Determine if event value is valid."""
             try:
                 if float(item) - int(item) != 0:
+                    # Not an integer
                     return False
                 else:
+                    # Check if item is positive
                     return 0 <= int(item) < inf
             except ValueError:
+                # Not of valid type
                 return False
 
     events = Events()
@@ -239,7 +259,6 @@ class Periodic(EventListener):
 
     def __init__(self, event_listener_config: EventListenerConfig) -> None:
         """Initialize a constant frequency event listener."""
-
         super().__init__(event_listener_config)
 
         # Period specified by the user
@@ -263,10 +282,12 @@ class Periodic(EventListener):
 
     def time_until_next_event(self) -> timedelta:
         """Return the time remaining until the next period in seconds."""
-        return self.timedelta - (datetime.now() - self.initialization_time) % self.timedelta
+        return self.timedelta - \
+            (datetime.now() - self.initialization_time) % self.timedelta
 
 
 WorkDay = namedtuple('WorkDay', ('start', 'end',))
+
 
 class TimeOfDay(EventListener):
     """
@@ -289,6 +310,7 @@ class TimeOfDay(EventListener):
     }
 
     def __init__(self, event_listener_config: EventListenerConfig) -> None:
+        """Initialize time_of_day event listener based on config."""
         super().__init__(event_listener_config)
         self.weekdays = (
             'monday',
@@ -336,7 +358,6 @@ class TimeOfDay(EventListener):
             else:
                 return 'off'
 
-
     def time_until_next_event(self) -> timedelta:
         """Return the time remaining until the next event in seconds."""
         weekday_name = Weekday({'type': 'weekday'}).event()
@@ -377,7 +398,9 @@ class TimeOfDay(EventListener):
 
             if len(next_workday_nums) > 0:
                 days_until_next_workday = next_workday_nums[0] - weekday_num
-                next_workday = self.workdays[self.weekdays[next_workday_nums[0]]]
+                next_workday = self.workdays[
+                    self.weekdays[next_workday_nums[0]]
+                ]
             else:
                 # There are no workdays later in this week, so we need to
                 # get the *first* workday from next week instead.
@@ -399,25 +422,29 @@ class Static(EventListener):
     default_event_listener_config = {'type': 'static'}
 
     def _event(self) -> str:
-        """Static event listener asways returns the event 'static'."""
-
+        """Return the event 'static', as per specification."""
         return 'static'
 
     def time_until_next_event(self) -> timedelta:
-        """Returns a 100 year timedelta as an infinite approximation."""
-
+        """Return a 100 year timedelta as an infinite approximation."""
         return timedelta(days=36500)
 
 
 EVENT_LISTENERS = {
-        'daylight': Daylight,
-        'periodic': Periodic,
-        'solar': Solar,
-        'static': Static,
-        'time_of_day': TimeOfDay,
-        'weekday': Weekday,
+    'daylight': Daylight,
+    'periodic': Periodic,
+    'solar': Solar,
+    'static': Static,
+    'time_of_day': TimeOfDay,
+    'weekday': Weekday,
 }
 
-def event_listener_factory(event_listener_config: Dict[str, Union[str, int]]) -> EventListener:
+
+def event_listener_factory(
+    event_listener_config: Dict[str, Union[str, int]],
+) -> EventListener:
+    """Return Class responsible for specific event listener `type`."""
     event_listener_type = event_listener_config['type']
-    return EVENT_LISTENERS[event_listener_type](event_listener_config)  # type: ignore
+    return EVENT_LISTENERS[event_listener_type](  # type: ignore
+        event_listener_config,
+    )

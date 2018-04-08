@@ -1,11 +1,17 @@
+"""Custom exception definitions."""
+
+
 class AstralityConfigurationError(BaseException):
-    pass
+    """Exception for when astrality configuration is invalid."""
+
 
 class NonExistentEnabledModule(AstralityConfigurationError):
-    pass
+    """Exception for when an enabled module is not found."""
+
 
 class MisconfiguredConfigurationFile(AstralityConfigurationError):
-    pass
+    """Exception for when astrality configuration has semantic errors."""
+
 
 class GithubModuleError(AstralityConfigurationError):
-    pass
+    """Exception for when GitHub module could not be sourced."""
