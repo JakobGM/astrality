@@ -21,7 +21,7 @@ New issues issues can be submitted `here <https://github.com/JakobGM/astrality/i
 Improving the documentation
 ===========================
 
-If find something you would like to improve in `the documentation <https://astrality.readthedocs.io/en/latest/index.html>`_, follow these steps:
+If you find something you would like to improve in `the documentation <https://astrality.readthedocs.io/en/latest/index.html>`_, follow these steps:
 
 * Navigate to the page that you would like to edit on https://astrality.readthedocs.io.
 * Press the "Edit on GitHub" link in the upper right corner.
@@ -87,7 +87,7 @@ You can double check your environment by running ``echo $VIRTUAL_ENV``.
 Later you can deactivate it by running ``deactivate`` or restarting your terminal.
 The activated virtual environment is necessary in order to run the developer version of Astrality, including the test suite.
 
-Now you can install all the developer dependencies of Astrality by running:
+Now you can install all the developer dependencies of Astrality into the virtual environment by running:
 
 .. code-block:: console
 
