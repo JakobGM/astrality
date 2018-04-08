@@ -42,9 +42,9 @@ def main(logging_level: str = 'INFO', test: bool = False):
         1: An empty directory uses neglible disk space.
         2: If this process is interrupted by another Astrality instance,
            we might experience race conditions when the exit handler deletes
-           the temporary directory *after* the new Astrality instance creates it.
+           the temporary directory *after* the new Astrality instance creates
+           it.
         """
-
         logger.critical('Astrality was interrupted')
         logger.info('Cleaning up temporary files before exiting...')
 
@@ -110,6 +110,7 @@ def main(logging_level: str = 'INFO', test: bool = False):
     except KeyboardInterrupt:  # pragma: no cover
         exit_handler()
 
+
 def other_astrality_pids() -> Set[int]:
     """Return the process ids (PIDs) of any other Astrality instances."""
 
@@ -128,7 +129,6 @@ def other_astrality_pids() -> Set[int]:
 
 def kill_old_astrality_processes() -> None:
     """Kill all other instances of this script, to prevent duplicates."""
-
     pids = other_astrality_pids()
     failed_exits = 0
     for pid in pids:
@@ -136,7 +136,9 @@ def kill_old_astrality_processes() -> None:
             logger.info(f'Killing duplicate Astrality process with pid {pid}.')
             os.kill(pid, signal.SIGTERM)
         except OSError:
-            logger.error(f'Could not kill old instance of astrality with pid {pid}.')
+            logger.error(
+                f'Could not kill old instance of astrality with pid {pid}.'
+            )
             logger.error('Continuing anyway...')
             failed_exits += 1
 
