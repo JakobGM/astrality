@@ -22,7 +22,6 @@ def run_shell(
     If the shell command has a non-zero exit code or times out, the function
     returns the `fallback` argument instead of the standard output.
     """
-
     process = subprocess.Popen(
         command,
         cwd=working_directory,
@@ -64,7 +63,6 @@ def run_shell(
 
 def generate_expanded_env_dict() -> Dict[str, str]:
     """Return os.environ dict with all env variables expanded."""
-
     env_dict = {}
     for name, value in os.environ.items():
         try:
@@ -81,5 +79,3 @@ def generate_expanded_env_dict() -> Dict[str, str]:
                 raise
 
     return env_dict
-
-
