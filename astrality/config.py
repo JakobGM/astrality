@@ -764,7 +764,7 @@ def filter_config_file(
         )
     except FileNotFoundError:
         logger.warning(
-            f'Non-existent module configuration file "{config_file}"'
+            f'Non-existent module configuration file "{config_file}" '
             'Skipping enabled module '
             f'"{prepend}{enabled_module_name}"'
         )
