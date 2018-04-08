@@ -4,7 +4,7 @@ import copy
 import logging
 import os
 import re
-from abc import ABC, abstractclassmethod, abstractmethod
+from abc import ABC, abstractmethod
 from distutils.dir_util import copy_tree
 from io import StringIO
 from pathlib import Path
@@ -12,8 +12,6 @@ from typing import (
     Any,
     Dict,
     List,
-    Match,
-    MutableMapping,
     Optional,
     Pattern,
     Tuple,
@@ -21,7 +19,6 @@ from typing import (
     Iterable,
     Union,
 )
-import re
 
 from mypy_extensions import TypedDict
 
@@ -32,18 +29,17 @@ from astrality.exceptions import (
 )
 from astrality.github import clone_repo, clone_or_pull_repo
 from astrality.resolver import Resolver
-from astrality.utils import generate_expanded_env_dict, run_shell
 
 Context = Dict[str, Resolver]
 
 logger = logging.getLogger('astrality')
 
-from yaml import load, dump
+from yaml import load  # noqa
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore
+    from yaml import CLoader as Loader  # type: ignore
     logger.info('Using LibYAML bindings for faster .yml parsing.')
 except ImportError:  # pragma: no cover
-    from yaml import Loader, Dumper
+    from yaml import Loader
     logger.warning(
         'LibYAML not installed.'
         'Using somewhat slower pure python implementation.',
@@ -133,7 +129,7 @@ def dict_from_config_file(
         context=context,
         shell_command_working_directory=config_file.parent,
     )
-    conf_dict = load(StringIO(config_string))
+    conf_dict = load(StringIO(config_string), Loader=Loader)
 
     return conf_dict
 
@@ -144,7 +140,6 @@ def infer_runtime_variables_from_config(
     config: ApplicationConfig,
 ) -> Dict[str, Dict[str, Path]]:
     """Return infered runtime variables based on config file."""
-
     temp_directory = Path(os.environ.get('TMPDIR', '/tmp')) / 'astrality'
     if not temp_directory.is_dir():
         os.mkdir(temp_directory)
@@ -158,7 +153,9 @@ def infer_runtime_variables_from_config(
     }
 
 
-def user_configuration(config_directory: Optional[Path] = None) -> ApplicationConfig:
+def user_configuration(
+    config_directory: Optional[Path] = None,
+) -> ApplicationConfig:
     """
     Return Resolver object containing the users configuration.
 
@@ -186,7 +183,8 @@ def user_configuration(config_directory: Optional[Path] = None) -> ApplicationCo
 
     # Insert default global settings that are not specified
     user_settings = config.get('config/astrality', {})
-    config['config/astrality'] = ASTRALITY_DEFAULT_GLOBAL_SETTINGS['config/astrality'].copy()
+    config['config/astrality'] = \
+        ASTRALITY_DEFAULT_GLOBAL_SETTINGS['config/astrality'].copy()
     config['config/astrality'].update(user_settings)
 
     return config
@@ -240,7 +238,9 @@ def create_config_directory(path: Optional[Path]=None, empty=False) -> Path:
             logger.warning(f'Creating empty directory at "{str(path)}".')
             path.mkdir(parents=True)
         else:
-            logger.warning(f'Copying over example config directory to "{str(path)}".')
+            logger.warning(
+                f'Copying over example config directory to "{str(path)}".',
+            )
             example_config_dir = Path(__file__).parent / 'config'
             copy_tree(
                 src=str(example_config_dir),
@@ -251,6 +251,7 @@ def create_config_directory(path: Optional[Path]=None, empty=False) -> Path:
 
     return path
 
+
 def expand_path(path: Path, config_directory: Path) -> Path:
     """
     Return an absolute path from a (possibly) relative path.
@@ -258,7 +259,6 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
     expanded to the home directory of $USER.
     """
-
     path = Path.expanduser(path)
 
     if not path.is_absolute():
@@ -271,11 +271,14 @@ def expand_path(path: Path, config_directory: Path) -> Path:
 
 
 class EnablingStatementRequired(TypedDict):
+    """The required fields of a config item which enables a specific module."""
+
     name: str
 
 
 class EnablingStatement(EnablingStatementRequired, total=False):
     """Dictionary defining an externally defined module."""
+
     trusted: bool
     autoupdate: bool
 
@@ -284,6 +287,8 @@ ModuleConfig = Dict[str, Any]
 
 
 class ModuleSource(ABC):
+    """Superclass for the source of an enabled module."""
+
     directory: Path
     config_file: Path
     _config: Dict[Any, Any]
@@ -300,7 +305,7 @@ class ModuleSource(ABC):
     @property
     @abstractmethod
     def name_syntax(self) -> Pattern:
-        """Regular expression defining how to name this type of module source."""
+        """Regular expression for the name syntax of the module source type."""
         raise NotImplementedError
 
     @abstractmethod
@@ -315,9 +320,7 @@ class ModuleSource(ABC):
 
     @classmethod
     def type(cls, of: str) -> 'ModuleSource':
-        """
-        Return the source subclass which is responsible for the module name.
-        """
+        """Return the subclass which is responsible for the module name."""
         for source_type in cls.__subclasses__():
             if source_type.represented_by(module_name=of):
                 return source_type
@@ -328,12 +331,13 @@ class ModuleSource(ABC):
 
     @abstractmethod
     def __contains__(self, module_name: str) -> bool:
-        """Return True module source contains module with name `module_name`."""
+        """Return True module source contains module `module_name`."""
         raise NotImplementedError
 
 
 class GlobalModuleSource(ModuleSource):
     """Module defined in `astrality.yml`."""
+
     name_syntax = re.compile(r'^(\w+|\*)$')
 
     def __init__(
@@ -360,11 +364,13 @@ class GlobalModuleSource(ModuleSource):
             return module_name == self.enabled_module
 
     def __repr__(self) -> str:
+        """Return the string representation of the global module source."""
         return f"GlobalModuleSource('{self.enabled_module}')"
 
 
 class GithubModuleSource(ModuleSource):
     """Module defined in a GitHub repository."""
+
     name_syntax = re.compile(r'^github::.+/.+(::(\w+|\*))?$')
     _config: ApplicationConfig
 
@@ -374,7 +380,7 @@ class GithubModuleSource(ModuleSource):
         modules_directory: Path,
     ) -> None:
         """
-        Initialize enabled module defined in Github repository
+        Initialize enabled module defined in Github repository.
 
         A GitHub module is enabled with the name syntax:
         github::<github_user>/<github_repo>[::<enabled_module>]
@@ -400,11 +406,16 @@ class GithubModuleSource(ModuleSource):
 
         assert modules_directory.is_absolute()
         self.modules_directory = modules_directory
-        self.directory = modules_directory / self.github_user / self.github_repo
+        self.directory = modules_directory \
+            / self.github_user / self.github_repo
         self.config_file = self.directory / 'config.yml'
 
     def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
-        """Return the contents of config.yml, filtering out disabled modules."""
+        """
+        Return the contents of config.yml.
+
+        All disabled modules are removed from the configuration dictionary.
+        """
         if hasattr(self, '_config'):
             return self._config
 
@@ -438,17 +449,19 @@ class GithubModuleSource(ModuleSource):
 
     def __eq__(self, other) -> bool:
         """
+        Return True if being compared to identical github module.
+
         Return True if two GithubModuleSource objects represent the same
         directory with identical modules enabled.
         """
         try:
-            return self.directory == other.directory and self._config == other._config
+            return self.directory == other.directory \
+                and self._config == other._config
         except AttributeError:
             return False
 
-
-
     def __repr__(self) -> str:
+        """Return string representation of the github module source."""
         return f"GithubModuleSource('{self.github_user}/{self.github_repo}')" \
             f' = {tuple(self._config.keys())}'
 
@@ -467,13 +480,12 @@ class DirectoryModuleSource(ModuleSource):
         enabling_statement: EnablingStatement,
         modules_directory: Path,
     ) -> None:
-        """
-        Initialize an ExternalModule object.
-        """
+        """Initialize an ExternalModule object."""
         assert self.represented_by(
             module_name=enabling_statement['name'],
         )
-        relative_directory_path, self.enabled_module_name = enabling_statement['name'].split('::')
+        relative_directory_path, self.enabled_module_name = \
+            enabling_statement['name'].split('::')
         self.relative_directory_path = Path(relative_directory_path)
 
         assert modules_directory.is_absolute()
@@ -496,11 +508,15 @@ class DirectoryModuleSource(ModuleSource):
 
     def __repr__(self):
         """Human-readable representation of a DirectoryModuleSource object."""
-        return f'DirectoryModuleSource(name={self.relative_directory_path}::{self.enabled_module_name}, directory={self.directory}, trusted={self.trusted})'
+        return f'DirectoryModuleSource(' \
+            'name={self.relative_directory_path}::'\
+            '{self.enabled_module_name}, '\
+            'directory={self.directory}, ' \
+            'trusted={self.trusted})'
 
     def __eq__(self, other) -> bool:
         """
-        Return true if two DirectoryModuleSource objects represents the same Module.
+        Return true if compared to identical module defined in a directory.
 
         Entirily determined by the source directory of the module.
         """
@@ -564,9 +580,7 @@ class EnabledModules:
         enabling_statements: List[EnablingStatement],
         modules_directory: Path,
     ):
-        """
-        Return enabling statements where wildcards have been replaced.
-        """
+        """Return enabling statements where wildcards have been replaced."""
         self.all_global_modules_enabled = False
         self.all_directory_modules_enabled = False
 
@@ -579,7 +593,9 @@ class EnabledModules:
             elif enabling_statement['name'] == '*::*':
                 self.all_directory_modules_enabled = True
 
-                for module_directory in self.module_directories(within=modules_directory):
+                for module_directory in self.module_directories(
+                    within=modules_directory,
+                ):
                     directory_module = module_directory + '::*'
                     new_enabling_statement = copy.deepcopy(enabling_statement)
                     new_enabling_statement['name'] = directory_module
@@ -592,6 +608,7 @@ class EnabledModules:
 
     @staticmethod
     def module_directories(within: Path) -> Tuple[str, ...]:
+        """Return all subdirectories which contain module definitions."""
         try:
             return tuple(
                 path.name
@@ -617,7 +634,6 @@ class EnabledModules:
         ):
             source.config(context=context)
 
-
     def __contains__(self, module_name: str) -> bool:
         """Return True if the given module name is supposed to be enabled."""
         if module_name[:7].lower() == 'module/':
@@ -631,6 +647,7 @@ class EnabledModules:
         return False
 
     def __repr__(self) -> str:
+        """Return string representation of all enabled modules."""
         return ', '.join(
             source.__repr__()
             for source
@@ -640,6 +657,7 @@ class EnabledModules:
 
 class GlobalModulesConfigDict(TypedDict, total=False):
     """Dictionary defining configuration options for Modules."""
+
     requires_timeout: Union[int, float]
     run_timeout: Union[int, float]
     recompile_modified_templates: bool
@@ -662,7 +680,6 @@ class GlobalModulesConfig:
         config_directory: Path,
     ) -> None:
         """Initialize a GlobalModulesConfig object from a dictionary."""
-
         self.recompile_modified_templates = config.get(
             'recompile_modified_templates',
             False,
@@ -716,7 +733,7 @@ class GlobalModulesConfig:
 
     @property
     def external_module_config_files(self) -> Iterable[Path]:
-        """Return an iterator yielding all absolute paths to module config files."""
+        """Yield all absolute paths to module config files."""
         for external_module_source in self.external_module_sources:
             yield external_module_source.config_file
 
