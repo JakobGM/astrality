@@ -45,3 +45,6 @@ sphinx_rtd_theme
 
 # For watching filesystem changes
 watchdog
+
+# For linting python files
+flake8
