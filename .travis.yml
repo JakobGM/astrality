@@ -8,6 +8,8 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install coveralls
+before_script:
+  - flake8 .
 script:
   - coverage run --rcfile=.coveragerc --source='.' -m py.test -vv --runslow
   - coverage report -m
