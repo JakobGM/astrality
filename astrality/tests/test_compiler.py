@@ -159,6 +159,21 @@ def test_handling_of_undefined_context(tmpdir, caplog):
 
     assert "'this' is undefined" in caplog.record_tuples[0][2]
 
+def test_writing_template_file_with_default_permissions(tmpdir):
+    tmpdir = Path(tmpdir)
+    template = tmpdir / 'template'
+    template.write_text('content')
+    permission = 0o751
+    template.chmod(permission)
+    target = tmpdir / 'target'
+
+    compile_template(
+        template=template,
+        target=target,
+        context={},
+        shell_command_working_directory=tmpdir,
+    )
+    assert (target.stat().st_mode & 0o777) == permission
 
 def test_writing_template_file_with_specific_permissions(tmpdir):
     tmpdir = Path(tmpdir)
