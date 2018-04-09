@@ -1,10 +1,12 @@
+"""Module for abstractions around git clone and pull."""
+
 import logging
-import os
 from pathlib import Path
 from typing import Union
 
 from astrality.exceptions import GithubModuleError
 from astrality.utils import run_shell
+
 
 def clone_repo(
     user: str,
@@ -18,11 +20,11 @@ def clone_repo(
     The resulting repository is placed in:
     <modules_directory>/<user>/<repository>.
     """
-
     github_user_directory = modules_directory / user
     github_user_directory.mkdir(parents=True, exist_ok=True)
     repository_directory = github_user_directory / repository
-    github_url = f'https://github.com/{user}/{repository}.git {repository_directory}'
+    github_url = \
+        f'https://github.com/{user}/{repository}.git {repository_directory}'
 
     # Fail on git credential prompt: https://serverfault.com/a/665959
     result = run_shell(
@@ -53,6 +55,7 @@ def clone_or_pull_repo(
     modules_directory: Path,
     timeout: Union[int, float] = 50,
 ) -> Path:
+    """Fetch newest version of GitHub repository."""
     github_repo_directory = modules_directory / user / repository
 
     if not github_repo_directory.is_dir():

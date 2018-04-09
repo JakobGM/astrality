@@ -21,6 +21,7 @@ Table of Contents
     examples
     tips_and_tricks
     attributions
+    contributing
     license
 
     External: Astrality source code <https://github.com/JakobGM/astrality>

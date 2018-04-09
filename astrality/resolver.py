@@ -1,3 +1,5 @@
+"""Module defining Resolver class for templating context handling."""
+
 from math import inf
 from numbers import Number
 from typing import (
@@ -8,7 +10,6 @@ from typing import (
     KeysView,
     ValuesView,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -33,6 +34,7 @@ class Resolver:
     replacements['colors'][3]
     >>> 'BACBEB'
     """
+
     _dict: Union['Resolver', Dict[Key, Value]]
 
     def __init__(
@@ -104,7 +106,6 @@ class Resolver:
             else:
                 raise KeyError(f'Integer index "{key}" is non-existent and had '
                                'no lower index to be substituted for')
-
 
     def get(self, key: Key, defualt=None) -> Value:
         """Get value from index with fallback value `default`."""

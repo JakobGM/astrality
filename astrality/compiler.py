@@ -19,7 +19,6 @@ from astrality.utils import generate_expanded_env_dict
 from astrality.resolver import Resolver
 from astrality.utils import run_shell
 
-
 Context = Dict[str, Resolver]
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
