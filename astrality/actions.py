@@ -8,7 +8,7 @@ object method `execute()`.
 
 import abc
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Union
 
 from mypy_extensions import TypedDict
 
@@ -26,12 +26,11 @@ class Action(abc.ABC):
                     action type.
     :param directory: The directory used as anchor for relative paths. This
                       must be an absolute path.
-    :param replacer: Placeholder substitution of string user options.
+    :param replacer: Placeholder substitutor of string user options.
     """
 
     directory: Path
     priority: int
-    replace: Replacer
 
     def __init__(
         self,
@@ -42,24 +41,63 @@ class Action(abc.ABC):
     ) -> None:
         """Contstruct action object."""
         assert directory.is_absolute()
-        self.options = options
         self.directory = directory
-        self.replace = replacer  # type: ignore
+        self._options = options
+        self._replace = replacer
 
-    @abc.abstractmethod
-    def execute(self) -> None:
-        """Exucute defined action."""
-
-    def absolute_path(self, of: str) -> Path:
+    def replace(self, string: str) -> str:
         """
-        Return absolute path of relative string path.
+        Return converted string, substitution defined by `replacer`.
 
-        Expands relative paths relative to self.directory.
+        This is used to replace placeholders such as {event}.
+        This redirection is necessary due to python/mypy/issues/2427
+
+        :param string: String configuration option.
+        :return: String with placeholders substituted.
+        """
+        return self._replace(string)
+
+    def option(self, key: str, path: bool = False) -> Any:
+        """
+        Return user specified action option.
+
+        All option value access should go through this helper function, as
+        it replaces relevant placeholders users might have specified.
+
+        :param key: The key of the user option that should be retrieved.
+        :param path: If True, convert string path to Path.is_absolute().
+        :return: Processed action configuration value.
+        """
+        option_value = self._options.get(key)
+
+        if path:
+            # The option value represents a path, that should be converted
+            # to an absolute pathlib.Path object
+            assert isinstance(option_value, str)
+            substituted_string_path = self.replace(option_value)
+            return self._absolute_path(of=substituted_string_path)
+        elif isinstance(option_value, str):
+            # The option is a string, and any placeholders should be
+            # substituted before it is returned.
+            return self.replace(option_value)
+        else:
+            return option_value
+
+    def _absolute_path(self, of: str) -> Path:
+        """
+        Return absolute path from relative string path.
+
+        :param of: Relative path.
+        :return: Absolute path anchored to `self.directory`.
         """
         return expand_path(
             path=Path(of),
             config_directory=self.directory,
         )
+
+    @abc.abstractmethod
+    def execute(self) -> None:
+        """Exucute defined action."""
 
 
 class RequiredImportContextDict(TypedDict):
@@ -85,9 +123,6 @@ class ImportContextAction(Action):
     """
 
     priority = 100
-    from_path: Path
-    from_section: Optional[str]
-    to_section: Optional[str]
     context_store: Context
 
     def __init__(
@@ -103,18 +138,15 @@ class ImportContextAction(Action):
         Expands any relative paths relative to `self.directory`.
         """
         super().__init__(options, directory, replacer)
-        self.from_path = self.absolute_path(of=self.options['from_path'])
-        self.from_section = self.options.get('from_section')
-        self.to_section = self.options.get('to_section')
         self.context_store = context_store
 
     def execute(self) -> None:
         """Import context section(s) according to user configuration block."""
-        insert_into(
+        insert_into(  # type: ignore
             context=self.context_store,
-            from_config_file=self.from_path,
-            section=self.to_section,
-            from_section=self.from_section,
+            from_config_file=self.option(key='from_path', path=True),
+            section=self.option(key='to_section'),
+            from_section=self.option(key='from_section'),
         )
 
 
