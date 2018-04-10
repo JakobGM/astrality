@@ -46,3 +46,27 @@ def test_importing_entire_file(context_directory):
         }
     }
     assert context_store == expected_context
+
+def test_importing_specific_section(context_directory):
+    """Test importing specific sections from context file."""
+    context_import_dict = {
+        'from_path': 'several_sections.yml',
+        'from_section': 'section1',
+    }
+    context_store = {'original': 'value'}
+    import_context_action = ImportContextAction(
+        options=context_import_dict,
+        directory=context_directory,
+        replacer=lambda x: x,
+        context_store=context_store,
+    )
+    import_context_action.execute()
+
+    expected_context = {
+        'original': 'value',
+        'section1': {
+            'k1_1': 'v1_1',
+            'k1_2': 'v1_2',
+        },
+    }
+    assert context_store == expected_context
