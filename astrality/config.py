@@ -218,6 +218,10 @@ def insert_into(
         context={},
     ))
 
+    if from_section and section is None:
+        # If only from section is specified, keep the section name
+        section = from_section
+
     if section and from_section:
         # A specific source and target section has been specified
         context[section] = contexts[from_section]
