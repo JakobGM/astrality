@@ -71,3 +71,8 @@ def temp_directory():
 
     # Cleanup temp dir after test has been run
     shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@pytest.fixture
+def context_directory(test_config_directory):
+    return test_config_directory / 'context'
