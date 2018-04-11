@@ -21,6 +21,7 @@ Table of Contents
     examples
     tips_and_tricks
     attributions
+    changelog
     contributing
     license
 
