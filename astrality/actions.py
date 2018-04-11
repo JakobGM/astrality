@@ -4,18 +4,29 @@ Module defining class-representation of module actions.
 Each action class type encapsulates the user specified options available for
 that specific action type. The action itself can be performed by invoking the
 object method `execute()`.
+
+One of the main goals with Action, is that the arity of execute is 0.
+This means that we unfortunately need to pass a reference to global mutable
+state, i.e. the context store.
+
+Another goal is that none of the subclasses require the global configuration
+of the entire application, just the action configuration itself. Earlier
+implementations required GlobalApplicationConfig to be passed arround in the
+entire run-stack, which was quite combersome. Some of the limitations with this
+approach could be solved if we implement GlobalApplicationConfig as a singleton
+which could be imported and accessed independently from other modules.
 """
 
 import abc
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Tuple, Union
 
 from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
-from . import compiler
+from . import compiler, utils
 from .config import expand_path, insert_into
 
 Replacer = Callable[[str], str]
@@ -30,6 +41,7 @@ class Action(abc.ABC):
     :param directory: The directory used as anchor for relative paths. This
         must be an absolute path.
     :param replacer: Placeholder substitutor of string user options.
+    :param context_store: A reference to the global context store.
     """
 
     directory: Path
@@ -40,7 +52,7 @@ class Action(abc.ABC):
         options: Union['ImportContextDict', 'CompileDict', 'RunDict'],
         directory: Path,
         replacer: Replacer,
-        **kwargs,
+        context_store: compiler.Context,
     ) -> None:
         """Contstruct action object."""
         # If no options are provided, use null object pattern
@@ -50,6 +62,7 @@ class Action(abc.ABC):
         self.directory = directory
         self._options = options
         self._replace = replacer
+        self.context_store = context_store
 
     def replace(self, string: str) -> str:
         """
@@ -137,21 +150,6 @@ class ImportContextAction(Action):
     priority = 100
     context_store: compiler.Context
 
-    def __init__(
-        self,
-        options: ImportContextDict,
-        directory: Path,
-        replacer: Replacer,
-        context_store: compiler.Context,
-    ) -> None:
-        """
-        Contstruct import_context action object.
-
-        Expands any relative paths relative to `self.directory`.
-        """
-        super().__init__(options, directory, replacer)
-        self.context_store = context_store
-
     def execute(self) -> None:
         """Import context section(s) according to user configuration block."""
         if self.null_object:
@@ -183,22 +181,6 @@ class CompileAction(Action):
     """Compile template action."""
 
     priority = 200
-
-    def __init__(
-        self,
-        options: CompileDict,
-        directory: Path,
-        replacer: Callable[[str], str],
-        context_store: compiler.Context,
-    ) -> None:
-        """
-        Initialize compile action.
-
-        :param context_store: A reference to a (not necessarily mutable)
-            context store used as context for template compilation.
-        """
-        super().__init__(options, directory, replacer)
-        self.context_store = context_store
 
     def execute(self) -> Optional[Path]:
         """
@@ -259,18 +241,31 @@ class CompileAction(Action):
 class RunDict(TypedDict):
     """Required fields of run action user config."""
 
-    command: str
+    shell: str
+    timeout: Union[int, float]
 
 
 class RunAction(Action):
-    """Run shell command action."""
+    """Run shell command Action sub-class."""
 
     priority = 300
 
-    def __init__(
-        self,
-        options: RunDict,
-        directory: Path,
-        replacer: Callable[[str], str],
-    ) -> None:
-        """Initialize shell command action."""
+    def execute(self) -> Optional[Tuple[str, str]]:
+        """
+        Execute shell command action.
+
+        :return: 2-tuple containing the executed command and its resulting
+            stdout.
+        """
+        if self.null_object:
+            # Null objects do nothing
+            return None
+
+        command = self.option(key='shell')
+        timeout = self.option(key='timeout')
+        result = utils.run_shell(
+            command=command,
+            timeout=timeout,
+            working_directory=self.directory,
+        )
+        return command, result
