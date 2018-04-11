@@ -21,13 +21,21 @@ import abc
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
-from . import compiler, utils
-from .config import expand_path, insert_into
+from astrality import compiler, utils
+from astrality.config import expand_path, insert_into
 
 Replacer = Callable[[str], str]
 
@@ -269,3 +277,106 @@ class RunAction(Action):
             working_directory=self.directory,
         )
         return command, result
+
+
+class ActionBlockDict(TypedDict, total=False):
+    """Valid keys in an action block."""
+
+    import_context: Union[ImportContextDict, List[ImportContextDict]]
+    compile: Union[CompileDict, List[CompileDict]]
+    run: Union[RunDict, List[RunDict]]
+    trigger: Union[str, List[str]]
+
+
+T = TypeVar('T')
+
+
+def cast_to_list(content: Union[T, List[T]]) -> List[T]:
+    """
+    Cast content to a 1-item list containing content.
+
+    If content already is a list, return content unaltered.
+    """
+    if not isinstance(content, list):
+        return [content]
+    else:
+        return content
+
+
+class ActionBlock:
+    """
+    Class representing a module action block, e.g. 'on_startup'.
+
+    :param action_block: Dictinary containing all actions to be performed.
+    :param directory: The directory used as anchor for relative paths. This
+        must be an absolute path.
+    :param replacer: Placeholder substitutor of string user options.
+    :param context_store: A reference to the global context store.
+    """
+
+    def __init__(
+        self,
+        action_block: ActionBlockDict,
+        directory: Path,
+        replacer: Replacer,
+        context_store: compiler.Context,
+    ) -> None:
+        """Construct ActionBlock object."""
+        self.action_block = action_block
+
+        # Create and persist a list of all ImportContextAction objects
+        import_context_actions = cast_to_list(
+            self.action_block.get('import_context', {}),  # type: ignore
+        )
+        self._import_context_actions = [
+            ImportContextAction(
+                options=options,
+                directory=directory,
+                replacer=replacer,
+                context_store=context_store,
+            ) for options in import_context_actions
+        ]
+
+        # Create and persist a list of all CompileAction objects
+        compile_actions = cast_to_list(
+            self.action_block.get('compile', {}),  # type: ignore
+        )
+        self._compile_actions = [
+            CompileAction(
+                options=options,
+                directory=directory,
+                replacer=replacer,
+                context_store=context_store,
+            ) for options in compile_actions
+        ]
+
+        # Create and persist a list of all RunAction objects
+        run_actions = cast_to_list(
+            self.action_block.get('run', {}),  # type: ignore
+        )
+        self._run_actions = [
+            RunAction(
+                options=options,
+                directory=directory,
+                replacer=replacer,
+                context_store=context_store,
+            ) for options in run_actions
+        ]
+
+    def execute(self) -> None:
+        """
+        Execute all actions in action block.
+
+        The order of execution is:
+            1) Perform all context imports into the context store.
+            2) Compile all templates.
+            3) Run all shell commands.
+        """
+        for import_context_action in self._import_context_actions:
+            import_context_action.execute()
+
+        for compile_action in self._compile_actions:
+            compile_action.execute()
+
+        for run_action in self._run_actions:
+            run_action.execute()
