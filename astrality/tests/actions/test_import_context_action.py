@@ -1,6 +1,18 @@
 """Tests for ImportContextAction class."""
 
+from pathlib import Path
+
 from astrality.actions import ImportContextAction
+
+def test_null_object_pattern():
+    """Test initializing action with no behaviour."""
+    import_context_action = ImportContextAction(
+        options={},
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+    import_context_action.execute()
 
 def test_importing_entire_file(context_directory):
     """
