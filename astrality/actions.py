@@ -10,7 +10,7 @@ import abc
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Union
+from typing import Any, Callable, Optional, Union
 
 from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
@@ -43,6 +43,9 @@ class Action(abc.ABC):
         **kwargs,
     ) -> None:
         """Contstruct action object."""
+        # If no options are provided, use null object pattern
+        self.null_object = not bool(options)
+
         assert directory.is_absolute()
         self.directory = directory
         self._options = options
@@ -151,6 +154,10 @@ class ImportContextAction(Action):
 
     def execute(self) -> None:
         """Import context section(s) according to user configuration block."""
+        if self.null_object:
+            # Null object does nothing
+            return None
+
         insert_into(  # type: ignore
             context=self.context_store,
             from_config_file=self.option(key='from_path', path=True),
@@ -193,12 +200,16 @@ class CompileAction(Action):
         super().__init__(options, directory, replacer)
         self.context_store = context_store
 
-    def execute(self) -> Path:
+    def execute(self) -> Optional[Path]:
         """
         Compile template to target destination.
 
         :return: Path to compiled target.
         """
+        if self.null_object:
+            # Null objects do nothing
+            return None
+
         template = self.option(key='template', path=True)
         target = self.option(key='target', path=True)
         if target is None:
