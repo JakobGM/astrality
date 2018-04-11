@@ -7,12 +7,15 @@ object method `execute()`.
 """
 
 import abc
+import logging
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any, Callable, Union
 
+from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
-from .compiler import Context
+from . import compiler
 from .config import expand_path, insert_into
 
 Replacer = Callable[[str], str]
@@ -23,9 +26,9 @@ class Action(abc.ABC):
     Superclass for module action types.
 
     :param options: A dictionary containing the user options for a given module
-                    action type.
+        action type.
     :param directory: The directory used as anchor for relative paths. This
-                      must be an absolute path.
+        must be an absolute path.
     :param replacer: Placeholder substitutor of string user options.
     """
 
@@ -70,7 +73,9 @@ class Action(abc.ABC):
         """
         option_value = self._options.get(key)
 
-        if path:
+        if option_value is None:
+            return None
+        elif path:
             # The option value represents a path, that should be converted
             # to an absolute pathlib.Path object
             assert isinstance(option_value, str)
@@ -96,8 +101,12 @@ class Action(abc.ABC):
         )
 
     @abc.abstractmethod
-    def execute(self) -> None:
-        """Exucute defined action."""
+    def execute(self) -> Any:
+        """Execute defined action."""
+
+    def __repr__(self) -> str:
+        """Return string representation of Action object."""
+        return self.__class__.__name__ + f'({self._options})'
 
 
 class RequiredImportContextDict(TypedDict):
@@ -123,14 +132,14 @@ class ImportContextAction(Action):
     """
 
     priority = 100
-    context_store: Context
+    context_store: compiler.Context
 
     def __init__(
         self,
         options: ImportContextDict,
         directory: Path,
         replacer: Replacer,
-        context_store: Context,
+        context_store: compiler.Context,
     ) -> None:
         """
         Contstruct import_context action object.
@@ -173,8 +182,67 @@ class CompileAction(Action):
         options: CompileDict,
         directory: Path,
         replacer: Callable[[str], str],
+        context_store: compiler.Context,
     ) -> None:
-        """Initialize compile action."""
+        """
+        Initialize compile action.
+
+        :param context_store: A reference to a (not necessarily mutable)
+            context store used as context for template compilation.
+        """
+        super().__init__(options, directory, replacer)
+        self.context_store = context_store
+
+    def execute(self) -> Path:
+        """
+        Compile template to target destination.
+
+        :return: Path to compiled target.
+        """
+        template = self.option(key='template', path=True)
+        target = self.option(key='target', path=True)
+        if target is None:
+            # A compilation target has not been specified, so we will compile
+            # to a temporary file instead.
+            target = self._create_temp_file(template.name)
+
+        try:
+            compiler.compile_template(
+                template=template,
+                target=target,
+                context=self.context_store,
+                shell_command_working_directory=self.directory,
+                permissions=self.option(key='permissions'),
+            )
+        except TemplateNotFound:
+            logger = logging.getLogger(__name__)
+            logger.error(
+                'Could not compile template '
+                f'"{template}" to target "{target}". '
+                'Template does not exist.',
+            )
+        return target
+
+    def _create_temp_file(self, name) -> Path:
+        """
+        Create persisted tempory file.
+
+        :return: Path object pointing to the created temporary file.
+        """
+        temp_file = NamedTemporaryFile(  # type: ignore
+            prefix=name + '-',
+            # dir=Path(self.temp_directory),
+        )
+
+        # NB: These temporary files need to be persisted during the entirity of
+        # the scripts runtime, since the files are deleted when they go out of
+        # scope.
+        if not hasattr(self, 'temp_files'):
+            self.temp_files = [temp_file]
+        else:
+            self.temp_files.append(temp_file)
+
+        return Path(temp_file.name)
 
 
 class RunDict(TypedDict):

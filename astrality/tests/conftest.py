@@ -75,4 +75,10 @@ def temp_directory():
 
 @pytest.fixture
 def context_directory(test_config_directory):
+    """Return path to directory containing several context files."""
     return test_config_directory / 'context'
+
+@pytest.fixture
+def template_directory(test_config_directory):
+    """Return path to directory containing several templates"""
+    return test_config_directory / 'templates'
