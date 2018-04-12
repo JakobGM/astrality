@@ -46,6 +46,7 @@ def test_executing_several_action_blocks(test_config_directory, tmpdir):
             'target': str(target),
         }],
         'run': {'shell': 'touch ' + str(touched)},
+        'trigger': {'block': 'on_startup'},
     }
     context_store = {}
 
@@ -60,3 +61,37 @@ def test_executing_several_action_blocks(test_config_directory, tmpdir):
     assert context_store == {'car': {'manufacturer': 'Mercedes'}}
     assert target.read_text() == 'My car is a Mercedes'
     assert touched.is_file()
+
+def test_retrieving_triggers_from_action_block():
+    """All trigger instructions should be returned."""
+    action_block_dict = {
+        'trigger': [
+            {'block': 'on_startup'},
+            {'block': 'on_modified', 'path': 'test.template'},
+        ]
+    }
+    action_block = ActionBlock(
+        action_block=action_block_dict,
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    startup_trigger, on_modified_trigger = action_block.triggers()
+
+    assert startup_trigger.block == 'on_startup'
+    assert on_modified_trigger.block == 'on_modified'
+    assert on_modified_trigger.specified_path == 'test.template'
+    assert on_modified_trigger.relative_path == Path('test.template')
+    assert on_modified_trigger.absolute_path == Path('/test.template')
+
+def test_retrieving_triggers_from_action_block_without_triggers():
+    """Action block with no triggers should return empty tuple."""
+    action_block = ActionBlock(
+        action_block={},
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    assert action_block.triggers() == tuple()
