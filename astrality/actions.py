@@ -355,6 +355,21 @@ class ActionBlock:
                 ],
             )
 
+    def import_context(self) -> None:
+        """Import context into global context store."""
+        for import_context_action in self._import_context_actions:
+            import_context_action.execute()
+
+    def compile(self) -> None:
+        """Compile all templates."""
+        for compile_action in self._compile_actions:
+            compile_action.execute()
+
+    def run(self) -> None:
+        """Run shell commands."""
+        for run_action in self._run_actions:
+            run_action.execute()
+
     def execute(self) -> None:
         """
         Execute all actions in action block.
@@ -364,11 +379,6 @@ class ActionBlock:
             2) Compile all templates.
             3) Run all shell commands.
         """
-        for import_context_action in self._import_context_actions:
-            import_context_action.execute()
-
-        for compile_action in self._compile_actions:
-            compile_action.execute()
-
-        for run_action in self._run_actions:
-            run_action.execute()
+        self.import_context()
+        self.compile()
+        self.run()
