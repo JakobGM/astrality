@@ -27,7 +27,7 @@ from astrality.event_listener import (
 )
 from astrality.filewatcher import DirectoryWatcher
 from astrality.resolver import Resolver
-from astrality.utils import run_shell
+from astrality.utils import cast_to_list, run_shell
 
 
 class ModuleConfigDict(TypedDict, total=False):
@@ -185,8 +185,9 @@ class Module:
             *module_config['on_modified'].values(),
         ):
             for action in ('import_context', 'compile', 'run', 'trigger', ):
-                if not isinstance(event_block[action], list):  # type: ignore
-                    event_block[action] = [event_block[action]]  # type: ignore
+                event_block[action] = cast_to_list(  # type: ignore
+                    event_block[action],  # type: ignore
+                )
 
         return module_config  # type: ignore
 
@@ -381,9 +382,7 @@ class Module:
         if not requires:
             return True
         else:
-            if isinstance(requires, str):
-                requires = [requires]
-
+            requires = cast_to_list(requires)
             for requirement in requires:
                 if run_shell(command=requirement, fallback=False) is False:
                     logger.warning(
