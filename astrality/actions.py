@@ -278,6 +278,83 @@ class RunAction(Action):
         return command, result
 
 
+class TriggerDict(TypedDict):
+    """Required fields of a trigger module action."""
+
+    block: str
+
+
+class Trigger:
+    """
+    A class representing an instruction to trigger a specific action block.
+
+    :ivar block: The block to be trigger, for example 'on_startup',
+        'on_event', 'on_exit', or 'on_modified'.
+    :ivar specified_path: The string path specified for a 'on_modified' block.
+    :ivar relative_path: The relative pathlib.Path specified by
+        `specified_path`.
+    :ivar absolute_path: The absolute path specified by `specified_path`.
+    """
+
+    block: str
+    specified_path: Optional[str]
+    relative_path: Optional[Path]
+    absolute_path: Optional[Path]
+
+    def __init__(
+        self,
+        block: str,
+        specified_path: Optional[str] = None,
+        relative_path: Optional[Path] = None,
+        absolute_path: Optional[Path] = None,
+    ) -> None:
+        """Construct trigger instruction."""
+        self.block = block
+        self.specified_path = specified_path
+        self.relative_path = relative_path
+        self.absolute_path = absolute_path
+
+
+class TriggerAction(Action):
+    """Action sub-class representing a trigger action."""
+
+    priority = 0
+
+    def execute(self) -> Optional[Trigger]:
+        """
+        Return trigger instruction.
+
+        If no trigger is specified, return None.
+
+        :return: Optional :class:`.Trigger` instance.
+        """
+        if self.null_object:
+            """Null objects do nothing."""
+            return None
+
+        block = self.option(key='block')
+
+        if block != 'on_modified':
+            # We do not need any paths, as the trigger block is not relative to
+            # any modified path.
+            return Trigger(block=block)
+
+        # The modified path specified by the user configuration
+        specified_path = self.option(key='path')
+
+        # Instantiate relative and absolute pathlib.Path objects
+        relative_path = Path(specified_path)
+        absolute_path = self._absolute_path(of=specified_path)
+
+        # Return 'on_modified' Trigger object with path information
+        return Trigger(
+            block=block,
+            specified_path=specified_path,
+            relative_path=relative_path,
+            absolute_path=absolute_path,
+        )
+
+
 class ActionBlockDict(TypedDict, total=False):
     """Valid keys in an action block."""
 
@@ -316,6 +393,7 @@ class ActionBlock:
     _import_context_actions: List[ImportContextAction]
     _compile_actions: List[CompileAction]
     _run_actions: List[RunAction]
+    _trigger_actions: List[TriggerAction]
 
     def __init__(
         self,
@@ -337,6 +415,7 @@ class ActionBlock:
             ('import_context', ImportContextAction),
             ('compile', CompileAction),
             ('run', RunAction),
+            ('trigger', TriggerAction),
         ):
             # Create and persist a list of all ImportContextAction objects
             action_configs = utils.cast_to_list(  # type: ignore
@@ -368,6 +447,19 @@ class ActionBlock:
         """Run shell commands."""
         for run_action in self._run_actions:
             run_action.execute()
+
+    def triggers(self) -> Tuple[Trigger, ...]:
+        """
+        Return all trigger instructions specified in action block.
+
+        :return: Tuple of Trigger objects specified in action block.
+        """
+        return tuple(
+            trigger_action.execute()  # type: ignore
+            for trigger_action
+            in self._trigger_actions
+            if not trigger_action.null_object
+        )
 
     def execute(self) -> None:
         """
