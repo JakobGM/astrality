@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, TypeVar, Union
 
 logger = logging.getLogger('astrality')
 
@@ -44,7 +44,7 @@ def run_shell(
         if process.returncode != 0 and not allow_error_codes:
             logger.error(
                 f'Command "{command}" exited with non-zero return code: ' +
-                str(process.returncode)
+                str(process.returncode),
             )
             return fallback
         else:
@@ -56,7 +56,7 @@ def run_shell(
         logger.warning(
             f'The command "{command}" used more than {timeout} seconds in '
             'order to finish. The exit code can not be verified. This might be '
-            'intentional for background processes and daemons.'
+            'intentional for background processes and daemons.',
         )
         return fallback
 
@@ -79,3 +79,18 @@ def generate_expanded_env_dict() -> Dict[str, str]:
                 raise
 
     return env_dict
+
+
+T = TypeVar('T')
+
+
+def cast_to_list(content: Union[T, List[T]]) -> List[T]:
+    """
+    Cast content to a 1-item list containing content.
+
+    If content already is a list, return content unaltered.
+    """
+    if not isinstance(content, list):
+        return [content]
+    else:
+        return content

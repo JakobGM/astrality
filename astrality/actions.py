@@ -27,7 +27,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    TypeVar,
     Union,
 )
 
@@ -303,21 +302,6 @@ class ActionBlockListDict(TypedDict, total=False):
     trigger: List[str]
 
 
-T = TypeVar('T')
-
-
-def cast_to_list(content: Union[T, List[T]]) -> List[T]:
-    """
-    Cast content to a 1-item list containing content.
-
-    If content already is a list, return content unaltered.
-    """
-    if not isinstance(content, list):
-        return [content]
-    else:
-        return content
-
-
 class ActionBlock:
     """
     Class representing a module action block, e.g. 'on_startup'.
@@ -355,7 +339,7 @@ class ActionBlock:
             ('run', RunAction),
         ):
             # Create and persist a list of all ImportContextAction objects
-            action_configs = cast_to_list(  # type: ignore
+            action_configs = utils.cast_to_list(  # type: ignore
                 self.action_block.get(identifier, {}),  # type: ignore
             )
             setattr(
