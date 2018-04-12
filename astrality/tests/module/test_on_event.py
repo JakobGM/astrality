@@ -34,11 +34,11 @@ def test_that_only_changed_events_are_run(
     application_config = {
         'module/weekday': {
             'event_listener': {'type': 'weekday'},
-            'on_event': {'run': 'touch ' + str(file1)},
+            'on_event': {'run': {'shell': 'touch ' + str(file1)}},
         },
         'module/periodic': {
             'event_listener': {'type': 'periodic', 'days': 1, 'hours': 12},
-            'on_event': {'run': 'touch ' + str(file2)},
+            'on_event': {'run': {'shell': 'touch ' + str(file2)}},
         },
     }
     application_config.update(default_global_options)

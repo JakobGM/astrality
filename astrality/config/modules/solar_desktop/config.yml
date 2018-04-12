@@ -45,8 +45,8 @@ module/solar_desktop:
         # We surround the template paths with {} since we want to refer to the
         # *compiled* templates, and not the template sources.
         run:
-            - conky -c {time.template}
-            - conky -c {performance.template}
+            - shell: conky -c {time.template}
+            - shell: conky -c {performance.template}
 
     on_event:
         # Import the context section named the same as the current event,
@@ -65,8 +65,10 @@ module/solar_desktop:
 
         # Run shell command to change the desktop wallpaper named the same
         # as the current event.
-        run: feh --bg-fill {event}.*
+        run:
+            - shell: feh --bg-fill {event}.*
 
     on_exit:
         # Kill the conky processes on Astrality shutdown.
-        run: pkill -f conky
+        run:
+            - shell: pkill -f conky

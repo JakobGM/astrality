@@ -38,7 +38,7 @@ def modules_config(
                             'target': str(secondary_template_target),
                         },
                     ],
-                    'run': ['touch ' + str(touch_target)],
+                    'run': [{'shell': 'touch ' + str(touch_target)}],
                 },
             },
         },
@@ -264,7 +264,7 @@ def test_all_three_actions_in_on_modified_block(
                         'template': str(car_template),
                         'target': str(file1),
                     },
-                    'run': 'touch ' + str(file3),
+                    'run': {'shell': 'touch ' + str(file3)},
                 },
             },
         },
@@ -369,7 +369,7 @@ def test_recompile_templates_when_modified_overridden(
             },
             'on_modified': {
                 str(template): {
-                    'run': 'touch ' + str(touch_target),
+                    'run': {'shell': 'touch ' + str(touch_target)},
                 },
             },
         },

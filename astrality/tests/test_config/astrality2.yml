@@ -9,4 +9,4 @@ module/A:
 
     on_exit:
         run:
-            - rm {templates/no_context.template}
+            - shell: rm {templates/no_context.template}

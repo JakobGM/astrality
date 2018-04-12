@@ -238,16 +238,22 @@ class Module:
         Valid action blocks are: on_startup, on_event, on_exit, or on_modified.
         A modified file action block is given by block='on_modified:file/path'.
         """
-        startup_commands: List[str]
+        startup_commands: Tuple[str, ...]
 
         if modified_file:
             assert block == 'on_modified'
-            startup_commands = self.module_config[  # type: ignore
+            startup_commands = tuple(map(
+                lambda run_action: run_action['shell'],
+                self.module_config[  # type: ignore
                 'on_modified'
-            ][modified_file]['run']
+                ][modified_file]['run'],
+            ))
         else:
             assert block in ('on_startup', 'on_event', 'on_exit',)
-            startup_commands = self.module_config[block]['run']  # type: ignore
+            startup_commands = tuple(map(
+                lambda run_action: run_action['shell'],
+                self.module_config[block]['run'],  # type: ignore
+            ))
 
         if len(startup_commands) == 0:
             logger.debug(f'[module/{self.name}] No {block} command specified.')

@@ -118,7 +118,7 @@ context/fonts:
     # We also add some configurations which are specific for some application
     # types.
     terminal:
-        size: 12
+        size: 10
 
     status_bar:
         size: 8
@@ -144,9 +144,9 @@ module/polybar:
             - template: modules/polybar/config.template
 
         run:
-            - killall -q polybar
-            - polybar --config={modules/polybar/config.template} --reload HDMI2
-            - polybar --config={modules/polybar/config.template} --reload eDP1
+            - shell: killall -q polybar
+            - shell: polybar --config={modules/polybar/config.template} --reload HDMI2
+            - shell: polybar --config={modules/polybar/config.template} --reload eDP1
 
     on_modified:
         modules/polybar/config.template:
