@@ -1,15 +1,17 @@
 """Module implementing user configured custom functionality."""
 
+import logging
 from collections import namedtuple
 from datetime import timedelta
-import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from jinja2.exceptions import TemplateNotFound
+from mypy_extensions import TypedDict
 
 from astrality import compiler
+from astrality.actions import ActionBlockDict, ActionBlockListDict
 from astrality.compiler import context
 from astrality.config import (
     ApplicationConfig,
@@ -18,13 +20,49 @@ from astrality.config import (
     insert_into,
     user_configuration,
 )
-from astrality.event_listener import EventListener, event_listener_factory
+from astrality.event_listener import (
+    EventListener,
+    EventListenerConfig,
+    event_listener_factory,
+)
 from astrality.filewatcher import DirectoryWatcher
 from astrality.resolver import Resolver
 from astrality.utils import run_shell
 
 
-ModuleConfig = Dict[str, Any]
+class ModuleConfigDict(TypedDict, total=False):
+    """Content of module configuration dict."""
+
+    enabled: Optional[bool]
+    requires: Union[str, List[str]]
+    event_listener: EventListenerConfig
+
+    on_startup: ActionBlockDict
+    on_exit: ActionBlockDict
+    on_event: ActionBlockDict
+    on_modified: Dict[str, ActionBlockDict]
+
+
+class ModuleConfigListDict(TypedDict, total=False):
+    """
+    Content of processed module configuration dict.
+
+    Users are allowed to not specify a list when they want to specify just
+    *one* item. In this case the item is cast into a list in Module.__init__ in
+    order to expect lists everywhere in the remaining methods.
+    """
+
+    enabled: Optional[bool]
+    requires: Union[str, List[str]]
+    event_listener: EventListenerConfig
+
+    on_startup: ActionBlockListDict
+    on_exit: ActionBlockListDict
+    on_event: ActionBlockListDict
+    on_modified: Dict[str, ActionBlockListDict]
+
+
+ModuleConfig = Dict[str, ModuleConfigDict]
 
 ContextSectionImport = namedtuple(
     'ContextSectionImport',
@@ -56,6 +94,8 @@ class Module:
     - {event}: The event specified by the event_listener instance.
     """
 
+    module_config: ModuleConfigListDict
+
     def __init__(
         self,
         module_config: ModuleConfig,
@@ -78,15 +118,16 @@ class Module:
         # Can only initialize one module at a time
         assert len(module_config) == 1
 
-        section = next(iter(module_config.keys()))
+        section: str = next(iter(module_config.keys()))
         self.name: str = section[7:]
 
         # The source directory for the module, determining how to interpret
         # relative paths in the module config
         self.directory = module_directory
 
-        self.module_config = module_config[section]
-        self.populate_event_blocks()
+        self.module_config = self.populate_event_blocks(
+            module_config=module_config[section],
+        )
 
         # Import trigger actions into their respective event blocks
         self.import_trigger_actions()
@@ -96,50 +137,58 @@ class Module:
             self.module_config.get('event_listener', {'type': 'static'}),
         )
 
-    def populate_event_blocks(self) -> None:
+    def populate_event_blocks(
+        self,
+        module_config: ModuleConfigDict,
+    ) -> ModuleConfigListDict:
         """
         Populate non-configured actions within event blocks.
 
         This prevents us from having to use .get() all over the Module.
         """
-        for event_block in ('on_startup', 'on_event', 'on_exit', ):
-            configured_event_block = self.module_config.get(event_block, {})
-            self.module_config[event_block] = {
+        for event in ('on_startup', 'on_event', 'on_exit', ):
+            configured_event_block = module_config.get(event, {})
+            module_config[event] = {  # type: ignore
                 'import_context': [],
                 'compile': [],
                 'run': [],
                 'trigger': [],
             }
-            self.module_config[event_block].update(configured_event_block)
+            module_config[event].update(  # type: ignore
+                configured_event_block,
+            )
 
-        if 'on_modified' not in self.module_config:
-            self.module_config['on_modified'] = {}
+        if 'on_modified' not in module_config:
+            module_config['on_modified'] = {}
         else:
-            for template_name in self.module_config['on_modified'].keys():
+            for template_name in module_config['on_modified'].keys():
                 configured_event_block = \
-                    self.module_config['on_modified'][template_name]
-                self.module_config['on_modified'][template_name] = {
+                    module_config['on_modified'][template_name]
+                module_config['on_modified'][template_name] = {
                     'import_context': [],
                     'compile': [],
                     'run': [],
                     'trigger': [],
                 }
-                self.module_config['on_modified'][template_name].update(
-                    configured_event_block,
-                )
+                module_config[  # type: ignore
+                    'on_modified'
+                ][template_name].update(configured_event_block)
 
         # Convert any single actions into a list of that action, allowing
         # users to not use lists in their configuration if they only have one
         # action
+        event_block: ActionBlockDict
         for event_block in (
-            self.module_config['on_startup'],
-            self.module_config['on_event'],
-            self.module_config['on_exit'],
-            *self.module_config['on_modified'].values(),
+            module_config['on_startup'],
+            module_config['on_event'],
+            module_config['on_exit'],
+            *module_config['on_modified'].values(),
         ):
-            for action in ('import_context', 'compile', 'run', 'trigger',):
+            for action in ('import_context', 'compile', 'run', 'trigger', ):
                 if not isinstance(event_block[action], list):  # type: ignore
                     event_block[action] = [event_block[action]]  # type: ignore
+
+        return module_config  # type: ignore
 
     def import_trigger_actions(self) -> None:
         """If an event block defines trigger events, import those actions."""
@@ -161,7 +210,7 @@ class Module:
     def _import_event_block(
         self,
         from_event_block: str,
-        into: Dict[str, Any],
+        into: ActionBlockListDict,
     ) -> None:
         """Merge one event block with another one."""
         if 'on_modified:' in from_event_block:
@@ -171,7 +220,8 @@ class Module:
                 {},
             )
         else:
-            from_event_block_dict = self.module_config[from_event_block]
+            assert from_event_block in ('on_startup', 'on_event', 'on_exit',)
+            from_event_block_dict = self.module_config[from_event_block]  # type: ignore
 
         into['run'].extend(from_event_block_dict['run'])
         into['import_context'].extend(from_event_block_dict['import_context'])
@@ -192,11 +242,12 @@ class Module:
 
         if modified_file:
             assert block == 'on_modified'
-            startup_commands = \
-                self.module_config['on_modified'][modified_file]['run']
+            startup_commands = self.module_config[  # type: ignore
+                'on_modified'
+            ][modified_file]['run']
         else:
             assert block in ('on_startup', 'on_event', 'on_exit',)
-            startup_commands = self.module_config[block]['run']
+            startup_commands = self.module_config[block]['run']  # type: ignore
 
         if len(startup_commands) == 0:
             logger.debug(f'[module/{self.name}] No {block} command specified.')
@@ -242,11 +293,12 @@ class Module:
         import_config: List[Dict[str, str]]
         if modified:
             assert trigger == 'on_modified'
-            import_config = \
-                self.module_config[trigger][modified]['import_context']
+            import_config = self.module_config\
+                [trigger][modified]['import_context']  # type: ignore
         else:
             assert trigger in ('on_startup', 'on_event', 'on_exit',)
-            import_config = self.module_config[trigger]['import_context']
+            import_config = self.module_config\
+                [trigger]['import_context']  # type: ignore
 
         context_section_imports = []
         for context_import in import_config:
@@ -646,7 +698,7 @@ class ModuleManager:
             modules = self.modules.values()
 
         for module in modules:
-            for compilation in module.module_config[trigger]['compile']:
+            for compilation in module.module_config[trigger]['compile']:  # type: ignore
                 specified_path = compilation['template']
                 template = self.templates[specified_path]
                 self.compile_template(

@@ -288,6 +288,21 @@ class ActionBlockDict(TypedDict, total=False):
     trigger: Union[str, List[str]]
 
 
+class ActionBlockListDict(TypedDict, total=False):
+    """
+    Action block dict where everything is in lists.
+
+    Users are allowed to not specify a list when they want to specify just
+    *one* item. In this case the item is cast into a list in Module.__init__ in
+    order to expect lists everywhere in the remaining methods.
+    """
+
+    import_context: List[ImportContextDict]
+    compile: List[CompileDict]
+    run: List[RunDict]
+    trigger: List[str]
+
+
 T = TypeVar('T')
 
 
