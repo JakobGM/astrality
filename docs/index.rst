@@ -12,6 +12,7 @@ Table of Contents
 
 .. toctree::
     :maxdepth: 2
+    :caption: Documentation
 
     readme
     configuration
@@ -20,11 +21,26 @@ Table of Contents
     event_listeners
     examples
     tips_and_tricks
-    attributions
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Codebase
+
     changelog
     contributing
+    api
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Legalese
+
+    attributions
     license
 
-    External: Astrality source code <https://github.com/JakobGM/astrality>
-    External: YAML documentation <http://docs.ansible.com/ansible/latest/YAMLSyntax.html>
-    External: Jinja2 documentation <http://jinja.pocoo.org/docs/latest/templates/>
+.. toctree::
+    :maxdepth: 2
+    :caption: External resources
+
+    Source code on GitHub <https://github.com/JakobGM/astrality>
+    YAML syntax documentation <http://docs.ansible.com/ansible/latest/YAMLSyntax.html>
+    Jinja2 templating documentation <http://jinja.pocoo.org/docs/latest/templates/>
