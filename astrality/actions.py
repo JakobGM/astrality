@@ -314,6 +314,10 @@ class ActionBlock:
     :param context_store: A reference to the global context store.
     """
 
+    _import_context_actions: List[ImportContextAction]
+    _compile_actions: List[CompileAction]
+    _run_actions: List[RunAction]
+
     def __init__(
         self,
         action_block: ActionBlockDict,
@@ -321,47 +325,35 @@ class ActionBlock:
         replacer: Replacer,
         context_store: compiler.Context,
     ) -> None:
-        """Construct ActionBlock object."""
+        """
+        Construct ActionBlock object.
+
+        Instantiates action types and appends to:
+        self._run_actions: List[RunAction], and so on...
+        """
+        assert directory.is_absolute()
         self.action_block = action_block
 
-        # Create and persist a list of all ImportContextAction objects
-        import_context_actions = cast_to_list(
-            self.action_block.get('import_context', {}),  # type: ignore
-        )
-        self._import_context_actions = [
-            ImportContextAction(
-                options=options,
-                directory=directory,
-                replacer=replacer,
-                context_store=context_store,
-            ) for options in import_context_actions
-        ]
-
-        # Create and persist a list of all CompileAction objects
-        compile_actions = cast_to_list(
-            self.action_block.get('compile', {}),  # type: ignore
-        )
-        self._compile_actions = [
-            CompileAction(
-                options=options,
-                directory=directory,
-                replacer=replacer,
-                context_store=context_store,
-            ) for options in compile_actions
-        ]
-
-        # Create and persist a list of all RunAction objects
-        run_actions = cast_to_list(
-            self.action_block.get('run', {}),  # type: ignore
-        )
-        self._run_actions = [
-            RunAction(
-                options=options,
-                directory=directory,
-                replacer=replacer,
-                context_store=context_store,
-            ) for options in run_actions
-        ]
+        for identifier, action_type in (
+            ('import_context', ImportContextAction),
+            ('compile', CompileAction),
+            ('run', RunAction),
+        ):
+            # Create and persist a list of all ImportContextAction objects
+            action_configs = cast_to_list(  # type: ignore
+                self.action_block.get(identifier, {}),  # type: ignore
+            )
+            setattr(
+                self,
+                f'_{identifier}_actions',
+                [action_type(  # type: ignore
+                        options=action_config,
+                        directory=directory,
+                        replacer=replacer,
+                        context_store=context_store,
+                ) for action_config in action_configs
+                ],
+            )
 
     def execute(self) -> None:
         """
