@@ -23,9 +23,26 @@ Added
 Changed
 -------
 
-- The ``run`` module action now is now a dictionary instead of a string in
-  order to support additional future options, such as ``timeout``. Now you
+- The ``run`` module action is now a dictionary instead of a string. This
+  enables us to support additional future options, such as ``timeout``. Now you
   specify the shell command to be run as a string value keyed to ``shell``.
+
+  *Old syntax:*
+
+  .. code-block:: yaml
+
+      run:
+          - command1
+          - command2
+
+  *New syntax:*
+
+  .. code-block:: yaml
+
+      run:
+          - shell: command1
+          - shell: command2
+
 - Template metadata is now copied to compilation targets, including permission
   bits. Thanks to @sshashank124 for the implementation!
 
