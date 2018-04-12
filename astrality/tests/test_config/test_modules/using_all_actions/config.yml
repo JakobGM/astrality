@@ -6,7 +6,7 @@ module/vietnam:
             template: module.template
             target: compiled.tmp
         run:
-            - touch touched.tmp
+            - shell: touch touched.tmp
 
     on_modified:
         watched_for_modifications:
@@ -16,5 +16,5 @@ module/vietnam:
                 template: module.template
                 target: compiled.tmp
             run:
-                - touch watch_touched.tmp
+                - shell: touch watch_touched.tmp
 

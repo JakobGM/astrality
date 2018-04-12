@@ -22,7 +22,7 @@ def valid_module_section():
             'enabled': True,
             'event_listener': {'type': 'weekday'},
             'on_startup': {
-                'run': ['echo {event}'],
+                'run': [{'shell': 'echo {event}'}],
                 'compile': [
                     {
                         'template': '../templates/test_template.conf',
@@ -30,8 +30,12 @@ def valid_module_section():
                     },
                 ],
             },
-            'on_event': {'run': ['echo {../templates/test_template.conf}']},
-            'on_exit': {'run': ['echo exit']},
+            'on_event': {
+                'run': [{'shell': 'echo {../templates/test_template.conf}'}],
+            },
+            'on_exit': {
+                'run': [{'shell': 'echo exit'}],
+            },
         }
     }
 
@@ -599,16 +603,28 @@ def config_with_modules(default_global_options):
                     'target': '/tmp/compiled_result',
                 }
             },
-            'on_startup': {'run': ['echo solar compiling {template_name}']},
-            'on_event': {'run': ['echo solar {event}']},
-            'on_exit': {'run': ['echo solar exit']},
+            'on_startup': {
+                'run': [{'shell': 'echo solar compiling {template_name}'}],
+            },
+            'on_event': {
+                'run': [{'shell': 'echo solar {event}'}],
+            },
+            'on_exit': {
+                'run': [{'shell': 'echo solar exit'}],
+            },
         },
         'module/weekday_module': {
             'enabled': True,
             'event_listener': {'type': 'weekday'},
-            'on_startup': {'run': ['echo weekday startup']},
-            'on_event': {'run': ['echo weekday {event}']},
-            'on_exit': {'run': ['echo weekday exit']},
+            'on_startup': {
+                'run': [{'shell': 'echo weekday startup'}],
+            },
+            'on_event': {
+                'run': [{'shell': 'echo weekday {event}'}],
+            },
+            'on_exit': {
+                'run': [{'shell': 'echo weekday exit'}],
+            },
         },
         'module/disabled_module': {
             'enabled': False,
@@ -878,10 +894,10 @@ def test_that_only_startup_event_block_is_run_on_startup(
         'module/A': {
             'event_listener': {'type': 'weekday'},
             'on_startup': {
-                'run': ['touch ' + str(test_file1)],
+                'run': [{'shell': 'touch ' + str(test_file1)}],
             },
             'on_event': {
-                'run': ['touch ' + str(test_file2)],
+                'run': [{'shell': 'touch ' + str(test_file2)}],
             },
         },
     }
@@ -916,21 +932,21 @@ def test_trigger_event_module_action(
             'event_listener': {'type': 'weekday'},
             'on_startup': {
                 'trigger': ['on_event', 'on_exit', 'on_modified:templateA'],
-                'run': ['echo startup'],
+                'run': [{'shell': 'echo startup'}],
             },
             'on_event': {
-                'run': ['echo on_event'],
+                'run': [{'shell': 'echo on_event'}],
                 'import_context': [{
                     'from_path': 'contexts/file.yml',
                     'from_section': 'section',
                 }],
             },
             'on_exit': {
-                'run': ['echo exit'],
+                'run': [{'shell': 'echo exit'}],
             },
             'on_modified': {
                 'templateA': {
-                    'run': ['echo modified.templateA'],
+                    'run': [{'shell': 'echo modified.templateA'}],
                     'compile': [
                         {'template': 'templateA'}
                     ],
@@ -989,7 +1005,7 @@ def test_not_using_list_when_specifiying_trigger_action(
                 'trigger': 'on_event',
             },
             'on_event': {
-                'run': ['echo on_event'],
+                'run': [{'shell': 'echo on_event'}],
             },
         },
         '_runtime': {

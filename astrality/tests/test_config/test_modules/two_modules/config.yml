@@ -3,4 +3,5 @@ module/bhutan:
 
 module/bangladesh:
     on_startup:
-        run: echo Greetings from Dhaka!
+        run:
+            - shell: echo Greetings from Dhaka!
