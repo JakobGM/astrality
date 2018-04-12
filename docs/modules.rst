@@ -285,8 +285,8 @@ Here is an example:
                 - source: modules/desktop/conky_module.template
 
             run:
-                - conky -c {modules/desktop/conky_module.template}
-                - polybar bar
+                - shell: conky -c {modules/desktop/conky_module.template}
+                - shell: polybar bar
 
 Notice that the shell command ``conky -c {modules/desktop/conky_module.template}`` is replaced with something like ``conky -c /path/to/compiled/template.temp``.
 
@@ -300,7 +300,10 @@ Run shell commands
 ------------------
 
 You can instruct Astrality to run an arbitrary number of shell commands when different :ref:`action blocks <modules_action_blocks>` are triggered.
-Place each command as a list item under the ``run`` option of an :ref:`action block <modules_action_blocks>`.
+Each shell command is specified as a dictionary.
+The shell command is specified as a string keyed to ``shell``.
+Place the commands within a list under the ``run`` option of an :ref:`action block <modules_action_blocks>`.
+See the example below.
 
 You can place the following placeholders within your shell commands:
 
@@ -319,17 +322,18 @@ Example:
             type: weekday
 
         on_startup:
-            run: notify-send "You just started Astrality, and the day is {event}"
+            run:
+                - shell: 'notify-send "You just started Astrality, and the day is {event}"'
 
         on_event:
             run:
-                - notify-send "It is now midnight, have a great {event}! I'm creating a notes document for this day."
-                - touch ~/notes/notes_for_{event}.txt
+                - shell: 'notify-send "It is now midnight, have a great {event}! I'm creating a notes document for this day."'
+                - shell: 'touch ~/notes/notes_for_{event}.txt'
 
         on_exit:
             run:
-                - echo "Deleting today's notes!"
-                - rm ~/notes/notes_for_{event}.txt
+                - shell: 'echo "Deleting today's notes!"'
+                - shell: 'rm ~/notes/notes_for_{event}.txt'
 
 
 .. _trigger_action:
@@ -350,7 +354,8 @@ An example of a module using ``trigger`` actions:
             type: weekday
 
         on_startup:
-            run: startup_command
+            run:
+                - shell: startup_command
 
             trigger:
                 - on_event
@@ -389,8 +394,8 @@ This is equivalent to writing the following module:
                 template: templates/templateA
 
             run:
-                - startup_command
-                - shell_command_dependent_on_templateA
+                - shell: startup_command
+                - shell: shell_command_dependent_on_templateA
 
         on_event:
             import_context:
@@ -401,14 +406,16 @@ This is equivalent to writing the following module:
             compile:
                 template: templateA
 
-            run: shell_command_dependent_on_templateA
+            run:
+                - shell: shell_command_dependent_on_templateA
 
         on_modified:
             templates/templateA:
                 compile:
                     template: templates/templateA
 
-                run: shell_command_dependent_on_templateA
+                run:
+                    - shell: shell_command_dependent_on_templateA
 
 
 .. hint::
