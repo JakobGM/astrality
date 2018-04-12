@@ -441,7 +441,7 @@ EVENT_LISTENERS = {
 
 
 def event_listener_factory(
-    event_listener_config: Dict[str, Union[str, int]],
+    event_listener_config: EventListenerConfig,
 ) -> EventListener:
     """Return Class responsible for specific event listener `type`."""
     event_listener_type = event_listener_config['type']
