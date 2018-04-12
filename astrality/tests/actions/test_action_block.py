@@ -14,6 +14,25 @@ def test_null_object_pattern():
     )
     action_block.execute()
 
+def test_executing_action_block_with_one_action(test_config_directory, tmpdir):
+    """Action block behaviour with only one action specified."""
+    temp_dir = Path(tmpdir)
+    touched = temp_dir / 'touched.tmp'
+
+    action_block_dict = {
+        'run': [{'shell': 'touch ' + str(touched)}],
+    }
+
+    action_block = ActionBlock(
+        action_block=action_block_dict,
+        directory=test_config_directory,
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    action_block.execute()
+    assert touched.is_file()
+
 def test_executing_several_action_blocks(test_config_directory, tmpdir):
     """Invoking execute() should execute all actions."""
     temp_dir = Path(tmpdir)
