@@ -12,7 +12,7 @@ def test_null_object_pattern():
         replacer=lambda x: x,
         context_store={},
     )
-    action_block.execute()
+    action_block.execute(default_timeout=1)
 
 def test_executing_action_block_with_one_action(test_config_directory, tmpdir):
     """Action block behaviour with only one action specified."""
@@ -30,7 +30,7 @@ def test_executing_action_block_with_one_action(test_config_directory, tmpdir):
         context_store={},
     )
 
-    action_block.execute()
+    action_block.execute(default_timeout=1)
     assert touched.is_file()
 
 def test_executing_several_action_blocks(test_config_directory, tmpdir):
@@ -57,7 +57,7 @@ def test_executing_several_action_blocks(test_config_directory, tmpdir):
         context_store=context_store,
     )
 
-    action_block.execute()
+    action_block.execute(default_timeout=1)
     assert context_store == {'car': {'manufacturer': 'Mercedes'}}
     assert target.read_text() == 'My car is a Mercedes'
     assert touched.is_file()
@@ -123,7 +123,7 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
 
     assert action_block.performed_compilations() == {}
 
-    action_block.execute()
+    action_block.execute(default_timeout=1)
     assert action_block.performed_compilations() == {
         template1: {target1, target2},
         template2: {target3},

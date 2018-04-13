@@ -69,8 +69,12 @@ def modules_config(
 def test_modified_commands_of_module(modules_config):
     config, empty_template, empty_template_target, touch_target, *_= modules_config
     module_manager = ModuleManager(config)
-    assert module_manager.modules['A'].modified_commands(str(empty_template)) == \
-        ('touch ' + str(touch_target), )
+    result = module_manager.modules['A'].run(
+        block_name='on_modified',
+        path=empty_template,
+        default_timeout=1,
+    )
+    assert result == (('touch ' + str(touch_target), ''),)
 
 def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
     (

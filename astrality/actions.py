@@ -277,10 +277,15 @@ class RunAction(Action):
 
     priority = 300
 
-    def execute(self) -> Optional[Tuple[str, str]]:
+    def execute(
+        self,
+        default_timeout: Union[int, float] = 0,
+    ) -> Optional[Tuple[str, str]]:
         """
         Execute shell command action.
 
+        :param default_timeout: Run timeout in seconds if no specific value is
+            specified in `options`.
         :return: 2-tuple containing the executed command and its resulting
             stdout.
         """
@@ -290,9 +295,13 @@ class RunAction(Action):
 
         command = self.option(key='shell')
         timeout = self.option(key='timeout')
+
+        logger = logging.getLogger(__name__)
+        logger.info(f'Running command "{command}".')
+
         result = utils.run_shell(
             command=command,
-            timeout=timeout,
+            timeout=timeout or default_timeout,
             working_directory=self.directory,
         )
         return command, result
@@ -417,7 +426,7 @@ class ActionBlock:
 
     def __init__(
         self,
-        action_block: ActionBlockDict,
+        action_block: Union[ActionBlockDict, ActionBlockListDict],
         directory: Path,
         replacer: Replacer,
         context_store: compiler.Context,
@@ -463,10 +472,27 @@ class ActionBlock:
         for compile_action in self._compile_actions:
             compile_action.execute()
 
-    def run(self) -> None:
-        """Run shell commands."""
+    def run(
+        self,
+        default_timeout: Union[int, float],
+    ) -> Tuple[Tuple[str, str], ...]:
+        """
+        Run shell commands.
+
+        :param default_timeout: How long to wait for run commands to exit
+        :return: Tuple of 2-tuples containing (shell_command, stdout,)
+        """
+        results: Tuple[Tuple[str, str], ...] = tuple()
         for run_action in self._run_actions:
-            run_action.execute()
+            result = run_action.execute(
+                default_timeout=default_timeout,
+            )
+            if result:
+                # Run action is not null object, so we can return results
+                command, stdout = result
+                results += ((command, stdout,),)
+
+        return results
 
     def triggers(self) -> Tuple[Trigger, ...]:
         """
@@ -481,7 +507,7 @@ class ActionBlock:
             if not trigger_action.null_object
         )
 
-    def execute(self) -> None:
+    def execute(self, default_timeout: Union[int, float]) -> None:
         """
         Execute all actions in action block.
 
@@ -492,7 +518,7 @@ class ActionBlock:
         """
         self.import_context()
         self.compile()
-        self.run()
+        self.run(default_timeout=default_timeout)
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """
