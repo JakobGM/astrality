@@ -10,7 +10,7 @@ import pytest
 
 from astrality import event_listener
 from astrality.config import dict_from_config_file
-from astrality.module import ContextSectionImport, Module, ModuleManager
+from astrality.module import Module, ModuleManager
 from astrality.resolver import Resolver
 from astrality.utils import generate_expanded_env_dict
 
@@ -170,54 +170,6 @@ class TestModuleClass:
             logging.INFO,
             compilation_target + '\n',
         ) in caplog.record_tuples
-
-    @pytest.mark.slow
-    def test_running_shell_command_that_times_out(self, single_module_manager, caplog):
-        single_module_manager.run_shell(
-            command='sleep 2.1',
-            timeout=2,
-            working_directory=Path('/'),
-            module_name='name',
-        )
-        assert 'used more than 2 seconds' in caplog.record_tuples[1][2]
-
-    def test_running_shell_command_with_non_zero_exit_code(
-        self,
-        single_module_manager,
-        caplog,
-    ):
-        single_module_manager.run_shell(
-            command='thiscommandshould not exist',
-            timeout=2,
-            working_directory=Path('/'),
-            module_name='name',
-        )
-        assert 'not found' in caplog.record_tuples[1][2]
-        assert 'non-zero return code' in caplog.record_tuples[2][2]
-
-    def test_running_shell_command_with_environment_variable(
-        self,
-        single_module_manager,
-        caplog,
-    ):
-        single_module_manager.run_shell(
-            command='echo $USER',
-            timeout=2,
-            working_directory=Path('/'),
-            module_name='name',
-        )
-        assert caplog.record_tuples == [
-            (
-                'astrality',
-                logging.INFO,
-                '[module/name] Running command "echo $USER".',
-            ),
-            (
-                'astrality',
-                logging.INFO,
-                os.environ['USER'] + '\n',
-            )
-        ]
 
     @freeze_time('2018-01-27')
     def test_running_module_startup_command(
@@ -413,13 +365,8 @@ class TestModuleClass:
 
         caplog.clear()
         module_manager.finish_tasks()
-        assert (
-                'astrality',
-                logging.ERROR,
-                f'Could not compile template "/not/existing" to target "{template_target}".'
-                ' Template does not exist.'
-        ) in caplog.record_tuples
-
+        assert 'Could not compile template "/not/existing" '\
+               'to target "' in caplog.record_tuples[1][2]
 
     def test_create_temp_file_method(self, single_module_manager):
         temp_file = single_module_manager.create_temp_file('whatever')
@@ -705,53 +652,6 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     }
 
 
-def test_context_section_imports():
-    module_config = {
-        'module/name': {
-            'on_startup': {
-                'import_context': [
-                    {
-                        'from_path': '/testfile',
-                        'from_section': 'source_section',
-                        'to_section': 'target_section',
-                    }
-                ]
-            },
-            'on_event': {
-                'import_context': [
-                    {
-                        'from_path': '/testfile',
-                        'from_section': 'source_section',
-                    }
-                ]
-            },
-        },
-    }
-    module = Module(
-        module_config=module_config,
-        module_directory=Path('/'),
-    )
-    startup_csis = module.context_section_imports('on_startup')
-    expected = (
-        ContextSectionImport(
-            from_config_file=Path('/testfile'),
-            from_section='source_section',
-            into_section='target_section',
-        ),
-    )
-    assert startup_csis == expected
-
-    on_event_csis = module.context_section_imports('on_event')
-    expected = (
-        ContextSectionImport(
-            from_config_file=Path('/testfile'),
-            from_section='source_section',
-            into_section='source_section',
-        ),
-    )
-    assert on_event_csis == expected
-
-
 class TestModuleManager:
     def test_invocation_of_module_manager_with_config(self, conf):
         ModuleManager(conf)
@@ -923,8 +823,8 @@ def test_trigger_event_module_action(
             'on_event': {
                 'run': [{'shell': 'echo on_event'}],
                 'import_context': [{
-                    'from_path': 'contexts/file.yml',
-                    'from_section': 'section',
+                    'from_path': 'context/mercedes.yml',
+                    'from_section': 'car',
                 }],
             },
             'on_exit': {
@@ -954,13 +854,10 @@ def test_trigger_event_module_action(
     )
 
     # Check that all context section imports are available in startup block
-    assert module_manager.modules['A'].context_section_imports('on_startup') == (
-        ContextSectionImport(
-            into_section='section',
-            from_section='section',
-            from_config_file=Path('contexts/file.yml'),
-        ),
-    )
+    module_manager.modules['A'].import_context('on_startup')
+    assert module_manager.application_context == {
+        'car': {'manufacturer': 'Mercedes'},
+    }
 
     # Check that all compile actions have been merged into startup block
     assert module_manager.modules['A'].module_config['on_startup']['compile'] ==\
@@ -973,13 +870,10 @@ def test_trigger_event_module_action(
     results = module_manager.modules['A'].run('on_exit', default_timeout=1)
     assert results == (('echo exit', 'exit'),)
 
-    assert module_manager.modules['A'].context_section_imports('on_event') == (
-        ContextSectionImport(
-            into_section='section',
-            from_section='section',
-            from_config_file=Path('contexts/file.yml'),
-        ),
-    )
+    module_manager.modules['A'].import_context('on_event')
+    assert module_manager.application_context == {
+        'car': {'manufacturer': 'Mercedes'},
+    }
 
 def test_not_using_list_when_specifiying_trigger_action(
     conf_path,

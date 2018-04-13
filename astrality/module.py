@@ -17,7 +17,6 @@ from astrality.config import (
     ApplicationConfig,
     GlobalModulesConfig,
     expand_path,
-    insert_into,
     user_configuration,
 )
 from astrality.event_listener import (
@@ -73,10 +72,6 @@ class ModuleActionBlocks(TypedDict):
 
 ModuleConfig = Dict[str, ModuleConfigDict]
 
-ContextSectionImport = namedtuple(
-    'ContextSectionImport',
-    ['into_section', 'from_section', 'from_config_file'],
-)
 Template = namedtuple(
     'Template',
     ['source', 'target', 'permissions'],
@@ -276,6 +271,53 @@ class Module:
         into['import_context'].extend(from_event_block_dict['import_context'])
         into['compile'].extend(from_event_block_dict['compile'])
 
+    def get_action_block(
+        self,
+        name: str,
+        path: Optional[Path] = None,
+    ) -> ActionBlock:
+        """
+        Return specific action block from module.
+
+        :param name: Identifier of action block, for example 'on_startup'.
+        :param path: If `name` == on_modified, path specifies modified path.
+        """
+        if path:
+            assert path.is_absolute()
+            assert name == 'on_modified'
+            return self.action_blocks[name][path]  # type: ignore
+        else:
+            assert name in ('on_startup', 'on_event', 'on_exit',)
+            return self.action_blocks[name]  # type: ignore
+
+    def import_context(
+        self,
+        block_name: str,
+        path: Optional[Path] = None,
+    ) -> None:
+        """
+        Execute all import context actions specified in block_name[:path].
+
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
+        """
+        action_block = self.get_action_block(name=block_name, path=path)
+        action_block.import_context()
+
+    def compile(
+        self,
+        block_name: str,
+        path: Optional[Path] = None,
+    ) -> None:
+        """
+        Execute all compile actions specified in block_name[:path].
+
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
+        """
+        action_block = self.get_action_block(name=block_name, path=path)
+        action_block.compile()
+
     def run(
         self,
         block_name: str,
@@ -286,80 +328,11 @@ class Module:
         Execute all run actions specified in block_name[:path].
 
         :param block_name: Name of block such as 'on_startup'.
+        :param default_timeout: Default timeout for run actions.
         :param path: Absolute path in case of block_name == 'on_modified'.
         """
-        if path:
-            assert path.is_absolute()
-            assert block_name == 'on_modified'
-            action_block = self.action_blocks[block_name][path]  # type: ignore
-        else:
-            assert block_name in ('on_startup', 'on_event', 'on_exit',)
-            action_block = self.action_blocks[block_name]  # type: ignore
-
+        action_block = self.get_action_block(name=block_name, path=path)
         return action_block.run(default_timeout=default_timeout)
-
-    def context_section_imports(
-        self,
-        trigger: str,
-        modified: Optional[str] = None,
-    ) -> Tuple[ContextSectionImport, ...]:
-        """
-        Return what to import into the global application_context.
-
-        Trigger is one of 'on_startup', 'on_event', 'on_modified, or 'on_exit'.
-        This determines which section of the module is used to get the context
-        import specification from.
-
-        If trigger is 'on_modified', you also need to specify which file is
-        modified, in order to get the correct section.
-        """
-        import_config: List[Dict[str, str]]
-        if modified:
-            assert trigger == 'on_modified'
-            import_config = self.module_config\
-                [trigger][modified]['import_context']  # type: ignore
-        else:
-            assert trigger in ('on_startup', 'on_event', 'on_exit',)
-            import_config = self.module_config\
-                [trigger]['import_context']  # type: ignore
-
-        context_section_imports = []
-        for context_import in import_config:
-            # Insert placeholders
-            from_path = self.interpolate_string(context_import['from_path'])
-
-            from_section: Optional[str]
-            to_section: Optional[str]
-
-            if 'from_section' in context_import:
-                from_section = self.interpolate_string(
-                    context_import['from_section'],
-                )
-
-                # If no `to_section` is specified, use the same section as
-                # `from_section`
-                to_section = self.interpolate_string(
-                    context_import.get('to_section', from_section),
-                )
-            else:
-                # From section is not specified, so set both to None, indicating
-                # a wish to import *all* sections
-                from_section = None
-                to_section = None
-
-            # Get the relative path to file containing the context
-            config_path = Path(from_path)
-
-            # Isert a ContextSectionImport tuple into the return value
-            context_section_imports.append(
-                ContextSectionImport(
-                    into_section=to_section,
-                    from_section=from_section,
-                    from_config_file=config_path,
-                ),
-            )
-
-        return tuple(context_section_imports)
 
     def interpolate_string(self, string: str) -> str:
         """
@@ -694,18 +667,7 @@ class ModuleManager:
             modules = self.modules.values()
 
         for module in modules:
-            context_section_imports = module.context_section_imports(trigger)
-
-            for csi in context_section_imports:
-                self.application_context = insert_into(
-                    context=self.application_context,
-                    section=csi.into_section,
-                    from_section=csi.from_section,
-                    from_config_file=expand_path(
-                        path=csi.from_config_file,
-                        config_directory=module.directory,
-                    ),
-                )
+            module.import_context(block_name=trigger)
 
     def compile_templates(
         self,
@@ -728,15 +690,7 @@ class ModuleManager:
             modules = self.modules.values()
 
         for module in modules:
-            for compilation in module.module_config\
-                    [trigger]['compile']:  # type: ignore
-                specified_path = compilation['template']
-                template = self.templates[specified_path]
-                self.compile_template(
-                    source=template.source,
-                    target=template.target,
-                    permissions=template.permissions,
-                )
+            module.compile(block_name=trigger)
 
     def compile_template(
         self,
@@ -821,32 +775,13 @@ class ModuleManager:
         """Perform actions when a watched file is modified."""
         watched_file = self.on_modified_paths[modified]
         module = watched_file.module
-        specified_path = watched_file.specified_path
+        path = watched_file.path
 
         # First import context sections in on_modified block
-        for csi in module.context_section_imports(
-            trigger='on_modified',
-            modified=specified_path,
-        ):
-            self.application_context = insert_into(
-                context=self.application_context,
-                section=csi.into_section,
-                from_section=csi.from_section,
-                from_config_file=expand_path(
-                    path=csi.from_config_file,
-                    config_directory=module.directory,
-                ),
-            )
+        module.import_context(block_name='on_modified', path=path)
 
         # Now compile templates specified in on_modified block
-        comps = module.module_config['on_modified'][specified_path]['compile']
-        for compilation in comps:
-            template = self.templates[compilation['template']]
-            self.compile_template(
-                source=template.source,
-                target=template.target,
-                permissions=template.permissions,
-            )
+        module.compile(block_name='on_modified', path=path)
 
         # Lastly, run commands specified in on_modified block
         logger.info(f'[module/{module.name}] Running modified commands.')
@@ -930,23 +865,6 @@ class ModuleManager:
                     target=template.target,
                     permissions=template.permissions,
                 )
-
-    def run_shell(
-        self,
-        command: str,
-        timeout: Union[int, float],
-        working_directory: Path,
-        module_name: Optional[str] = None,
-    ) -> None:
-        """Run a shell command defined by a managed module."""
-        if module_name:
-            logger.info(f'[module/{module_name}] Running command "{command}".')
-
-        run_shell(
-            command=command,
-            timeout=timeout,
-            working_directory=working_directory,
-        )
 
     def interpolate_string(self, string: str) -> str:
         """
