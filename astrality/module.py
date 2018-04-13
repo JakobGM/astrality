@@ -15,7 +15,6 @@ from astrality.actions import (
     ActionBlock,
     ActionBlockDict,
     ActionBlockListDict,
-    TriggerDict,
 )
 from astrality.compiler import context
 from astrality.config import (
@@ -151,9 +150,6 @@ class Module:
             module_config=module_config[section],
         )
 
-        # Import trigger actions into their respective event blocks
-        self.import_trigger_actions()
-
         # Use static event_listener if no event_listener is specified
         self.event_listener: EventListener = event_listener_factory(
             self.module_config.get('event_listener', {'type': 'static'}),
@@ -238,43 +234,6 @@ class Module:
 
         return module_config  # type: ignore
 
-    def import_trigger_actions(self) -> None:
-        """If an event block defines trigger events, import those actions."""
-        event_blocks = (
-            self.module_config['on_startup'],
-            self.module_config['on_event'],
-            self.module_config['on_exit'],
-            *self.module_config['on_modified'].values(),
-        )
-        for event_block in event_blocks:
-            for trigger in event_block['trigger']:
-                self._import_event_block(
-                    trigger=trigger,
-                    into=event_block,
-                )
-
-    def _import_event_block(
-        self,
-        trigger: TriggerDict,
-        into: ActionBlockListDict,
-    ) -> None:
-        """Merge one event block with another one."""
-        from_event_block = trigger['block']
-        if from_event_block == 'on_modified':
-            template = trigger['path']
-            from_event_block_dict = self.module_config['on_modified'].get(
-                template,
-                {},
-            )
-        else:
-            assert from_event_block in ('on_startup', 'on_event', 'on_exit',)
-            from_event_block_dict = \
-                self.module_config[from_event_block]  # type: ignore
-
-        into['run'].extend(from_event_block_dict['run'])
-        into['import_context'].extend(from_event_block_dict['import_context'])
-        into['compile'].extend(from_event_block_dict['compile'])
-
     def get_action_block(
         self,
         name: str,
@@ -308,12 +267,13 @@ class Module:
         action_block = self.get_action_block(name=block_name, path=path)
         action_block.import_context()
 
-        # triggers = action_block.triggers()
-        # for trigger in triggers:
-        #     self.import_context_sections(
-        #         block_name=trigger.block,
-        #         path=self.absolute_path,
-        #     )
+        # Import context sections from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            self.import_context(
+                block_name=trigger.block,
+                path=trigger.absolute_path,
+            )
 
     def compile(
         self,
@@ -329,6 +289,14 @@ class Module:
         action_block = self.get_action_block(name=block_name, path=path)
         action_block.compile()
 
+        # Compile templates from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            self.compile(
+                block_name=trigger.block,
+                path=trigger.absolute_path,
+            )
+
     def run(
         self,
         block_name: str,
@@ -343,7 +311,20 @@ class Module:
         :param path: Absolute path in case of block_name == 'on_modified'.
         """
         action_block = self.get_action_block(name=block_name, path=path)
-        return action_block.run(default_timeout=default_timeout)
+        results = action_block.run(default_timeout=default_timeout)
+
+        # Run shell commands from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            new_results = self.run(
+                block_name=trigger.block,
+                default_timeout=default_timeout,
+                path=trigger.absolute_path,
+            )
+            if new_results:
+                results += new_results
+
+        return results
 
     def interpolate_string(self, string: str) -> str:
         """

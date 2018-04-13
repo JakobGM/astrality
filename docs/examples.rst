@@ -77,4 +77,5 @@ Or, alternatively, we can just :ref:`trigger <trigger_action>` the ``on_startup`
                 - shell: feh --bg-fill modules/weekday_wallpaper/{event}.*
 
         on_event:
-            trigger: on_startup
+            trigger: 
+                - block: on_startup
