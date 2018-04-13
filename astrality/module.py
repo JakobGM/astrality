@@ -5,7 +5,7 @@ from collections import namedtuple
 from datetime import timedelta
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
@@ -92,6 +92,13 @@ class Module:
 
     Commands are run in the users shell, and can use the following placeholder:
     - {event}: The event specified by the event_listener instance.
+
+    :param module_config: Dictionary keyed to module name and containing all
+        module options.
+    :param module_directory: The directory which contains all module relevant
+        files, such as `config.yml`. All relative paths use this as anchor.
+    :param replacer: String options should be processed by this function in
+        order to replace relevant placeholders.
     """
 
     module_config: ModuleConfigListDict
@@ -100,6 +107,7 @@ class Module:
         self,
         module_config: ModuleConfig,
         module_directory: Path,
+        replacer: Callable[[str], str] = lambda string: string,
     ) -> None:
         """
         Initialize Module object with a section from a config dictionary.
@@ -124,6 +132,9 @@ class Module:
         # The source directory for the module, determining how to interpret
         # relative paths in the module config
         self.directory = module_directory
+
+        # All user string options should be processed by the replacer
+        self.replace = replacer
 
         self.module_config = self.populate_event_blocks(
             module_config=module_config[section],
@@ -351,7 +362,12 @@ class Module:
 
         For now, the module only replaces {event} placeholders.
         """
-        return string.replace('{event}', self.event_listener.event())
+        return self.replace(
+            string.replace(
+                '{event}',
+                self.event_listener.event(),
+            ),
+        )
 
     @staticmethod
     def valid_class_section(
@@ -449,6 +465,7 @@ class ModuleManager:
                 module = Module(
                     module_config=module_config,
                     module_directory=module_directory,
+                    replacer=self.interpolate_string,
                 )
                 self.modules[module.name] = module
 
@@ -471,6 +488,7 @@ class ModuleManager:
             module = Module(
                 module_config=module_config,
                 module_directory=self.config_directory,
+                replacer=self.interpolate_string,
             )
             self.modules[module.name] = module
 
@@ -929,8 +947,6 @@ class ModuleManager:
         module_name: Optional[str] = None,
     ) -> None:
         """Run a shell command defined by a managed module."""
-        command = self.interpolate_string(command)
-
         if module_name:
             logger.info(f'[module/{module_name}] Running command "{command}".')
 
@@ -941,7 +957,15 @@ class ModuleManager:
         )
 
     def interpolate_string(self, string: str) -> str:
-        """Replace all template placeholders with the compilation path."""
+        """
+        Replace all template placeholders with the compilation path.
+
+        This function is passed as a reference to all modules, making them
+        perform the replacement instead.
+
+        :return: String where '{path/to/template}' has been replaced with
+            'path/to/compilation/target.
+        """
         for specified_path, template in self.templates.items():
             string = string.replace(
                 '{' + specified_path + '}',
