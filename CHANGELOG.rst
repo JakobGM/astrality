@@ -43,6 +43,26 @@ Changed
           - shell: command1
           - shell: command2
 
+- The ``trigger`` module action is now a dictionary instead of a string. Now
+  you specify the block to be triggered as a string value keyed to ``block``.
+  ``on_modified`` blocks need to supply an additional ``path`` key indicating
+  which file modification block to trigger.
+
+  *Old syntax*
+
+  .. code-block:: yaml
+
+      trigger:
+          - on_startup
+          - on_modified:path/to/file
+
+  .. code-block:: yaml
+
+      trigger:
+          - block: on_startup
+          - block: on_modified
+            path: path/to/file
+
 - Template metadata is now copied to compilation targets, including permission
   bits. Thanks to @sshashank124 for the implementation!
 

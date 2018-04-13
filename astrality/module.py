@@ -11,7 +11,12 @@ from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
 from astrality import compiler
-from astrality.actions import ActionBlock, ActionBlockDict, ActionBlockListDict
+from astrality.actions import (
+    ActionBlock,
+    ActionBlockDict,
+    ActionBlockListDict,
+    TriggerDict,
+)
 from astrality.compiler import context
 from astrality.config import (
     ApplicationConfig,
@@ -242,22 +247,21 @@ class Module:
             *self.module_config['on_modified'].values(),
         )
         for event_block in event_blocks:
-            event_blocks_to_import = event_block['trigger']
-
-            for event_block_to_import in event_blocks_to_import:
+            for trigger in event_block['trigger']:
                 self._import_event_block(
-                    from_event_block=event_block_to_import,
+                    trigger=trigger,
                     into=event_block,
                 )
 
     def _import_event_block(
         self,
-        from_event_block: str,
+        trigger: TriggerDict,
         into: ActionBlockListDict,
     ) -> None:
         """Merge one event block with another one."""
-        if 'on_modified:' in from_event_block:
-            template = from_event_block[12:]
+        from_event_block = trigger['block']
+        if from_event_block == 'on_modified':
+            template = trigger['path']
             from_event_block_dict = self.module_config['on_modified'].get(
                 template,
                 {},
@@ -303,6 +307,13 @@ class Module:
         """
         action_block = self.get_action_block(name=block_name, path=path)
         action_block.import_context()
+
+        # triggers = action_block.triggers()
+        # for trigger in triggers:
+        #     self.import_context_sections(
+        #         block_name=trigger.block,
+        #         path=self.absolute_path,
+        #     )
 
     def compile(
         self,
