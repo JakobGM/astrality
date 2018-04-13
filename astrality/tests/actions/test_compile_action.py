@@ -166,3 +166,35 @@ def test_that_current_directory_is_set_correctly(template_directory):
     )
     target = compile_action.execute()
     assert target.read_text() == '/tmp'
+
+def test_retrieving_all_compiled_templates(template_directory, tmpdir):
+    """Compile actions should return all compiled templates."""
+    target1, target2 = Path(tmpdir) / 'target.tmp', Path(tmpdir) / 'target2'
+    targets = [target1, target2]
+    template = Path('no_context.template')
+    compile_dict = {
+        'template': str(template),
+        'target': '{target}',
+    }
+
+    # First replace {target} with target1, then with target2, by doing some
+    # trickery with the replacer function.
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=template_directory,
+        replacer=lambda x: x.format(
+            target=targets.pop(),
+        ) if x == '{target}' else x,
+        context_store={},
+    )
+    assert compile_action.performed_compilations() == {}
+
+    compile_action.execute()
+    assert compile_action.performed_compilations() == {
+        template_directory / template: {target2},
+    }
+
+    compile_action.execute()
+    assert compile_action.performed_compilations() == {
+        template_directory / template: {target1, target2},
+    }
