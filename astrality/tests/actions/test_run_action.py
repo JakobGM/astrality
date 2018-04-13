@@ -38,3 +38,54 @@ def test_use_of_replacer(tmpdir):
     command, result = run_action.execute()
     assert command == 'echo test'
     assert result == 'test'
+
+def test_run_timeout_specified_in_action_block(tmpdir):
+    """
+    Run actions can time out.
+
+    The option `timeout` overrides any timeout providided to `execute()`.
+    """
+    temp_dir = Path(tmpdir)
+    run_action = RunAction(
+        options={'shell': 'sleep 0.1 && echo hi', 'timeout': 0.05},
+        directory=temp_dir,
+        replacer=lambda x: x,
+        context_store={},
+    )
+    _, result = run_action.execute(default_timeout=10000)
+    assert result == ''
+
+    run_action = RunAction(
+        options={'shell': 'sleep 0.1 && echo hi', 'timeout': 0.2},
+        directory=temp_dir,
+        replacer=lambda x: x,
+        context_store={},
+    )
+    _, result = run_action.execute(default_timeout=0)
+    assert result == 'hi'
+
+def test_run_timeout_specified_in_execute(tmpdir):
+    """
+    Run actions can time out.
+
+    The the option `timeout` is not specified, use `default_timeout` argument
+    instead.
+    """
+    temp_dir = Path(tmpdir)
+    run_action = RunAction(
+        options={'shell': 'sleep 0.1 && echo hi'},
+        directory=temp_dir,
+        replacer=lambda x: x,
+        context_store={},
+    )
+    _, result = run_action.execute(default_timeout=0.05)
+    assert result == ''
+
+    run_action = RunAction(
+        options={'shell': 'sleep 0.1 && echo hi'},
+        directory=temp_dir,
+        replacer=lambda x: x,
+        context_store={},
+    )
+    _, result = run_action.execute(default_timeout=0.2)
+    assert result == 'hi'

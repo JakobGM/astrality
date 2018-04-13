@@ -11,7 +11,7 @@ from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
 from astrality import compiler
-from astrality.actions import ActionBlockDict, ActionBlockListDict
+from astrality.actions import ActionBlock, ActionBlockDict, ActionBlockListDict
 from astrality.compiler import context
 from astrality.config import (
     ApplicationConfig,
@@ -62,6 +62,15 @@ class ModuleConfigListDict(TypedDict, total=False):
     on_modified: Dict[str, ActionBlockListDict]
 
 
+class ModuleActionBlocks(TypedDict):
+    """Contents of Module().action_blocks."""
+
+    on_startup: ActionBlock
+    on_event: ActionBlock
+    on_exit: ActionBlock
+    on_modified: Dict[Path, ActionBlock]
+
+
 ModuleConfig = Dict[str, ModuleConfigDict]
 
 ContextSectionImport = namedtuple(
@@ -102,12 +111,14 @@ class Module:
     """
 
     module_config: ModuleConfigListDict
+    action_blocks: ModuleActionBlocks
 
     def __init__(
         self,
         module_config: ModuleConfig,
         module_directory: Path,
         replacer: Callable[[str], str] = lambda string: string,
+        context_store: compiler.Context = {},
     ) -> None:
         """
         Initialize Module object with a section from a config dictionary.
@@ -147,6 +158,31 @@ class Module:
         self.event_listener: EventListener = event_listener_factory(
             self.module_config.get('event_listener', {'type': 'static'}),
         )
+
+        self.context_store = context_store
+
+        # Create action block object for each available action block type
+        action_blocks: Dict = {'on_modified': {}}
+        for block_name in ('on_startup', 'on_event', 'on_exit'):
+            action_blocks[block_name] = ActionBlock(
+                action_block=self.module_config[block_name],  # type: ignore
+                directory=self.directory,
+                replacer=self.interpolate_string,
+                context_store=self.context_store,
+            )
+        for path_string, action_block_dict \
+                in self.module_config['on_modified'].items():
+            modified_path = expand_path(
+                path=Path(path_string),
+                config_directory=self.directory,
+            )
+            action_blocks['on_modified'][modified_path] = ActionBlock(
+                action_block=action_block_dict,
+                directory=self.directory,
+                replacer=self.interpolate_string,
+                context_store=self.context_store,
+            )
+        self.action_blocks = action_blocks  # type: ignore
 
     def populate_event_blocks(
         self,
@@ -240,58 +276,27 @@ class Module:
         into['import_context'].extend(from_event_block_dict['import_context'])
         into['compile'].extend(from_event_block_dict['compile'])
 
-    def commands(
+    def run(
         self,
-        block: str,
-        modified_file: Optional[str] = None,
-    ) -> Tuple[str, ...]:
+        block_name: str,
+        default_timeout: Union[int, float],
+        path: Optional[Path] = None,
+    ) -> Tuple[Tuple[str, str], ...]:
         """
-        Return shell commands to be run in action block.
+        Execute all run actions specified in block_name[:path].
 
-        Valid action blocks are: on_startup, on_event, on_exit, or on_modified.
-        A modified file action block is given by block='on_modified:file/path'.
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
         """
-        startup_commands: Tuple[str, ...]
-
-        if modified_file:
-            assert block == 'on_modified'
-            startup_commands = tuple(map(
-                lambda run_action: run_action['shell'],
-                self.module_config
-                ['on_modified'][modified_file]['run'],
-            ))
+        if path:
+            assert path.is_absolute()
+            assert block_name == 'on_modified'
+            action_block = self.action_blocks[block_name][path]  # type: ignore
         else:
-            assert block in ('on_startup', 'on_event', 'on_exit',)
-            startup_commands = tuple(map(
-                lambda run_action: run_action['shell'],
-                self.module_config[block]['run'],  # type: ignore
-            ))
+            assert block_name in ('on_startup', 'on_event', 'on_exit',)
+            action_block = self.action_blocks[block_name]  # type: ignore
 
-        if len(startup_commands) == 0:
-            logger.debug(f'[module/{self.name}] No {block} command specified.')
-            return ()
-        else:
-            return tuple(
-                self.interpolate_string(command)
-                for command
-                in startup_commands
-            )
-
-    def startup_commands(self) -> Tuple[str, ...]:
-        """Return commands to be run on Module instance startup."""
-        return self.commands('on_startup')
-
-    def on_event_commands(self) -> Tuple[str, ...]:
-        """Commands to be run when self.event_listener event changes."""
-        return self.commands('on_event')
-
-    def exit_commands(self) -> Tuple[str, ...]:
-        """Commands to be run on Module instance shutdown."""
-        return self.commands('on_exit')
-
-    def modified_commands(self, specified_path: str) -> Tuple[str, ...]:
-        """Commands to be run when a module template is modified."""
-        return self.commands('on_modified', specified_path)
+        return action_block.run(default_timeout=default_timeout)
 
     def context_section_imports(
         self,
@@ -466,6 +471,7 @@ class ModuleManager:
                     module_config=module_config,
                     module_directory=module_directory,
                     replacer=self.interpolate_string,
+                    context_store=self.application_context,
                 )
                 self.modules[module.name] = module
 
@@ -489,6 +495,7 @@ class ModuleManager:
                 module_config=module_config,
                 module_directory=self.config_directory,
                 replacer=self.interpolate_string,
+                context_store=self.application_context,
             )
             self.modules[module.name] = module
 
@@ -760,15 +767,11 @@ class ModuleManager:
     def startup(self):
         """Run all startup commands specified by the managed modules."""
         for module in self.modules.values():
-            startup_commands = module.startup_commands()
-            for command in startup_commands:
-                logger.info(f'[module/{module.name}] Running startup command.')
-                self.run_shell(
-                    command=command,
-                    timeout=self.global_modules_config.run_timeout,
-                    working_directory=module.directory,
-                    module_name=module.name,
-                )
+            logger.info(f'[module/{module.name}] Running startup commands.')
+            module.run(
+                block_name='on_startup',
+                default_timeout=self.global_modules_config.run_timeout,
+            )
 
         self.startup_done = True
 
@@ -780,15 +783,11 @@ class ModuleManager:
         module: Module,
     ):
         """Run all event change commands specified by a managed module."""
-        on_event_commands = module.on_event_commands()
-        for command in on_event_commands:
-            logger.info(f'[module/{module.name}] Running event command.')
-            self.run_shell(
-                command=command,
-                timeout=self.global_modules_config.run_timeout,
-                working_directory=module.directory,
-                module_name=module.name,
-            )
+        logger.info(f'[module/{module.name}] Running event commands.')
+        module.run(
+            block_name='on_event',
+            default_timeout=self.global_modules_config.run_timeout,
+        )
 
     def exit(self):
         """
@@ -802,15 +801,11 @@ class ModuleManager:
 
         # Then run all shell commands
         for module in self.modules.values():
-            exit_commands = module.exit_commands()
-            for command in exit_commands:
-                logger.info(f'[module/{module.name}] Running exit command.')
-                self.run_shell(
-                    command=command,
-                    timeout=self.global_modules_config.run_timeout,
-                    working_directory=module.directory,
-                    module_name=module.name,
-                )
+            logger.info(f'[module/{module.name}] Running exit commands.')
+            module.run(
+                block_name='on_exit',
+                default_timeout=self.global_modules_config.run_timeout,
+            )
 
         if hasattr(self, 'temp_files'):
             for temp_file in self.temp_files:
@@ -854,15 +849,12 @@ class ModuleManager:
             )
 
         # Lastly, run commands specified in on_modified block
-        modified_commands = module.modified_commands(specified_path)
-        for command in modified_commands:
-            logger.info(f'[module/{module.name}] Running modified command.')
-            self.run_shell(
-                command=command,
-                timeout=self.global_modules_config.run_timeout,
-                working_directory=module.directory,
-                module_name=module.name,
-            )
+        logger.info(f'[module/{module.name}] Running modified commands.')
+        module.run(
+            'on_modified',
+            path=modified,
+            default_timeout=self.global_modules_config.run_timeout,
+        )
 
     def file_system_modified(self, modified: Path) -> None:
         """

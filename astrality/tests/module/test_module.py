@@ -138,20 +138,6 @@ class TestModuleClass:
         assert isinstance(static_module.event_listener, event_listener.Static)
 
     @freeze_time('2018-01-27')
-    def test_get_shell_commands_with_special_interpolations(
-        self,
-        module,
-        single_module_manager,
-        caplog,
-    ):
-        assert module.startup_commands() == ('echo saturday',)
-
-        compilation_target = '/tmp/compiled_result'
-        assert single_module_manager.interpolate_string(
-            module.on_event_commands()[0],
-        ) == f'echo {compilation_target}'
-
-    @freeze_time('2018-01-27')
     def test_running_module_manager_commands_with_special_interpolations(
         self,
         single_module_manager,
@@ -159,9 +145,9 @@ class TestModuleClass:
     ):
         single_module_manager.startup()
         assert (
-            'astrality',
+            'astrality.actions',
             logging.INFO,
-            '[module/test_module] Running command "echo saturday".',
+            'Running command "echo saturday".',
         ) in caplog.record_tuples
         assert (
             'astrality',
@@ -175,9 +161,9 @@ class TestModuleClass:
         )
         compilation_target = '/tmp/compiled_result'
         assert (
-            'astrality',
+            'astrality.actions',
             logging.INFO,
-            '[module/test_module] Running command "echo /tmp/compiled_result".',
+            'Running command "echo /tmp/compiled_result".',
         ) in caplog.record_tuples
         assert (
             'astrality',
@@ -247,12 +233,12 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
-                '[module/test_module] Running startup command.',
+                '[module/test_module] Running startup commands.',
             ),
             (
-                'astrality',
+                'astrality.actions',
                 logging.INFO,
-                '[module/test_module] Running command "echo saturday".',
+                'Running command "echo saturday".',
             ),
             (
                 'astrality',
@@ -276,8 +262,8 @@ class TestModuleClass:
         assert caplog.record_tuples == [
             (
                 'astrality',
-                logging.DEBUG,
-                '[module/test_module] No on_startup command specified.',
+                logging.INFO,
+                '[module/test_module] Running startup commands.',
             ),
         ]
 
@@ -299,12 +285,12 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
-                '[module/test_module] Running event command.',
+                '[module/test_module] Running event commands.',
             ),
             (
-                'astrality',
+                'astrality.actions',
                 logging.INFO,
-                f'[module/test_module] Running command "echo {compiled_template}".',
+                f'Running command "echo {compiled_template}".',
             ),
             (
                 'astrality',
@@ -331,8 +317,8 @@ class TestModuleClass:
         assert caplog.record_tuples == [
             (
                 'astrality',
-                logging.DEBUG,
-                '[module/test_module] No on_event command specified.',
+                logging.INFO,
+                '[module/test_module] Running event commands.',
             ),
         ]
 
@@ -342,12 +328,12 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
-                '[module/test_module] Running exit command.',
+                '[module/test_module] Running exit commands.',
             ),
             (
-                'astrality',
+                'astrality.actions',
                 logging.INFO,
-                '[module/test_module] Running command "echo exit".',
+                'Running command "echo exit".',
             ),
             (
                 'astrality',
@@ -369,8 +355,8 @@ class TestModuleClass:
         assert caplog.record_tuples == [
             (
                 'astrality',
-                logging.DEBUG,
-                '[module/test_module] No on_exit command specified.',
+                logging.INFO,
+                '[module/test_module] Running exit commands.',
             ),
         ]
 
@@ -510,12 +496,12 @@ def test_running_finished_tasks_command(
         (
             'astrality',
             logging.INFO,
-            '[module/test_module] Running startup command.',
+            '[module/test_module] Running startup commands.',
         ),
         (
-            'astrality',
+            'astrality.actions',
             logging.INFO,
-            '[module/test_module] Running command "echo thursday".',
+            'Running command "echo thursday".',
         ),
         (
             'astrality',
@@ -538,12 +524,12 @@ def test_running_finished_tasks_command(
         (
             'astrality',
             logging.INFO,
-            '[module/test_module] Running event command.',
+            '[module/test_module] Running event commands.',
         ),
         (
-            'astrality',
+            'astrality.actions',
             logging.INFO,
-            '[module/test_module] Running command "echo /tmp/compiled_result".',
+            'Running command "echo /tmp/compiled_result".',
         ),
         (
             'astrality',
@@ -959,11 +945,12 @@ def test_trigger_event_module_action(
     module_manager = ModuleManager(application_config)
 
     # Check that all run commands have been imported into startup block
-    assert module_manager.modules['A'].startup_commands() == (
-        'echo startup',
-        'echo on_event',
-        'echo exit',
-        'echo modified.templateA',
+    results = module_manager.modules['A'].run('on_startup', default_timeout=1)
+    assert results == (
+        ('echo startup', 'startup',),
+        ('echo on_event', 'on_event',),
+        ('echo exit', 'exit',),
+        ('echo modified.templateA', 'modified.templateA',),
     )
 
     # Check that all context section imports are available in startup block
@@ -980,12 +967,11 @@ def test_trigger_event_module_action(
         [{'template': 'templateA'}]
 
     # Double check that the other sections are not affected
-    assert module_manager.modules['A'].on_event_commands() == (
-        'echo on_event',
-    )
-    assert module_manager.modules['A'].exit_commands() == (
-        'echo exit',
-    )
+    results = module_manager.modules['A'].run('on_event', default_timeout=1)
+    assert results == (('echo on_event', 'on_event'),)
+
+    results = module_manager.modules['A'].run('on_exit', default_timeout=1)
+    assert results == (('echo exit', 'exit'),)
 
     assert module_manager.modules['A'].context_section_imports('on_event') == (
         ContextSectionImport(
@@ -1017,6 +1003,7 @@ def test_not_using_list_when_specifiying_trigger_action(
     module_manager = ModuleManager(application_config)
 
     # Check that all run commands have been imported into startup block
-    assert module_manager.modules['A'].startup_commands() == (
-        'echo on_event',
+    result = module_manager.modules['A'].run('on_event', default_timeout=1)
+    assert result == (
+        ('echo on_event', 'on_event',),
     )
