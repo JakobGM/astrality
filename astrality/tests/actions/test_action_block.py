@@ -95,3 +95,36 @@ def test_retrieving_triggers_from_action_block_without_triggers():
     )
 
     assert action_block.triggers() == tuple()
+
+def test_retrieving_all_compiled_templates(template_directory, tmpdir):
+    """All earlier compilations should be retrievable."""
+    template1 = template_directory / 'empty.template'
+    template2 = template_directory / 'no_context.template'
+
+    temp_dir = Path(tmpdir)
+    target1 = temp_dir / 'target1.tmp'
+    target2 = temp_dir / 'target2.tmp'
+    target3 = temp_dir / 'target3.tmp'
+
+    action_block_dict = {
+        'compile': [
+            {'template': str(template1), 'target': str(target1)},
+            {'template': str(template1), 'target': str(target2)},
+            {'template': str(template2), 'target': str(target3)},
+        ],
+    }
+
+    action_block = ActionBlock(
+        action_block=action_block_dict,
+        directory=template_directory,
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    assert action_block.performed_compilations() == {}
+
+    action_block.execute()
+    assert action_block.performed_compilations() == {
+        template1: {target1, target2},
+        template2: {target3},
+    }

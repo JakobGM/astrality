@@ -18,14 +18,17 @@ which could be imported and accessed independently from other modules.
 """
 
 import abc
+from collections import defaultdict
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
     Any,
     Callable,
+    DefaultDict,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
 )
@@ -189,6 +192,12 @@ class CompileAction(Action):
 
     priority = 200
 
+    def __init__(self, *args, **kwargs) -> None:
+        """Construct compile action object."""
+        super().__init__(*args, **kwargs)
+        self._performed_compilations: DefaultDict[Path, Set[Path]] = \
+            defaultdict(set)
+
     def execute(self) -> Optional[Path]:
         """
         Compile template to target destination.
@@ -221,7 +230,18 @@ class CompileAction(Action):
                 f'"{template}" to target "{target}". '
                 'Template does not exist.',
             )
+
+        self._performed_compilations[template].add(target)
         return target
+
+    def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
+        """
+        Return dictionary containing all performed compilations.
+
+        :return: Dictinary with keys containing compiled templates, and values
+            as a set of target paths.
+        """
+        return self._performed_compilations
 
     def _create_temp_file(self, name) -> Path:
         """
@@ -473,3 +493,17 @@ class ActionBlock:
         self.import_context()
         self.compile()
         self.run()
+
+    def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
+        """
+        Return all earlier performed compilations.
+
+        :return: Dictionary with template keys and target path set.
+        """
+        all_compilations: DefaultDict[Path, Set[Path]] = defaultdict(set)
+        for compile_action in self._compile_actions:
+            compilations = compile_action.performed_compilations()
+            for template, targets in compilations.items():
+                all_compilations[template] |= targets
+
+        return all_compilations
