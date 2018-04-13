@@ -817,7 +817,11 @@ def test_trigger_event_module_action(
         'module/A': {
             'event_listener': {'type': 'weekday'},
             'on_startup': {
-                'trigger': ['on_event', 'on_exit', 'on_modified:templateA'],
+                'trigger': [
+                    {'block': 'on_event',},
+                    {'block': 'on_exit',},
+                    {'block': 'on_modified', 'path': 'templateA',},
+                ],
                 'run': [{'shell': 'echo startup'}],
             },
             'on_event': {
@@ -882,7 +886,7 @@ def test_not_using_list_when_specifiying_trigger_action(
     application_config = {
         'module/A': {
             'on_startup': {
-                'trigger': 'on_event',
+                'trigger': {'block': 'on_event',},
             },
             'on_event': {
                 'run': [{'shell': 'echo on_event'}],
@@ -897,7 +901,7 @@ def test_not_using_list_when_specifiying_trigger_action(
     module_manager = ModuleManager(application_config)
 
     # Check that all run commands have been imported into startup block
-    result = module_manager.modules['A'].run('on_event', default_timeout=1)
+    result = module_manager.modules['A'].run('on_startup', default_timeout=1)
     assert result == (
         ('echo on_event', 'on_event',),
     )

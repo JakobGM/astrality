@@ -35,7 +35,8 @@ module/solar_desktop:
         # Execute all actions specified in `on_event` on Astrality startup,
         # since the conky templates are compiled in that block, and we need
         # those compiled templates in the run actions below.
-        trigger: on_event
+        trigger:
+            - block: on_event
 
         # Start conky modules on startup.
         # We do not have to restart conky when we recompile the templates,

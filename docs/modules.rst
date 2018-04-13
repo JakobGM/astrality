@@ -341,9 +341,12 @@ Example:
 Trigger action blocks
 ---------------------
 
-From one :ref:`action block <modules_action_blocks>` you can trigger another action block by specifying the ``trigger`` action.
+From one :ref:`action block <modules_action_blocks>` you can trigger another action block by specifying a ``trigger`` action.
 
-The ``trigger`` option accepts ``on_startup``, ``on_event``, ``on_exit``, and ``on_modified:file_path``, either as a single string, or a list with any combination of these.
+Each trigger option is a dictionary with a mandatory ``block`` key, on of
+``on_startup``, ``on_event``, ``on_exit``, or ``on_modified``. In the case of
+setting ``block: on_modified``, you have to specify an additional ``path`` key
+indicating which file modification block you want to trigger.
 
 An example of a module using ``trigger`` actions:
 
@@ -358,8 +361,9 @@ An example of a module using ``trigger`` actions:
                 - shell: startup_command
 
             trigger:
-                - on_event
-                - 'on_modified:templates/template'
+                - block: on_event
+                - block: on_modified
+                  path: templates/template
 
         on_event:
             import_context:
@@ -367,7 +371,9 @@ An example of a module using ``trigger`` actions:
                   from_section: '{event}'
                   to_section: a_stuff
 
-            trigger: on_modified:templates/templateA
+            trigger: 
+                - block: on_modified
+                  path: templates/templateA
 
         on_modified:
             templates/A.template:

@@ -18,7 +18,7 @@ def test_that_module_configuration_is_processed_correctly_before_use(
         'on_event': {
             'import_context': {'from_file': '/test'},
             'run': ['echo 1', 'echo 2'],
-            'trigger': 'on_modified:/some/file',
+            'trigger': {'block': 'on_modified', 'path': '/some/file'},
         },
         'on_modified': {
             '/some/file': {
@@ -43,7 +43,7 @@ def test_that_module_configuration_is_processed_correctly_before_use(
             'import_context': [{'from_file': '/test'}],
             'run': ['echo 1', 'echo 2'],
             'compile': [{'template': '/some/template'}],
-            'trigger': ['on_modified:/some/file'],
+            'trigger': [{'block': 'on_modified', 'path': '/some/file',}],
         },
         'on_exit': {
             'run': [],

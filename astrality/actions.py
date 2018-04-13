@@ -307,10 +307,16 @@ class RunAction(Action):
         return command, result
 
 
-class TriggerDict(TypedDict):
+class TriggerDictRequired(TypedDict):
     """Required fields of a trigger module action."""
 
     block: str
+
+
+class TriggerDict(TriggerDictRequired, total=False):
+    """Optional fields of a trigger module action."""
+
+    path: str
 
 
 class Trigger:
@@ -390,7 +396,7 @@ class ActionBlockDict(TypedDict, total=False):
     import_context: Union[ImportContextDict, List[ImportContextDict]]
     compile: Union[CompileDict, List[CompileDict]]
     run: Union[RunDict, List[RunDict]]
-    trigger: Union[str, List[str]]
+    trigger: Union[TriggerDict, List[TriggerDict]]
 
 
 class ActionBlockListDict(TypedDict, total=False):
@@ -405,7 +411,7 @@ class ActionBlockListDict(TypedDict, total=False):
     import_context: List[ImportContextDict]
     compile: List[CompileDict]
     run: List[RunDict]
-    trigger: List[str]
+    trigger: List[TriggerDict]
 
 
 class ActionBlock:
