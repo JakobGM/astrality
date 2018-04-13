@@ -863,10 +863,6 @@ def test_trigger_event_module_action(
         'car': {'manufacturer': 'Mercedes'},
     }
 
-    # Check that all compile actions have been merged into startup block
-    assert module_manager.modules['A'].module_config['on_startup']['compile'] ==\
-        [{'template': 'templateA'}]
-
     # Double check that the other sections are not affected
     results = module_manager.modules['A'].run('on_event', default_timeout=1)
     assert results == (('echo on_event', 'on_event'),)
