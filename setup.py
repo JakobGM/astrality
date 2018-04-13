@@ -45,5 +45,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Desktop Environment :: File Managers',
         'Topic :: Text Processing',
-    ]
+    ],
 )

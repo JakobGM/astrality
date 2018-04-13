@@ -96,7 +96,7 @@ def main(logging_level: str = 'INFO', test: bool = False):
             else:
                 logger.info(
                     f'Waiting {module_manager.time_until_next_event()} '
-                    'until next event change and ensuing update.'
+                    'until next event change and ensuing update.',
                 )
 
                 # Weird bug related to sleeping more than 10e7 seconds
@@ -113,7 +113,6 @@ def main(logging_level: str = 'INFO', test: bool = False):
 
 def other_astrality_pids() -> Set[int]:
     """Return the process ids (PIDs) of any other Astrality instances."""
-
     # Get all processes instanciated from this file
     result = subprocess.Popen(
         ['pgrep', '-f', 'astrality'],
@@ -137,7 +136,7 @@ def kill_old_astrality_processes() -> None:
             os.kill(pid, signal.SIGTERM)
         except OSError:
             logger.error(
-                f'Could not kill old instance of astrality with pid {pid}.'
+                f'Could not kill old instance of astrality with pid {pid}.',
             )
             logger.error('Continuing anyway...')
             failed_exits += 1

@@ -92,9 +92,9 @@ def infer_config_location(
 
     if not config_file.is_file():
         logger.warning(
-            'Configuration file not found in its expected path '
-            + str(config_file) +
-            '.'
+            'Configuration file not found in its expected path ' +
+            str(config_file) +
+            '.',
         )
         config_directory = Path(__file__).parent.absolute() / 'config'
         config_file = config_directory / 'astrality.yml'
@@ -118,7 +118,6 @@ def dict_from_config_file(
     And shell commands can be inserted like this:
         {{ 'shell command' | shell }}
     """
-
     if not config_file.is_file():  # pragma: no cover
         error_msg = f'Could not load config file "{config_file}".'
         logger.critical(error_msg)
@@ -149,7 +148,7 @@ def infer_runtime_variables_from_config(
             'config_directory': config_directory,
             'config_file': config_file,
             'temp_directory': temp_directory,
-        }
+        },
     }
 
 
@@ -565,7 +564,7 @@ class EnabledModules:
             except MisconfiguredConfigurationFile:
                 logger.error(
                     f'Invalid module name syntax {str(enabling_statement)} '
-                    'in enabled_modules configuration.'
+                    'in enabled_modules configuration.',
                 )
                 continue
 
@@ -623,7 +622,7 @@ class EnabledModules:
         except FileNotFoundError:
             logger.error(
                 f'Tried to search for module directories in "{within}", '
-                'but directory does not exist!.'
+                'but directory does not exist!.',
             )
             return ()
 
@@ -718,7 +717,7 @@ class GlobalModulesConfig:
                 [
                     {'name': '*', 'trusted': True},
                     {'name': '*::*', 'trusted': True},
-                ]
+                ],
             ),
             config_directory=self.config_directory,
             modules_directory=self.modules_directory,
@@ -770,7 +769,7 @@ def filter_config_file(
         logger.warning(
             f'Non-existent module configuration file "{config_file}" '
             'Skipping enabled module '
-            f'"{prepend}{enabled_module_name}"'
+            f'"{prepend}{enabled_module_name}"',
         )
         return {}
 
@@ -782,7 +781,7 @@ def filter_config_file(
     elif not isinstance(modules_dict, dict):  # pragma: no cover
         logger.critical(
             f'Configuration file "{config_file}" not formated as '
-            'a dictionary at root indentation.'
+            'a dictionary at root indentation.',
         )
         raise MisconfiguredConfigurationFile
 

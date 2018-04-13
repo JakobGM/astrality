@@ -43,7 +43,7 @@ def clone_repo(
 
         raise GithubModuleError(
             f'Could not clone repository "{user}/{repository}.\n'
-            f'Return value from cloning operation: "{result}".'
+            f'Return value from cloning operation: "{result}".',
         )
 
     return repository_directory
@@ -71,7 +71,7 @@ def clone_or_pull_repo(
     if not (github_repo_directory / '.git').is_dir():
         logger.error(
             f'Tried to update git module directory "{github_repo_directory}", '
-            'but the directory does not contain a ".git" sub-directory.'
+            'but the directory does not contain a ".git" sub-directory.',
         )
         return github_repo_directory
 
@@ -85,7 +85,7 @@ def clone_or_pull_repo(
     if result is False:
         raise GithubModuleError(
             f'Could not git pull module directory "{github_repo_directory}".\.'
-            f'Return value from git pull operation: "{result}".'
+            f'Return value from git pull operation: "{result}".',
         )
 
     return github_repo_directory

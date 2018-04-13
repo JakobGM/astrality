@@ -146,7 +146,7 @@ class Module:
 
         This prevents us from having to use .get() all over the Module.
         """
-        for event in ('on_startup', 'on_event', 'on_exit', ):
+        for event in ('on_startup', 'on_event', 'on_exit',):
             configured_event_block = module_config.get(event, {})
             module_config[event] = {  # type: ignore
                 'import_context': [],
@@ -184,7 +184,7 @@ class Module:
             module_config['on_exit'],
             *module_config['on_modified'].values(),
         ):
-            for action in ('import_context', 'compile', 'run', 'trigger', ):
+            for action in ('import_context', 'compile', 'run', 'trigger',):
                 event_block[action] = cast_to_list(  # type: ignore
                     event_block[action],  # type: ignore
                 )
@@ -222,7 +222,8 @@ class Module:
             )
         else:
             assert from_event_block in ('on_startup', 'on_event', 'on_exit',)
-            from_event_block_dict = self.module_config[from_event_block]  # type: ignore
+            from_event_block_dict = \
+                self.module_config[from_event_block]  # type: ignore
 
         into['run'].extend(from_event_block_dict['run'])
         into['import_context'].extend(from_event_block_dict['import_context'])
@@ -245,9 +246,8 @@ class Module:
             assert block == 'on_modified'
             startup_commands = tuple(map(
                 lambda run_action: run_action['shell'],
-                self.module_config[  # type: ignore
-                'on_modified'
-                ][modified_file]['run'],
+                self.module_config
+                ['on_modified'][modified_file]['run'],
             ))
         else:
             assert block in ('on_startup', 'on_event', 'on_exit',)
@@ -340,7 +340,7 @@ class Module:
                     into_section=to_section,
                     from_section=from_section,
                     from_config_file=config_path,
-                )
+                ),
             )
 
         return tuple(context_section_imports)
@@ -393,7 +393,7 @@ class Module:
                     return False
 
             logger.info(
-                f'[{module_name}] Module satisfies all requirements.'
+                f'[{module_name}] Module satisfies all requirements.',
             )
             return True
 
@@ -703,7 +703,8 @@ class ModuleManager:
             modules = self.modules.values()
 
         for module in modules:
-            for compilation in module.module_config[trigger]['compile']:  # type: ignore
+            for compilation in module.module_config\
+                    [trigger]['compile']:  # type: ignore
                 specified_path = compilation['template']
                 template = self.templates[specified_path]
                 self.compile_template(
@@ -735,7 +736,7 @@ class ModuleManager:
         except TemplateNotFound:
             logger.error(
                 f'Could not compile template "{source}" to target "{target}". '
-                'Template does not exist.'
+                'Template does not exist.',
             )
 
     def startup(self):
