@@ -167,7 +167,7 @@ def compile_template(
         else:
             raise MisconfiguredConfigurationFile(
                 f'Tried to write template "{template}" to path "{target}" '
-                f'with unsupported permission type "{permissions}".'
+                f'with unsupported permission type "{permissions}".',
             )
 
         target.chmod(mode)

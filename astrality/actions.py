@@ -425,10 +425,10 @@ class ActionBlock:
                 self,
                 f'_{identifier}_actions',
                 [action_type(  # type: ignore
-                        options=action_config,
-                        directory=directory,
-                        replacer=replacer,
-                        context_store=context_store,
+                    options=action_config,
+                    directory=directory,
+                    replacer=replacer,
+                    context_store=context_store,
                 ) for action_config in action_configs
                 ],
             )

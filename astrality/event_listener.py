@@ -50,7 +50,7 @@ class EventListener(abc.ABC):
                     f'[event_listener/{self.name}] option `force_event` set to '
                     f'{force_event}, which is not a valid event type for '
                     f'the event_listener type "{self.name}": {self.events}.'
-                    'Still using the option in case it is intentional.'
+                    'Still using the option in case it is intentional.',
                 )
 
             return force_event  # type: ignore
@@ -277,7 +277,7 @@ class Periodic(EventListener):
 
     def _event(self) -> str:
         return str(int(
-            (datetime.now() - self.initialization_time) / self.timedelta
+            (datetime.now() - self.initialization_time) / self.timedelta,
         ))
 
     def time_until_next_event(self) -> timedelta:
