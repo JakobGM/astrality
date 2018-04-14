@@ -1,9 +1,12 @@
+"""Tests for configuraition dictionary management."""
 import shutil
 
 import pytest
 
 from astrality.module import GlobalModulesConfig, Module, ModuleManager
 
+# TODO: Delete this after populate_event_blocks is made uneccessary
+@pytest.mark.skip(reason='No longer in use after module/refactor')
 def test_that_module_configuration_is_processed_correctly_before_use(
     test_config_directory,
 ):

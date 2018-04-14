@@ -262,15 +262,15 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
     expanded to the home directory of $USER.
     """
+    # Expand any tilde expressions for user home directory
     path = Path.expanduser(path)
 
+    # Use config directory as anchor for relative paths
     if not path.is_absolute():
-        path = Path(
-            config_directory,
-            path,
-        )
+        path = config_directory / path
 
-    return path
+    # Return path where symlinks such as '..' are resolved
+    return path.resolve()
 
 
 class EnablingStatementRequired(TypedDict):

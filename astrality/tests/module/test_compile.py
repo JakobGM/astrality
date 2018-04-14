@@ -68,7 +68,6 @@ def test_that_module_manager_detects_all_managed_templates(
     test_config_directory,
 ):
     """Test that all compiled templates are identified."""
-
     module_manager = compiling_fixtures['module_manager']
     template1 = compiling_fixtures['template1']
     template2 = compiling_fixtures['template2']
@@ -86,19 +85,3 @@ def test_that_module_manager_detects_all_managed_templates(
 
     assert module_manager.templates[str(template2)].target == \
         test_config_directory / template2_target
-
-def test_module_manager_placeholders_are_correctly_generated(
-    compiling_fixtures,
-    test_config_directory,
-):
-    """Test that placeholders are generated."""
-    module_manager = compiling_fixtures['module_manager']
-
-    template2 = compiling_fixtures['template2']
-    template2_target = compiling_fixtures['template2_target']
-
-    string_replacements = module_manager.string_replacements
-
-    assert string_replacements[str(template2)] == str(
-        test_config_directory / template2_target,
-    )

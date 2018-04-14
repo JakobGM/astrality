@@ -1,11 +1,23 @@
 """Module implementing user configured custom functionality."""
 
 import logging
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from datetime import timedelta
 from pathlib import Path
+import re
 from tempfile import NamedTemporaryFile
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Callable,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Match,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
@@ -326,17 +338,79 @@ class Module:
 
         return results
 
+    def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
+        """
+        Return all templates that have been compiled and their target(s).
+
+        :return: Dictionary with template path keys and values as a set of
+            compilation target paths for that template.
+        """
+        performed_compilations: DefaultDict[Path, Set[Path]] = defaultdict(set)
+        for action_block in (
+            self.action_blocks['on_startup'],  # type: ignore
+            self.action_blocks['on_event'],
+            self.action_blocks['on_exit'],
+            *self.action_blocks['on_modified'].values(),
+        ):
+            for template, targets \
+                    in action_block.performed_compilations().items():
+                performed_compilations[template] |= targets
+
+        return performed_compilations
+
     def interpolate_string(self, string: str) -> str:
         """
         Replace all module placeholders in string.
 
-        For now, the module only replaces {event} placeholders.
+        The configuration string processor replaces {event} with the current
+        module event, and {/path/to/template} with the compilation target.
+
+        :return: String where '{path/to/template}' has been replaced with
+            'path/to/compilation/target', and {event} repleced with last event.
         """
-        return self.replace(
+        # First replace any event placeholders with the last event, this must
+        # be done before path replacements as paths could contain {event}.
+        string = self.replace(
             string.replace(
                 '{event}',
                 self.event_listener.event(),
             ),
+        )
+
+        placeholder_pattern = re.compile(r'({.+})')
+        performed_compilations = self.performed_compilations()
+
+        def replace_placeholders(match: Match) -> str:
+            """Regex file path match replacer."""
+            # Remove enclosing curly brackets
+            specified_path = match.group(0)[1:-1]
+
+            absolute_path = expand_path(
+                path=Path(specified_path),
+                config_directory=self.directory,
+            )
+
+            if absolute_path in performed_compilations:
+                # TODO: Is joining the right thing to do here?
+                return " ".join(
+                    [
+                        str(path)
+                        for path
+                        in performed_compilations[absolute_path]
+                    ],
+                )
+            else:
+                logger.error(
+                    'String placeholder {' + specified_path + '} '
+                    f'could not be replaced. "{specified_path}" '
+                    'has not been compiled.',
+                )
+                # Return the placeholder left alone
+                return '{' + specified_path + '}'
+
+        return placeholder_pattern.sub(
+            repl=replace_placeholders,
+            string=string,
         )
 
     @staticmethod
@@ -465,9 +539,6 @@ class ModuleManager:
             self.modules[module.name] = module
 
         self.templates = self.prepare_templates(self.modules.values())
-        self.string_replacements = self.generate_string_replacements(
-            self.templates,
-        )
 
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
@@ -567,8 +638,6 @@ class ModuleManager:
             self.last_module_events = self.module_events()
 
             # Perform all startup actions
-            self.import_context_sections('on_startup')
-            self.compile_templates('on_startup')
             self.startup()
         elif self.last_module_events != self.module_events():
             # One or more module events have changed, execute the event blocks
@@ -681,7 +750,12 @@ class ModuleManager:
             )
 
     def startup(self):
-        """Run all startup commands specified by the managed modules."""
+        """Run all startup actions specified by the managed modules."""
+        assert not self.startup_done
+
+        self.import_context_sections('on_startup')
+        self.compile_templates('on_startup')
+
         for module in self.modules.values():
             logger.info(f'[module/{module.name}] Running startup commands.')
             module.run(
@@ -847,19 +921,17 @@ class ModuleManager:
 
     def interpolate_string(self, string: str) -> str:
         """
-        Replace all template placeholders with the compilation path.
+        Process configuration string before using it.
 
         This function is passed as a reference to all modules, making them
-        perform the replacement instead.
+        perform the replacement instead. For now, the ModuleManager does not
+        change the string at all, but we will leave it here in case we would
+        want to interpolate strings from the ModuleManager level instead of
+        the Module level.
 
-        :return: String where '{path/to/template}' has been replaced with
-            'path/to/compilation/target.
+        :param string: String to be processed.
+        :return: Processed string.
         """
-        for specified_path, template in self.templates.items():
-            string = string.replace(
-                '{' + specified_path + '}',
-                str(template.target),
-            )
         return string
 
     def create_temp_file(self, name) -> Path:

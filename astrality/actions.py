@@ -207,6 +207,12 @@ class CompileAction(Action):
         if self.null_object:
             # Null objects do nothing
             return None
+        elif 'target' not in self._options:
+            # If no target is specified, then we can create a temporary file
+            # and insert it into the configuration options.
+            template = self.option(key='template', path=True)
+            target = self._create_temp_file(template.name)
+            self._options['target'] = str(target)  # type: ignore
 
         template = self.option(key='template', path=True)
         target = self.option(key='target', path=True)
