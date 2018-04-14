@@ -1,3 +1,5 @@
+"""Tests for compile action class."""
+
 import os
 from pathlib import Path
 
@@ -26,8 +28,9 @@ def test_compilation_of_template_to_temporary_file(template_directory):
         replacer=lambda x: x,
         context_store={},
     )
-    target = compile_action.execute()
+    template, target = compile_action.execute()
 
+    assert template == template_directory / 'no_context.template'
     assert target.read_text() == 'one\ntwo\nthree'
 
 def test_compilation_to_specific_absolute_file_path(template_directory, tmpdir):
@@ -47,7 +50,7 @@ def test_compilation_to_specific_absolute_file_path(template_directory, tmpdir):
         replacer=lambda x: x,
         context_store={},
     )
-    return_target = compile_action.execute()
+    _, return_target = compile_action.execute()
 
     assert return_target == target
     assert target.read_text() == 'one\ntwo\nthree'
@@ -69,7 +72,7 @@ def test_compilation_to_specific_relative_file_path(template_directory, tmpdir):
         replacer=lambda x: x,
         context_store={},
     )
-    return_target = compile_action.execute()
+    _, return_target = compile_action.execute()
 
     assert return_target == target
     assert target.read_text() == 'one\ntwo\nthree'
@@ -93,13 +96,13 @@ def test_compilation_with_context(template_directory):
     )
 
     context_store['fonts'] = {2: 'ComicSans'}
-    target = compile_action.execute()
+    _, target = compile_action.execute()
 
     username = os.environ.get('USER')
     assert target.read_text() == f'some text\n{username}\nComicSans'
 
     context_store['fonts'] = {2: 'TimesNewRoman'}
-    target = compile_action.execute()
+    _, target = compile_action.execute()
     assert target.read_text() == f'some text\n{username}\nTimesNewRoman'
 
 def test_setting_permissions_of_target_template(template_directory):
@@ -115,7 +118,7 @@ def test_setting_permissions_of_target_template(template_directory):
         context_store={},
     )
 
-    target = compile_action.execute()
+    _, target = compile_action.execute()
     assert (target.stat().st_mode & 0o777) == 0o707
 
 def test_use_of_replacer(template_directory, tmpdir):
@@ -145,7 +148,7 @@ def test_use_of_replacer(template_directory, tmpdir):
         context_store={},
     )
 
-    target = compile_action.execute()
+    _, target = compile_action.execute()
     assert target.read_text() == 'one\ntwo\nthree'
     assert (target.stat().st_mode & 0o777) == 0o777
 
@@ -164,7 +167,7 @@ def test_that_current_directory_is_set_correctly(template_directory):
         replacer=lambda x: x,
         context_store={},
     )
-    target = compile_action.execute()
+    _, target = compile_action.execute()
     assert target.read_text() == '/tmp'
 
 def test_retrieving_all_compiled_templates(template_directory, tmpdir):

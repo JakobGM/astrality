@@ -198,11 +198,11 @@ class CompileAction(Action):
         self._performed_compilations: DefaultDict[Path, Set[Path]] = \
             defaultdict(set)
 
-    def execute(self) -> Optional[Path]:
+    def execute(self) -> Optional[Tuple[Path, Path]]:
         """
         Compile template to target destination.
 
-        :return: Path to compiled target.
+        :return: 2-Tuple containing template and compile target.
         """
         if self.null_object:
             # Null objects do nothing
@@ -232,7 +232,7 @@ class CompileAction(Action):
             )
 
         self._performed_compilations[template].add(target)
-        return target
+        return template, target
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """

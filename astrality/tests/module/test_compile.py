@@ -102,21 +102,3 @@ def test_module_manager_placeholders_are_correctly_generated(
     assert string_replacements[str(template2)] == str(
         test_config_directory / template2_target,
     )
-
-def test_that_all_modified_observed_files_are_identified(
-    compiling_fixtures,
-    test_config_directory,
-):
-    """Test that all files watched for modifications are correctly identified."""
-    module_manager = compiling_fixtures['module_manager']
-    specified_path = compiling_fixtures['template3']
-    path = test_config_directory / specified_path
-    module = module_manager.modules['B']
-
-    assert module_manager.on_modified_paths == {
-        path: WatchedFile(
-            path=path,
-            module=module,
-            specified_path=str(specified_path),
-        )
-    }
