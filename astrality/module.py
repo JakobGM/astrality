@@ -338,6 +338,14 @@ class Module:
 
         return results
 
+    def all_action_blocks(self) -> Iterable[ActionBlock]:
+        return (
+            self.action_blocks['on_startup'],
+            self.action_blocks['on_event'],
+            self.action_blocks['on_exit'],
+            *self.action_blocks['on_modified'].values(),
+        )
+
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """
         Return all templates that have been compiled and their target(s).
@@ -346,12 +354,7 @@ class Module:
             compilation target paths for that template.
         """
         performed_compilations: DefaultDict[Path, Set[Path]] = defaultdict(set)
-        for action_block in (
-            self.action_blocks['on_startup'],  # type: ignore
-            self.action_blocks['on_event'],
-            self.action_blocks['on_exit'],
-            *self.action_blocks['on_modified'].values(),
-        ):
+        for action_block in self.all_action_blocks():
             for template, targets \
                     in action_block.performed_compilations().items():
                 performed_compilations[template] |= targets
@@ -894,13 +897,13 @@ class ModuleManager:
         if not self.recompile_modified_templates:
             return
 
-        for template in self.templates.values():
-            if template.source == modified:
-                self.compile_template(
-                    source=template.source,
-                    target=template.target,
-                    permissions=template.permissions,
-                )
+        # Run any compile action a new if that compile action uses the modifed
+        # path as a template.
+        for module in self.modules.values():
+            for action_block in module.all_action_blocks():
+                for compile_action in action_block._compile_actions:
+                    if modified in compile_action:
+                        compile_action.execute()
 
     def interpolate_string(self, string: str) -> str:
         """
