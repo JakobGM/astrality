@@ -26,6 +26,14 @@ def test_use_of_string_interpolations_of_module(
                 },
             }
         },
+        'module/C': {
+            'on_exit': {
+                'compile': {
+                        'template': 'template',
+                        'target': '/target',
+                },
+            },
+        },
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
@@ -39,3 +47,6 @@ def test_use_of_string_interpolations_of_module(
     interpolated_string = 'one: ' + target1 + ' two: ' + target2
 
     assert module_manager.interpolate_string(string) == interpolated_string
+
+    string = 'one: {template}'
+    assert module_manager.interpolate_string(string) == 'one: /target'

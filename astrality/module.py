@@ -82,7 +82,7 @@ Template = namedtuple(
 )
 WatchedFile = namedtuple(
     'WatchedFile',
-    ['path', 'module', 'specified_path'],
+    ['path', 'module'],
 )
 
 logger = logging.getLogger('astrality')
@@ -468,9 +468,6 @@ class ModuleManager:
         self.string_replacements = self.generate_string_replacements(
             self.templates,
         )
-        self.on_modified_paths = self.find_on_modified_paths(
-            self.modules.values(),
-        )
 
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
@@ -527,33 +524,6 @@ class ModuleManager:
                     )
 
         return templates
-
-    def find_on_modified_paths(
-        self,
-        modules: Iterable[Module],
-    ) -> Dict[Path, WatchedFile]:
-        """
-        Return a dictionary keyed to all modification watched file paths.
-
-        Return a dictionary with the paths to watched files as the keys and
-        WatchedFile instances as values.
-        """
-        on_modified_paths: Dict[Path, WatchedFile] = {}
-
-        for module in modules:
-            for watched_for_modification \
-                    in module.module_config['on_modified'].keys():
-                on_modified_path = expand_path(
-                    path=Path(watched_for_modification),
-                    config_directory=module.directory,
-                )
-                on_modified_paths[on_modified_path] = WatchedFile(
-                    path=on_modified_path,
-                    module=module,
-                    specified_path=watched_for_modification,
-                )
-
-        return on_modified_paths
 
     def generate_string_replacements(
         self,
@@ -763,25 +733,39 @@ class ModuleManager:
         # Stop watching config directory for file changes
         self.directory_watcher.stop()
 
-    def on_modified(self, modified: Path) -> None:
-        """Perform actions when a watched file is modified."""
-        watched_file = self.on_modified_paths[modified]
-        module = watched_file.module
-        path = watched_file.path
+    def on_modified(self, modified: Path) -> bool:
+        """
+        Perform actions when a watched file is modified.
 
-        # First import context sections in on_modified block
-        module.import_context(block_name='on_modified', path=path)
+        :return: Returns True if on_modified block was triggered.
+        """
+        assert modified.is_absolute()
+        triggered = False
 
-        # Now compile templates specified in on_modified block
-        module.compile(block_name='on_modified', path=path)
+        for module in self.modules.values():
+            if modified not in module.action_blocks['on_modified']:
+                continue
 
-        # Lastly, run commands specified in on_modified block
-        logger.info(f'[module/{module.name}] Running modified commands.')
-        module.run(
-            'on_modified',
-            path=modified,
-            default_timeout=self.global_modules_config.run_timeout,
-        )
+            triggered = True
+            logger.info(
+                f'[module/{module.name}] on_modified:{modified} triggered.',
+            )
+
+            # First import context sections in on_modified block
+            module.import_context(block_name='on_modified', path=modified)
+
+            # Now compile templates specified in on_modified block
+            module.compile(block_name='on_modified', path=modified)
+
+            # Lastly, run commands specified in on_modified block
+            logger.info(f'[module/{module.name}] Running modified commands.')
+            module.run(
+                'on_modified',
+                path=modified,
+                default_timeout=self.global_modules_config.run_timeout,
+            )
+
+        return triggered
 
     def file_system_modified(self, modified: Path) -> None:
         """
@@ -796,12 +780,15 @@ class ModuleManager:
         config_file = \
             self.application_config['_runtime']['config_directory'] \
             / 'astrality.yml'
+
         if modified == config_file:
             self.on_application_config_modified()
-        elif modified in self.on_modified_paths:
-            # The modified file is specified in one of the modules
-            self.on_modified(modified)
+            return
         else:
+            # Run any relevant on_modified blocks.
+            triggered = self.on_modified(modified)
+
+        if not triggered:
             # Check if the modified path is a template which is supposed to
             # be recompiled.
             self.recompile_modified_template(modified=modified)
