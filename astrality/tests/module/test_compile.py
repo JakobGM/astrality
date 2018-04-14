@@ -61,27 +61,3 @@ def compiling_fixtures(
         os.remove(fixtures['template2_target'])
 
     module_manager.exit()
-
-
-def test_that_module_manager_detects_all_managed_templates(
-    compiling_fixtures,
-    test_config_directory,
-):
-    """Test that all compiled templates are identified."""
-    module_manager = compiling_fixtures['module_manager']
-    template1 = compiling_fixtures['template1']
-    template2 = compiling_fixtures['template2']
-    template4 = compiling_fixtures['template4']
-
-    template2_target = compiling_fixtures['template2_target']
-
-    expected_templates = {
-        str(template1): test_config_directory / template1,
-        str(template2): test_config_directory / template2,
-        str(template4): test_config_directory / template4,
-    }
-    for specified_path, absolute_path in expected_templates.items():
-        assert module_manager.templates[specified_path].source == absolute_path
-
-    assert module_manager.templates[str(template2)].target == \
-        test_config_directory / template2_target
