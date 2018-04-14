@@ -12,6 +12,7 @@ from astrality import event_listener
 from astrality.config import dict_from_config_file
 from astrality.module import Module, ModuleManager
 from astrality.resolver import Resolver
+from astrality.tests.utils import RegexCompare
 from astrality.utils import generate_expanded_env_dict
 
 
@@ -185,6 +186,13 @@ class TestModuleClass:
             (
                 'astrality',
                 logging.INFO,
+                RegexCompare(
+                    r'\[Compiling\].+test_template\.conf.+compiled_result"',
+                ),
+            ),
+            (
+                'astrality',
+                logging.INFO,
                 '[module/test_module] Running startup commands.',
             ),
             (
@@ -211,13 +219,11 @@ class TestModuleClass:
         caplog.clear()
         module_manager.startup()
 
-        assert caplog.record_tuples == [
-            (
-                'astrality',
-                logging.INFO,
-                '[module/test_module] Running startup commands.',
-            ),
-        ]
+        assert (
+            'astrality',
+            logging.INFO,
+            '[module/test_module] Running startup commands.',
+        ) in caplog.record_tuples
 
     def test_running_module_on_event_command(
         self,
@@ -225,13 +231,20 @@ class TestModuleClass:
         module,
         caplog,
     ):
+        single_module_manager.startup()
+        caplog.clear()
+
         single_module_manager.run_on_event_commands(
             single_module_manager.modules['test_module'],
         )
 
-        compiled_template = str(
-            single_module_manager.templates['../templates/test_template.conf'].target,
-        )
+        # Convoluted way of getting the compilation target. Sorry!
+        compiled_template = list(
+            single_module_manager
+                .modules['test_module']
+                .performed_compilations()
+                .values(),
+        )[0].pop()
 
         assert caplog.record_tuples == [
             (
