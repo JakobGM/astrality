@@ -56,6 +56,8 @@ Changed
           - on_startup
           - on_modified:path/to/file
 
+  *New syntax:*
+
   .. code-block:: yaml
 
       trigger:
@@ -68,6 +70,9 @@ Changed
 
 - The ``trigger`` action now follows recursive ``trigger`` actions. Beware of
   circular trigger chains!
+
+- Astrality will now only recompile templates that have already been compiled
+  when ``recompile_modified_templates`` is set to ``true``.
 
 Fixed
 -----

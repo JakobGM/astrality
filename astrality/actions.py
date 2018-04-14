@@ -270,6 +270,17 @@ class CompileAction(Action):
 
         return Path(temp_file.name)
 
+    def __contains__(self, other) -> bool:
+        """Return True if run action is responsible for template."""
+        assert other.is_absolute()
+
+        if not self.option(key='template', path=True) == other:
+            # This is not a managed template, so we will not recompile
+            return False
+
+        # Return True if the template has been compiled
+        return other in self.performed_compilations()
+
 
 class RunDict(TypedDict):
     """Required fields of run action user config."""

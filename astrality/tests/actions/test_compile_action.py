@@ -201,3 +201,40 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
     assert compile_action.performed_compilations() == {
         template_directory / template: {target1, target2},
     }
+
+def test_contains_special_method(template_directory, tmpdir):
+    """Compile actions should 'contain' its compiled template."""
+    temp_dir = Path(tmpdir)
+    compile_dict = {
+        'template': 'empty.template',
+        'permissions': '707',
+        'target': str(temp_dir / 'target.tmp'),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=template_directory,
+        replacer=lambda x: x,
+        context_store={},
+    )
+    compile_action.execute()
+    assert template_directory / 'empty.template' in compile_action
+    assert Path('/no/template') not in compile_action
+
+def test_contains_with_uncompiled_template(template_directory, tmpdir):
+    """Compile action only contains *compiled* templates."""
+    temp_dir = Path(tmpdir)
+    compile_dict = {
+        'template': 'empty.template',
+        'permissions': '707',
+        'target': str(temp_dir / 'target.tmp'),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=template_directory,
+        replacer=lambda x: x,
+        context_store={},
+    )
+    assert template_directory / 'empty.template' not in compile_action
+
+    compile_action.execute()
+    assert template_directory / 'empty.template' in compile_action
