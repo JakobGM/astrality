@@ -596,23 +596,6 @@ class ModuleManager:
 
         return templates
 
-    def generate_string_replacements(
-        self,
-        templates: Dict[str, Template],
-    ) -> Dict[str, str]:
-        """
-        Return a dictionary containing all string replacements.
-
-        Each string replaced is keyed to their placeholders. Includes template
-        path placeholders replaced with the compilation target path.
-        """
-        string_replacements: Dict[str, str] = {}
-
-        for specified_path, template in templates.items():
-            string_replacements[specified_path] = str(template.target)
-
-        return string_replacements
-
     def module_events(self) -> Dict[str, str]:
         """Return dict containing the event of all modules."""
         module_events = {}
