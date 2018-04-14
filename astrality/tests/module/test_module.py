@@ -325,34 +325,6 @@ class TestModuleClass:
             ),
         ]
 
-    def test_location_of_template_file_defined_relatively(
-        self,
-        single_module_manager,
-        test_config_directory
-    ):
-        template_file = single_module_manager.templates['../templates/test_template.conf'].source
-        compiled_template = single_module_manager.templates['../templates/test_template.conf'].target
-
-        assert template_file.resolve() == Path(__file__).parents[1] / 'templates' / 'test_template.conf'
-        assert compiled_template == Path('/tmp/compiled_result')
-
-    def test_location_of_template_file_defined_absolutely(
-        self,
-        valid_module_section,
-        default_global_options,
-        _runtime,
-    ):
-        absolute_path = Path(__file__).parents[1] / 'templates' / 'test_template.conf'
-        valid_module_section['module/test_module']['on_startup']['compile'][0]['template'] = absolute_path
-
-        valid_module_section.update(default_global_options)
-        valid_module_section.update(_runtime)
-
-        module_manager = ModuleManager(valid_module_section)
-        template_file = module_manager.templates[absolute_path].source
-
-        assert template_file == absolute_path
-
     def test_missing_template_file(
         self,
         default_global_options,
@@ -373,8 +345,6 @@ class TestModuleClass:
         application_config.update(_runtime)
 
         module_manager = ModuleManager(application_config)
-        assert len(module_manager.templates) == 1
-        template_target = module_manager.templates['/not/existing'].target
 
         caplog.clear()
         module_manager.finish_tasks()
@@ -401,15 +371,19 @@ class TestModuleClass:
         simple_application_config['module/test_module']['event_listener']['type'] = 'solar'
         compiled_template_content = 'some text\n' + os.environ['USER'] + '\nFuraMono Nerd Font'
         module_manager = ModuleManager(simple_application_config)
+        directory = module_manager.config_directory
 
         caplog.clear()
         module_manager.compile_templates('on_startup')
 
         template_file = str(
-            module_manager.templates['../templates/test_template.conf'].source,
+            (directory / '../templates/test_template.conf').resolve()
         )
         compiled_template = str(
-            module_manager.templates['../templates/test_template.conf'].target,
+            list(
+                module_manager.modules['test_module']\
+                    .performed_compilations()[Path(template_file)]\
+            )[0]
         )
 
         with open('/tmp/compiled_result', 'r') as file:
@@ -444,14 +418,14 @@ def test_running_finished_tasks_command(
     module_manager.finish_tasks()
 
     # Only startup commands should be finished at first
-    template = str(
-        module_manager.templates['../templates/test_template.conf'].source,
-    )
     assert caplog.record_tuples == [
         (
             'astrality',
             logging.INFO,
-            f'[Compiling] Template: "{template}" -> Target: "/tmp/compiled_result"'
+            RegexCompare(
+                r'\[Compiling\] Template: ".+/templates/test_template.conf" '
+                r'-> Target: "/tmp/compiled_result"'
+            ),
         ),
         (
             'astrality',

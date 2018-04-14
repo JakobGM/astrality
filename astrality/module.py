@@ -158,93 +158,46 @@ class Module:
         # All user string options should be processed by the replacer
         self.replace = replacer
 
-        self.module_config = self.populate_event_blocks(
-            module_config=module_config[section],
-        )
+        # Extract configuration content
+        module_config_content: ModuleConfigDict = module_config[section]
 
         # Use static event_listener if no event_listener is specified
-        self.event_listener: EventListener = event_listener_factory(
-            self.module_config.get('event_listener', {'type': 'static'}),
-        )
+        self.event_listener: EventListener = \
+            event_listener_factory(  # type: ignore
+                module_config_content.get(  # type: ignore
+                    'event_listener',
+                    {'type': 'static'},
+                ),
+            )
 
         self.context_store = context_store
 
         # Create action block object for each available action block type
         action_blocks: Dict = {'on_modified': {}}
         for block_name in ('on_startup', 'on_event', 'on_exit'):
-            action_blocks[block_name] = ActionBlock(
-                action_block=self.module_config[block_name],  # type: ignore
+            action_blocks[block_name] = ActionBlock(  # type: ignore
+                action_block=module_config_content.get(  # type: ignore
+                    block_name,
+                    {},
+                ),
                 directory=self.directory,
                 replacer=self.interpolate_string,
                 context_store=self.context_store,
             )
         for path_string, action_block_dict \
-                in self.module_config['on_modified'].items():
+                in module_config_content.get('on_modified', {}).items():
             modified_path = expand_path(
                 path=Path(path_string),
                 config_directory=self.directory,
             )
-            action_blocks['on_modified'][modified_path] = ActionBlock(
-                action_block=action_block_dict,
-                directory=self.directory,
-                replacer=self.interpolate_string,
-                context_store=self.context_store,
+            action_blocks['on_modified'][modified_path] = \
+                ActionBlock(  # type: ignore
+                    action_block=action_block_dict,
+                    directory=self.directory,
+                    replacer=self.interpolate_string,
+                    context_store=self.context_store,
             )
         self.action_blocks = action_blocks  # type: ignore
-
-    def populate_event_blocks(
-        self,
-        module_config: ModuleConfigDict,
-    ) -> ModuleConfigListDict:
-        """
-        Populate non-configured actions within event blocks.
-
-        This prevents us from having to use .get() all over the Module.
-        """
-        for event in ('on_startup', 'on_event', 'on_exit',):
-            configured_event_block = module_config.get(event, {})
-            module_config[event] = {  # type: ignore
-                'import_context': [],
-                'compile': [],
-                'run': [],
-                'trigger': [],
-            }
-            module_config[event].update(  # type: ignore
-                configured_event_block,
-            )
-
-        if 'on_modified' not in module_config:
-            module_config['on_modified'] = {}
-        else:
-            for template_name in module_config['on_modified'].keys():
-                configured_event_block = \
-                    module_config['on_modified'][template_name]
-                module_config['on_modified'][template_name] = {
-                    'import_context': [],
-                    'compile': [],
-                    'run': [],
-                    'trigger': [],
-                }
-                module_config[  # type: ignore
-                    'on_modified'
-                ][template_name].update(configured_event_block)
-
-        # Convert any single actions into a list of that action, allowing
-        # users to not use lists in their configuration if they only have one
-        # action
-        event_block: ActionBlockDict
-        for event_block in (
-            module_config['on_startup'],
-            module_config['on_event'],
-            module_config['on_exit'],
-            *module_config['on_modified'].values(),
-        ):
-            for action in ('import_context', 'compile', 'run', 'trigger',):
-                event_block[action] = cast_to_list(  # type: ignore
-                    event_block[action],  # type: ignore
-                )
-
-        return module_config  # type: ignore
 
     def get_action_block(
         self,
@@ -339,6 +292,7 @@ class Module:
         return results
 
     def all_action_blocks(self) -> Iterable[ActionBlock]:
+        """Return flatten tuple of all module action blocks."""
         return (
             self.action_blocks['on_startup'],
             self.action_blocks['on_event'],
@@ -541,8 +495,6 @@ class ModuleManager:
             )
             self.modules[module.name] = module
 
-        self.templates = self.prepare_templates(self.modules.values())
-
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
             directory=self.config_directory,
@@ -554,50 +506,6 @@ class ModuleManager:
     def __len__(self) -> int:
         """Return the number of managed modules."""
         return len(self.modules)
-
-    def prepare_templates(
-        self,
-        modules: Iterable[Module],
-    ) -> Dict[str, Template]:
-        """
-        Prepare the use of templates that could be compiled by `modules`.
-
-        Returns a dictionary where the user provided path to the template is
-        the key, and the value is a Template NamedTuple instance, containing
-        the source and target Paths of the template.
-        """
-        templates: Dict[str, Template] = {}
-
-        for module in modules:
-            # All the module blocks which can contain compile actions
-            for block in (
-                    module.module_config['on_startup'],
-                    module.module_config['on_event'],
-                    module.module_config['on_exit'],
-                    *module.module_config['on_modified'].values(),
-            ):
-                for compile_action in block['compile']:
-                    specified_source = compile_action['template']
-                    absolute_source = expand_path(
-                        path=Path(specified_source),
-                        config_directory=module.directory,
-                    )
-
-                    if 'target' in compile_action:
-                        target = expand_path(
-                            path=Path(compile_action['target']),
-                            config_directory=module.directory,
-                        )
-                    else:
-                        target = self.create_temp_file(name=module.name)
-
-                    templates[specified_source] = Template(
-                        source=absolute_source,
-                        target=target,
-                        permissions=compile_action.get('permissions'),
-                    )
-
-        return templates
 
     def module_events(self) -> Dict[str, str]:
         """Return dict containing the event of all modules."""
