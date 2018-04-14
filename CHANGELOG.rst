@@ -66,9 +66,16 @@ Changed
 - Template metadata is now copied to compilation targets, including permission
   bits. Thanks to @sshashank124 for the implementation!
 
+- The ``trigger`` action now follows recursive ``trigger`` actions. Beware of
+  circular trigger chains!
+
 Fixed
 -----
 
 - If a ``import_context`` action imported specified ``from_section`` but not
   ``to_section``, the section was not imported at all. This is now fixed by
   setting ``to_section`` to the same as ``from_section``.
+
+- Template path placeholders are now normalized, which makes it possible to
+  refer to the same template path in different ways, using symlinks and ``..``
+  paths.

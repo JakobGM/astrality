@@ -305,7 +305,7 @@ The shell command is specified as a string keyed to ``shell``.
 Place the commands within a list under the ``run`` option of an :ref:`action block <modules_action_blocks>`.
 See the example below.
 
-You can place the following placeholders within your shell commands:
+You can place the following placeholders within your shell commands 
 
     ``{event}``:
         The last event detected by the :ref:`module event listener <event_listeners>`.
@@ -335,6 +335,14 @@ Example:
                 - shell: 'echo "Deleting today's notes!"'
                 - shell: 'rm ~/notes/notes_for_{event}.txt'
 
+You can actually place these placeholders in any action type's string values.
+Placeholders are replaced at runtime every time an action is triggered.
+
+.. warning::
+    ``template/path`` must be compiled when an action type with a
+    ``{template/path}`` placeholder is executed. Otherwise, Astrality does not
+    know what to replace the placeholder with, so it will leave it alone and
+    log an error instead.
 
 .. _trigger_action:
 
@@ -362,8 +370,6 @@ An example of a module using ``trigger`` actions:
 
             trigger:
                 - block: on_event
-                - block: on_modified
-                  path: templates/template
 
         on_event:
             import_context:
@@ -425,14 +431,11 @@ This is equivalent to writing the following module:
 
 
 .. hint::
-    You can use ``trigger: on_event`` in the ``on_startup`` block in order to consider the event detected on Astrality startup as a new ``event``.
+    You can use ``trigger: on_event`` in the ``on_startup`` block in order to
+    consider the event detected on Astrality startup as a new ``event``.
 
-    The ``trigger`` action can also help you reduce the degree of repetition in your configuration.
-
-.. caution::
-    Astrality does not invoke recursive trigger events at the moment.
-    You have to specify them manually instead, as shown in the example above.
-
+    The ``trigger`` action can also help you reduce the degree of repetition in
+    your configuration.
 
 
 The execution order of module actions
