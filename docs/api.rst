@@ -35,6 +35,12 @@ Here we offer a quick overview of the most relevant python modules in the code b
     Each module in the user configuration is represented by a ``Module`` object.
     All ``Module``-objects are managed by a single ``ModuleManager`` object which iterates over them and executes their actions.
 
+``astrality.requirements``:
+    Module for checking if module requirements are satisfied.
+
+``astrality.actions``:
+    Module for executing actions such as "import_context", "compile", "run", and "trigger".
+
 ``astrality.event_listener``:
     Implements all the types of module event listeners as subclasses of ``EventListener``.
 
@@ -61,6 +67,15 @@ Actions module
 --------------
 
 .. automodule:: astrality.actions
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+Requirements module
+-------------------
+
+.. automodule:: astrality.requirements
     :members:
     :undoc-members:
     :inherited-members:

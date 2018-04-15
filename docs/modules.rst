@@ -67,21 +67,48 @@ Module dependencies
 You can specify conditionals that must be satisfied in order to consider a module enabled.
 It can be useful if a module requires certain dependencies in order to work correctly
 
-This is done by setting the module option ``requires`` equal to a shell command, or a list of shell commands,
-*all* of which must be successfully executed (i.e. return a ``0`` exit code) in order to enable the module.
+You can specify module requirements by setting the module option ``requires``
+equal to a list of dictionaries containing one, or more, of the following
+keywords:
 
-For example, if your module depends on the ``docker`` and ``docker-machine`` shell commands being available, you can check if they are available with the POSIX command ``command -v``:
+``env``:
+    Environment variable specified as a string. The environment variable must
+    be set in order to consider the module enabled.
+
+``installed``:
+    Program name specified as a string. The program name must be invokable
+    through the command line, i.e. available through the ``$PATH`` environment
+    variable.
+
+``shell``:
+    Shell command specified as a string. The shell command must return a 0 exit
+    code (which defines success), in order to consider the module enabled.
+
+    If the shell command uses more than 1 second to return, it will be
+    considered failed. You can change the default timeout by setting the
+    :ref:`requires_timeout <modules_config_requires_timeout>` configuration
+    option.
+
+    You can also override the default timeout on a case-by-case basis by
+    setting the ``timeout`` key to a numeric value (in seconds).
+
+
+*All* specified dependencies must be satisfied in order to enable the module.
+
+For example, if your module depends on the ``docker`` and ``docker-machine``
+shell commands being available, the environment variable ``$ENABLE_DOCKER``
+being set, and "my_docker_container" existing, you can check this by setting
+the following requirements:
 
 .. code-block:: yaml
 
     module/docker:
         requires:
-            - command -v docker
-            - command -v docker-machine
-
-If ``docker`` *or* ``docker-machine`` is not in your shell ``PATH``, this module will be disabled.
-
-If one of the shell commands use more than 1 second to return, it will be considered failed. You can change the default time out by setting the :ref:`requires_timeout <modules_config_requires_timeout>` configuration option.
+            - installed: docker
+            - installed: docker-machine
+            - env: ENABLE_DOCKER
+            - shell: '[ $(docker ps -a | grep my_docker_container) ]'
+              timeout: 10 # seconds
 
 .. hint::
     ``requires`` can be useful if you want to use Astrality to manage your `dotfiles <https://medium.com/@webprolific/getting-started-with-dotfiles-43c3602fd789>`_. You can use module dependencies in order to only compile configuration templates to their respective directories if the dependent application is available on the system. This way, Astrality becomes a "conditional symlinker" for your dotfiles.

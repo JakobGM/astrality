@@ -10,8 +10,8 @@ module/solar_desktop:
     # A module can require shell commands to return successfully in order to
     # enable the module. Here, we check if `feh` and `conky` are installed.
     requires:
-        - command -v feh
-        - command -v conky
+        - installed: feh
+        - installed: conky
 
     event_listener:
         # The solar event listener provides the following events:
@@ -61,8 +61,8 @@ module/solar_desktop:
         # Compile the templates specified in the conky module, as their
         # context values have changed due to the import_context action above.
         compile:
-            - template: time.template
-            - template: performance.template
+            - source: time.template
+            - source: performance.template
 
         # Run shell command to change the desktop wallpaper named the same
         # as the current event.

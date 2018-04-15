@@ -38,14 +38,15 @@ from astrality.event_listener import (
 )
 from astrality.filewatcher import DirectoryWatcher
 from astrality.resolver import Resolver
-from astrality.utils import cast_to_list, run_shell
+from astrality.requirements import Requirement, RequirementDict
+from astrality.utils import cast_to_list
 
 
 class ModuleConfigDict(TypedDict, total=False):
     """Content of module configuration dict."""
 
     enabled: Optional[bool]
-    requires: Union[str, List[str]]
+    requires: Union[RequirementDict, List[RequirementDict]]
     event_listener: EventListenerConfig
 
     on_startup: ActionBlockDict
@@ -142,7 +143,7 @@ class Module:
         action_blocks: ModuleActionBlocks = {'on_modified': {}}  # type: ignore
         for block_name in ('on_startup', 'on_event', 'on_exit'):
             action_blocks[block_name] = ActionBlock(  # type: ignore
-                action_block=module_config_content.get(
+                action_block=module_config_content.get(  # type: ignore
                     block_name,
                     {},
                 ),
@@ -361,24 +362,33 @@ class Module:
             return False
 
         # The module is enabled, now check if all requirements are satisfied
-        requires = section[module_name].get('requires')
-        if not requires:
+        requires: List[RequirementDict] = cast_to_list(
+            section[module_name].get(
+                'requires',
+                {},
+            ),
+        )
+        requirements = [
+            Requirement(
+                requirements=requirements_dict,
+                directory=requires_working_directory,
+                timeout=requires_timeout,
+            )
+            for requirements_dict
+            in requires
+        ]
+        if all(requirements):
             return True
         else:
-            requires = cast_to_list(requires)
-            for requirement in requires:
-                if run_shell(command=requirement, fallback=False) is False:
-                    logger.warning(
-                        f'[{module_name}] '
-                        'Module does not satisfy requirement '
-                        f'"{requirement}".',
-                    )
-                    return False
-
-            logger.info(
-                f'[{module_name}] Module satisfies all requirements.',
+            logger.warning(
+                f'[{module_name}] ' +
+                ", ".join([
+                    repr(requirement)
+                    for requirement
+                    in requirements
+                ]) + '!',
             )
-            return True
+            return False
 
 
 class ModuleManager:

@@ -105,3 +105,6 @@ ENV/
 .mypy_cache
 **/.mypy_cache/*
 tags
+
+# pytest
+.pytest_cache

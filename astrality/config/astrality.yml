@@ -137,11 +137,12 @@ context/color_schemes_config:
 
 
 module/polybar:
-    requires: command -v polybar
+    requires:
+        - installed: polybar
 
     on_startup:
         compile:
-            - template: modules/polybar/config.template
+            - source: modules/polybar/config.template
 
         run:
             - shell: killall -q polybar
@@ -151,7 +152,7 @@ module/polybar:
     on_modified:
         modules/polybar/config.template:
             compile:
-                - template: modules/polybar/config.template
+                - source: modules/polybar/config.template
 
 
 module/terminals:
@@ -170,12 +171,12 @@ module/terminals:
     # Kitty: https://github.com/kovidgoyal/kitty
 
     requires:
-        - command -v alacritty
-        - command -v kitty
+        - installed: 'alacritty'
+        - installed: 'kitty'
 
     on_startup:
         compile:
-            - template: modules/terminals/alacritty.yml.template
+            - source: modules/terminals/alacritty.yml.template
               target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
-            - template: modules/terminals/kitty.conf.template
+            - source: modules/terminals/kitty.conf.template
               target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf
