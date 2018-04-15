@@ -351,16 +351,6 @@ class TestModuleClass:
         assert 'Could not compile template "/not/existing" '\
                'to target "' in caplog.record_tuples[1][2]
 
-    def test_create_temp_file_method(self, single_module_manager):
-        temp_file = single_module_manager.create_temp_file('whatever')
-        assert temp_file.is_file()
-
-    def test_cleanup_of_tempfile_on_exit(self, single_module_manager):
-        temp_file = single_module_manager.create_temp_file('whatever')
-        assert temp_file.is_file()
-        single_module_manager.exit()
-        assert not temp_file.is_file()
-
     def test_compilation_of_template(
         self,
         simple_application_config,
