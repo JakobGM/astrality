@@ -19,6 +19,10 @@ Added
 - ``compile`` actions now support an optional ``permissions`` field for
   setting the permissions of the compiled template. It allows setting octal
   values such as ``'755'``, and uses the UNIX ``chmod`` API.
+- Module requirements can now specify required programs and environment
+  variables by using the dictionary keys ``installed`` and ``env``
+  respectively.
+- You can now set ``requires`` timeout on a case-by-case basis.
 
 Changed
 -------
@@ -92,6 +96,24 @@ Changed
       compile:
           - source: path/to/template
 
+- The module list items within the module ``requires`` option is now
+  a dictionary, where shell commands are specified under the ``shell`` keyword.
+  This allows other requirement types (see Added section).
+
+  *Old syntax*
+
+  .. code-block:: yaml
+
+      requires:
+          - './shell/script.sh'
+
+  *New syntax:*
+
+  .. code-block:: yaml
+
+      requires:
+          - shell: './shell/script'
+
 
 Fixed
 -----
@@ -103,3 +125,5 @@ Fixed
 - Template path placeholders are now normalized, which makes it possible to
   refer to the same template path in different ways, using symlinks and ``..``
   paths.
+
+- Module option ``requires_timeout`` is now respected.
