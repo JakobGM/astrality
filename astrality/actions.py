@@ -216,10 +216,6 @@ class CompileAction(Action):
 
         template = self.option(key='source', path=True)
         target = self.option(key='target', path=True)
-        if target is None:
-            # A compilation target has not been specified, so we will compile
-            # to a temporary file instead.
-            target = self._create_temp_file(template.name)
 
         try:
             compiler.compile_template(

@@ -14,10 +14,9 @@ class RegexCompare:
 
     def __eq__(self, other) -> bool:
         """Return True if full regex match."""
-        if not isinstance(other, str):
-            return False
-        else:
-            return bool(self.pattern.fullmatch(other))
+        # Object only comparable with string
+        assert isinstance(other, str)
+        return bool(self.pattern.fullmatch(other))
 
     def __repr__(self) -> str:
         """Return string representation of RegexCompare object."""

@@ -89,7 +89,7 @@ def test_replacer_function_being_used(context_directory):
         elif option == 'to':
             return 'new_section'
         else:
-            raise Exception
+            raise AssertionError
 
     import_context_action = ImportContextAction(
         options=context_import_dict,

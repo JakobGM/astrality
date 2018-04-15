@@ -5,7 +5,6 @@ from collections import defaultdict
 from datetime import timedelta
 from pathlib import Path
 import re
-from tempfile import NamedTemporaryFile
 from typing import (
     Callable,
     DefaultDict,
@@ -19,7 +18,6 @@ from typing import (
     Union,
 )
 
-from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
 from astrality import compiler
@@ -593,32 +591,6 @@ class ModuleManager:
         for module in modules:
             module.compile(block_name=trigger)
 
-    def compile_template(
-        self,
-        source: Path,
-        target: Path,
-        permissions: Optional[Union[int, str]],
-    ) -> None:
-        """
-        Compile a single template given by its shortname.
-
-        A shortname is given either by shortname, implying that the module given
-        defines that template, or by module_name.shortname, making it explicit.
-        """
-        try:
-            compiler.compile_template(
-                template=source,
-                target=target,
-                context=self.application_context,
-                shell_command_working_directory=self.config_directory,
-                permissions=permissions,
-            )
-        except TemplateNotFound:
-            logger.error(
-                f'Could not compile template "{source}" to target "{target}". '
-                'Template does not exist.',
-            )
-
     def startup(self):
         """Run all startup actions specified by the managed modules."""
         assert not self.startup_done
@@ -803,20 +775,3 @@ class ModuleManager:
         :return: Processed string.
         """
         return string
-
-    def create_temp_file(self, name) -> Path:
-        """Return path to temp file used as a compilation target."""
-        temp_file = NamedTemporaryFile(  # type: ignore
-            prefix=name + '-',
-            # dir=Path(self.temp_directory),
-        )
-
-        # NB: These temporary files need to be persisted during the entirity of
-        # the scripts runtime, since the files are deleted when they go out of
-        # scope.
-        if not hasattr(self, 'temp_files'):
-            self.temp_files = [temp_file]
-        else:
-            self.temp_files.append(temp_file)
-
-        return Path(temp_file.name)
