@@ -30,11 +30,11 @@ def modules_config(
                 str(empty_template): {
                     'compile': [
                         {
-                            'template' : str(empty_template),
+                            'source' : str(empty_template),
                             'target': str(empty_template_target),
                         },
                         {
-                            'template': str(secondary_template),
+                            'source': str(secondary_template),
                             'target': str(secondary_template_target),
                         },
                     ],
@@ -255,7 +255,7 @@ def test_all_three_actions_in_on_modified_block(
                     'from_path': str(mercedes_context),
                 },
                 'compile': {
-                    'template': str(car_template),
+                    'source': str(car_template),
                     'target': str(file1),
                 },
             },
@@ -265,7 +265,7 @@ def test_all_three_actions_in_on_modified_block(
                         'from_path': str(tesla_context),
                     },
                     'compile': {
-                        'template': str(car_template),
+                        'source': str(car_template),
                         'target': str(file1),
                     },
                     'run': {'shell': 'touch ' + str(file3)},
@@ -314,7 +314,7 @@ def test_recompile_templates_when_modified(
         'module/module_name': {
             'on_startup': {
                 'compile': {
-                    'template': str(template),
+                    'source': str(template),
                     'target': str(target),
                 },
             },
@@ -367,7 +367,7 @@ def test_recompile_templates_when_modified_overridden(
         'module/module_name': {
             'on_startup': {
                 'compile': {
-                    'template': str(template),
+                    'source': str(template),
                     'target': str(target),
                 },
             },

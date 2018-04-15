@@ -3,7 +3,7 @@ module/vietnam:
         import_context:
             from_path: south_context.yml
         compile:
-            template: module.template
+            source: module.template
             target: compiled.tmp
         run:
             - shell: touch touched.tmp
@@ -13,7 +13,7 @@ module/vietnam:
             import_context:
                 from_path: north_context.yml
             compile:
-                template: module.template
+                source: module.template
                 target: compiled.tmp
             run:
                 - shell: touch watch_touched.tmp

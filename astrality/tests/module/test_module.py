@@ -26,7 +26,7 @@ def valid_module_section():
                 'run': [{'shell': 'echo {event}'}],
                 'compile': [
                     {
-                        'template': '../templates/test_template.conf',
+                        'source': '../templates/test_template.conf',
                         'target': '/tmp/compiled_result',
                     },
                 ],
@@ -335,7 +335,7 @@ class TestModuleClass:
             'module/test_module': {
                 'on_startup': {
                     'compile': [
-                        {'template': '/not/existing'},
+                        {'source': '/not/existing'},
                     ],
                 },
             },
@@ -716,7 +716,7 @@ def test_that_shell_filter_is_run_from_config_directory(
             'on_startup': {
                 'compile': [
                     {
-                        'template': str(shell_filter_template),
+                        'source': str(shell_filter_template),
                         'target': str(shell_filter_template_target),
                     }
                 ],
@@ -825,7 +825,7 @@ def test_trigger_event_module_action(
                 'templateA': {
                     'run': [{'shell': 'echo modified.templateA'}],
                     'compile': [
-                        {'template': 'templateA'}
+                        {'source': 'templateA'}
                     ],
                 },
             },

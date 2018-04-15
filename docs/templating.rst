@@ -280,7 +280,7 @@ which will compile the template on Astrality startup:
     module/some_name:
         on_startup:
             compile:
-                - template: modules/test/template
+                - source: modules/test/template
                   target: /tmp/config.ini
 
 Now we can compile the template by starting Astrality:

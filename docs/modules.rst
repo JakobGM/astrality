@@ -242,13 +242,17 @@ The available attributes for ``import_context`` are:
 Compile templates
 -----------------
 
-Template compilations are defined as a dictionary, or a list of dictionaries, under the ``compile`` keyword in an :ref:`action block <modules_action_blocks>` of a module.
+Template compilations are defined as a dictionary, or a list of dictionaries,
+under the ``compile`` keyword in an :ref:`action block <modules_action_blocks>`
+of a module.
 
 Each template compilation action has the following available attributes:
 
-    ``template``
+    ``source``:
         Path to the template.
     ``target``: *[Optional]*
+        *Default:* Temporary file created by Astrality.
+
         Path which specifies where to put the *compiled* template.
 
         You can skip this option if you do not care where the compiled template is placed, and what it is named.
@@ -258,6 +262,8 @@ Each template compilation action has the following available attributes:
             When you do not provide Astrality with a ``target`` path for a template, Astrality will create a *temporary* file as the target for compilation. This file will be automatically deleted when you quit Astrality.
 
     ``permissions``: *[Optional]*
+        *Default:* Same permissions as source file.
+
         The file mode (i.e. permission bits) assigned to the *compiled* template.
         Given either as a string, such as ``'755'``, or as an octal integer, such as ``0o755``.
 
@@ -384,7 +390,7 @@ An example of a module using ``trigger`` actions:
         on_modified:
             templates/A.template:
                 compile:
-                    template: templates/A.template
+                    source: templates/A.template
 
                 run: shell_command_dependent_on_templateA
 
@@ -403,7 +409,7 @@ This is equivalent to writing the following module:
                   to_section: a_stuff
 
             compile:
-                template: templates/templateA
+                source: templates/templateA
 
             run:
                 - shell: startup_command
@@ -416,7 +422,7 @@ This is equivalent to writing the following module:
                 to_section: a_stuff
 
             compile:
-                template: templateA
+                source: templateA
 
             run:
                 - shell: shell_command_dependent_on_templateA
@@ -424,7 +430,7 @@ This is equivalent to writing the following module:
         on_modified:
             templates/templateA:
                 compile:
-                    template: templates/templateA
+                    source: templates/templateA
 
                 run:
                     - shell: shell_command_dependent_on_templateA
