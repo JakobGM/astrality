@@ -1,7 +1,7 @@
 """Module implementing user configured custom functionality."""
 
 import logging
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from datetime import timedelta
 from pathlib import Path
 import re
@@ -23,11 +23,7 @@ from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
 from astrality import compiler
-from astrality.actions import (
-    ActionBlock,
-    ActionBlockDict,
-    ActionBlockListDict,
-)
+from astrality.actions import ActionBlock, ActionBlockDict
 from astrality.compiler import context
 from astrality.config import (
     ApplicationConfig,
@@ -58,25 +54,6 @@ class ModuleConfigDict(TypedDict, total=False):
     on_modified: Dict[str, ActionBlockDict]
 
 
-class ModuleConfigListDict(TypedDict, total=False):
-    """
-    Content of processed module configuration dict.
-
-    Users are allowed to not specify a list when they want to specify just
-    *one* item. In this case the item is cast into a list in Module.__init__ in
-    order to expect lists everywhere in the remaining methods.
-    """
-
-    enabled: Optional[bool]
-    requires: Union[str, List[str]]
-    event_listener: EventListenerConfig
-
-    on_startup: ActionBlockListDict
-    on_exit: ActionBlockListDict
-    on_event: ActionBlockListDict
-    on_modified: Dict[str, ActionBlockListDict]
-
-
 class ModuleActionBlocks(TypedDict):
     """Contents of Module().action_blocks."""
 
@@ -87,16 +64,6 @@ class ModuleActionBlocks(TypedDict):
 
 
 ModuleConfig = Dict[str, ModuleConfigDict]
-
-Template = namedtuple(
-    'Template',
-    ['source', 'target', 'permissions'],
-)
-WatchedFile = namedtuple(
-    'WatchedFile',
-    ['path', 'module'],
-)
-
 logger = logging.getLogger('astrality')
 
 
@@ -121,7 +88,6 @@ class Module:
         order to replace relevant placeholders.
     """
 
-    module_config: ModuleConfigListDict
     action_blocks: ModuleActionBlocks
 
     def __init__(
@@ -163,8 +129,8 @@ class Module:
 
         # Use static event_listener if no event_listener is specified
         self.event_listener: EventListener = \
-            event_listener_factory(  # type: ignore
-                module_config_content.get(  # type: ignore
+            event_listener_factory(
+                module_config_content.get(
                     'event_listener',
                     {'type': 'static'},
                 ),
@@ -173,10 +139,10 @@ class Module:
         self.context_store = context_store
 
         # Create action block object for each available action block type
-        action_blocks: Dict = {'on_modified': {}}
+        action_blocks: ModuleActionBlocks = {'on_modified': {}}  # type: ignore
         for block_name in ('on_startup', 'on_event', 'on_exit'):
             action_blocks[block_name] = ActionBlock(  # type: ignore
-                action_block=module_config_content.get(  # type: ignore
+                action_block=module_config_content.get(
                     block_name,
                     {},
                 ),
@@ -191,13 +157,13 @@ class Module:
                 config_directory=self.directory,
             )
             action_blocks['on_modified'][modified_path] = \
-                ActionBlock(  # type: ignore
+                ActionBlock(
                     action_block=action_block_dict,
                     directory=self.directory,
                     replacer=self.interpolate_string,
                     context_store=self.context_store,
             )
-        self.action_blocks = action_blocks  # type: ignore
+        self.action_blocks = action_blocks
 
     def get_action_block(
         self,

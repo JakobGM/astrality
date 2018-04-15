@@ -416,21 +416,6 @@ class ActionBlockDict(TypedDict, total=False):
     trigger: Union[TriggerDict, List[TriggerDict]]
 
 
-class ActionBlockListDict(TypedDict, total=False):
-    """
-    Action block dict where everything is in lists.
-
-    Users are allowed to not specify a list when they want to specify just
-    *one* item. In this case the item is cast into a list in Module.__init__ in
-    order to expect lists everywhere in the remaining methods.
-    """
-
-    import_context: List[ImportContextDict]
-    compile: List[CompileDict]
-    run: List[RunDict]
-    trigger: List[TriggerDict]
-
-
 class ActionBlock:
     """
     Class representing a module action block, e.g. 'on_startup'.
@@ -449,7 +434,7 @@ class ActionBlock:
 
     def __init__(
         self,
-        action_block: Union[ActionBlockDict, ActionBlockListDict],
+        action_block: ActionBlockDict,
         directory: Path,
         replacer: Replacer,
         context_store: compiler.Context,
