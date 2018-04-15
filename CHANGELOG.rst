@@ -74,6 +74,25 @@ Changed
 - Astrality will now only recompile templates that have already been compiled
   when ``recompile_modified_templates`` is set to ``true``.
 
+- The ``template`` compile action keyword has now been replaced with
+  ``source``. This keyword makes more sense when we add support for compiling
+  all templates within a directory.
+
+  *Old syntax*
+
+  .. code-block:: yaml
+
+      compile:
+          - template: path/to/template
+
+  *New syntax:*
+
+  .. code-block:: yaml
+
+      compile:
+          - source: path/to/template
+
+
 Fixed
 -----
 

@@ -26,7 +26,7 @@ def test_compiling_template_with_specific_permissions(
         'module/test': {
             'on_startup': {
                 'compile': {
-                    'template': str(template),
+                    'source': str(template),
                     'target': str(target),
                     'permissions': specified_permission,
                 },

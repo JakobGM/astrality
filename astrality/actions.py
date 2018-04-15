@@ -177,7 +177,7 @@ class ImportContextAction(Action):
 class RequiredCompileDict(TypedDict):
     """Required fields of compile action."""
 
-    template: str
+    source: str
 
 
 class CompileDict(RequiredCompileDict, total=False):
@@ -210,11 +210,11 @@ class CompileAction(Action):
         elif 'target' not in self._options:
             # If no target is specified, then we can create a temporary file
             # and insert it into the configuration options.
-            template = self.option(key='template', path=True)
+            template = self.option(key='source', path=True)
             target = self._create_temp_file(template.name)
             self._options['target'] = str(target)  # type: ignore
 
-        template = self.option(key='template', path=True)
+        template = self.option(key='source', path=True)
         target = self.option(key='target', path=True)
         if target is None:
             # A compilation target has not been specified, so we will compile
@@ -274,7 +274,7 @@ class CompileAction(Action):
         """Return True if run action is responsible for template."""
         assert other.is_absolute()
 
-        if not self.option(key='template', path=True) == other:
+        if not self.option(key='source', path=True) == other:
             # This is not a managed template, so we will not recompile
             return False
 
