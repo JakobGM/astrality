@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from astrality.module import ModuleManager, WatchedFile
+from astrality.module import ModuleManager
 
 @pytest.yield_fixture
 def compiling_fixtures(
