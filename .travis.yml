@@ -1,5 +1,11 @@
 language: python
 cache: pip
+os:
+  - linux
+  - osx
+matrix:
+  allow_failures:
+    - os: osx
 python:
   - 3.6
 before_install:
