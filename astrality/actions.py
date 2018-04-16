@@ -20,12 +20,14 @@ which could be imported and accessed independently from other modules.
 import abc
 from collections import defaultdict
 import logging
+from os.path import relpath
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
     Any,
     Callable,
     DefaultDict,
+    Dict,
     List,
     Optional,
     Set,
@@ -33,7 +35,6 @@ from typing import (
     Union,
 )
 
-from jinja2.exceptions import TemplateNotFound
 from mypy_extensions import TypedDict
 
 from astrality import compiler, utils
@@ -198,15 +199,15 @@ class CompileAction(Action):
         self._performed_compilations: DefaultDict[Path, Set[Path]] = \
             defaultdict(set)
 
-    def execute(self) -> Optional[Tuple[Path, Path]]:
+    def execute(self) -> Dict[Path, Path]:
         """
         Compile template to target destination.
 
-        :return: 2-Tuple containing template and compile target.
+        :return: Dictionary with template keys and compile target values.
         """
         if self.null_object:
             # Null objects do nothing
-            return None
+            return {}
         elif 'target' not in self._options:
             # If no target is specified, then we can create a temporary file
             # and insert it into the configuration options.
@@ -214,27 +215,54 @@ class CompileAction(Action):
             target = self._create_temp_file(template.name)
             self._options['target'] = str(target)  # type: ignore
 
-        template = self.option(key='source', path=True)
+        template_source = self.option(key='source', path=True)
         target = self.option(key='target', path=True)
 
-        try:
-            compiler.compile_template(
-                template=template,
-                target=target,
-                context=self.context_store,
-                shell_command_working_directory=self.directory,
-                permissions=self.option(key='permissions'),
+        compilations: Dict[Path, Path] = {}
+        if template_source.is_file():
+            # Single template file, so straight forward compilation
+            self.compile_template(template=template_source, target=target)
+            self._performed_compilations[template_source].add(target)
+            compilations = {template_source: target}
+
+        elif template_source.is_dir():
+            # The template source is a directory, so we will recurse over
+            # all the files and compile every single file while preserving
+            # the directory hierarchy
+            templates = tuple(
+                path
+                for path
+                in template_source.glob('**/*')
+                if path.is_file()
             )
-        except TemplateNotFound:
-            logger = logging.getLogger(__name__)
-            logger.error(
-                'Could not compile template '
-                f'"{template}" to target "{target}". '
-                'Template does not exist.',
+            targets = tuple(
+                target / relpath(template_file, start=template_source)
+                for template_file
+                in templates
             )
 
-        self._performed_compilations[template].add(target)
-        return template, target
+            for template, target in zip(templates, targets):
+                self.compile_template(template=template, target=target)
+                self._performed_compilations[template].add(target)
+                compilations[template] = target
+
+        else:
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f'Could not compile template "{template_source}" '
+                f'to target "{target}". No such path!',
+            )
+
+        return compilations
+
+    def compile_template(self, template: Path, target: Path) -> None:
+        compiler.compile_template(
+            template=template,
+            target=target,
+            context=self.context_store,
+            shell_command_working_directory=self.directory,
+            permissions=self.option(key='permissions'),
+        )
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """

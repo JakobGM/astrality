@@ -10,6 +10,7 @@ def test_use_of_string_interpolations_of_module(
     _runtime,
     tmpdir,
     caplog,
+    template_directory,
 ):
     """Path placeholders should be replaced with compilation target."""
     temp_dir = Path(tmpdir)
@@ -18,9 +19,12 @@ def test_use_of_string_interpolations_of_module(
     a_template.write_text('foobar')
 
     b_template = temp_dir / 'b.template'
+    b_template.write_text('')
     b_target = temp_dir / 'b.target'
+    b_on_modified = template_directory / 'empty.template'
 
     c_template = temp_dir / 'c.template'
+    c_template.write_text('')
     c_target = temp_dir / 'c.target'
 
     application_config = {
@@ -33,7 +37,7 @@ def test_use_of_string_interpolations_of_module(
         },
         'module/B': {
             'on_modified': {
-                '/what/ever': {
+                str(b_on_modified): {
                     'compile': [
                         {
                             'source': str(b_template),
@@ -76,9 +80,9 @@ def test_use_of_string_interpolations_of_module(
 
 
     # Specified compilation targets should be inserted
-    module_manager.modules['B'].compile('on_modified', Path('/what/ever'))
+    module_manager.modules['B'].compile('on_modified', b_on_modified)
     assert module_manager.modules['B'].interpolate_string(
-        '{b.template}',
+        '{' + str(b_template) + '}',
     ) == str(b_target)
 
     # Relative paths should be resolved

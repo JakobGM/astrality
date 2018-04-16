@@ -14,6 +14,9 @@ Versioning <http://semver.org/spec/v2.0.0.html>`_.
 Added
 -----
 
+- You can now compile all templates recursively within a directory. Just set
+  ``source`` to a directory path. ``target`` must be a directory as well, and
+  the relative file hierarchy is preserved.
 - The run action now supports ``timeout`` option, in order to set
   ``run_timeout`` on command-by-command basis.
 - ``compile`` actions now support an optional ``permissions`` field for

@@ -349,7 +349,7 @@ class TestModuleClass:
         caplog.clear()
         module_manager.finish_tasks()
         assert 'Could not compile template "/not/existing" '\
-               'to target "' in caplog.record_tuples[1][2]
+               'to target "' in caplog.record_tuples[0][2]
 
     def test_compilation_of_template(
         self,

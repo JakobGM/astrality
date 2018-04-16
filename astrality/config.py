@@ -14,6 +14,7 @@ from typing import (
     List,
     Optional,
     Pattern,
+    Set,
     Tuple,
     Type,
     Iterable,
@@ -271,6 +272,32 @@ def expand_path(path: Path, config_directory: Path) -> Path:
 
     # Return path where symlinks such as '..' are resolved
     return path.resolve()
+
+
+def expand_globbed_path(path: Path, config_directory: Path) -> Set[Path]:
+    """
+    Expand globs, i.e. * and **, of path object.
+
+    This function is actually not used at the moment, but I have left it here
+    in case we would want to support globbed paths in the future.
+
+    :param path: Path to be expanded.
+    :param config_directory: Anchor for relative paths.
+    :return: Set of file paths resulting from glob expansion.
+    """
+    # Make relative paths absolute with config_directory as anchor
+    path = expand_path(path=path, config_directory=config_directory)
+
+    # Remove root directory from path
+    relative_to_root = Path(*path.parts[1:])
+
+    # Expand all globs in the entirety of `path`, recursing if ** is present
+    expanded_paths = Path('/').glob(
+        pattern=str(relative_to_root),
+    )
+
+    # Cast generator to set, and remove directories
+    return set(path for path in expanded_paths if path.is_file())
 
 
 class EnablingStatementRequired(TypedDict):

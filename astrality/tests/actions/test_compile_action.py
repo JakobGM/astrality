@@ -3,6 +3,8 @@
 import os
 from pathlib import Path
 
+import pytest
+
 from astrality.actions import CompileAction
 
 def test_null_object_pattern():
@@ -14,7 +16,7 @@ def test_null_object_pattern():
         context_store={},
     )
     target = compile_action.execute()
-    assert target is None
+    assert target == {}
 
 
 def test_compilation_of_template_to_temporary_file(template_directory):
@@ -28,10 +30,11 @@ def test_compilation_of_template_to_temporary_file(template_directory):
         replacer=lambda x: x,
         context_store={},
     )
-    template, target = compile_action.execute()
+    compilations = compile_action.execute()
 
-    assert template == template_directory / 'no_context.template'
-    assert target.read_text() == 'one\ntwo\nthree'
+    template = template_directory / 'no_context.template'
+    assert template in compilations
+    assert compilations[template].read_text() == 'one\ntwo\nthree'
 
 def test_compilation_to_specific_absolute_file_path(template_directory, tmpdir):
     """
@@ -50,7 +53,7 @@ def test_compilation_to_specific_absolute_file_path(template_directory, tmpdir):
         replacer=lambda x: x,
         context_store={},
     )
-    _, return_target = compile_action.execute()
+    return_target = list(compile_action.execute().values())[0]
 
     assert return_target == target
     assert target.read_text() == 'one\ntwo\nthree'
@@ -72,7 +75,7 @@ def test_compilation_to_specific_relative_file_path(template_directory, tmpdir):
         replacer=lambda x: x,
         context_store={},
     )
-    _, return_target = compile_action.execute()
+    return_target = list(compile_action.execute().values())[0]
 
     assert return_target == target
     assert target.read_text() == 'one\ntwo\nthree'
@@ -96,13 +99,13 @@ def test_compilation_with_context(template_directory):
     )
 
     context_store['fonts'] = {2: 'ComicSans'}
-    _, target = compile_action.execute()
+    target = list(compile_action.execute().values())[0]
 
     username = os.environ.get('USER')
     assert target.read_text() == f'some text\n{username}\nComicSans'
 
     context_store['fonts'] = {2: 'TimesNewRoman'}
-    _, target = compile_action.execute()
+    target = list(compile_action.execute().values())[0]
     assert target.read_text() == f'some text\n{username}\nTimesNewRoman'
 
 def test_setting_permissions_of_target_template(template_directory):
@@ -118,7 +121,7 @@ def test_setting_permissions_of_target_template(template_directory):
         context_store={},
     )
 
-    _, target = compile_action.execute()
+    target = list(compile_action.execute().values())[0]
     assert (target.stat().st_mode & 0o777) == 0o707
 
 def test_use_of_replacer(template_directory, tmpdir):
@@ -148,7 +151,7 @@ def test_use_of_replacer(template_directory, tmpdir):
         context_store={},
     )
 
-    _, target = compile_action.execute()
+    target = list(compile_action.execute().values())[0]
     assert target.read_text() == 'one\ntwo\nthree'
     assert (target.stat().st_mode & 0o777) == 0o777
 
@@ -167,7 +170,7 @@ def test_that_current_directory_is_set_correctly(template_directory):
         replacer=lambda x: x,
         context_store={},
     )
-    _, target = compile_action.execute()
+    target = list(compile_action.execute().values())[0]
     assert target.read_text() == '/tmp'
 
 def test_retrieving_all_compiled_templates(template_directory, tmpdir):
@@ -238,3 +241,58 @@ def test_contains_with_uncompiled_template(template_directory, tmpdir):
 
     compile_action.execute()
     assert template_directory / 'empty.template' in compile_action
+
+def test_compiling_entire_directory(test_config_directory, tmpdir):
+    """All directory contents should be recursively compiled."""
+    temp_dir = Path(tmpdir)
+    templates = \
+        test_config_directory / 'test_modules' / 'using_all_actions'
+    compile_dict = {
+        'source': str(templates),
+        'target': str(temp_dir),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=test_config_directory,
+        replacer=lambda x: x,
+        context_store={'geography': {'capitol': 'Berlin'}},
+    )
+    results = compile_action.execute()
+
+    # Check if return content is correct, showing performed compilations
+    assert templates / 'module.template' in results
+    assert results[templates / 'module.template'] == \
+        temp_dir / 'module.template'
+
+    # Check if the templates actually have been compiled
+    target_dir_content = list(temp_dir.iterdir())
+    assert len(target_dir_content) == 6
+    assert temp_dir / 'module.template' in target_dir_content
+    assert (temp_dir / 'recursive' / 'empty.template').is_file()
+
+@pytest.mark.skip(reason='Glob paths have not been implemented yet')
+def test_compiling_entire_directory_with_single_glob(  # pragma: no cover
+    test_config_directory,
+    tmpdir,
+):  # pragma: no cover
+    """All directory content should be compilable with a glob."""
+    temp_dir = Path(tmpdir)
+    templates = test_config_directory / 'test_modules' / 'using_all_actions'
+    compile_dict = {
+        'source': str(templates / '*'),
+        'target': str(temp_dir),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=test_config_directory,
+        replacer=lambda x: x,
+        context_store={},
+    )
+    results = compile_action.execute()
+
+    assert templates / 'module.template' in results
+    assert results[templates / 'module.template'] == temp_dir / 'module.template'
+
+    target_dir_content = list(temp_dir.iterdir())
+    assert len(target_dir_content) == 5
+    assert templates / 'module.template' in target_dir_content
