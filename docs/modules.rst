@@ -276,7 +276,12 @@ of a module.
 Each template compilation action has the following available attributes:
 
     ``source``:
-        Path to the template.
+        Path to either a template file or template directory.
+
+        If ``source`` is a directory, Astrality will compile all templates
+        recursively to the ``target`` directory, preserving the directory
+        hierarchy.
+
     ``target``: *[Optional]*
         *Default:* Temporary file created by Astrality.
 
