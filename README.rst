@@ -2,29 +2,36 @@
 
 .. |pypi_version| image:: https://badge.fury.io/py/astrality.svg
     :target: https://badge.fury.io/py/astrality
+    :alt: PyPI package
 
 .. |travis-ci| image:: https://travis-ci.org/JakobGM/astrality.svg?branch=master
     :target: https://travis-ci.org/JakobGM/astrality
+    :alt: Travis-CI
 
 .. |coveralls| image:: https://coveralls.io/repos/github/JakobGM/astrality/badge.svg?branch=master
     :target: https://coveralls.io/github/JakobGM/astrality?branch=master
+    :alt: Coveralls
 
 .. |rtfd| image:: https://readthedocs.org/projects/astrality/badge/?version=latest
     :target: http://astrality.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. |logo| image:: https://github.com/JakobGM/astrality/raw/master/docs/images/astrality_logo.png
+    :alt: Astrality logo
 
-=====================================================================================================
-|logo| Astrality - A Dynamic Configuration File Manager |pypi_version| |travis-ci| |rtfd| |coveralls|
-=====================================================================================================
+.. |gitter| image:: https://badges.gitter.im/JakobGM/astrality.png
+    :target: https://gitter.im/astrality/Lobby
+
+==============================================================================================================
+|logo| Astrality - A Dynamic Configuration File Manager |pypi_version| |travis-ci| |rtfd| |coveralls| |gitter|
+==============================================================================================================
 
 What does it do?
 ================
 
-Astrality is a tool for managing configuration files and scheduling tasks related to those files.
+Astrality is an `Ansible <https://www.ansible.com/>`_-like approach to low-configuration management of dotfiles. It allows you to write all your configuration files as templates which will be *automatically* compiled when modified.
 
-You can create templates for your configuration files, and Astrality will replace placeholders within those templates with ``context`` values defined in a central configuration file. Furthermore, you can dynamically manipulate that ``context`` at predefined times and events.
+Astrality will replace placeholders within templates with ``context`` values defined in a central configuration file. Furthermore, you can dynamically manipulate that ``context`` at predefined times and events.
 
 By publishing an Astrality module to GitHub, others can try out your configuration by only pasting one line into their configuration. The use of template placeholders in your configuration files make such sharing portable on cross of different systems and user preferences.
 
