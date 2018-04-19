@@ -271,7 +271,10 @@ def expand_path(path: Path, config_directory: Path) -> Path:
         path = config_directory / path
 
     # Return path where symlinks such as '..' are resolved
-    return path.resolve()
+    path = path.resolve()
+
+    # Expand environment variables and return as a Path object
+    return Path(os.path.expandvars(str(path)))
 
 
 def expand_globbed_path(path: Path, config_directory: Path) -> Set[Path]:

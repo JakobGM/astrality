@@ -25,6 +25,17 @@ def test_expand_path_method(test_config_directory):
         config_directory=test_config_directory,
     ) == test_config_directory / 'test'
 
+def test_expansion_of_environment_variables(test_config_directory):
+    """
+    Environment variables should be expanded in paths.
+
+    See pytest.ini for available environment variables.
+    """
+    assert expand_path(
+        path=Path('${EXAMPLE_ENV_VARIABLE}/recursive'),
+        config_directory=test_config_directory / '$EXAMPLE_ENV_VARIABLE',
+    ) == test_config_directory / 'test_value' / 'test_value' / 'recursive'
+
 def test_expand_globbed_path(test_config_directory):
     """Globbed paths should allow one level of globbing."""
     templates = Path('test_modules', 'using_all_actions')
