@@ -20,7 +20,7 @@ which could be imported and accessed independently from other modules.
 import abc
 from collections import defaultdict
 import logging
-from os.path import relpath
+import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
@@ -110,8 +110,9 @@ class Action(abc.ABC):
             return self._absolute_path(of=substituted_string_path)
         elif isinstance(option_value, str):
             # The option is a string, and any placeholders should be
-            # substituted before it is returned.
-            return self.replace(option_value)
+            # substituted before it is returned. We also expand any environment
+            # variables that might be present.
+            return os.path.expandvars(self.replace(option_value))
         else:
             return option_value
 
@@ -236,7 +237,7 @@ class CompileAction(Action):
                 if path.is_file()
             )
             targets = tuple(
-                target / relpath(template_file, start=template_source)
+                target / os.path.relpath(template_file, start=template_source)
                 for template_file
                 in templates
             )
