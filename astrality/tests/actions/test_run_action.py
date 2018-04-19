@@ -124,7 +124,7 @@ def test_running_shell_command_with_environment_variable(caplog):
         (
             'astrality.actions',
             logging.INFO,
-            'Running command "echo $USER".',
+            f'Running command "echo {os.environ["USER"]}".',
         ),
         (
             'astrality',
@@ -132,3 +132,14 @@ def test_running_shell_command_with_environment_variable(caplog):
             os.environ['USER'] + '\n',
         )
     ]
+
+def test_that_environment_variables_are_expanded():
+    """String parameters in any Action type should expand env variables."""
+    run_action = RunAction(
+        options={'shell': 'echo $EXAMPLE_ENV_VARIABLE'},
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+    command, _ = run_action.execute()
+    assert command == 'echo test_value'

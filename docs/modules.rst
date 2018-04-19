@@ -315,7 +315,7 @@ Here is an example:
         on_startup:
             compile:
                 - source: modules/scripts/executable.sh.template
-                  target: {{ env.XDG_CONFIG_HOME }}/bin/executable.sh
+                  target: ${XDG_CONFIG_HOME}/bin/executable.sh
                   permissions: 0o555
                 - source: modules/desktop/conky_module.template
 

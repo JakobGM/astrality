@@ -264,14 +264,17 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     expanded to the home directory of $USER.
     """
     # Expand any tilde expressions for user home directory
-    path = Path.expanduser(path)
+    path = path.expanduser()
 
     # Use config directory as anchor for relative paths
     if not path.is_absolute():
         path = config_directory / path
 
     # Return path where symlinks such as '..' are resolved
-    return path.resolve()
+    path = path.resolve()
+
+    # Expand environment variables and return as a Path object
+    return Path(os.path.expandvars(path))  # type: ignore
 
 
 def expand_globbed_path(path: Path, config_directory: Path) -> Set[Path]:
