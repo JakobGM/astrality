@@ -5,9 +5,6 @@ import pytest
 from astrality.module import ModuleManager
 
 @pytest.mark.parametrize("specified_permission,expected_permission", [
-        (0o100, 0o100),
-        (0o777, 0o777),
-        (8, 0o010),
         ("777", 0o777),
         ("100", 0o100),
 ])
