@@ -275,14 +275,14 @@ of a module.
 
 Each template compilation action has the following available attributes:
 
-    ``source``:
+    ``source:``
         Path to either a template file or template directory.
 
         If ``source`` is a directory, Astrality will compile all templates
         recursively to the ``target`` directory, preserving the directory
         hierarchy.
 
-    ``target``: *[Optional]*
+    ``target:`` *[Optional]*
         *Default:* Temporary file created by Astrality.
 
         Path which specifies where to put the *compiled* template.
@@ -293,7 +293,30 @@ Each template compilation action has the following available attributes:
         .. warning::
             When you do not provide Astrality with a ``target`` path for a template, Astrality will create a *temporary* file as the target for compilation. This file will be automatically deleted when you quit Astrality.
 
-    ``permissions``: *[Optional]*
+    ``templates:`` *[Optional]*
+        *Default:* ``'(.+)'``
+
+        Regular expression restricting which filenames that should be compiled
+        as templates.  Useful when ``source`` is a directory which contains
+        non-template files. By default Astrality will try to compile all files.
+
+        If you specify a capture group, astrality will use the captured string
+        as the target filename. For example, ``templates: '^template\.(.+)$'``
+        will match the file "template.kitty.conf" and rename the target to
+        "kitty.conf".
+
+        .. hint::
+            You can test your regex `here <https://regex101.com/r/myMbmT/1>`_.
+            Astrality uses the capture group with the greatest index.
+
+    ``non_templates:`` *[Optional]*
+        *Default:* ``'symlink'``
+
+        *Accepts:* ``symlink``, ``copy``, ``ignore``
+
+        What to do with files that do not match the ``templates`` regex.
+
+    ``permissions:`` *[Optional]*
         *Default:* Same permissions as source file.
 
         The file mode (i.e. permission bits) assigned to the *compiled* template.
