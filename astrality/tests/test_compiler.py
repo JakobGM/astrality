@@ -175,13 +175,13 @@ def test_writing_template_file_with_default_permissions(tmpdir):
     )
     assert (target.stat().st_mode & 0o777) == permission
 
-def test_writing_template_file_with_specific_permissions(tmpdir):
+def test_writing_template_file_with_specific_octal_permissions(tmpdir):
     tmpdir = Path(tmpdir)
     template = tmpdir / 'template'
     template.write_text('content')
     target = tmpdir / 'target'
 
-    permissions = 0o777
+    permissions = '514'
     compile_template(
         template=template,
         target=target,
@@ -189,15 +189,17 @@ def test_writing_template_file_with_specific_permissions(tmpdir):
         shell_command_working_directory=tmpdir,
         permissions=permissions,
     )
-    assert (target.stat().st_mode & 0o777) == permissions
+    assert (target.stat().st_mode & 0o777) == 0o514
 
-def test_writing_template_with_string_permissions(tmpdir):
+def test_writing_template_file_with_specific_modal_permissions(tmpdir):
     tmpdir = Path(tmpdir)
     template = tmpdir / 'template'
     template.write_text('content')
+    permission = 0o644
+    template.chmod(permission)
     target = tmpdir / 'target'
 
-    permissions = '100'
+    permissions = 'uo+x'
     compile_template(
         template=template,
         target=target,
@@ -205,4 +207,22 @@ def test_writing_template_with_string_permissions(tmpdir):
         shell_command_working_directory=tmpdir,
         permissions=permissions,
     )
-    assert (target.stat().st_mode & 0o777) == 0o100
+    assert (target.stat().st_mode & 0o777) == 0o745
+
+def test_writing_template_file_with_invalid_permissions(tmpdir):
+    tmpdir = Path(tmpdir)
+    template = tmpdir / 'template'
+    template.write_text('content')
+    permission = 0o732
+    template.chmod(permission)
+    target = tmpdir / 'target'
+
+    permissions = 'invalid_argument'
+    compile_template(
+        template=template,
+        target=target,
+        context={},
+        shell_command_working_directory=tmpdir,
+        permissions=permissions,
+    )
+    assert (target.stat().st_mode & 0o777) == 0o732

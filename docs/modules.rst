@@ -297,17 +297,14 @@ Each template compilation action has the following available attributes:
         *Default:* Same permissions as source file.
 
         The file mode (i.e. permission bits) assigned to the *compiled* template.
-        Given either as a string, such as ``'755'``, or as an octal integer, such as ``0o755``.
+        Given either as a string of octal permissions, such as ``'755'``, or as a string of symbolic permissions, such as ``'u+x'``. This option is passed to the linux shell command ``chmod``. Refer to ``chmod``'s manual for the full details on possible arguments.
 
-        .. warning::
-            Take care when specifying permission bits using integers, as they are interpreted literally w.r.t. the indicated base.
+        .. note::
+            The permissions specified in the ``permissions`` option are applied *on top* of the default permissions copied from the template file.
 
-            ``permissions: 511`` is equal to running the shell command ``chmod 777 <compiled_template>``, as 511 *base 10* is equal to 777 *base 8*.
-            ``permissions: 0o511`` is most often what you intended instead.
+            For example, if the template's permissions are ``rw-r--r-- (644)`` and the value of ``'ug+x'`` is supplied for the ``permissions`` option, the ``644`` permissions will first be copied to the resulting compiled file and then ``chmod ug+x`` will be applied on top of that to give a resulting permission on the file of ``rwxr-xr-- (754)``.
 
-            You should therefore always prepend ``0o`` (this indicates an octal number) to the number you would usually use when using the shell command ``chmod``.
-
-            Alternatively, specify permissions using a string instead, as ``permissions: '511'`` is equal to running the shell command ``chmod 511 <compiled_template>``.
+            If an invalid value is supplied for the ``permissions`` option, only the default permissions are copied to the compiled file.
 
 
 Here is an example:
