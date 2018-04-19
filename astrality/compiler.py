@@ -160,10 +160,10 @@ def compile_template(
         result = run_shell(
             command=f'chmod {permissions} {target}',
             timeout=0,
-            fallback=None,
+            fallback=False,
         )
 
-        if not result:
+        if result is False:
             logger.error(
                 f'Could not set "{permissions}" permissions for "{target}"',
             )

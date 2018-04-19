@@ -2,7 +2,7 @@
 Astrality contributors
 ======================
 
-List of contributors sorted alphabetically:
+`Jakob Gerhard Martinussen <https://github.com/JakobGM>`_ - Maintainer and Original Creator of Astrality
 
-- `Jakob Gerhard Martinussen <https://github.com/JakobGM>`_
-    - Maintainer and original creator of Astrality
+Contributors sorted alphabetically:
+ - `Shashank Singh <https://github.com/sshashank124>`_
