@@ -14,7 +14,6 @@ from jinja2 import (
     make_logging_undefined,
 )
 
-from astrality.exceptions import MisconfiguredConfigurationFile
 from astrality.utils import generate_expanded_env_dict
 from astrality.resolver import Resolver
 from astrality.utils import run_shell
