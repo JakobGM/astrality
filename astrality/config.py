@@ -271,7 +271,7 @@ def expand_path(path: Path, config_directory: Path) -> Path:
 
     # Use config directory as anchor for relative paths
     if not path.is_absolute():
-        path = config_directory / path
+        path = Path(os.path.expandvars(config_directory)) / path  # type: ignore
 
     # Return path where symlinks such as '..' are resolved
     return path.resolve()
