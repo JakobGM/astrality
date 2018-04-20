@@ -22,6 +22,7 @@ from collections import defaultdict
 import logging
 import os
 from pathlib import Path
+import re
 from tempfile import NamedTemporaryFile
 from typing import (
     Any,
@@ -87,7 +88,7 @@ class Action(abc.ABC):
         """
         return self._replace(string)
 
-    def option(self, key: str, path: bool = False) -> Any:
+    def option(self, key: str, default: Any = None, path: bool = False) -> Any:
         """
         Return user specified action option.
 
@@ -95,10 +96,11 @@ class Action(abc.ABC):
         it replaces relevant placeholders users might have specified.
 
         :param key: The key of the user option that should be retrieved.
+        :param default: Default return value if key not found.
         :param path: If True, convert string path to Path.is_absolute().
         :return: Processed action configuration value.
         """
-        option_value = self._options.get(key)
+        option_value = self._options.get(key, default)
 
         if option_value is None:
             return None
@@ -234,7 +236,7 @@ class CompileAction(Action):
                 path
                 for path
                 in template_source.glob('**/*')
-                if path.is_file()
+                if self.compilable(path)
             )
             targets = tuple(
                 target / os.path.relpath(template_file, start=template_source)
@@ -257,6 +259,12 @@ class CompileAction(Action):
         return compilations
 
     def compile_template(self, template: Path, target: Path) -> None:
+        """
+        Compile template to target destination.
+
+        :param template: Template path.
+        :param target: Compile target path.
+        """
         compiler.compile_template(
             template=template,
             target=target,
@@ -264,6 +272,18 @@ class CompileAction(Action):
             shell_command_working_directory=self.directory,
             permissions=self.option(key='permissions'),
         )
+
+    def compilable(self, path: Path) -> bool:
+        """Return True if path is supposed to be compiled."""
+        if not path.is_file():
+            return False
+
+        # The default pattern matches everything
+        specified_pattern = self.option(key='templates', default='.+')
+
+        # Only compile if filename matches the specified pattern
+        template_pattern = re.compile(specified_pattern)
+        return bool(template_pattern.match(path.name))
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """
