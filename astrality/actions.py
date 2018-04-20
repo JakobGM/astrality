@@ -246,7 +246,7 @@ class CompileAction(Action):
             logger = logging.getLogger(__name__)
             logger.error(
                 f'Could not compile template "{template_source}" '
-                f'to target "{target}". No such path!',
+                f'to target "{target_source}". No such path!',
             )
             return {}
 

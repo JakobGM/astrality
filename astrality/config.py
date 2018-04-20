@@ -263,6 +263,9 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
     expanded to the home directory of $USER.
     """
+    # Expand environment variables present in path
+    path = Path(os.path.expandvars(path))
+
     # Expand any tilde expressions for user home directory
     path = path.expanduser()
 
@@ -271,10 +274,7 @@ def expand_path(path: Path, config_directory: Path) -> Path:
         path = config_directory / path
 
     # Return path where symlinks such as '..' are resolved
-    path = path.resolve()
-
-    # Expand environment variables and return as a Path object
-    return Path(os.path.expandvars(path))  # type: ignore
+    return path.resolve()
 
 
 def expand_globbed_path(path: Path, config_directory: Path) -> Set[Path]:
