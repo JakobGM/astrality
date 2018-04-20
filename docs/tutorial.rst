@@ -1,7 +1,7 @@
 .. _examples:
 
 ========
-Examples
+Tutorial
 ========
 
 .. _examples_weekday_wallpaper:

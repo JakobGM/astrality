@@ -26,14 +26,20 @@
 |logo| Astrality - A Dynamic Configuration File Manager |pypi_version| |travis-ci| |rtfd| |coveralls| |gitter|
 ==============================================================================================================
 
+    Astrality is the "dotfile"-manager you wish you always had.
+
 What does it do?
 ================
 
-Astrality is an `Ansible <https://www.ansible.com/>`_-like approach to low-configuration management of dotfiles. It allows you to write all your configuration files as templates which will be *automatically* compiled when modified.
+Astrality offers an  `Ansible <https://www.ansible.com/>`_-like approach to dotfile management that adapts to your existing dotfiles structure, not the other way around.
+You can start to write configuration files as templates which will be *automatically* compiled to their intended location when they are modified.
 
-Astrality will replace placeholders within templates with ``context`` values defined in a central configuration file. Furthermore, you can dynamically manipulate that ``context`` at predefined times and events.
+Templating allows more flexibility when writing otherwise static configuration files, replacing placeholders with values defined in a central configuration file.
+Astrality builds upon this by allowing you to dynamically manipulate the context store, changing configuration files based on the current OS, the time of day, and much more.
 
 By publishing an Astrality module to GitHub, others can try out your configuration by only pasting one line into their configuration. The use of template placeholders in your configuration files make such sharing portable on cross of different systems and user preferences.
+
+Take a look at the `full documentation <https://astrality.readthedocs.io>`_ for more information, and feel free to drop by our `Gitter room <https://gitter.im/astrality/Lobby>`_ for any questions you might have.
 
 **Here is gif demonstrating how Astrality is used to**:
 
@@ -53,7 +59,7 @@ By publishing an Astrality module to GitHub, others can try out your configurati
 * Insert environment variables, by writing ``{{ env.USER }}``, and command substitutions, by writing ``{{ 'xrandr | grep -cw connected' | shell }}``), into configuration files that do not natively support them.
 * Modularize your desktop configuration, allowing you to switch between different combinations of applications and/or configurations by only editing one line. With Astrality you can, for example, quickly switch between `different <https://github.com/jaagr/polybar>`_ `status <https://github.com/LemonBoy/bar>`_ `bars <https://i3wm.org/i3bar/>`_ with little effort.
 * Share ``modules`` with others who can effortlessly try out your configuration, and easily switch back to their old configuration if they wish, making experimentation frictionless.
-* And much more...  An example configuration with several examples is included.
+* And much more...  An `example configuration <https://astrality.readthedocs.io/example_configuration.html>` with several examples is included.
 
 The configuration format uses the flexible `YAML <http://docs.ansible.com/ansible/latest/YAMLSyntax.html#yaml-basics>`_ format, and the template language uses the `Jinja2 syntax <http://jinja.pocoo.org/docs/2.10/>`_, which is easy to get started with, but allows complex templating for those who need it.
 

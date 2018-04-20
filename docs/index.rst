@@ -19,7 +19,8 @@ Table of Contents
     templating
     modules
     event_listeners
-    examples
+    tutorial
+    example_configuration
     tips_and_tricks
 
 .. toctree::
