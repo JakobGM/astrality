@@ -23,6 +23,7 @@ import logging
 import os
 from pathlib import Path
 import re
+import shutil
 from tempfile import NamedTemporaryFile
 from typing import (
     Any,
@@ -204,9 +205,10 @@ class CompileAction(Action):
 
     def execute(self) -> Dict[Path, Path]:
         """
-        Compile template to target destination.
+        Compile template source to target destination.
 
-        :return: Dictionary with template keys and compile target values.
+        :return: Dictionary with source keys and target values.
+            Contains compiled, symlinked, and copied files.
         """
         if self.null_object:
             # Null objects do nothing
@@ -222,7 +224,6 @@ class CompileAction(Action):
         template_source = self.option(key='source', path=True)
         target_source = self.option(key='target', path=True)
 
-        compilations: Dict[Path, Path] = {}
         if template_source.is_file():
             # Single template file, so straight forward compilation
             self.compile_template(
@@ -230,36 +231,24 @@ class CompileAction(Action):
                 target=target_source,
             )
             self._performed_compilations[template_source].add(target_source)
-            compilations = {template_source: target_source}
+            return {template_source: target_source}
 
         elif template_source.is_dir():
             # The template source is a directory, so we will recurse over
             # all the files and compile every single template while preserving
-            # the directory hierarchy
-            templates = (
-                path
-                for path
-                in template_source.glob('**/*')
-                if self.compilable(path)
+            # the directory hierarchy. Non-templates are handled according to
+            # the `non_templates` option.
+            return self.compile_directory(
+                source=template_source,
+                target=target_source,
             )
-            for template in templates:
-                target = self.target(
-                    template=template,
-                    template_root=template_source,
-                    target_root=target_source,
-                )
-                self.compile_template(template=template, target=target)
-                self._performed_compilations[template].add(target)
-                compilations[template] = target
-
         else:
             logger = logging.getLogger(__name__)
             logger.error(
                 f'Could not compile template "{template_source}" '
                 f'to target "{target}". No such path!',
             )
-
-        return compilations
+            return {}
 
     def compile_template(self, template: Path, target: Path) -> None:
         """
@@ -275,6 +264,82 @@ class CompileAction(Action):
             shell_command_working_directory=self.directory,
             permissions=self.option(key='permissions'),
         )
+
+    def compile_directory(self, source: Path, target: Path) -> Dict[Path, Path]:
+        """
+        Compile the `source` directory to `target`.
+
+        Non-templates are handled according to the `non_templates` option.
+        Directory hierarchy is preserved.
+
+        :param source: Directory containing files to be compiled.
+        :param target: Target destination for compiled files.
+        """
+        assert source.is_dir()
+
+        # Disect all files based on if they are templates or not
+        all_files = set(
+            path
+            for path
+            in source.glob('**/*')
+            if path.is_file()
+        )
+        templates = set(
+            path
+            for path
+            in all_files
+            if self.compilable(path)
+        )
+        non_templates = all_files - templates
+
+        # Compile all template files
+        compilations: Dict[Path, Path] = {}
+        for template in templates:
+            target_file = self.target(
+                template=template,
+                template_root=source,
+                target_root=target,
+            )
+            self.compile_template(template=template, target=target_file)
+            self._performed_compilations[template].add(target_file)
+            compilations[template] = target_file
+
+        # We will symlink all files if nothing else is specified
+        non_template_action = self.option(
+            key='non_templates',
+            default='symlink',
+        )
+        if non_template_action not in ('symlink', 'copy', 'ignore',):
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f'Non-template compile action "{non_template_action}" '
+                'not supported. Should be one of "symlink", "copy", or '
+                'ignore.',
+            )
+
+        # --- Perform non-template action ---
+        def target_path(non_template: Path) -> Path:
+            """Return target path of non-template."""
+            return target / os.path.relpath(  # type: ignore
+                non_template,
+                start=source,
+            )
+
+        if non_template_action == 'symlink':
+            for non_template in non_templates:
+                symlink = target_path(non_template)
+                symlink.symlink_to(non_template)
+                self._performed_compilations[non_template].add(symlink)
+                compilations[non_template] = symlink
+
+        elif non_template_action == 'copy':
+            for non_template in non_templates:
+                copy = target_path(non_template)
+                shutil.copy(str(non_template), str(copy))
+                self._performed_compilations[non_template].add(copy)
+                compilations[non_template] = copy
+
+        return compilations
 
     def compilable(self, path: Path) -> bool:
         """Return True if path is supposed to be compiled."""
