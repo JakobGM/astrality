@@ -17,6 +17,11 @@ Added
 - You can now compile all templates recursively within a directory. Just set
   ``source`` to a directory path. ``target`` must be a directory as well, and
   the relative file hierarchy is preserved.
+- You can now specify which filenames are considered templates when compiling
+  directories recursively.
+- Template target filenames can now be renamed by specifying a regular
+  expression capture group.
+- Non-template files can now be either symlinked, copied, or ignored.
 - The run action now supports ``timeout`` option, in order to set
   ``run_timeout`` on command-by-command basis.
 - ``compile`` actions now support an optional ``permissions`` field for
