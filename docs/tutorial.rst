@@ -4,6 +4,102 @@
 Tutorial
 ========
 
+.. _examples_dotfiles:
+
+Managing dotfiles with templates
+================================
+
+It is relatively common to organize all configuration files in a "dotfiles"
+repository. How you structure such a repository comes down to personal
+preference. We would like to use the templating capabilities of Astrality
+without making any changes to our existing dotfiles hierarchy. This is
+relatively easy!
+
+Let us start by managing the files located in ``$XDG_CONFIG_HOME``, where most
+configuration files reside. The default value of this environment variable is
+"~/.config". We will create an Astrality module which automatically detects
+files named "template.whatever", and compile it to "whatever". This way you can
+easily add new templates without having to add new configuration.
+
+.. code-block:: yaml
+
+    # $ASTRALITY_CONFIG_HOME/astrality.yml
+
+    module/dotfiles:
+        on_startup:
+            compile:
+                source: $XDG_CONFIG_HOME
+                target: $XDG_CONFIG_HOME
+                templates: 'template\.(.+)'
+                non_templates: ignore
+
+Let us go through the module configuration step-by-step:
+
+- We set both the source and target to be ``$XDG_CONFIG_HOME``, compiling any
+  template to the same directory as the template.
+- We only want to compile template filenames which matches the regular
+  expression ``template\.(.+)``.
+- The regex capture group in ``template\.(.+)`` specifies that everything
+  appearing after "template." should be used as the *compiled* target filename.
+- ``non_templates: ignore`` instructs Astrality to leave any non-templates
+  alone.
+
+We can now compile all such templates within *$XDG_CONFIG_HOME* by running
+``astrality`` from the shell. But we would like to *automatically* recompile
+templates when we modify them or create new ones. You can achieve this by
+enabling ``recompile_modified_templates``:
+
+.. code-block:: yaml
+
+    # $ASTRALITY_CONFIG_HOME/astrality.yml
+
+    config/modules:
+        recompile_modified_templates: true
+
+Astrality will automatically recompile any modified templates as long as it
+runs as a background process.
+
+Let us continue by managing a more complicated dotfiles repository. Most people
+create a separate repository containing *all* their configuration files, not
+only ``$XDG_CONFIG_HOME``. The repository is then cloned to something like
+``~/.dotfiles``, the contents of which is symlinked or copied to separate
+locations, ``$HOME``, ``$XDG_CONFIG_HOME``, ``$/etc`` on so on. You can do all
+of this with Astrality.
+
+
+For demonstration purposes, let us assume that the contents of
+"~/.dotfiles/home" should be compiled to "~", and "~/.dotfiles/etc" to "/etc",
+while non-templates should be symlinked instead.
+
+Move ``astrality.yml`` to the root of your dotfiles repository, set ``export
+ASTRALITY_CONFIG_HOME=~/.dotfiles``, and modify the dotfiles module
+accordingly:
+
+.. code-block:: yaml
+
+    # ~/.dotfiles/astrality.yml
+
+    config/modules:
+        recompile_modified_templates: true
+
+    module/dotfiles:
+        on_startup:
+            compile:
+                - source: home
+                  target: ~
+                  templates: 'template\.(.+)'
+                  non_templates: symlink
+
+                - source: etc
+                  target: /etc
+                  templates: 'template\.(.+)'
+                  non_templates: symlink
+
+Symlink is actually the default option, so we could have skipped specifying it
+altogether. You can also specify ``copy``. You can now start to write all your
+configuration files as templates instead, using placeholders for secret API
+keys or configuration values that change between machines, and much much more.
+
 .. _examples_weekday_wallpaper:
 
 A module using events
