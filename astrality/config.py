@@ -264,7 +264,7 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     expanded to the home directory of $USER.
     """
     # Expand environment variables present in path
-    path = Path(os.path.expandvars(path))
+    path = Path(os.path.expandvars(path))  # type: ignore
 
     # Expand any tilde expressions for user home directory
     path = path.expanduser()

@@ -49,6 +49,19 @@ config/modules:
           autoupdate: true  # Fetch new color schemes as they are added
 
 
+module/dotfiles:
+    # This module automatically compiles all filenames within $XDG_CONFIG_HOME
+    # prefixed with 'template.'. It removes the prefix for the compile target,
+    # placing it in the same directory as the template.
+    on_startup:
+        compile:
+            source: $XDG_CONFIG_HOME
+            target: $XDG_CONFIG_HOME
+            templates: 'template\.(.+)'
+            non_templates: ignore
+
+
+
 context/host:
     # Here we define some context values which often change between host
     # computers, and are therefore practical to use in our templates.
