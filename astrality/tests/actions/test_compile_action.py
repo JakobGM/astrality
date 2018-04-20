@@ -294,6 +294,32 @@ def test_filtering_compiled_templates(test_config_directory, tmpdir):
     assert (temp_dir / 'module.template').is_file()
     assert (temp_dir / 'recursive' / 'empty.template').is_file()
 
+def test_renaming_templates(test_config_directory, tmpdir):
+    """Templates targets should be renameable with a capture group."""
+    temp_dir = Path(tmpdir)
+    templates = \
+        test_config_directory / 'test_modules' / 'using_all_actions'
+
+    # Multiple capture groups should be allowed
+    compile_dict = {
+        'source': str(templates),
+        'target': str(temp_dir),
+        'templates': r'(?:^template\.(.+)$|^(.+)\.template$)',
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=test_config_directory,
+        replacer=lambda x: x,
+        context_store={'geography': {'capitol': 'Berlin'}},
+    )
+    compile_action.execute()
+
+    # We should have a total of two compiled files
+    assert len(list(temp_dir.iterdir())) == 2
+    assert len(list((temp_dir / 'recursive').iterdir())) == 1
+    assert (temp_dir / 'module').is_file()
+    assert (temp_dir / 'recursive' / 'empty').is_file()
+
 @pytest.mark.skip(reason='Glob paths have not been implemented yet')
 def test_compiling_entire_directory_with_single_glob(  # pragma: no cover
     test_config_directory,

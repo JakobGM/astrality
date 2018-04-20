@@ -218,33 +218,36 @@ class CompileAction(Action):
             target = self._create_temp_file(template.name)
             self._options['target'] = str(target)  # type: ignore
 
+        # These might either be file paths or directory paths
         template_source = self.option(key='source', path=True)
-        target = self.option(key='target', path=True)
+        target_source = self.option(key='target', path=True)
 
         compilations: Dict[Path, Path] = {}
         if template_source.is_file():
             # Single template file, so straight forward compilation
-            self.compile_template(template=template_source, target=target)
-            self._performed_compilations[template_source].add(target)
-            compilations = {template_source: target}
+            self.compile_template(
+                template=template_source,
+                target=target_source,
+            )
+            self._performed_compilations[template_source].add(target_source)
+            compilations = {template_source: target_source}
 
         elif template_source.is_dir():
             # The template source is a directory, so we will recurse over
-            # all the files and compile every single file while preserving
+            # all the files and compile every single template while preserving
             # the directory hierarchy
-            templates = tuple(
+            templates = (
                 path
                 for path
                 in template_source.glob('**/*')
                 if self.compilable(path)
             )
-            targets = tuple(
-                target / os.path.relpath(template_file, start=template_source)
-                for template_file
-                in templates
-            )
-
-            for template, target in zip(templates, targets):
+            for template in templates:
+                target = self.target(
+                    template=template,
+                    template_root=template_source,
+                    target_root=target_source,
+                )
                 self.compile_template(template=template, target=target)
                 self._performed_compilations[template].add(target)
                 compilations[template] = target
@@ -284,6 +287,39 @@ class CompileAction(Action):
         # Only compile if filename matches the specified pattern
         template_pattern = re.compile(specified_pattern)
         return bool(template_pattern.match(path.name))
+
+    def target(
+        self,
+        template: Path,
+        template_root: Path,
+        target_root: Path,
+    ) -> Path:
+        """
+        Return intended compile target path for template.
+
+        The target path will keep the file hierarchy of the template source
+        directory, and possibly rename the target based on present capture
+        group(s) in the `templates` option.
+
+        :param template: Path to template.
+        :param template_root: Path to template root directory.
+        :param target_root: Path to target root directory.
+        """
+        # Transfer `template_root` directory hierarchy to `target_root`
+        target_path = target_root \
+            / os.path.relpath(template, start=template_root)  # type: ignore
+
+        # The default pattern matches everything, keeping the name intact
+        specified_pattern = self.option(key='templates', default='(.+)')
+        template_pattern = re.compile(specified_pattern)
+
+        if template_pattern.groups == 0:
+            # There is no capture group, so we will not rename the target
+            return target_path
+        else:
+            # Use capture group as the filename of the target path
+            match = template_pattern.match(template.name)
+            return target_path.parent / match.group(match.lastindex)
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """
