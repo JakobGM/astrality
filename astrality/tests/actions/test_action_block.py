@@ -42,7 +42,7 @@ def test_executing_several_action_blocks(test_config_directory, tmpdir):
     action_block_dict = {
         'import_context': {'from_path': 'context/mercedes.yml'},
         'compile': [{
-            'source': 'templates/a_car.template',
+            'content': 'templates/a_car.template',
             'target': str(target),
         }],
         'run': {'shell': 'touch ' + str(touched)},
@@ -108,9 +108,9 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
 
     action_block_dict = {
         'compile': [
-            {'source': str(template1), 'target': str(target1)},
-            {'source': str(template1), 'target': str(target2)},
-            {'source': str(template2), 'target': str(target3)},
+            {'content': str(template1), 'target': str(target1)},
+            {'content': str(template1), 'target': str(target2)},
+            {'content': str(template2), 'target': str(target3)},
         ],
     }
 

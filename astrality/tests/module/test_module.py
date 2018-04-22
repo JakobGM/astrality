@@ -1,6 +1,7 @@
+"""Tests for Module class."""
+
 import logging
 import os
-import shutil
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -9,7 +10,6 @@ from freezegun import freeze_time
 import pytest
 
 from astrality import event_listener
-from astrality.config import dict_from_config_file
 from astrality.module import Module, ModuleManager
 from astrality.resolver import Resolver
 from astrality.tests.utils import RegexCompare
@@ -26,7 +26,7 @@ def valid_module_section():
                 'run': [{'shell': 'echo {event}'}],
                 'compile': [
                     {
-                        'source': '../templates/test_template.conf',
+                        'content': '../templates/test_template.conf',
                         'target': '/tmp/compiled_result',
                     },
                 ],
@@ -335,7 +335,7 @@ class TestModuleClass:
             'module/test_module': {
                 'on_startup': {
                     'compile': [
-                        {'source': '/not/existing'},
+                        {'content': '/not/existing'},
                     ],
                 },
             },
@@ -509,7 +509,7 @@ def config_with_modules(default_global_options):
             },
             'templates': {
                 'template_name': {
-                    'source': 'astrality/tests/templates/test_template.conf',
+                    'content': 'astrality/tests/templates/test_template.conf',
                     'target': '/tmp/compiled_result',
                 }
             },
@@ -706,7 +706,7 @@ def test_that_shell_filter_is_run_from_config_directory(
             'on_startup': {
                 'compile': [
                     {
-                        'source': str(shell_filter_template),
+                        'content': str(shell_filter_template),
                         'target': str(shell_filter_template_target),
                     }
                 ],
@@ -778,12 +778,6 @@ def test_that_only_startup_event_block_is_run_on_startup(
     assert test_file1.is_file()
     assert not test_file2.is_file()
 
-    friday = datetime(
-        year=2018,
-        month=2,
-        day=16,
-        hour=12,
-    )
 
 def test_trigger_event_module_action(
     test_config_directory,
@@ -815,7 +809,7 @@ def test_trigger_event_module_action(
                 'templateA': {
                     'run': [{'shell': 'echo modified.templateA'}],
                     'compile': [
-                        {'source': 'templateA'}
+                        {'content': 'templateA'}
                     ],
                 },
             },

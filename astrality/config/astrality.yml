@@ -40,6 +40,7 @@ config/modules:
         # Module defined in this file
         - name: polybar
         - name: terminals
+        - name: dotfiles
 
         # All modules defined in <modules_directory>/solar_desktop/config.yml
         - name: solar_desktop::*
@@ -55,7 +56,7 @@ module/dotfiles:
     # placing it in the same directory as the template.
     on_startup:
         compile:
-            source: $XDG_CONFIG_HOME
+            content: $XDG_CONFIG_HOME
             target: $XDG_CONFIG_HOME
             templates: 'template\.(.+)'
             non_templates: ignore
@@ -155,7 +156,7 @@ module/polybar:
 
     on_startup:
         compile:
-            - source: modules/polybar/config.template
+            - content: modules/polybar/config.template
 
         run:
             - shell: killall -q polybar
@@ -165,7 +166,7 @@ module/polybar:
     on_modified:
         modules/polybar/config.template:
             compile:
-                - source: modules/polybar/config.template
+                - content: modules/polybar/config.template
 
 
 module/terminals:
@@ -189,7 +190,7 @@ module/terminals:
 
     on_startup:
         compile:
-            - source: modules/terminals/alacritty.yml.template
+            - content: modules/terminals/alacritty.yml.template
               target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
-            - source: modules/terminals/kitty.conf.template
+            - content: modules/terminals/kitty.conf.template
               target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf

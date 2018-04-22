@@ -27,7 +27,7 @@ def test_that_all_exit_actions_are_correctly_performed(
                     'from_path': 'context/mercedes.yml',
                 },
                 'compile': {
-                    'source': 'templates/a_car.template',
+                    'content': 'templates/a_car.template',
                     'target': str(test_target),
                 },
             },
@@ -36,7 +36,7 @@ def test_that_all_exit_actions_are_correctly_performed(
                     'from_path': 'context/tesla.yml',
                 },
                 'compile': {
-                    'source': 'templates/a_car.template',
+                    'content': 'templates/a_car.template',
                     'target': str(test_target),
                 },
             },
