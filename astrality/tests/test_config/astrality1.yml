@@ -4,7 +4,7 @@ config/astrality:
 module/A:
     on_startup:
         compile:
-            - source: templates/no_context.template
+            - content: templates/no_context.template
               target: /tmp/astrality/target1
 
     on_exit:

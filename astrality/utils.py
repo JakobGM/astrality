@@ -2,9 +2,11 @@
 
 import logging
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, TypeVar, Union
+
 
 logger = logging.getLogger('astrality')
 
@@ -94,3 +96,54 @@ def cast_to_list(content: Union[T, List[T]]) -> List[T]:
         return [content]
     else:
         return content
+
+
+def resolve_targets(
+    content: Path,
+    target: Path,
+    include: str,
+) -> Dict[Path, Path]:
+    """
+    Return content/target file path pairs.
+
+    If `content` is a directory, it returns content/target path pairs that
+    reflects `content`s file hierarchy at the `target` directory.
+
+    If `content` is a file, and `target` is an existing directory, the target
+    will become `content` within the `target`.
+
+    Content files that do not match the include regex string are discarded.
+    Any capture group in the regex string is used for renaming the target.
+
+    :param content: Source path, either file or directory.
+    :param target: Target path, either file or directory.
+    :param include: Regular expression string for filtering/renaming content.
+    :return: Dictionary with content file keys and target file values.
+    """
+    targets: Dict[Path, Path] = {}
+    if content.is_file():
+        if target.is_dir():
+            targets[content] = target / content.name
+        else:
+            targets[content] = target
+
+    else:
+        for file in content.glob('**/*'):
+            if file.is_dir():
+                continue
+            target_file = target / file.relative_to(content)
+            targets[file] = target_file
+
+    include_pattern = re.compile(include)
+    filtered_targets: Dict[Path, Path] = {}
+    for content_file, target_file in targets.items():
+        match = include_pattern.fullmatch(target_file.name)
+        if not match:
+            continue
+
+        # If there is no group match, keep the name, else, use last group
+        renamed_target_file = target_file.parent \
+            / match.group(match.lastindex or 0)
+        filtered_targets[content_file] = renamed_target_file
+
+    return filtered_targets
