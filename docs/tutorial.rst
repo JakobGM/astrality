@@ -19,7 +19,8 @@ Let us start by managing the files located in ``$XDG_CONFIG_HOME``, where most
 configuration files reside. The default value of this environment variable is
 "~/.config". We will create an Astrality module which automatically detects
 files named "template.whatever", and compile it to "whatever". This way you can
-easily add new templates without having to add new configuration.
+easily write new templates without having to add new configuration in order to
+compile them.
 
 .. code-block:: yaml
 
@@ -28,21 +29,20 @@ easily add new templates without having to add new configuration.
     module/dotfiles:
         on_startup:
             compile:
-                source: $XDG_CONFIG_HOME
+                content: $XDG_CONFIG_HOME
                 target: $XDG_CONFIG_HOME
-                templates: 'template\.(.+)'
-                non_templates: ignore
+                include: 'template\.(.+)'
 
 Let us go through the module configuration step-by-step:
 
-- We set both the source and target to be ``$XDG_CONFIG_HOME``, compiling any
+- We use the ``compile`` action type, as we are only interested in compiling
+  templates at the moment.
+- We set both the content and target to be ``$XDG_CONFIG_HOME``, compiling any
   template to the same directory as the template.
 - We only want to compile template filenames which matches the regular
   expression ``template\.(.+)``.
 - The regex capture group in ``template\.(.+)`` specifies that everything
   appearing after "template." should be used as the *compiled* target filename.
-- ``non_templates: ignore`` instructs Astrality to leave any non-templates
-  alone.
 
 We can now compile all such templates within *$XDG_CONFIG_HOME* by running
 ``astrality`` from the shell. But we would like to *automatically* recompile
@@ -67,12 +67,14 @@ locations, ``$HOME``, ``$XDG_CONFIG_HOME``, ``$/etc`` on so on. You can do all
 of this with Astrality.
 
 
-For demonstration purposes, let us assume that the contents of
+For demonstration purposes, let us assume that the templates within
 "~/.dotfiles/home" should be compiled to "~", and "~/.dotfiles/etc" to "/etc",
-while non-templates should be symlinked instead.
+while non-templates should be symlinked instead. This combination of
+:ref:`symlink <symlink_action>` and :ref:`compile <compile_action>` actions can
+be done with the :ref:`stow <stow_action>` action.
 
-Move ``astrality.yml`` to the root of your dotfiles repository, set ``export
-ASTRALITY_CONFIG_HOME=~/.dotfiles``, and modify the dotfiles module
+Move ``astrality.yml`` to the root of your dotfiles repository. Set ``export
+ASTRALITY_CONFIG_HOME=~/.dotfiles``. Finally, modify the dotfiles module
 accordingly:
 
 .. code-block:: yaml
@@ -84,21 +86,24 @@ accordingly:
 
     module/dotfiles:
         on_startup:
-            compile:
-                - source: home
+            stow:
+                - content: home
                   target: ~
                   templates: 'template\.(.+)'
                   non_templates: symlink
 
-                - source: etc
+                - content: etc
                   target: /etc
                   templates: 'template\.(.+)'
                   non_templates: symlink
 
-Symlink is actually the default option, so we could have skipped specifying it
-altogether. You can also specify ``copy``. You can now start to write all your
-configuration files as templates instead, using placeholders for secret API
-keys or configuration values that change between machines, and much much more.
+``templates: 'template\.(.+)'`` and ``non_templates: symlink`` are actually the
+default options for the stow action, so we could have skipped specifying them
+altogether. Alternatively, you can specify ``non_templates: copy``.
+
+You can now start to write all your configuration files as templates instead,
+using placeholders for secret API keys or configuration values that change
+between machines, and much much more.
 
 .. _examples_weekday_wallpaper:
 
