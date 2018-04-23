@@ -459,6 +459,9 @@ class SymlinkAction(Action):
 
         :return: Dictionary with content keys and symlink values.
         """
+        if self.null_object:
+            return {}
+
         content = self.option(key='content', path=True)
         target = self.option(key='target', path=True)
         include = self.option(key='include', default=r'(.+)')
@@ -499,6 +502,9 @@ class CopyAction(Action):
 
         :return: Dictionary with content keys and copy values.
         """
+        if self.null_object:
+            return {}
+
         content = self.option(key='content', path=True)
         target = self.option(key='target', path=True)
         include = self.option(key='include', default=r'(.+)')

@@ -5,6 +5,17 @@ from pathlib import Path
 from astrality.actions import SymlinkAction
 
 
+def test_null_object_pattern():
+    """Copy actions without options should do nothing."""
+    symlink_action = SymlinkAction(
+        options={},
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+    symlink_action.execute()
+
+
 def test_symlink_action_using_all_parameters(tmpdir):
     """All three parameters should be respected."""
     temp_dir = Path(tmpdir) / 'content'

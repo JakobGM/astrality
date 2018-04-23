@@ -5,6 +5,17 @@ from pathlib import Path
 from astrality.actions import CopyAction
 
 
+def test_null_object_pattern():
+    """Copy actions without options should do nothing."""
+    copy_action = CopyAction(
+        options={},
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+    copy_action.execute()
+
+
 def test_copy_action_using_all_parameters(tmpdir):
     """All three parameters should be respected."""
     temp_dir = Path(tmpdir) / 'content'
