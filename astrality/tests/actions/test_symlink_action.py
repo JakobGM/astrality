@@ -125,3 +125,6 @@ def test_symlinking_file_to_directory(tmpdir):
 
     assert (target / 'file1').is_symlink()
     assert (target / 'file1').resolve() == file1
+    assert symlink_action.symlinked_files == {
+        file1: {target / 'file1'},
+    }

@@ -453,6 +453,12 @@ class SymlinkAction(Action):
 
     priority = 200
 
+    def __init__(self, *args, **kwargs) -> None:
+        """Construct symlink action object."""
+        super().__init__(*args, **kwargs)
+        self.symlinked_files: DefaultDict[Path, Set[Path]] = \
+            defaultdict(set)
+
     def execute(self) -> Dict[Path, Path]:
         """
         Symlink to `content` path from `target` path.
@@ -473,6 +479,7 @@ class SymlinkAction(Action):
         for content, symlink in links.items():
             symlink.parent.mkdir(parents=True, exist_ok=True)
             symlink.symlink_to(content)
+            self.symlinked_files[content].add(symlink)
 
         return links
 
@@ -495,6 +502,12 @@ class CopyAction(Action):
     """Copy files Action sub-class."""
 
     priority = 300
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Construct copy action object."""
+        super().__init__(*args, **kwargs)
+        self.copied_files: DefaultDict[Path, Set[Path]] = \
+            defaultdict(set)
 
     def execute(self) -> Dict[Path, Path]:
         """
