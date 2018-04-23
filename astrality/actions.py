@@ -189,6 +189,7 @@ class CompileDict(RequiredCompileDict, total=False):
     """Allowable fields of compile action."""
 
     target: str
+    include: str
     permissions: str
 
 

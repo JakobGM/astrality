@@ -339,13 +339,6 @@ Each template compilation action has the following available attributes:
             You can test your regex `here <https://regex101.com/r/myMbmT/1>`_.
             Astrality uses the capture group with the greatest index.
 
-    ``non_templates:`` *[Optional]*
-        *Default:* ``'symlink'``
-
-        *Accepts:* ``symlink``, ``copy``, ``ignore``
-
-        What to do with files that do not match the ``templates`` regex.
-
     .. _compile_action_permissions:
 
     ``permissions:`` *[Optional]*
