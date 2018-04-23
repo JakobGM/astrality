@@ -196,7 +196,7 @@ class CompileDict(RequiredCompileDict, total=False):
 class CompileAction(Action):
     """Compile template action."""
 
-    priority = 200
+    priority = 400
 
     def __init__(self, *args, **kwargs) -> None:
         """Construct compile action object."""
@@ -429,6 +429,45 @@ class CompileAction(Action):
         return other in self.performed_compilations()
 
 
+class RequiredSymlinkDict(TypedDict):
+    """Required fields of symlink action user config."""
+
+    content: str
+    target: str
+
+
+class SymlinkDict(RequiredSymlinkDict, total=False):
+    """Allowable fields of symlink action user config."""
+
+    include: str
+
+
+class SymlinkAction(Action):
+    """Symlink files Action sub-class."""
+
+    priority = 200
+
+    def execute(self) -> Dict[Path, Path]:
+        """
+        Symlink to `content` path from `target` path.
+
+        :return: Dictionary with content keys and symlink values.
+        """
+        content = self.option(key='content', path=True)
+        target = self.option(key='target', path=True)
+        include = self.option(key='include', default=r'(.+)')
+        links = utils.resolve_targets(
+            content=content,
+            target=target,
+            include=include,
+        )
+        for content, symlink in links.items():
+            symlink.parent.mkdir(parents=True, exist_ok=True)
+            symlink.symlink_to(content)
+
+        return links
+
+
 class RunDict(TypedDict):
     """Required fields of run action user config."""
 
@@ -439,7 +478,7 @@ class RunDict(TypedDict):
 class RunAction(Action):
     """Run shell command Action sub-class."""
 
-    priority = 300
+    priority = 600
 
     def execute(
         self,
