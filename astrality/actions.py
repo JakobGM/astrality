@@ -34,6 +34,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 
@@ -63,11 +64,12 @@ class Action(abc.ABC):
     def __init__(
         self,
         options: Union[
-            'ImportContextDict',
             'CompileDict',
-            'SymlinkDict',
             'CopyDict',
+            'ImportContextDict',
             'RunDict',
+            'StowDict',
+            'SymlinkDict',
         ],
         directory: Path,
         replacer: Replacer,
@@ -391,7 +393,8 @@ class CompileAction(Action):
         else:
             # Use capture group as the filename of the target path
             match = template_pattern.match(template.name)
-            return target_path.parent / match.group(match.lastindex)
+            return target_path.parent \
+                / match.group(match.lastindex)  # type: ignore
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """
@@ -553,6 +556,143 @@ class CopyAction(Action):
     def __contains__(self, other) -> bool:
         """Return True if path has been copied *from*."""
         return other in self.copied_files
+
+
+class RequiredStowDict(TypedDict):
+    """Required dictionary keys for user stow action config."""
+
+    content: str
+    target: str
+
+
+class StowDict(RequiredStowDict, total=False):
+    """Allowable dictionary keys for user stow action config."""
+
+    templates: str
+    non_templates: str
+    permissions: str
+
+
+class StowAction(Action):
+    """Stow directory action."""
+
+    non_templates_action: Union[CopyAction, SymlinkAction]
+    _options: StowDict
+
+    priority = 500
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Construct stow action object."""
+        super().__init__(*args, **kwargs)
+        if self.null_object:
+            return
+
+        # Create equivalent compile action based on stow config
+        compile_options: CompileDict = {  # type: ignore
+            'content': self._options['content'],
+            'target': self._options['target'],
+            'templates': self._options.get('templates'),
+            'non_templates': 'ignore',
+            'permissions': self._options.get('permissions'),
+        }
+        self.compile_action = CompileAction(
+            options=compile_options,
+            directory=self.directory,
+            replacer=self.replace,
+            context_store=self.context_store,
+        )
+
+        # Determine what to do with non-templates
+        non_templates_action = self.option(
+            key='non_templates',
+            default='symlink',
+        )
+        self.ignore_non_templates = non_templates_action.lower() == 'ignore'
+
+        if non_templates_action.lower() not in ('copy', 'symlink', 'ignore',):
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f'Invalid stow non_templates parameter:'
+                f'"{non_templates_action}". '
+                'Should be one of "symlink", "copy", or "ignore"!',
+            )
+            self.ignore_non_templates = True
+            return
+
+        # Negate the `templates` regex pattern in order to match non-templates
+        if 'templates' in self._options:
+            excluded = r'(?!' + self._options['templates'] + r').+'
+        else:
+            excluded = r'(?!template\..+).+'
+
+        # Create configuration used for either symlink or copy
+        non_templates_options: Dict = {
+            'content': self._options['content'],
+            'target': self._options['target'],
+            'include': excluded,
+            'permissions': self._options.get('permissions'),
+        }
+
+        # Create action object based on parameter `non_templates`
+        NonTemplatesAction: Union[Type[CopyAction], Type[SymlinkAction]]
+        if non_templates_action.lower() == 'copy':
+            NonTemplatesAction = CopyAction
+        else:
+            NonTemplatesAction = SymlinkAction  # type: ignore
+
+        self.non_templates_action = NonTemplatesAction(
+            options=non_templates_options,
+            directory=self.directory,
+            replacer=self.replace,
+            context_store=self.context_store,
+        )
+
+    def execute(self) -> Dict[Path, Path]:
+        """
+        Stow directory source to target destination.
+
+        :return: Dictionary with source keys and target values.
+            Contains compiled, symlinked, and copied files.
+        """
+        if self.null_object:
+            return {}
+
+        if self.ignore_non_templates:
+            return self.compile_action.execute()
+        else:
+            copies_or_links = self.non_templates_action.execute()
+            compilations = self.compile_action.execute()
+            compilations.update(copies_or_links)
+            return compilations
+
+    def managed_files(self) -> Dict[Path, Set[Path]]:
+        """
+        Return dictionary containing content keys and target values.
+
+        :return: Dictinary with keys containing compiled templates, and values
+            as a set of target paths. If `non_templates` is 'copy', then these
+            will be included as well.
+        """
+        managed_files = self.compile_action._performed_compilations.copy()
+
+        if isinstance(self.non_templates_action, CopyAction):
+            managed_files.update(self.non_templates_action.copied_files)
+
+        return managed_files
+
+    def __contains__(self, other) -> bool:
+        """
+        Return True if stow action is responsible for file path.
+
+        A stow action is considered to be responsible for a file path if that
+        path is modified results in its tasks to be outdated, and it needs to be
+        re-executed.
+
+        :param other: File path.
+        :return: Boolean indicating if path has been copied or compiled.
+        """
+        assert other.is_absolute()
+        return other in self.managed_files()
 
 
 class RunDict(TypedDict):
