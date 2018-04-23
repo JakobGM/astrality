@@ -518,6 +518,7 @@ class CopyAction(Action):
         for content, copy in copies.items():
             copy.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(str(content), str(copy))
+            self.copied_files[content].add(copy)
 
         if permissions:
             for copy in copies.values():
@@ -535,6 +536,10 @@ class CopyAction(Action):
                     )
 
         return copies
+
+    def __contains__(self, other) -> bool:
+        """Return True if path has been copied *from*."""
+        return other in self.copied_files
 
 
 class RunDict(TypedDict):

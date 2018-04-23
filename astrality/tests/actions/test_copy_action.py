@@ -52,6 +52,12 @@ def test_copy_action_using_all_parameters(tmpdir):
     assert (target / '1').read_text() == file1.read_text()
     assert (target / '2').read_text() == file2.read_text()
     assert (target / 'recursive' / '3').read_text() == file3.read_text()
+    assert copy_action.copied_files == {
+        file1: {target / '1'},
+        file2: {target / '2'},
+        file3: {target / 'recursive' / '3'},
+    }
+    assert file1 in copy_action
 
 
 def test_copying_without_renaming(tmpdir):
