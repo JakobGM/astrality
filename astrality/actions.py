@@ -62,7 +62,13 @@ class Action(abc.ABC):
 
     def __init__(
         self,
-        options: Union['ImportContextDict', 'CompileDict', 'RunDict'],
+        options: Union[
+            'ImportContextDict',
+            'CompileDict',
+            'SymlinkDict',
+            'CopyDict',
+            'RunDict',
+        ],
         directory: Path,
         replacer: Replacer,
         context_store: compiler.Context,
@@ -466,6 +472,63 @@ class SymlinkAction(Action):
             symlink.symlink_to(content)
 
         return links
+
+
+class RequiredCopyDict(TypedDict):
+    """Required fields of copy action user config."""
+
+    content: str
+    target: str
+
+
+class CopyDict(RequiredCopyDict, total=False):
+    """Allowable fields of copy action user config."""
+
+    include: str
+    permissions: str
+
+
+class CopyAction(Action):
+    """Copy files Action sub-class."""
+
+    priority = 300
+
+    def execute(self) -> Dict[Path, Path]:
+        """
+        Copy from `content` path to `target` path.
+
+        :return: Dictionary with content keys and copy values.
+        """
+        content = self.option(key='content', path=True)
+        target = self.option(key='target', path=True)
+        include = self.option(key='include', default=r'(.+)')
+        permissions = self.option(key='permissions', default=None)
+
+        copies = utils.resolve_targets(
+            content=content,
+            target=target,
+            include=include,
+        )
+        for content, copy in copies.items():
+            copy.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(str(content), str(copy))
+
+        if permissions:
+            for copy in copies.values():
+                result = utils.run_shell(
+                    command=f'chmod {permissions} "{copy}"',
+                    timeout=1,
+                    fallback=False,
+                )
+
+                if result is False:
+                    logger = logging.getLogger(__name__)
+                    logger.error(
+                        f'Could not set "{permissions}" '
+                        f'permissions for copy "{target}"',
+                    )
+
+        return copies
 
 
 class RunDict(TypedDict):
