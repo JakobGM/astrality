@@ -11,7 +11,7 @@ from astrality.config import (
     ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
     user_configuration,
 )
-from astrality.module import Module
+from astrality.module import Module, ModuleManager
 from astrality.utils import generate_expanded_env_dict
 
 
@@ -119,6 +119,15 @@ def module_factory(test_config_directory):
         return module
 
     return _module_factory
+
+
+@pytest.fixture
+def module_manager(
+    default_global_options,
+    _runtime,
+):
+    default_global_options.update(_runtime)
+    return ModuleManager(default_global_options)
 
 
 @pytest.fixture

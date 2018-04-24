@@ -584,6 +584,10 @@ class ModuleManager:
                         trigger='on_event',
                         module=self.modules[module_name],
                     )
+                    self.symlink(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
                     self.compile_templates(
                         trigger='on_event',
                         module=self.modules[module_name],
@@ -610,6 +614,20 @@ class ModuleManager:
             in self.modules.values()
         )
 
+    def _iter_modules(self, modules: Optional[Module]) -> Iterable[Module]:
+        """
+        Return iterable from module(s) input.
+
+        This is a small helper function as it is used in most of the actions.
+
+        :return: If given a single module, return a 1-tuple containing that
+            module. Else, returns all the modules managed by the ModuleManager.
+        """
+        if isinstance(modules, Module):
+            return (modules, )
+        else:
+            return self.modules.values()
+
     def import_context_sections(
         self,
         trigger: str,
@@ -624,14 +642,27 @@ class ModuleManager:
         """
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
-        modules: Iterable[Module]
-        if isinstance(module, Module):
-            modules = (module, )
-        else:
-            modules = self.modules.values()
-
+        modules = self._iter_modules(module)
         for module in modules:
             module.import_context(block_name=trigger)
+
+    def symlink(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
+        """
+        Create symlinks defined by the managed modules.
+
+        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
+        This determines which event block of the module is used to get the
+        symlink specification from.
+        """
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
+
+        modules = self._iter_modules(module)
+        for module in modules:
+            module.symlink(block_name=trigger)
 
     def compile_templates(
         self,
@@ -647,12 +678,7 @@ class ModuleManager:
         """
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
-        modules: Iterable[Module]
-        if isinstance(module, Module):
-            modules = (module, )
-        else:
-            modules = self.modules.values()
-
+        modules = self._iter_modules(module)
         for module in modules:
             module.compile(block_name=trigger)
 
@@ -661,6 +687,7 @@ class ModuleManager:
         assert not self.startup_done
 
         self.import_context_sections('on_startup')
+        self.symlink('on_startup')
         self.compile_templates('on_startup')
 
         for module in self.modules.values():
@@ -692,8 +719,9 @@ class ModuleManager:
 
         Also close all temporary file handlers created by the modules.
         """
-        # First import context and compile templates
+        # First import context, symlink, and compile templates
         self.import_context_sections('on_exit')
+        self.symlink('on_exit')
         self.compile_templates('on_exit')
 
         # Then run all shell commands
@@ -703,13 +731,6 @@ class ModuleManager:
                 block_name='on_exit',
                 default_timeout=self.global_modules_config.run_timeout,
             )
-
-        if hasattr(self, 'temp_files'):
-            for temp_file in self.temp_files:
-                temp_file.close()
-
-            # Prevent files from being closed again
-            del self.temp_files
 
         # Stop watching config directory for file changes
         self.directory_watcher.stop()
@@ -734,6 +755,9 @@ class ModuleManager:
 
             # First import context sections in on_modified block
             module.import_context(block_name='on_modified', path=modified)
+
+            # Then symlink files
+            module.symlink(block_name='on_modified', path=modified)
 
             # Now compile templates specified in on_modified block
             module.compile(block_name='on_modified', path=modified)
