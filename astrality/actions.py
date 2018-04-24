@@ -475,10 +475,7 @@ class StowAction(Action):
         )
 
         # Determine what to do with non-templates
-        non_templates_action = self.option(
-            key='non_templates',
-            default='symlink',
-        )
+        non_templates_action = self._options.get('non_templates', 'symlink')
         self.ignore_non_templates = non_templates_action.lower() == 'ignore'
 
         if non_templates_action.lower() not in ('copy', 'symlink', 'ignore',):
