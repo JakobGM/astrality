@@ -741,7 +741,6 @@ class ModuleManager:
 
         Also close all temporary file handlers created by the modules.
         """
-        # First import context, symlink, and compile templates
         self.import_context_sections('on_exit')
         self.symlink('on_exit')
         self.copy('on_exit')
@@ -869,6 +868,15 @@ class ModuleManager:
                 for compile_action in action_block._compile_actions:
                     if modified in compile_action:
                         compile_action.execute()
+
+                for stow_action in action_block._stow_actions:
+                    if modified in stow_action:
+                        stow_action.execute()
+
+                # TODO: Test this branch
+                for copy_action in action_block._copy_actions:
+                    if modified in copy_action:
+                        copy_action.execute()
 
     def interpolate_string(self, string: str) -> str:
         """

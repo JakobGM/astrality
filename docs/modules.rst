@@ -740,14 +740,15 @@ Global configuration options for all your modules are specified in ``astrality.y
 
     If enabled, Astrality will watch for file modifications in
     ``$ASTRALITY_CONFIG_HOME``.
-    All ``compile_action`` items that contain ``template`` paths that have been
-    modified will be compiled again.
+    All files that have been compiled or copied to a destination will be
+    recompiled or recopied if they are modified.
 
     .. hint::
         You can have more fine-grained control over exactly *what* happens when
-        a file is modified by using the ``on_modified`` :ref:`module event <modules_action_blocks>`.
-        This way you can run shell commands, import context values, and compile
-        arbitrary templates when specific files are modified on disk.
+        a file is modified by using the ``on_modified`` :ref:`module event
+        <modules_action_blocks>`. This way you can run shell commands, import
+        context values, and compile arbitrary templates when specific files are
+        modified on disk.
 
     .. caution::
         At the moment, Astrality only watches for file changes recursively within
