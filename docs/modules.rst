@@ -425,6 +425,9 @@ will be recursively symlinked, leaving any non-conflicting files intact. The
         match the file "symlink.wallpaper.jpeg" and rename the symlink to
         "wallpaper.jpeg".
 
+.. note::
+    If you astrality encounters an existing **file** where it is supposed to
+    place a symbolic link, it will rename the existing file to "filename.bak".
 
 .. _copy_action:
 

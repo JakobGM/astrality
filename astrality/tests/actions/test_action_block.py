@@ -128,3 +128,25 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
         template1: {target1, target2},
         template2: {target3},
     }
+
+
+def test_symlinking(action_block_factory, create_temp_files):
+    """Action blocks should symlink properly."""
+    file1, file2, file3, file4 = create_temp_files(4)
+    file2.write_text('original')
+
+    action_block = action_block_factory(
+        symlink=[
+            {'content': str(file1), 'target': str(file2)},
+            {'content': str(file3), 'target': str(file4)},
+        ],
+    )
+    action_block.symlink()
+
+    assert file2.is_symlink()
+    assert file2.resolve() == file1
+    assert file4.is_symlink()
+    assert file4.resolve() == file3
+
+    # Existing files should be backed up
+    assert Path(str(file2) + '.bak').read_text() == 'original'

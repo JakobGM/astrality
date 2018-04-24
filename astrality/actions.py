@@ -346,6 +346,9 @@ class SymlinkAction(Action):
             include=include,
         )
         for content, symlink in links.items():
+            if symlink.is_file():
+                symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
+
             symlink.parent.mkdir(parents=True, exist_ok=True)
             symlink.symlink_to(content)
             self.symlinked_files[content].add(symlink)
@@ -714,6 +717,7 @@ class ActionBlock:
     """
 
     _import_context_actions: List[ImportContextAction]
+    _symlink_actions: List[SymlinkAction]
     _compile_actions: List[CompileAction]
     _run_actions: List[RunAction]
     _trigger_actions: List[TriggerAction]
@@ -736,6 +740,7 @@ class ActionBlock:
 
         for identifier, action_type in (
             ('import_context', ImportContextAction),
+            ('symlink', SymlinkAction),
             ('compile', CompileAction),
             ('run', RunAction),
             ('trigger', TriggerAction),
@@ -761,8 +766,13 @@ class ActionBlock:
         for import_context_action in self._import_context_actions:
             import_context_action.execute()
 
+    def symlink(self) -> None:
+        """Symlink files."""
+        for symlink_action in self._symlink_actions:
+            symlink_action.execute()
+
     def compile(self) -> None:
-        """Compile all templates."""
+        """Compile templates."""
         for compile_action in self._compile_actions:
             compile_action.execute()
 

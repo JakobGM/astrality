@@ -78,7 +78,71 @@ def context_directory(test_config_directory):
     """Return path to directory containing several context files."""
     return test_config_directory / 'context'
 
+
 @pytest.fixture
 def template_directory(test_config_directory):
     """Return path to directory containing several templates"""
     return test_config_directory / 'templates'
+
+
+@pytest.yield_fixture
+def module_factory(test_config_directory):
+    def _module_factory(
+        config,
+        module_directory=test_config_directory / 'test_modules' /
+        'using_all_actions',
+        replacer=lambda x: x,
+        context_store={},
+    ) -> Module:
+        if not 'module/' in list(config.keys())[0]:
+            config = {'module/test': config}
+
+        return Module(
+            module_config=config,
+            module_directory=module_directory,
+            replacer=replacer,
+            context_store=context_store,
+        )
+
+    yield _module_factory
+
+
+@pytest.fixture
+def create_temp_files(tmpdir):
+    """Return temp file factory function."""
+    temp_dir = Path(tmpdir)
+
+    def _create_temp_files(number):
+        """Create `number` tempfiles in seperate directories and yield paths."""
+        for _number in range(number):
+            temp_file = temp_dir / str(_number) / f'file{_number}.temp'
+            temp_file.parent.mkdir(parents=True)
+            temp_file.touch()
+            yield temp_file
+
+    return _create_temp_files
+
+
+@pytest.fixture
+def action_block_factory(test_config_directory):
+    """Return action block factory function for testing."""
+
+    def _action_block_factory(
+        symlink={},
+        directory=test_config_directory,
+        replacer=lambda x: x,
+        context_store={},
+    ):
+        """Return module with given parameters."""
+        config = {
+            'symlink': symlink,
+        }
+
+        return ActionBlock(
+            action_block=config,
+            directory=directory,
+            replacer=replacer,
+            context_store=context_store,
+        )
+
+    return _action_block_factory
