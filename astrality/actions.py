@@ -720,6 +720,7 @@ class ActionBlock:
     _copy_actions: List[CopyAction]
     _import_context_actions: List[ImportContextAction]
     _run_actions: List[RunAction]
+    _stow_actions: List[StowAction]
     _symlink_actions: List[SymlinkAction]
     _trigger_actions: List[TriggerAction]
 
@@ -745,6 +746,7 @@ class ActionBlock:
             ('import_context', ImportContextAction),
             ('run', RunAction),
             ('symlink', SymlinkAction),
+            ('stow', StowAction),
             ('trigger', TriggerAction),
         ):
             # Create and persist a list of all ImportContextAction objects
@@ -782,6 +784,11 @@ class ActionBlock:
         """Compile templates."""
         for compile_action in self._compile_actions:
             compile_action.execute()
+
+    def stow(self) -> None:
+        """Stow directory contents."""
+        for stow_action in self._stow_actions:
+            stow_action.execute()
 
     def run(
         self,

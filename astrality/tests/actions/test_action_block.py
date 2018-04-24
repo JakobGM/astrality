@@ -169,3 +169,27 @@ def test_copying(action_block_factory, create_temp_files):
     # Check if content has been copied
     assert file2.read_text() == file1.read_text()
     assert file4.read_text() == file3.read_text()
+
+
+def test_stowing(action_block_factory, create_temp_files):
+    """Action blocks should stow properly."""
+    template, target = create_temp_files(2)
+    template.write_text('{{ env.EXAMPLE_ENV_VARIABLE }}')
+    symlink_target = template.parent / 'symlink_me'
+    symlink_target.touch()
+
+    action_block = action_block_factory(
+        stow={
+            'content': str(template.parent),
+            'target': str(target.parent),
+            'templates': r'file(0).temp',
+            'non_templates': 'symlink',
+        },
+    )
+    action_block.stow()
+
+    # Check if template has been compiled
+    assert Path(target.parent / '0').read_text() == 'test_value'
+
+    # Check if non_template has been symlinked
+    assert (template.parent / 'symlink_me').resolve() == symlink_target
