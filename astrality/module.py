@@ -588,7 +588,15 @@ class ModuleManager:
                         trigger='on_event',
                         module=self.modules[module_name],
                     )
+                    self.copy(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
                     self.compile_templates(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
+                    self.stow(
                         trigger='on_event',
                         module=self.modules[module_name],
                     )
@@ -651,36 +659,48 @@ class ModuleManager:
         trigger: str,
         module: Optional[Module] = None,
     ) -> None:
-        """
-        Create symlinks defined by the managed modules.
-
-        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
-        This determines which event block of the module is used to get the
-        symlink specification from.
-        """
+        """Create symlinks defined by the managed modules."""
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
         modules = self._iter_modules(module)
         for module in modules:
             module.symlink(block_name=trigger)
 
+    def copy(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
+        """Copy according to action block `trigger` in managed modules."""
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
+
+        modules = self._iter_modules(module)
+        for module in modules:
+            module.copy(block_name=trigger)
+
     def compile_templates(
         self,
         trigger: str,
         module: Optional[Module] = None,
     ) -> None:
-        """
-        Compile the module templates specified by the `templates` option.
-
-        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
-        This determines which section of the module is used to get the compile
-        specification from.
-        """
+        """Compile the module templates specified by the `templates` option."""
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
         modules = self._iter_modules(module)
         for module in modules:
             module.compile(block_name=trigger)
+
+    def stow(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
+        """Perform `stow` action of managed modules."""
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
+
+        modules = self._iter_modules(module)
+        for module in modules:
+            module.stow(block_name=trigger)
 
     def startup(self):
         """Run all startup actions specified by the managed modules."""
@@ -688,7 +708,9 @@ class ModuleManager:
 
         self.import_context_sections('on_startup')
         self.symlink('on_startup')
+        self.copy('on_startup')
         self.compile_templates('on_startup')
+        self.stow('on_startup')
 
         for module in self.modules.values():
             logger.info(f'[module/{module.name}] Running startup commands.')
@@ -722,7 +744,9 @@ class ModuleManager:
         # First import context, symlink, and compile templates
         self.import_context_sections('on_exit')
         self.symlink('on_exit')
+        self.copy('on_exit')
         self.compile_templates('on_exit')
+        self.stow('on_exit')
 
         # Then run all shell commands
         for module in self.modules.values():
@@ -753,16 +777,12 @@ class ModuleManager:
                 f'[module/{module.name}] on_modified:{modified} triggered.',
             )
 
-            # First import context sections in on_modified block
             module.import_context(block_name='on_modified', path=modified)
-
-            # Then symlink files
             module.symlink(block_name='on_modified', path=modified)
-
-            # Now compile templates specified in on_modified block
+            module.copy(block_name='on_modified', path=modified)
             module.compile(block_name='on_modified', path=modified)
+            module.stow(block_name='on_modified', path=modified)
 
-            # Lastly, run commands specified in on_modified block
             logger.info(f'[module/{module.name}] Running modified commands.')
             module.run(
                 'on_modified',
