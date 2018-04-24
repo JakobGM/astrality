@@ -155,12 +155,11 @@ class Module:
                 path=Path(path_string),
                 config_directory=self.directory,
             )
-            action_blocks['on_modified'][modified_path] = \
-                ActionBlock(
-                    action_block=action_block_dict,
-                    directory=self.directory,
-                    replacer=self.interpolate_string,
-                    context_store=self.context_store,
+            action_blocks['on_modified'][modified_path] = ActionBlock(
+                action_block=action_block_dict,
+                directory=self.directory,
+                replacer=self.interpolate_string,
+                context_store=self.context_store,
             )
         self.action_blocks = action_blocks
 
@@ -201,6 +200,28 @@ class Module:
         triggers = action_block.triggers()
         for trigger in triggers:
             self.import_context(
+                block_name=trigger.block,
+                path=trigger.absolute_path,
+            )
+
+    def symlink(
+        self,
+        block_name: str,
+        path: Optional[Path] = None,
+    ) -> None:
+        """
+        Execute all symlink actions specified in block_name[:path].
+
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
+        """
+        action_block = self.get_action_block(name=block_name, path=path)
+        action_block.symlink()
+
+        # Symlink from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            self.symlink(
                 block_name=trigger.block,
                 path=trigger.absolute_path,
             )

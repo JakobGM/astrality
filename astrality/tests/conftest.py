@@ -87,26 +87,27 @@ def template_directory(test_config_directory):
     return test_config_directory / 'templates'
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def module_factory(test_config_directory):
     def _module_factory(
-        config,
+        on_startup=None,
         module_directory=test_config_directory / 'test_modules' /
         'using_all_actions',
         replacer=lambda x: x,
         context_store={},
     ) -> Module:
-        if 'module/' not in list(config.keys())[0]:
-            config = {'module/test': config}
-
-        return Module(
-            module_config=config,
+        module = Module(
+            module_config={'module/test': {}},
             module_directory=module_directory,
             replacer=replacer,
             context_store=context_store,
         )
+        if on_startup:
+            module.action_blocks['on_startup'] = on_startup
 
-    yield _module_factory
+        return module
+
+    return _module_factory
 
 
 @pytest.fixture
