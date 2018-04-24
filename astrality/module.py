@@ -226,6 +226,28 @@ class Module:
                 path=trigger.absolute_path,
             )
 
+    def copy(
+        self,
+        block_name: str,
+        path: Optional[Path] = None,
+    ) -> None:
+        """
+        Execute all copy actions specified in block_name[:path].
+
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
+        """
+        action_block = self.get_action_block(name=block_name, path=path)
+        action_block.copy()
+
+        # Symlink from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            self.copy(
+                block_name=trigger.block,
+                path=trigger.absolute_path,
+            )
+
     def compile(
         self,
         block_name: str,

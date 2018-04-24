@@ -89,13 +89,17 @@ def template_directory(test_config_directory):
 
 @pytest.fixture
 def module_factory(test_config_directory):
+    """Return Module factory for testing."""
     def _module_factory(
         on_startup=None,
+        on_modified=None,
+        path=None,
         module_directory=test_config_directory / 'test_modules' /
         'using_all_actions',
         replacer=lambda x: x,
         context_store={},
     ) -> Module:
+        """Return module with specified action blocks and config."""
         module = Module(
             module_config={'module/test': {}},
             module_directory=module_directory,
@@ -104,6 +108,9 @@ def module_factory(test_config_directory):
         )
         if on_startup:
             module.action_blocks['on_startup'] = on_startup
+
+        if on_modified:
+            module.action_blocks['on_modified'][path] = on_modified
 
         return module
 
