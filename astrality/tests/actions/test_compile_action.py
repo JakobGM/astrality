@@ -147,8 +147,10 @@ def test_use_of_replacer(template_directory, tmpdir):
             return template.name
         elif string == 'target':
             return str(target)
-        else:
+        elif string == 'permissions':
             return '777'
+        else:
+            return string
 
     compile_action = CompileAction(
         options=compile_dict,
@@ -290,8 +292,7 @@ def test_filtering_compiled_templates(test_config_directory, tmpdir):
     compile_dict = {
         'content': str(templates),
         'target': str(temp_dir),
-        'templates': r'.+\.template',
-        'non_templates': 'ignore',
+        'include': r'.+\.template',
     }
     compile_action = CompileAction(
         options=compile_dict,
@@ -318,8 +319,7 @@ def test_renaming_templates(test_config_directory, tmpdir):
     compile_dict = {
         'content': str(templates),
         'target': str(temp_dir),
-        'templates': r'(?:^template\.(.+)$|^(.+)\.template$)',
-        'non_templates': 'ignore',
+        'include': r'(?:^template\.(.+)$|^(.+)\.template$)',
     }
     compile_action = CompileAction(
         options=compile_dict,
@@ -334,97 +334,3 @@ def test_renaming_templates(test_config_directory, tmpdir):
     assert len(list((temp_dir / 'recursive').iterdir())) == 1
     assert (temp_dir / 'module').is_file()
     assert (temp_dir / 'recursive' / 'empty').is_file()
-
-
-def test_symlinking_non_templates(test_config_directory, tmpdir):
-    """Non-templates files should be implicitly symlinked."""
-    temp_dir = Path(tmpdir)
-    templates = \
-        test_config_directory / 'test_modules' / 'using_all_actions'
-    compile_dict = {
-        'content': str(templates),
-        'target': str(temp_dir),
-        'templates': r'.+\.template',
-    }
-    compile_action = CompileAction(
-        options=compile_dict,
-        directory=test_config_directory,
-        replacer=lambda x: x,
-        context_store={'geography': {'capitol': 'Berlin'}},
-    )
-    results = compile_action.execute()
-
-    # Templates should still compiled
-    target_dir_content = list(temp_dir.iterdir())
-    assert len(target_dir_content) == 6
-    assert temp_dir / 'module.template' in target_dir_content
-    assert (temp_dir / 'recursive' / 'empty.template').is_file()
-
-    # The rest should be symlinked
-    assert (temp_dir / 'config.yml').is_symlink()
-    assert (temp_dir / 'config.yml').resolve() == templates / 'config.yml'
-
-    # Symlinked files should be considered as "compiled templates"
-    assert templates / 'config.yml' in compile_action.performed_compilations()
-
-
-def test_copying_non_template_files(test_config_directory, tmpdir):
-    """Non-templates files can be copied."""
-    temp_dir = Path(tmpdir)
-    templates = \
-        test_config_directory / 'test_modules' / 'using_all_actions'
-    compile_dict = {
-        'content': str(templates),
-        'target': str(temp_dir),
-        'templates': r'.+\.template',
-        'non_templates': 'copy',
-    }
-    compile_action = CompileAction(
-        options=compile_dict,
-        directory=test_config_directory,
-        replacer=lambda x: x,
-        context_store={'geography': {'capitol': 'Berlin'}},
-    )
-    compile_action.execute()
-
-    # Templates should still compiled
-    target_dir_content = list(temp_dir.iterdir())
-    assert len(target_dir_content) == 6
-    assert temp_dir / 'module.template' in target_dir_content
-    assert (temp_dir / 'recursive' / 'empty.template').is_file()
-
-    # The rest should be symlinked
-    assert (temp_dir / 'config.yml').is_file()
-    assert (temp_dir / 'config.yml').read_text() == \
-        (templates / 'config.yml').read_text()
-
-    # Copied files should be considered as "compiled templates"
-    assert templates / 'config.yml' in compile_action.performed_compilations()
-
-
-@pytest.mark.skip(reason='Glob paths have not been implemented yet')
-def test_compiling_entire_directory_with_single_glob(  # pragma: no cover
-    test_config_directory,
-    tmpdir,
-):  # pragma: no cover
-    """All directory content should be compilable with a glob."""
-    temp_dir = Path(tmpdir)
-    templates = test_config_directory / 'test_modules' / 'using_all_actions'
-    compile_dict = {
-        'content': str(templates / '*'),
-        'target': str(temp_dir),
-    }
-    compile_action = CompileAction(
-        options=compile_dict,
-        directory=test_config_directory,
-        replacer=lambda x: x,
-        context_store={},
-    )
-    results = compile_action.execute()
-
-    assert templates / 'module.template' in results
-    assert results[templates / 'module.template'] == temp_dir / 'module.template'
-
-    target_dir_content = list(temp_dir.iterdir())
-    assert len(target_dir_content) == 5
-    assert templates / 'module.template' in target_dir_content

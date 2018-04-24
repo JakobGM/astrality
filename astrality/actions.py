@@ -22,7 +22,6 @@ from collections import defaultdict
 import logging
 import os
 from pathlib import Path
-import re
 import shutil
 from tempfile import NamedTemporaryFile
 from typing import (
@@ -70,6 +69,7 @@ class Action(abc.ABC):
             'RunDict',
             'StowDict',
             'SymlinkDict',
+            'TriggerDict',
         ],
         directory: Path,
         replacer: Replacer,
@@ -204,6 +204,8 @@ class CompileDict(RequiredCompileDict, total=False):
 class CompileAction(Action):
     """Compile template action."""
 
+    _options: CompileDict
+
     priority = 400
 
     def __init__(self, *args, **kwargs) -> None:
@@ -216,8 +218,7 @@ class CompileAction(Action):
         """
         Compile template source to target destination.
 
-        :return: Dictionary with source keys and target values.
-            Contains compiled, symlinked, and copied files.
+        :return: Dictionary with template content keys and target path values.
         """
         if self.null_object:
             # Null objects do nothing
@@ -232,26 +233,7 @@ class CompileAction(Action):
         # These might either be file paths or directory paths
         template_source = self.option(key='content', path=True)
         target_source = self.option(key='target', path=True)
-
-        if template_source.is_file():
-            # Single template file, so straight forward compilation
-            self.compile_template(
-                template=template_source,
-                target=target_source,
-            )
-            self._performed_compilations[template_source].add(target_source)
-            return {template_source: target_source}
-
-        elif template_source.is_dir():
-            # The template source is a directory, so we will recurse over
-            # all the files and compile every single template while preserving
-            # the directory hierarchy. Non-templates are handled according to
-            # the `non_templates` option.
-            return self.compile_directory(
-                source=template_source,
-                target=target_source,
-            )
-        else:
+        if not template_source.exists():
             logger = logging.getLogger(__name__)
             logger.error(
                 f'Could not compile template "{template_source}" '
@@ -259,142 +241,24 @@ class CompileAction(Action):
             )
             return {}
 
-    def compile_template(self, template: Path, target: Path) -> None:
-        """
-        Compile template to target destination.
-
-        :param template: Template path.
-        :param target: Compile target path.
-        """
-        compiler.compile_template(
-            template=template,
-            target=target,
-            context=self.context_store,
-            shell_command_working_directory=self.directory,
-            permissions=self.option(key='permissions'),
+        compile_pairs = utils.resolve_targets(
+            content=template_source,
+            target=target_source,
+            include=self.option(key='include', default=r'(.+)'),
         )
 
-    def compile_directory(self, source: Path, target: Path) -> Dict[Path, Path]:
-        """
-        Compile the `source` directory to `target`.
-
-        Non-templates are handled according to the `non_templates` option.
-        Directory hierarchy is preserved.
-
-        :param source: Directory containing files to be compiled.
-        :param target: Target destination for compiled files.
-        """
-        assert source.is_dir()
-
-        # Disect all files based on if they are templates or not
-        all_files = set(
-            path
-            for path
-            in source.glob('**/*')
-            if path.is_file()
-        )
-        templates = set(
-            path
-            for path
-            in all_files
-            if self.compilable(path)
-        )
-        non_templates = all_files - templates
-
-        # Compile all template files
-        compilations: Dict[Path, Path] = {}
-        for template in templates:
-            target_file = self.target(
-                template=template,
-                template_root=source,
-                target_root=target,
+        permissions = self.option(key='permissions')
+        for content_file, target_file in compile_pairs.items():
+            compiler.compile_template(
+                template=content_file,
+                target=target_file,
+                context=self.context_store,
+                shell_command_working_directory=self.directory,
+                permissions=permissions,
             )
-            self.compile_template(template=template, target=target_file)
-            self._performed_compilations[template].add(target_file)
-            compilations[template] = target_file
+            self._performed_compilations[content_file].add(target_file)
 
-        # We will symlink all files if nothing else is specified
-        non_template_action = self.option(
-            key='non_templates',
-            default='symlink',
-        )
-        if non_template_action not in ('symlink', 'copy', 'ignore',):
-            logger = logging.getLogger(__name__)
-            logger.error(
-                f'Non-template compile action "{non_template_action}" '
-                'not supported. Should be one of "symlink", "copy", or '
-                'ignore.',
-            )
-
-        # --- Perform non-template action ---
-        def target_path(non_template: Path) -> Path:
-            """Return target path of non-template."""
-            return target / os.path.relpath(  # type: ignore
-                non_template,
-                start=source,
-            )
-
-        if non_template_action == 'symlink':
-            for non_template in non_templates:
-                symlink = target_path(non_template)
-                symlink.symlink_to(non_template)
-                self._performed_compilations[non_template].add(symlink)
-                compilations[non_template] = symlink
-
-        elif non_template_action == 'copy':
-            for non_template in non_templates:
-                copy = target_path(non_template)
-                shutil.copy(str(non_template), str(copy))
-                self._performed_compilations[non_template].add(copy)
-                compilations[non_template] = copy
-
-        return compilations
-
-    def compilable(self, path: Path) -> bool:
-        """Return True if path is supposed to be compiled."""
-        if not path.is_file():
-            return False
-
-        # The default pattern matches everything
-        specified_pattern = self.option(key='templates', default='.+')
-
-        # Only compile if filename matches the specified pattern
-        template_pattern = re.compile(specified_pattern)
-        return bool(template_pattern.match(path.name))
-
-    def target(
-        self,
-        template: Path,
-        template_root: Path,
-        target_root: Path,
-    ) -> Path:
-        """
-        Return intended compile target path for template.
-
-        The target path will keep the file hierarchy of the template source
-        directory, and possibly rename the target based on present capture
-        group(s) in the `templates` option.
-
-        :param template: Path to template.
-        :param template_root: Path to template root directory.
-        :param target_root: Path to target root directory.
-        """
-        # Transfer `template_root` directory hierarchy to `target_root`
-        target_path = target_root \
-            / os.path.relpath(template, start=template_root)  # type: ignore
-
-        # The default pattern matches everything, keeping the name intact
-        specified_pattern = self.option(key='templates', default='(.+)')
-        template_pattern = re.compile(specified_pattern)
-
-        if template_pattern.groups == 0:
-            # There is no capture group, so we will not rename the target
-            return target_path
-        else:
-            # Use capture group as the filename of the target path
-            match = template_pattern.match(template.name)
-            return target_path.parent \
-                / match.group(match.lastindex)  # type: ignore
+        return compile_pairs
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """
@@ -403,7 +267,7 @@ class CompileAction(Action):
         :return: Dictinary with keys containing compiled templates, and values
             as a set of target paths.
         """
-        return self._performed_compilations
+        return self._performed_compilations.copy()
 
     def _create_temp_file(self, name) -> Path:
         """
@@ -456,6 +320,8 @@ class SymlinkAction(Action):
 
     priority = 200
 
+    _options: SymlinkDict
+
     def __init__(self, *args, **kwargs) -> None:
         """Construct symlink action object."""
         super().__init__(*args, **kwargs)
@@ -505,6 +371,8 @@ class CopyAction(Action):
     """Copy files Action sub-class."""
 
     priority = 300
+
+    _options: CopyDict
 
     def __init__(self, *args, **kwargs) -> None:
         """Construct copy action object."""
@@ -591,10 +459,11 @@ class StowAction(Action):
         compile_options: CompileDict = {  # type: ignore
             'content': self._options['content'],
             'target': self._options['target'],
-            'templates': self._options.get('templates'),
-            'non_templates': 'ignore',
-            'permissions': self._options.get('permissions'),
+            'include': self._options.get('templates', r'template\.(.+)'),
         }
+        if 'permissions' in self._options:
+            compile_options['permissions'] = self._options['permissions']
+
         self.compile_action = CompileAction(
             options=compile_options,
             directory=self.directory,
@@ -705,6 +574,8 @@ class RunDict(TypedDict):
 class RunAction(Action):
     """Run shell command Action sub-class."""
 
+    _options: RunDict
+
     priority = 600
 
     def execute(
@@ -782,6 +653,8 @@ class Trigger:
 
 class TriggerAction(Action):
     """Action sub-class representing a trigger action."""
+
+    _options: TriggerDict
 
     priority = 0
 

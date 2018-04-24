@@ -40,7 +40,6 @@ config/modules:
         # Module defined in this file
         - name: polybar
         - name: terminals
-        - name: dotfiles
 
         # All modules defined in <modules_directory>/solar_desktop/config.yml
         - name: solar_desktop::*
@@ -58,8 +57,7 @@ module/dotfiles:
         compile:
             content: $XDG_CONFIG_HOME
             target: $XDG_CONFIG_HOME
-            templates: 'template\.(.+)'
-            non_templates: ignore
+            include: 'template\.(.+)'
 
 
 
