@@ -6,10 +6,12 @@ from pathlib import Path
 
 import pytest
 
+from astrality.actions import ActionBlock
 from astrality.config import (
     ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
     user_configuration,
 )
+from astrality.module import Module
 from astrality.utils import generate_expanded_env_dict
 
 
@@ -94,7 +96,7 @@ def module_factory(test_config_directory):
         replacer=lambda x: x,
         context_store={},
     ) -> Module:
-        if not 'module/' in list(config.keys())[0]:
+        if 'module/' not in list(config.keys())[0]:
             config = {'module/test': config}
 
         return Module(
@@ -128,6 +130,10 @@ def action_block_factory(test_config_directory):
     """Return action block factory function for testing."""
 
     def _action_block_factory(
+        compile={},
+        copy={},
+        run={},
+        stow={},
         symlink={},
         directory=test_config_directory,
         replacer=lambda x: x,
@@ -135,6 +141,10 @@ def action_block_factory(test_config_directory):
     ):
         """Return module with given parameters."""
         config = {
+            'compile': compile,
+            'copy': copy,
+            'run': run,
+            'stow': stow,
             'symlink': symlink,
         }
 

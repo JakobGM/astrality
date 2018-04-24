@@ -150,3 +150,22 @@ def test_symlinking(action_block_factory, create_temp_files):
 
     # Existing files should be backed up
     assert Path(str(file2) + '.bak').read_text() == 'original'
+
+
+def test_copying(action_block_factory, create_temp_files):
+    """Action blocks should copy properly."""
+    file1, file2, file3, file4 = create_temp_files(4)
+    file2.write_text('original')
+    file4.write_text('some other content')
+
+    action_block = action_block_factory(
+        copy=[
+            {'content': str(file1), 'target': str(file2)},
+            {'content': str(file3), 'target': str(file4)},
+        ],
+    )
+    action_block.copy()
+
+    # Check if content has been copied
+    assert file2.read_text() == file1.read_text()
+    assert file4.read_text() == file3.read_text()

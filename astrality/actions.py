@@ -716,10 +716,11 @@ class ActionBlock:
     :param context_store: A reference to the global context store.
     """
 
-    _import_context_actions: List[ImportContextAction]
-    _symlink_actions: List[SymlinkAction]
     _compile_actions: List[CompileAction]
+    _copy_actions: List[CopyAction]
+    _import_context_actions: List[ImportContextAction]
     _run_actions: List[RunAction]
+    _symlink_actions: List[SymlinkAction]
     _trigger_actions: List[TriggerAction]
 
     def __init__(
@@ -739,10 +740,11 @@ class ActionBlock:
         self.action_block = action_block
 
         for identifier, action_type in (
-            ('import_context', ImportContextAction),
-            ('symlink', SymlinkAction),
             ('compile', CompileAction),
+            ('copy', CopyAction),
+            ('import_context', ImportContextAction),
             ('run', RunAction),
+            ('symlink', SymlinkAction),
             ('trigger', TriggerAction),
         ):
             # Create and persist a list of all ImportContextAction objects
@@ -770,6 +772,11 @@ class ActionBlock:
         """Symlink files."""
         for symlink_action in self._symlink_actions:
             symlink_action.execute()
+
+    def copy(self) -> None:
+        """Copy files."""
+        for copy_action in self._copy_actions:
+            copy_action.execute()
 
     def compile(self) -> None:
         """Compile templates."""
