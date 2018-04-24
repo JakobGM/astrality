@@ -93,6 +93,7 @@ def module_factory(test_config_directory):
     def _module_factory(
         on_startup=None,
         on_modified=None,
+        on_exit=None,
         path=None,
         module_directory=test_config_directory / 'test_modules' /
         'using_all_actions',
@@ -108,6 +109,9 @@ def module_factory(test_config_directory):
         )
         if on_startup:
             module.action_blocks['on_startup'] = on_startup
+
+        if on_exit:
+            module.action_blocks['on_exit'] = on_exit
 
         if on_modified:
             module.action_blocks['on_modified'][path] = on_modified
