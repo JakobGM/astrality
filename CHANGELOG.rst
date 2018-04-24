@@ -14,8 +14,13 @@ Versioning <http://semver.org/spec/v2.0.0.html>`_.
 Added
 -----
 
+- New ``symlink`` action type.
+- New ``copy`` action type.
+- New ``stow`` action type. This action allows you to either compile+symlink
+  or compile+copy, bisecting a directory based on filename regular expression
+  matching.
 - You can now compile all templates recursively within a directory. Just set
-  ``source`` to a directory path. ``target`` must be a directory as well, and
+  ``content`` to a directory path. ``target`` must be a directory as well, and
   the relative file hierarchy is preserved.
 - You can now specify which filenames are considered templates when compiling
   directories recursively.
@@ -90,8 +95,9 @@ Changed
   when ``reprocess_modified_files`` is set to ``true``.
 
 - The ``template`` compile action keyword has now been replaced with
-  ``source``. This keyword makes more sense when we add support for compiling
-  all templates within a directory.
+  ``content``. This keyword makes more sense when we add support for compiling
+  all templates within a directory. It also stays consistent with the new action
+  types that have been added.
 
   *Old syntax*
 
@@ -105,7 +111,7 @@ Changed
   .. code-block:: yaml
 
       compile:
-          - source: path/to/template
+          - content: path/to/template
 
 - The module list items within the module ``requires`` option is now
   a dictionary, where shell commands are specified under the ``shell`` keyword.
