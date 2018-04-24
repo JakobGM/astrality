@@ -21,8 +21,9 @@ config/modules:
     # commands to exit.
     run_timeout: 0
 
-    # Modified templates can be automatically recompiled.
-    recompile_modified_templates: true
+    # Modified templates can be automatically recompiled. This also includes
+    # files that have been copied to a target destination.
+    reprocess_modified_files: true
 
     # There are two possible ways to define modules. Either in this file, as
     # shown further below, or in separate external module directories within the

@@ -47,14 +47,14 @@ Let us go through the module configuration step-by-step:
 We can now compile all such templates within *$XDG_CONFIG_HOME* by running
 ``astrality`` from the shell. But we would like to *automatically* recompile
 templates when we modify them or create new ones. You can achieve this by
-enabling ``recompile_modified_templates``:
+enabling ``reprocess_modified_files``:
 
 .. code-block:: yaml
 
     # $ASTRALITY_CONFIG_HOME/astrality.yml
 
     config/modules:
-        recompile_modified_templates: true
+        reprocess_modified_files: true
 
 Astrality will automatically recompile any modified templates as long as it
 runs as a background process.
@@ -82,7 +82,7 @@ accordingly:
     # ~/.dotfiles/astrality.yml
 
     config/modules:
-        recompile_modified_templates: true
+        reprocess_modified_files: true
 
     module/dotfiles:
         on_startup:

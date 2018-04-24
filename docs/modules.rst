@@ -732,7 +732,7 @@ Global configuration options for all your modules are specified in ``astrality.y
 
     *Useful when you are dependent on shell commands running sequantially.*
 
-``recompile_modified_templates:``
+``reprocess_modified_files:``
     *Default:* ``false``
 
     If enabled, Astrality will watch for file modifications in

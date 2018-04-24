@@ -83,8 +83,11 @@ Changed
 - The ``trigger`` action now follows recursive ``trigger`` actions. Beware of
   circular trigger chains!
 
+- ``recompile_modified_templates`` has been renamed to
+  ``reprocess_modified_files``, as this option now also includes copied files.
+
 - Astrality will now only recompile templates that have already been compiled
-  when ``recompile_modified_templates`` is set to ``true``.
+  when ``reprocess_modified_files`` is set to ``true``.
 
 - The ``template`` compile action keyword has now been replaced with
   ``source``. This keyword makes more sense when we add support for compiling

@@ -326,7 +326,7 @@ def test_recompile_templates_when_modified(
     application_config.update(default_global_options)
     application_config.update(_runtime)
     application_config['config/modules'] = {
-        'recompile_modified_templates': True,
+        'reprocess_modified_files': True,
     }
 
     module_manager = ModuleManager(application_config)
@@ -358,7 +358,7 @@ def test_recompile_templates_when_modified_overridden(
 ):
     """
     If a file is watched in a on_modified block, it should override the
-    recompile_modified_templates option.
+    reprocess_modified_files option.
     """
     template, target, touch_target = three_watchable_files
     template.touch()
@@ -384,7 +384,7 @@ def test_recompile_templates_when_modified_overridden(
     application_config.update(default_global_options)
     application_config.update(_runtime)
     application_config['config/modules'] = {
-        'recompile_modified_templates': True,
+        'reprocess_modified_files': True,
     }
 
     module_manager = ModuleManager(application_config)

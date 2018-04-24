@@ -407,8 +407,8 @@ class ModuleManager:
             config=config.get('config/modules', {}),
             config_directory=self.config_directory,
         )
-        self.recompile_modified_templates = \
-            self.global_modules_config.recompile_modified_templates
+        self.reprocess_modified_files = \
+            self.global_modules_config.reprocess_modified_files
 
         self.modules: Dict[str, Module] = {}
 
@@ -748,9 +748,9 @@ class ModuleManager:
         Recompile any modified template if configured.
 
         This requires setting the global setting:
-        recompile_modified_templates: true
+        reprocess_modified_files: true
         """
-        if not self.recompile_modified_templates:
+        if not self.reprocess_modified_files:
             return
 
         # Run any compile action a new if that compile action uses the modifed
