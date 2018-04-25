@@ -85,6 +85,8 @@ class Module:
         files, such as `config.yml`. All relative paths use this as anchor.
     :param replacer: String options should be processed by this function in
         order to replace relevant placeholders.
+    :param global_modules_config: GlobalModulesConfig object specifying
+        configuration options applicable to all modules, such as run_timeout.
     """
 
     action_blocks: ModuleActionBlocks
@@ -95,6 +97,7 @@ class Module:
         module_directory: Path,
         replacer: Callable[[str], str] = lambda string: string,
         context_store: compiler.Context = {},
+        global_modules_config: Optional[GlobalModulesConfig] = None,
     ) -> None:
         """
         Initialize Module object with a section from a config dictionary.
@@ -148,6 +151,7 @@ class Module:
                 directory=self.directory,
                 replacer=self.interpolate_string,
                 context_store=self.context_store,
+                global_modules_config=global_modules_config,
             )
         for path_string, action_block_dict \
                 in module_config_content.get('on_modified', {}).items():
@@ -160,6 +164,7 @@ class Module:
                 directory=self.directory,
                 replacer=self.interpolate_string,
                 context_store=self.context_store,
+                global_modules_config=global_modules_config,
             )
         self.action_blocks = action_blocks
 
@@ -182,142 +187,55 @@ class Module:
             assert name in ('on_startup', 'on_event', 'on_exit',)
             return self.action_blocks[name]  # type: ignore
 
-    def import_context(
+    def execute(
         self,
-        block_name: str,
+        action: str,
+        block: str,
         path: Optional[Path] = None,
-    ) -> None:
+    ) -> Optional[Tuple[Tuple[str, str], ...]]:
         """
-        Execute all import context actions specified in block_name[:path].
+        Perform action defined in action block.
 
+        :param actions: Action type to be performed such as 'compile'.
+            If passed 'all' then all actions types will be triggered.
         :param block_name: Name of block such as 'on_startup'.
         :param path: Absolute path in case of block_name == 'on_modified'.
+        :return: Optional tuple of 2-tuples if run actions have been performed.
+            First item is command being run, second item is the standard output
+            of the shell command.
         """
-        action_block = self.get_action_block(name=block_name, path=path)
-        action_block.import_context()
-
-        # Import context sections from triggered action blocks
-        triggers = action_block.triggers()
-        for trigger in triggers:
-            self.import_context(
-                block_name=trigger.block,
-                path=trigger.absolute_path,
+        if action == 'all':
+            # If 'all' is specified, then we can run all actions except trigger,
+            # as triggers are handled in each respective action.
+            all_actions = filter(
+                lambda x: x != 'trigger',
+                ActionBlock.action_types.keys(),
             )
 
-    def symlink(
-        self,
-        block_name: str,
-        path: Optional[Path] = None,
-    ) -> None:
-        """
-        Execute all symlink actions specified in block_name[:path].
+            results: Tuple[Tuple[str, str], ...] = tuple()
+            for action in all_actions:
+                result = self.execute(action=action, block=block, path=path)
+                if result:
+                    results += result
 
-        :param block_name: Name of block such as 'on_startup'.
-        :param path: Absolute path in case of block_name == 'on_modified'.
-        """
-        action_block = self.get_action_block(name=block_name, path=path)
-        action_block.symlink()
+            return results
 
-        # Symlink from triggered action blocks
+        # In this branch, we have a single action, for example 'run'.
+        assert isinstance(action, str)
+        assert action in ActionBlock.action_types
+        action_block = self.get_action_block(name=block, path=path)
+        results = getattr(action_block, action)()
+
+        # We need to execute the same action in any triggered action block
         triggers = action_block.triggers()
         for trigger in triggers:
-            self.symlink(
-                block_name=trigger.block,
+            result = self.execute(
+                action=action,
+                block=trigger.block,
                 path=trigger.absolute_path,
             )
-
-    def copy(
-        self,
-        block_name: str,
-        path: Optional[Path] = None,
-    ) -> None:
-        """
-        Execute all copy actions specified in block_name[:path].
-
-        :param block_name: Name of block such as 'on_startup'.
-        :param path: Absolute path in case of block_name == 'on_modified'.
-        """
-        action_block = self.get_action_block(name=block_name, path=path)
-        action_block.copy()
-
-        # Symlink from triggered action blocks
-        triggers = action_block.triggers()
-        for trigger in triggers:
-            self.copy(
-                block_name=trigger.block,
-                path=trigger.absolute_path,
-            )
-
-    def compile(
-        self,
-        block_name: str,
-        path: Optional[Path] = None,
-    ) -> None:
-        """
-        Execute all compile actions specified in block_name[:path].
-
-        :param block_name: Name of block such as 'on_startup'.
-        :param path: Absolute path in case of block_name == 'on_modified'.
-        """
-        action_block = self.get_action_block(name=block_name, path=path)
-        action_block.compile()
-
-        # Compile templates from triggered action blocks
-        triggers = action_block.triggers()
-        for trigger in triggers:
-            self.compile(
-                block_name=trigger.block,
-                path=trigger.absolute_path,
-            )
-
-    def stow(
-        self,
-        block_name: str,
-        path: Optional[Path] = None,
-    ) -> None:
-        """
-        Execute all stow actions specified in block_name[:path].
-
-        :param block_name: Name of block such as 'on_startup'.
-        :param path: Absolute path in case of block_name == 'on_modified'.
-        """
-        action_block = self.get_action_block(name=block_name, path=path)
-        action_block.stow()
-
-        # Symlink from triggered action blocks
-        triggers = action_block.triggers()
-        for trigger in triggers:
-            self.stow(
-                block_name=trigger.block,
-                path=trigger.absolute_path,
-            )
-
-    def run(
-        self,
-        block_name: str,
-        default_timeout: Union[int, float],
-        path: Optional[Path] = None,
-    ) -> Tuple[Tuple[str, str], ...]:
-        """
-        Execute all run actions specified in block_name[:path].
-
-        :param block_name: Name of block such as 'on_startup'.
-        :param default_timeout: Default timeout for run actions.
-        :param path: Absolute path in case of block_name == 'on_modified'.
-        """
-        action_block = self.get_action_block(name=block_name, path=path)
-        results = action_block.run(default_timeout=default_timeout)
-
-        # Run shell commands from triggered action blocks
-        triggers = action_block.triggers()
-        for trigger in triggers:
-            new_results = self.run(
-                block_name=trigger.block,
-                default_timeout=default_timeout,
-                path=trigger.absolute_path,
-            )
-            if new_results:
-                results += new_results
+            if result:
+                results += result
 
         return results
 
@@ -507,6 +425,7 @@ class ModuleManager:
                     module_directory=module_directory,
                     replacer=self.interpolate_string,
                     context_store=self.application_context,
+                    global_modules_config=self.global_modules_config,
                 )
                 self.modules[module.name] = module
 
@@ -531,6 +450,7 @@ class ModuleManager:
                 module_directory=self.config_directory,
                 replacer=self.interpolate_string,
                 context_store=self.application_context,
+                global_modules_config=self.global_modules_config,
             )
             self.modules[module.name] = module
 
@@ -541,10 +461,6 @@ class ModuleManager:
         )
 
         logger.info('Enabled modules: ' + ', '.join(self.modules.keys()))
-
-    def __len__(self) -> int:
-        """Return the number of managed modules."""
-        return len(self.modules)
 
     def module_events(self) -> Dict[str, str]:
         """Return dict containing the event of all modules."""
@@ -578,33 +494,15 @@ class ModuleManager:
 
             for module_name, event in self.module_events().items():
                 if not self.last_module_events[module_name] == event:
-                    # This module has a new event
-
-                    self.import_context_sections(
-                        trigger='on_event',
+                    logger.info(
+                        f'[module/{module_name}] New event "{event}". '
+                        'Executing actions.',
+                    )
+                    self.execute(
+                        action='all',
+                        block='on_event',
                         module=self.modules[module_name],
                     )
-                    self.symlink(
-                        trigger='on_event',
-                        module=self.modules[module_name],
-                    )
-                    self.copy(
-                        trigger='on_event',
-                        module=self.modules[module_name],
-                    )
-                    self.compile_templates(
-                        trigger='on_event',
-                        module=self.modules[module_name],
-                    )
-                    self.stow(
-                        trigger='on_event',
-                        module=self.modules[module_name],
-                    )
-                    self.run_on_event_commands(
-                        module=self.modules[module_name],
-                    )
-
-                    # Save the event
                     self.last_module_events[module_name] = event
 
     def has_unfinished_tasks(self) -> bool:
@@ -622,118 +520,57 @@ class ModuleManager:
             in self.modules.values()
         )
 
-    def _iter_modules(self, modules: Optional[Module]) -> Iterable[Module]:
+    def execute(
+        self,
+        action: str,
+        block: str,
+        module: Optional[Module] = None,
+    ) -> None:
         """
-        Return iterable from module(s) input.
+        Execute action(s) specified in managed modules.
 
-        This is a small helper function as it is used in most of the actions.
+        The module actions are executed according to their specified priority.
+        First import context, then symlink, and so on...
 
-        :return: If given a single module, return a 1-tuple containing that
-            module. Else, returns all the modules managed by the ModuleManager.
+        :param action: Action to be perfomed. If given 'all', then all actions
+            will be performed.
+        :param block: Action block to be executed, for example 'on_exit'.
+        :module: Specific module to be executed. If not provided, then all
+            managed modules will be executed.
         """
-        if isinstance(modules, Module):
-            return (modules, )
+        assert block in ('on_startup', 'on_event', 'on_exit',)
+
+        modules: Iterable[Module]
+        if isinstance(module, Module):
+            modules = (module, )
         else:
-            return self.modules.values()
+            modules = self.modules.values()
 
-    def import_context_sections(
-        self,
-        trigger: str,
-        module: Optional[Module] = None,
-    ) -> None:
-        """
-        Import context sections defined by the managed modules.
+        if action == 'all':
+            all_actions = filter(
+                lambda x: x != 'trigger',
+                ActionBlock.action_types.keys(),
+            )
+        else:
+            all_actions = (action,)  # type: ignore
 
-        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
-        This determines which event block of the module is used to get the
-        context import specification from.
-        """
-        assert trigger in ('on_startup', 'on_event', 'on_exit',)
-
-        modules = self._iter_modules(module)
-        for module in modules:
-            module.import_context(block_name=trigger)
-
-    def symlink(
-        self,
-        trigger: str,
-        module: Optional[Module] = None,
-    ) -> None:
-        """Create symlinks defined by the managed modules."""
-        assert trigger in ('on_startup', 'on_event', 'on_exit',)
-
-        modules = self._iter_modules(module)
-        for module in modules:
-            module.symlink(block_name=trigger)
-
-    def copy(
-        self,
-        trigger: str,
-        module: Optional[Module] = None,
-    ) -> None:
-        """Copy according to action block `trigger` in managed modules."""
-        assert trigger in ('on_startup', 'on_event', 'on_exit',)
-
-        modules = self._iter_modules(module)
-        for module in modules:
-            module.copy(block_name=trigger)
-
-    def compile_templates(
-        self,
-        trigger: str,
-        module: Optional[Module] = None,
-    ) -> None:
-        """Compile the module templates specified by the `templates` option."""
-        assert trigger in ('on_startup', 'on_event', 'on_exit',)
-
-        modules = self._iter_modules(module)
-        for module in modules:
-            module.compile(block_name=trigger)
-
-    def stow(
-        self,
-        trigger: str,
-        module: Optional[Module] = None,
-    ) -> None:
-        """Perform `stow` action of managed modules."""
-        assert trigger in ('on_startup', 'on_event', 'on_exit',)
-
-        modules = self._iter_modules(module)
-        for module in modules:
-            module.stow(block_name=trigger)
+        for specific_action in all_actions:
+            for module in modules:
+                module.execute(
+                    action=specific_action,
+                    block=block,
+                )
 
     def startup(self):
-        """Run all startup actions specified by the managed modules."""
+        """
+        Run all startup actions specified by the managed modules.
+
+        Also starts the directory watcher in $ASTRALITY_CONFIG_HOME.
+        """
         assert not self.startup_done
-
-        self.import_context_sections('on_startup')
-        self.symlink('on_startup')
-        self.copy('on_startup')
-        self.compile_templates('on_startup')
-        self.stow('on_startup')
-
-        for module in self.modules.values():
-            logger.info(f'[module/{module.name}] Running startup commands.')
-            module.run(
-                block_name='on_startup',
-                default_timeout=self.global_modules_config.run_timeout,
-            )
-
-        self.startup_done = True
-
-        # Start watching config directory for file changes
+        self.execute(action='all', block='on_startup')
         self.directory_watcher.start()
-
-    def run_on_event_commands(
-        self,
-        module: Module,
-    ):
-        """Run all event change commands specified by a managed module."""
-        logger.info(f'[module/{module.name}] Running event commands.')
-        module.run(
-            block_name='on_event',
-            default_timeout=self.global_modules_config.run_timeout,
-        )
+        self.startup_done = True
 
     def exit(self):
         """
@@ -741,19 +578,7 @@ class ModuleManager:
 
         Also close all temporary file handlers created by the modules.
         """
-        self.import_context_sections('on_exit')
-        self.symlink('on_exit')
-        self.copy('on_exit')
-        self.compile_templates('on_exit')
-        self.stow('on_exit')
-
-        # Then run all shell commands
-        for module in self.modules.values():
-            logger.info(f'[module/{module.name}] Running exit commands.')
-            module.run(
-                block_name='on_exit',
-                default_timeout=self.global_modules_config.run_timeout,
-            )
+        self.execute(action='all', block='on_exit')
 
         # Stop watching config directory for file changes
         self.directory_watcher.stop()
@@ -776,17 +601,10 @@ class ModuleManager:
                 f'[module/{module.name}] on_modified:{modified} triggered.',
             )
 
-            module.import_context(block_name='on_modified', path=modified)
-            module.symlink(block_name='on_modified', path=modified)
-            module.copy(block_name='on_modified', path=modified)
-            module.compile(block_name='on_modified', path=modified)
-            module.stow(block_name='on_modified', path=modified)
-
-            logger.info(f'[module/{module.name}] Running modified commands.')
-            module.run(
-                'on_modified',
+            module.execute(
+                action='all',
+                block='on_modified',
                 path=modified,
-                default_timeout=self.global_modules_config.run_timeout,
             )
 
         return triggered
@@ -892,3 +710,7 @@ class ModuleManager:
         :return: Processed string.
         """
         return string
+
+    def __len__(self) -> int:
+        """Return the number of managed modules."""
+        return len(self.modules)

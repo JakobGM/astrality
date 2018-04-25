@@ -18,11 +18,11 @@ which could be imported and accessed independently from other modules.
 """
 
 import abc
-from collections import defaultdict
 import logging
 import os
-from pathlib import Path
 import shutil
+from collections import defaultdict
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
     Any,
@@ -40,7 +40,8 @@ from typing import (
 from mypy_extensions import TypedDict
 
 from astrality import compiler, utils
-from astrality.config import expand_path, insert_into
+from astrality.config import expand_path, insert_into, GlobalModulesConfig
+
 
 Replacer = Callable[[str], str]
 
@@ -721,12 +722,23 @@ class ActionBlock:
     _symlink_actions: List[SymlinkAction]
     _trigger_actions: List[TriggerAction]
 
+    action_types = {
+        'import_context': ImportContextAction,
+        'symlink': SymlinkAction,
+        'copy': CopyAction,
+        'compile': CompileAction,
+        'stow': StowAction,
+        'run': RunAction,
+        'trigger': TriggerAction,
+    }
+
     def __init__(
         self,
         action_block: ActionBlockDict,
         directory: Path,
         replacer: Replacer,
         context_store: compiler.Context,
+        global_modules_config: Optional[GlobalModulesConfig] = None,
     ) -> None:
         """
         Construct ActionBlock object.
@@ -737,15 +749,12 @@ class ActionBlock:
         assert directory.is_absolute()
         self.action_block = action_block
 
-        for identifier, action_type in (
-            ('compile', CompileAction),
-            ('copy', CopyAction),
-            ('import_context', ImportContextAction),
-            ('run', RunAction),
-            ('symlink', SymlinkAction),
-            ('stow', StowAction),
-            ('trigger', TriggerAction),
-        ):
+        if global_modules_config:
+            self.run_timeout = global_modules_config.run_timeout
+        else:
+            self.run_timeout = 0
+
+        for identifier, action_type in self.action_types.items():
             # Create and persist a list of all ImportContextAction objects
             action_configs = utils.cast_to_list(  # type: ignore
                 self.action_block.get(identifier, {}),  # type: ignore
@@ -789,7 +798,7 @@ class ActionBlock:
 
     def run(
         self,
-        default_timeout: Union[int, float],
+        default_timeout: Optional[Union[int, float]] = None,
     ) -> Tuple[Tuple[str, str], ...]:
         """
         Run shell commands.
@@ -800,7 +809,7 @@ class ActionBlock:
         results: Tuple[Tuple[str, str], ...] = tuple()
         for run_action in self._run_actions:
             result = run_action.execute(
-                default_timeout=default_timeout,
+                default_timeout=default_timeout or self.run_timeout,
             )
             if result:
                 # Run action is not null object, so we can return results

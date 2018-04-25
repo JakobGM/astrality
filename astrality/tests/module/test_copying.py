@@ -20,7 +20,7 @@ def test_copying_in_on_modified_block(
         ],
     )
     module = module_factory(on_modified=action_block, path=Path('/a/b/c'))
-    module.copy(block_name='on_modified', path=Path('/a/b/c'))
+    module.execute(action='all', block='on_modified', path=Path('/a/b/c'))
 
     # Check if content has been copied
     assert file2.read_text() == file1.read_text()

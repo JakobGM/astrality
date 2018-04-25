@@ -25,7 +25,7 @@ def test_stowing(
     module = module_factory(
         on_exit=action_block,
     )
-    module.stow(block_name='on_exit')
+    module.execute(action='all', block='on_exit')
 
     # Check if template has been compiled
     assert Path(target.parent / '0').read_text() == 'test_value'

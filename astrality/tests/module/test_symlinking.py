@@ -19,7 +19,7 @@ def test_symlinking_in_on_startup_block(
         ],
     )
     module = module_factory(on_startup=action_block)
-    module.symlink(block_name='on_startup')
+    module.execute(action='all', block='on_startup')
 
     assert file2.is_symlink()
     assert file2.resolve() == file1

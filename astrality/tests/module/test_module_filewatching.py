@@ -21,7 +21,8 @@ def modules_config(
     empty_template_target = Path('/tmp/astrality/empty_temp_template')
     touch_target = temp_directory / 'touched'
 
-    secondary_template = test_config_directory / 'templates' / 'no_context.template'
+    secondary_template = test_config_directory \
+        / 'templates' / 'no_context.template'
     secondary_template_target = temp_directory / 'secondary_template.tmp'
 
     config = {
@@ -30,7 +31,7 @@ def modules_config(
                 str(empty_template): {
                     'compile': [
                         {
-                            'content' : str(empty_template),
+                            'content': str(empty_template),
                             'target': str(empty_template_target),
                         },
                         {
@@ -67,14 +68,16 @@ def modules_config(
 
 
 def test_modified_commands_of_module(modules_config):
-    config, empty_template, empty_template_target, touch_target, *_= modules_config
+    config, empty_template, empty_template_target, touch_target, *_ \
+        = modules_config
     module_manager = ModuleManager(config)
-    result = module_manager.modules['A'].run(
-        block_name='on_modified',
+    result = module_manager.modules['A'].execute(
+        action='run',
+        block='on_modified',
         path=empty_template,
-        default_timeout=1,
     )
     assert result == (('touch ' + str(touch_target), ''),)
+
 
 def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
     (
@@ -104,6 +107,7 @@ def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
     # And that the new file has been touched
     time.sleep(0.5)
     assert touch_target.is_file()
+
 
 def test_on_modified_event_in_module(modules_config):
     (
@@ -146,6 +150,7 @@ def test_on_modified_event_in_module(modules_config):
     # And that the new file has been touched
     assert touch_target.is_file()
 
+
 @pytest.yield_fixture
 def test_template_targets():
     template_target1 = Path('/tmp/astrality/target1')
@@ -158,6 +163,7 @@ def test_template_targets():
     if template_target2.is_file():
         os.remove(template_target2)
 
+
 @pytest.mark.slow
 def test_hot_reloading(
     test_template_targets,
@@ -169,7 +175,6 @@ def test_hot_reloading(
     config1 = test_config_directory / 'astrality1.yml'
     config2 = test_config_directory / 'astrality2.yml'
     target_config = test_config_directory / 'astrality.yml'
-    temp_directory = Path('/tmp/astrality')
 
     # Copy the first configuration into place
     shutil.copy(str(config1), str(target_config))
@@ -213,6 +218,7 @@ def test_hot_reloading(
     if target_config.is_file():
         os.remove(target_config)
 
+
 @pytest.yield_fixture
 def three_watchable_files(test_config_directory):
     file1 = test_config_directory / 'file1.tmp'
@@ -236,6 +242,7 @@ def three_watchable_files(test_config_directory):
         os.remove(file2)
     if file3.is_file():
         os.remove(file3)
+
 
 def test_all_three_actions_in_on_modified_block(
     three_watchable_files,
@@ -301,6 +308,7 @@ def test_all_three_actions_in_on_modified_block(
     assert file3.is_file()
 
     module_manager.exit()
+
 
 def test_recompile_templates_when_modified(
     three_watchable_files,
@@ -448,7 +456,8 @@ def test_importing_context_on_modification(
     file1.touch()
     file1.write_text('new content, resulting in importing Mercedes')
     time.sleep(0.7)
-    assert module_manager.application_context['car']['manufacturer'] == 'Mercedes'
+    assert module_manager.application_context['car']['manufacturer'] \
+        == 'Mercedes'
 
 
 @pytest.mark.slow

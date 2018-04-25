@@ -5,6 +5,7 @@ import logging
 
 from astrality.module import ModuleManager
 
+
 def test_use_of_string_interpolations_of_module(
     default_global_options,
     _runtime,
@@ -50,8 +51,8 @@ def test_use_of_string_interpolations_of_module(
         'module/C': {
             'on_exit': {
                 'compile': {
-                        'content': str(c_template),
-                        'target': str(c_target),
+                    'content': str(c_template),
+                    'target': str(c_target),
                 },
             },
         },
@@ -63,8 +64,14 @@ def test_use_of_string_interpolations_of_module(
     module_manager = ModuleManager(application_config)
 
     # Compile twice to double check that only one temporary file is inserted
-    module_manager.modules['A'].compile('on_startup')
-    module_manager.modules['A'].compile('on_startup')
+    module_manager.modules['A'].execute(
+        action='compile',
+        block='on_startup',
+    )
+    module_manager.modules['A'].execute(
+        action='compile',
+        block='on_startup',
+    )
     a_target = list(
         module_manager.modules['A'].performed_compilations().values(),
     )[0].pop()
@@ -78,15 +85,21 @@ def test_use_of_string_interpolations_of_module(
         '{leave/me/alone}'
     ) == '{leave/me/alone}'
 
-
     # Specified compilation targets should be inserted
-    module_manager.modules['B'].compile('on_modified', b_on_modified)
+    module_manager.modules['B'].execute(
+        action='compile',
+        block='on_modified',
+        path=b_on_modified,
+    )
     assert module_manager.modules['B'].interpolate_string(
         '{' + str(b_template) + '}',
     ) == str(b_target)
 
     # Relative paths should be resolved
-    module_manager.modules['C'].compile('on_exit')
+    module_manager.modules['C'].execute(
+        action='compile',
+        block='on_exit',
+    )
     assert module_manager.modules['C'].interpolate_string(
         '{c.template/into/..}',
     ) == str(c_target)
