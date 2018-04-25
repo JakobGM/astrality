@@ -21,8 +21,9 @@ config/modules:
     # commands to exit.
     run_timeout: 0
 
-    # Modified templates can be automatically recompiled.
-    recompile_modified_templates: true
+    # Modified templates can be automatically recompiled. This also includes
+    # files that have been copied to a target destination.
+    reprocess_modified_files: true
 
     # There are two possible ways to define modules. Either in this file, as
     # shown further below, or in separate external module directories within the
@@ -47,6 +48,18 @@ config/modules:
         # Module defined at https://github.com/jakobgm/color-schemes.astrality
         - name: github::jakobgm/color-schemes.astrality
           autoupdate: true  # Fetch new color schemes as they are added
+
+
+module/dotfiles:
+    # This module automatically compiles all filenames within $XDG_CONFIG_HOME
+    # prefixed with 'template.'. It removes the prefix for the compile target,
+    # placing it in the same directory as the template.
+    on_startup:
+        compile:
+            content: $XDG_CONFIG_HOME
+            target: $XDG_CONFIG_HOME
+            include: 'template\.(.+)'
+
 
 
 context/host:
@@ -142,7 +155,7 @@ module/polybar:
 
     on_startup:
         compile:
-            - source: modules/polybar/config.template
+            - content: modules/polybar/config.template
 
         run:
             - shell: killall -q polybar
@@ -152,7 +165,7 @@ module/polybar:
     on_modified:
         modules/polybar/config.template:
             compile:
-                - source: modules/polybar/config.template
+                - content: modules/polybar/config.template
 
 
 module/terminals:
@@ -176,7 +189,7 @@ module/terminals:
 
     on_startup:
         compile:
-            - source: modules/terminals/alacritty.yml.template
+            - content: modules/terminals/alacritty.yml.template
               target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
-            - source: modules/terminals/kitty.conf.template
+            - content: modules/terminals/kitty.conf.template
               target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf

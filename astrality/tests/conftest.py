@@ -6,10 +6,12 @@ from pathlib import Path
 
 import pytest
 
+from astrality.actions import ActionBlock
 from astrality.config import (
     ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
     user_configuration,
 )
+from astrality.module import Module, ModuleManager
 from astrality.utils import generate_expanded_env_dict
 
 
@@ -78,7 +80,100 @@ def context_directory(test_config_directory):
     """Return path to directory containing several context files."""
     return test_config_directory / 'context'
 
+
 @pytest.fixture
 def template_directory(test_config_directory):
     """Return path to directory containing several templates"""
     return test_config_directory / 'templates'
+
+
+@pytest.fixture
+def module_factory(test_config_directory):
+    """Return Module factory for testing."""
+    def _module_factory(
+        on_startup=None,
+        on_modified=None,
+        on_exit=None,
+        path=None,
+        module_directory=test_config_directory / 'test_modules' /
+        'using_all_actions',
+        replacer=lambda x: x,
+        context_store={},
+    ) -> Module:
+        """Return module with specified action blocks and config."""
+        module = Module(
+            module_config={'module/test': {}},
+            module_directory=module_directory,
+            replacer=replacer,
+            context_store=context_store,
+        )
+        if on_startup:
+            module.action_blocks['on_startup'] = on_startup
+
+        if on_exit:
+            module.action_blocks['on_exit'] = on_exit
+
+        if on_modified:
+            module.action_blocks['on_modified'][path] = on_modified
+
+        return module
+
+    return _module_factory
+
+
+@pytest.fixture
+def module_manager(
+    default_global_options,
+    _runtime,
+):
+    default_global_options.update(_runtime)
+    return ModuleManager(default_global_options)
+
+
+@pytest.fixture
+def create_temp_files(tmpdir):
+    """Return temp file factory function."""
+    temp_dir = Path(tmpdir)
+
+    def _create_temp_files(number):
+        """Create `number` tempfiles in seperate directories and yield paths."""
+        for _number in range(number):
+            temp_file = temp_dir / str(_number) / f'file{_number}.temp'
+            temp_file.parent.mkdir(parents=True)
+            temp_file.touch()
+            yield temp_file
+
+    return _create_temp_files
+
+
+@pytest.fixture
+def action_block_factory(test_config_directory):
+    """Return action block factory function for testing."""
+
+    def _action_block_factory(
+        compile={},
+        copy={},
+        run={},
+        stow={},
+        symlink={},
+        directory=test_config_directory,
+        replacer=lambda x: x,
+        context_store={},
+    ):
+        """Return module with given parameters."""
+        config = {
+            'compile': compile,
+            'copy': copy,
+            'run': run,
+            'stow': stow,
+            'symlink': symlink,
+        }
+
+        return ActionBlock(
+            action_block=config,
+            directory=directory,
+            replacer=replacer,
+            context_store=context_store,
+        )
+
+    return _action_block_factory

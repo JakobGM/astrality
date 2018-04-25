@@ -23,13 +23,12 @@ livereload==2.5.1         # via sphinx-autobuild
 markupsafe==1.0           # via jinja2
 mccabe==0.6.1             # via flake8
 mypy-extensions==0.3.0
-mypy==0.560
+mypy==0.590
 packaging==16.8           # via sphinx
 pathtools==0.1.2          # via sphinx-autobuild, watchdog
 pip-tools==1.11.0
 pluggy==0.6.0             # via pytest
 port-for==0.3.1           # via sphinx-autobuild
-psutil==5.4.3             # via mypy
 py==1.5.2                 # via pytest
 pycodestyle==2.3.1        # via flake8
 pyflakes==1.6.0           # via flake8
@@ -37,7 +36,7 @@ pygments==2.2.0           # via sphinx
 pyparsing==2.2.0          # via packaging
 pytest-env==0.6.2
 pytest-freezegun==0.2.0
-pytest-mypy==0.3.0
+pytest-mypy==0.3.1
 pytest==3.3.2
 python-dateutil==2.6.1    # via freezegun
 pytz==2017.3              # via astral, babel

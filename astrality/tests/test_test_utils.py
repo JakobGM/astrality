@@ -1,3 +1,5 @@
+"""Tests for the test utils module."""
+
 from .utils import RegexCompare
 
 def test_use_of_regex_compare():

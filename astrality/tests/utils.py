@@ -2,6 +2,7 @@
 
 import re
 
+
 class RegexCompare:
     """
     Class for creating regex objects which can be compared with strings.

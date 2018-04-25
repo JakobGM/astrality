@@ -22,6 +22,7 @@ from collections import defaultdict
 import logging
 import os
 from pathlib import Path
+import shutil
 from tempfile import NamedTemporaryFile
 from typing import (
     Any,
@@ -32,6 +33,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 
@@ -60,7 +62,15 @@ class Action(abc.ABC):
 
     def __init__(
         self,
-        options: Union['ImportContextDict', 'CompileDict', 'RunDict'],
+        options: Union[
+            'CompileDict',
+            'CopyDict',
+            'ImportContextDict',
+            'RunDict',
+            'StowDict',
+            'SymlinkDict',
+            'TriggerDict',
+        ],
         directory: Path,
         replacer: Replacer,
         context_store: compiler.Context,
@@ -87,7 +97,7 @@ class Action(abc.ABC):
         """
         return self._replace(string)
 
-    def option(self, key: str, path: bool = False) -> Any:
+    def option(self, key: str, default: Any = None, path: bool = False) -> Any:
         """
         Return user specified action option.
 
@@ -95,10 +105,11 @@ class Action(abc.ABC):
         it replaces relevant placeholders users might have specified.
 
         :param key: The key of the user option that should be retrieved.
+        :param default: Default return value if key not found.
         :param path: If True, convert string path to Path.is_absolute().
         :return: Processed action configuration value.
         """
-        option_value = self._options.get(key)
+        option_value = self._options.get(key, default)
 
         if option_value is None:
             return None
@@ -179,20 +190,23 @@ class ImportContextAction(Action):
 class RequiredCompileDict(TypedDict):
     """Required fields of compile action."""
 
-    source: str
+    content: str
 
 
 class CompileDict(RequiredCompileDict, total=False):
     """Allowable fields of compile action."""
 
     target: str
+    include: str
     permissions: str
 
 
 class CompileAction(Action):
     """Compile template action."""
 
-    priority = 200
+    _options: CompileDict
+
+    priority = 400
 
     def __init__(self, *args, **kwargs) -> None:
         """Construct compile action object."""
@@ -202,9 +216,9 @@ class CompileAction(Action):
 
     def execute(self) -> Dict[Path, Path]:
         """
-        Compile template to target destination.
+        Compile template source to target destination.
 
-        :return: Dictionary with template keys and compile target values.
+        :return: Dictionary with template content keys and target path values.
         """
         if self.null_object:
             # Null objects do nothing
@@ -212,58 +226,39 @@ class CompileAction(Action):
         elif 'target' not in self._options:
             # If no target is specified, then we can create a temporary file
             # and insert it into the configuration options.
-            template = self.option(key='source', path=True)
+            template = self.option(key='content', path=True)
             target = self._create_temp_file(template.name)
             self._options['target'] = str(target)  # type: ignore
 
-        template_source = self.option(key='source', path=True)
-        target = self.option(key='target', path=True)
-
-        compilations: Dict[Path, Path] = {}
-        if template_source.is_file():
-            # Single template file, so straight forward compilation
-            self.compile_template(template=template_source, target=target)
-            self._performed_compilations[template_source].add(target)
-            compilations = {template_source: target}
-
-        elif template_source.is_dir():
-            # The template source is a directory, so we will recurse over
-            # all the files and compile every single file while preserving
-            # the directory hierarchy
-            templates = tuple(
-                path
-                for path
-                in template_source.glob('**/*')
-                if path.is_file()
-            )
-            targets = tuple(
-                target / os.path.relpath(template_file, start=template_source)
-                for template_file
-                in templates
-            )
-
-            for template, target in zip(templates, targets):
-                self.compile_template(template=template, target=target)
-                self._performed_compilations[template].add(target)
-                compilations[template] = target
-
-        else:
+        # These might either be file paths or directory paths
+        template_source = self.option(key='content', path=True)
+        target_source = self.option(key='target', path=True)
+        if not template_source.exists():
             logger = logging.getLogger(__name__)
             logger.error(
                 f'Could not compile template "{template_source}" '
-                f'to target "{target}". No such path!',
+                f'to target "{target_source}". No such path!',
             )
+            return {}
 
-        return compilations
-
-    def compile_template(self, template: Path, target: Path) -> None:
-        compiler.compile_template(
-            template=template,
-            target=target,
-            context=self.context_store,
-            shell_command_working_directory=self.directory,
-            permissions=self.option(key='permissions'),
+        compile_pairs = utils.resolve_targets(
+            content=template_source,
+            target=target_source,
+            include=self.option(key='include', default=r'(.+)'),
         )
+
+        permissions = self.option(key='permissions')
+        for content_file, target_file in compile_pairs.items():
+            compiler.compile_template(
+                template=content_file,
+                target=target_file,
+                context=self.context_store,
+                shell_command_working_directory=self.directory,
+                permissions=permissions,
+            )
+            self._performed_compilations[content_file].add(target_file)
+
+        return compile_pairs
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """
@@ -272,7 +267,7 @@ class CompileAction(Action):
         :return: Dictinary with keys containing compiled templates, and values
             as a set of target paths.
         """
-        return self._performed_compilations
+        return self._performed_compilations.copy()
 
     def _create_temp_file(self, name) -> Path:
         """
@@ -299,12 +294,274 @@ class CompileAction(Action):
         """Return True if run action is responsible for template."""
         assert other.is_absolute()
 
-        if not self.option(key='source', path=True) == other:
+        if not self.option(key='content', path=True) == other:
             # This is not a managed template, so we will not recompile
             return False
 
         # Return True if the template has been compiled
         return other in self.performed_compilations()
+
+
+class RequiredSymlinkDict(TypedDict):
+    """Required fields of symlink action user config."""
+
+    content: str
+    target: str
+
+
+class SymlinkDict(RequiredSymlinkDict, total=False):
+    """Allowable fields of symlink action user config."""
+
+    include: str
+
+
+class SymlinkAction(Action):
+    """Symlink files Action sub-class."""
+
+    priority = 200
+
+    _options: SymlinkDict
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Construct symlink action object."""
+        super().__init__(*args, **kwargs)
+        self.symlinked_files: DefaultDict[Path, Set[Path]] = \
+            defaultdict(set)
+
+    def execute(self) -> Dict[Path, Path]:
+        """
+        Symlink to `content` path from `target` path.
+
+        :return: Dictionary with content keys and symlink values.
+        """
+        if self.null_object:
+            return {}
+
+        content = self.option(key='content', path=True)
+        target = self.option(key='target', path=True)
+        include = self.option(key='include', default=r'(.+)')
+        links = utils.resolve_targets(
+            content=content,
+            target=target,
+            include=include,
+        )
+        for content, symlink in links.items():
+            if symlink.is_file():
+                symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
+
+            symlink.parent.mkdir(parents=True, exist_ok=True)
+            symlink.symlink_to(content)
+            self.symlinked_files[content].add(symlink)
+
+        return links
+
+
+class RequiredCopyDict(TypedDict):
+    """Required fields of copy action user config."""
+
+    content: str
+    target: str
+
+
+class CopyDict(RequiredCopyDict, total=False):
+    """Allowable fields of copy action user config."""
+
+    include: str
+    permissions: str
+
+
+class CopyAction(Action):
+    """Copy files Action sub-class."""
+
+    priority = 300
+
+    _options: CopyDict
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Construct copy action object."""
+        super().__init__(*args, **kwargs)
+        self.copied_files: DefaultDict[Path, Set[Path]] = \
+            defaultdict(set)
+
+    def execute(self) -> Dict[Path, Path]:
+        """
+        Copy from `content` path to `target` path.
+
+        :return: Dictionary with content keys and copy values.
+        """
+        if self.null_object:
+            return {}
+
+        content = self.option(key='content', path=True)
+        target = self.option(key='target', path=True)
+        include = self.option(key='include', default=r'(.+)')
+        permissions = self.option(key='permissions', default=None)
+
+        copies = utils.resolve_targets(
+            content=content,
+            target=target,
+            include=include,
+        )
+        for content, copy in copies.items():
+            copy.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(str(content), str(copy))
+            self.copied_files[content].add(copy)
+
+        if permissions:
+            for copy in copies.values():
+                result = utils.run_shell(
+                    command=f'chmod {permissions} "{copy}"',
+                    timeout=1,
+                    fallback=False,
+                )
+
+                if result is False:
+                    logger = logging.getLogger(__name__)
+                    logger.error(
+                        f'Could not set "{permissions}" '
+                        f'permissions for copy "{target}"',
+                    )
+
+        return copies
+
+    def __contains__(self, other) -> bool:
+        """Return True if path has been copied *from*."""
+        return other in self.copied_files
+
+
+class RequiredStowDict(TypedDict):
+    """Required dictionary keys for user stow action config."""
+
+    content: str
+    target: str
+
+
+class StowDict(RequiredStowDict, total=False):
+    """Allowable dictionary keys for user stow action config."""
+
+    templates: str
+    non_templates: str
+    permissions: str
+
+
+class StowAction(Action):
+    """Stow directory action."""
+
+    non_templates_action: Union[CopyAction, SymlinkAction]
+    _options: StowDict
+
+    priority = 500
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Construct stow action object."""
+        super().__init__(*args, **kwargs)
+        if self.null_object:
+            return
+
+        # Create equivalent compile action based on stow config
+        compile_options: CompileDict = {  # type: ignore
+            'content': self._options['content'],
+            'target': self._options['target'],
+            'include': self._options.get('templates', r'template\.(.+)'),
+        }
+        if 'permissions' in self._options:
+            compile_options['permissions'] = self._options['permissions']
+
+        self.compile_action = CompileAction(
+            options=compile_options,
+            directory=self.directory,
+            replacer=self.replace,
+            context_store=self.context_store,
+        )
+
+        # Determine what to do with non-templates
+        non_templates_action = self._options.get('non_templates', 'symlink')
+        self.ignore_non_templates = non_templates_action.lower() == 'ignore'
+
+        if non_templates_action.lower() not in ('copy', 'symlink', 'ignore',):
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f'Invalid stow non_templates parameter:'
+                f'"{non_templates_action}". '
+                'Should be one of "symlink", "copy", or "ignore"!',
+            )
+            self.ignore_non_templates = True
+            return
+
+        # Negate the `templates` regex pattern in order to match non-templates
+        if 'templates' in self._options:
+            excluded = r'(?!' + self._options['templates'] + r').+'
+        else:
+            excluded = r'(?!template\..+).+'
+
+        # Create configuration used for either symlink or copy
+        non_templates_options: Dict = {
+            'content': self._options['content'],
+            'target': self._options['target'],
+            'include': excluded,
+            'permissions': self._options.get('permissions'),
+        }
+
+        # Create action object based on parameter `non_templates`
+        NonTemplatesAction: Union[Type[CopyAction], Type[SymlinkAction]]
+        if non_templates_action.lower() == 'copy':
+            NonTemplatesAction = CopyAction
+        else:
+            NonTemplatesAction = SymlinkAction  # type: ignore
+
+        self.non_templates_action = NonTemplatesAction(
+            options=non_templates_options,
+            directory=self.directory,
+            replacer=self.replace,
+            context_store=self.context_store,
+        )
+
+    def execute(self) -> Dict[Path, Path]:
+        """
+        Stow directory source to target destination.
+
+        :return: Dictionary with source keys and target values.
+            Contains compiled, symlinked, and copied files.
+        """
+        if self.null_object:
+            return {}
+
+        if self.ignore_non_templates:
+            return self.compile_action.execute()
+        else:
+            copies_or_links = self.non_templates_action.execute()
+            compilations = self.compile_action.execute()
+            compilations.update(copies_or_links)
+            return compilations
+
+    def managed_files(self) -> Dict[Path, Set[Path]]:
+        """
+        Return dictionary containing content keys and target values.
+
+        :return: Dictinary with keys containing compiled templates, and values
+            as a set of target paths. If `non_templates` is 'copy', then these
+            will be included as well.
+        """
+        managed_files = self.compile_action._performed_compilations.copy()
+
+        if isinstance(self.non_templates_action, CopyAction):
+            managed_files.update(self.non_templates_action.copied_files)
+
+        return managed_files
+
+    def __contains__(self, other) -> bool:
+        """
+        Return True if stow action is responsible for file path.
+
+        A stow action is considered to be responsible for a file path if that
+        path is modified results in its tasks to be outdated, and it needs to be
+        re-executed.
+
+        :param other: File path.
+        :return: Boolean indicating if path has been copied or compiled.
+        """
+        assert other.is_absolute()
+        return other in self.managed_files()
 
 
 class RunDict(TypedDict):
@@ -317,7 +574,9 @@ class RunDict(TypedDict):
 class RunAction(Action):
     """Run shell command Action sub-class."""
 
-    priority = 300
+    _options: RunDict
+
+    priority = 600
 
     def execute(
         self,
@@ -395,6 +654,8 @@ class Trigger:
 class TriggerAction(Action):
     """Action sub-class representing a trigger action."""
 
+    _options: TriggerDict
+
     priority = 0
 
     def execute(self) -> Optional[Trigger]:
@@ -452,9 +713,12 @@ class ActionBlock:
     :param context_store: A reference to the global context store.
     """
 
-    _import_context_actions: List[ImportContextAction]
     _compile_actions: List[CompileAction]
+    _copy_actions: List[CopyAction]
+    _import_context_actions: List[ImportContextAction]
     _run_actions: List[RunAction]
+    _stow_actions: List[StowAction]
+    _symlink_actions: List[SymlinkAction]
     _trigger_actions: List[TriggerAction]
 
     def __init__(
@@ -474,9 +738,12 @@ class ActionBlock:
         self.action_block = action_block
 
         for identifier, action_type in (
-            ('import_context', ImportContextAction),
             ('compile', CompileAction),
+            ('copy', CopyAction),
+            ('import_context', ImportContextAction),
             ('run', RunAction),
+            ('symlink', SymlinkAction),
+            ('stow', StowAction),
             ('trigger', TriggerAction),
         ):
             # Create and persist a list of all ImportContextAction objects
@@ -500,10 +767,25 @@ class ActionBlock:
         for import_context_action in self._import_context_actions:
             import_context_action.execute()
 
+    def symlink(self) -> None:
+        """Symlink files."""
+        for symlink_action in self._symlink_actions:
+            symlink_action.execute()
+
+    def copy(self) -> None:
+        """Copy files."""
+        for copy_action in self._copy_actions:
+            copy_action.execute()
+
     def compile(self) -> None:
-        """Compile all templates."""
+        """Compile templates."""
         for compile_action in self._compile_actions:
             compile_action.execute()
+
+    def stow(self) -> None:
+        """Stow directory contents."""
+        for stow_action in self._stow_actions:
+            stow_action.execute()
 
     def run(
         self,

@@ -61,8 +61,8 @@ module/solar_desktop:
         # Compile the templates specified in the conky module, as their
         # context values have changed due to the import_context action above.
         compile:
-            - source: time.template
-            - source: performance.template
+            - content: time.template
+            - content: performance.template
 
         # Run shell command to change the desktop wallpaper named the same
         # as the current event.

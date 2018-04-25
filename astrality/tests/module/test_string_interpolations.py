@@ -31,7 +31,7 @@ def test_use_of_string_interpolations_of_module(
         'module/A': {
             'on_startup': {
                 'compile': [
-                    {'source': str(a_template)}
+                    {'content': str(a_template)}
                 ],
             },
         },
@@ -40,7 +40,7 @@ def test_use_of_string_interpolations_of_module(
                 str(b_on_modified): {
                     'compile': [
                         {
-                            'source': str(b_template),
+                            'content': str(b_template),
                             'target': str(b_target),
                         },
                     ],
@@ -50,7 +50,7 @@ def test_use_of_string_interpolations_of_module(
         'module/C': {
             'on_exit': {
                 'compile': {
-                        'source': str(c_template),
+                        'content': str(c_template),
                         'target': str(c_target),
                 },
             },

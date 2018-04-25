@@ -30,11 +30,11 @@ def modules_config(
                 str(empty_template): {
                     'compile': [
                         {
-                            'source' : str(empty_template),
+                            'content' : str(empty_template),
                             'target': str(empty_template_target),
                         },
                         {
-                            'source': str(secondary_template),
+                            'content': str(secondary_template),
                             'target': str(secondary_template_target),
                         },
                     ],
@@ -255,7 +255,7 @@ def test_all_three_actions_in_on_modified_block(
                     'from_path': str(mercedes_context),
                 },
                 'compile': {
-                    'source': str(car_template),
+                    'content': str(car_template),
                     'target': str(file1),
                 },
             },
@@ -265,7 +265,7 @@ def test_all_three_actions_in_on_modified_block(
                         'from_path': str(tesla_context),
                     },
                     'compile': {
-                        'source': str(car_template),
+                        'content': str(car_template),
                         'target': str(file1),
                     },
                     'run': {'shell': 'touch ' + str(file3)},
@@ -314,7 +314,7 @@ def test_recompile_templates_when_modified(
         'module/module_name': {
             'on_startup': {
                 'compile': {
-                    'source': str(template),
+                    'content': str(template),
                     'target': str(target),
                 },
             },
@@ -326,7 +326,7 @@ def test_recompile_templates_when_modified(
     application_config.update(default_global_options)
     application_config.update(_runtime)
     application_config['config/modules'] = {
-        'recompile_modified_templates': True,
+        'reprocess_modified_files': True,
     }
 
     module_manager = ModuleManager(application_config)
@@ -358,7 +358,7 @@ def test_recompile_templates_when_modified_overridden(
 ):
     """
     If a file is watched in a on_modified block, it should override the
-    recompile_modified_templates option.
+    reprocess_modified_files option.
     """
     template, target, touch_target = three_watchable_files
     template.touch()
@@ -367,7 +367,7 @@ def test_recompile_templates_when_modified_overridden(
         'module/module_name': {
             'on_startup': {
                 'compile': {
-                    'source': str(template),
+                    'content': str(template),
                     'target': str(target),
                 },
             },
@@ -384,7 +384,7 @@ def test_recompile_templates_when_modified_overridden(
     application_config.update(default_global_options)
     application_config.update(_runtime)
     application_config['config/modules'] = {
-        'recompile_modified_templates': True,
+        'reprocess_modified_files': True,
     }
 
     module_manager = ModuleManager(application_config)
@@ -449,3 +449,56 @@ def test_importing_context_on_modification(
     file1.write_text('new content, resulting in importing Mercedes')
     time.sleep(0.7)
     assert module_manager.application_context['car']['manufacturer'] == 'Mercedes'
+
+
+@pytest.mark.slow
+def test_that_stowed_templates_are_also_watched(
+    three_watchable_files,
+    default_global_options,
+    _runtime,
+):
+    """Stowing template instead of compiling it should still be watched."""
+    template, target, _ = three_watchable_files
+    template.touch()
+
+    application_config = {
+        'module/module_name': {
+            'on_startup': {
+                'stow': {
+                    'content': str(template),
+                    'target': str(target),
+                    'templates': '(.+)',
+                    'non_templates': 'ignore',
+                },
+            },
+        },
+        'context/section': {
+            1: 'value',
+        },
+    }
+    application_config.update(default_global_options)
+    application_config.update(_runtime)
+    application_config['config/modules'] = {
+        'reprocess_modified_files': True,
+    }
+
+    module_manager = ModuleManager(application_config)
+
+    # Sanity check before beginning testing
+    with open(template) as file:
+        assert file.read() == ''
+
+    assert not target.is_file()
+
+    # Stow the template
+    module_manager.finish_tasks()
+    with open(target) as file:
+        assert file.read() == ''
+
+    # Now write to the template and see if it is recompiled
+    template.write_text('{{ section.2 }}')
+    time.sleep(0.7)
+    with open(target) as file:
+        assert file.read() == 'value'
+
+    module_manager.exit()

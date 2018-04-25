@@ -263,18 +263,18 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     Relative paths are relative to $ASTRALITY_CONFIG_HOME, and ~ is
     expanded to the home directory of $USER.
     """
+    # Expand environment variables present in path
+    path = Path(os.path.expandvars(path))  # type: ignore
+
     # Expand any tilde expressions for user home directory
     path = path.expanduser()
 
     # Use config directory as anchor for relative paths
     if not path.is_absolute():
-        path = config_directory / path
+        path = Path(os.path.expandvars(config_directory)) / path  # type: ignore
 
     # Return path where symlinks such as '..' are resolved
-    path = path.resolve()
-
-    # Expand environment variables and return as a Path object
-    return Path(os.path.expandvars(path))  # type: ignore
+    return path.resolve()
 
 
 def expand_globbed_path(path: Path, config_directory: Path) -> Set[Path]:
@@ -693,7 +693,7 @@ class GlobalModulesConfigDict(TypedDict, total=False):
 
     requires_timeout: Union[int, float]
     run_timeout: Union[int, float]
-    recompile_modified_templates: bool
+    reprocess_modified_files: bool
     modules_directory: str
     enabled_modules: List[EnablingStatement]
 
@@ -713,8 +713,8 @@ class GlobalModulesConfig:
         config_directory: Path,
     ) -> None:
         """Initialize a GlobalModulesConfig object from a dictionary."""
-        self.recompile_modified_templates = config.get(
-            'recompile_modified_templates',
+        self.reprocess_modified_files = config.get(
+            'reprocess_modified_files',
             False,
         )
         self.requires_timeout = config.get(

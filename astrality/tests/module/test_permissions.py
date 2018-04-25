@@ -4,6 +4,7 @@ import pytest
 
 from astrality.module import ModuleManager
 
+
 @pytest.mark.parametrize("specified_permission,expected_permission", [
         ("777", 0o777),
         ("100", 0o100),
@@ -23,7 +24,7 @@ def test_compiling_template_with_specific_permissions(
         'module/test': {
             'on_startup': {
                 'compile': {
-                    'source': str(template),
+                    'content': str(template),
                     'target': str(target),
                     'permissions': specified_permission,
                 },

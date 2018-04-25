@@ -177,19 +177,40 @@ Demonstration of module action blocks:
 Actions
 =======
 
-Actions are tasks for Astrality to perform, and are placed within :ref:`action blocks <modules_action_blocks>` in order to specify *when* to perform them. There are four available ``action`` types:
+Actions are tasks for Astrality to perform, and are placed within :ref:`action
+blocks <modules_action_blocks>` in order to specify *when* to perform them.
+These are the available ``action`` types:
 
     :ref:`import_context <context_import_action>`:
-        Import a ``context`` section from a YAML formatted file. ``context`` variables are used as replacement values for placeholders in your :ref:`templates <templating>`. See :ref:`context <context>` for more information.
+        Import a ``context`` section from a YAML formatted file. ``context``
+        variables are used as replacement values for placeholders in your
+        :ref:`templates <templating>`. See :ref:`context <context>` for more
+        information.
 
     :ref:`compile <compile_action>`:
-        Compile a specific template to a target path.
+        Compile a specific template or template directory to a target path.
+
+    :ref:`copy <copy_action>`:
+        Copy a specific file or directory to a target path.
+
+    :ref:`symlink <symlink_action>`:
+        Create symbolic link(s) pointing to a specific file or directory.
+
+    :ref:`stow <stow_action>`:
+        Combination of ``compile`` + ``copy`` or ``compile`` + ``symlink``,
+        bisected based on filename pattern of files within a content directory.
 
     :ref:`run <run_action>`:
-        Execute a shell command, possibly referring to any compiled template and/or the last detected :ref:`event <event_listener_events>` defined by the :ref:`module event listener <event_listeners>`.
+        Execute a shell command, possibly referring to any compiled template
+        and/or the last detected :ref:`event <event_listener_events>` defined
+        by the :ref:`module event listener <event_listeners>`.
 
     :ref:`trigger <trigger_action>`:
-        Perform *all* actions specified within another :ref:`action block <modules_action_blocks>`. With other words, this action *appends* all the actions within another action block to the actions already specified in the action block. Useful for not having to repeat yourself when you want the same actions to be performed during different events.
+        Perform *all* actions specified within another :ref:`action block
+        <modules_action_blocks>`. With other words, this action *appends* all
+        the actions within another action block to the actions already
+        specified in the action block. Useful for not having to repeat yourself
+        when you want the same actions to be performed during different events.
 
 
 .. _context_import_action:
@@ -275,36 +296,73 @@ of a module.
 
 Each template compilation action has the following available attributes:
 
-    ``source``:
+    ``content:``
         Path to either a template file or template directory.
 
-        If ``source`` is a directory, Astrality will compile all templates
+        If ``content`` is a directory, Astrality will compile all templates
         recursively to the ``target`` directory, preserving the directory
         hierarchy.
 
-    ``target``: *[Optional]*
+    ``target:`` *[Optional]*
         *Default:* Temporary file created by Astrality.
 
         Path which specifies where to put the *compiled* template.
 
-        You can skip this option if you do not care where the compiled template is placed, and what it is named.
-        You can still use the compiled result by writing ``{template_path}`` in the rest of your module. This placeholder will be replaced with the absolute path of the compiled template. You can for instance refer to the file in :ref:`a shell command <run_action>`.
+        You can skip this option if you do not care where the compiled template
+        is placed, and what it is named. You can still use the compiled result
+        by writing ``{template_path}`` in the rest of your module. This
+        placeholder will be replaced with the absolute path of the compiled
+        template. You can for instance refer to the file in :ref:`a shell
+        command <run_action>`.
 
         .. warning::
-            When you do not provide Astrality with a ``target`` path for a template, Astrality will create a *temporary* file as the target for compilation. This file will be automatically deleted when you quit Astrality.
+            When you do not provide Astrality with a ``target`` path for
+            a template, Astrality will create a *temporary* file as the target
+            for compilation. This file will be automatically deleted when you
+            quit Astrality.
 
-    ``permissions``: *[Optional]*
-        *Default:* Same permissions as source file.
+    .. _compile_action_include:
+
+    ``include`` *[Optional]*
+        *Default:* ``'(.+)'``
+
+        Regular expression defining which filenames that are considered to be
+        templates. Useful when ``content`` is a directory which contains
+        non-template files. By default Astrality will try to compile all files.
+
+        If you specify a capture group, astrality will use the captured string
+        as the target filename. For example, ``templates: 'template\.(.+)'``
+        will match the file "template.kitty.conf" and rename the target to
+        "kitty.conf".
+
+        .. hint::
+            You can test your regex `here <https://regex101.com/r/myMbmT/1>`_.
+            Astrality uses the capture group with the greatest index.
+
+    .. _compile_action_permissions:
+
+    ``permissions:`` *[Optional]*
+        *Default:* Same permissions as the template file.
 
         The file mode (i.e. permission bits) assigned to the *compiled* template.
-        Given either as a string of octal permissions, such as ``'755'``, or as a string of symbolic permissions, such as ``'u+x'``. This option is passed to the linux shell command ``chmod``. Refer to ``chmod``'s manual for the full details on possible arguments.
+        Given either as a string of octal permissions, such as ``'755'``, or as
+        a string of symbolic permissions, such as ``'u+x'``. This option is
+        passed to the linux shell command ``chmod``. Refer to ``chmod``'s
+        manual for the full details on possible arguments.
 
         .. note::
-            The permissions specified in the ``permissions`` option are applied *on top* of the default permissions copied from the template file.
+            The permissions specified in the ``permissions`` option are applied
+            *on top* of the default permissions copied from the template file.
 
-            For example, if the template's permissions are ``rw-r--r-- (644)`` and the value of ``'ug+x'`` is supplied for the ``permissions`` option, the ``644`` permissions will first be copied to the resulting compiled file and then ``chmod ug+x`` will be applied on top of that to give a resulting permission on the file of ``rwxr-xr-- (754)``.
+            For example, if the template's permissions are ``rw-r--r-- (644)``
+            and the value of ``'ug+x'`` is supplied for the ``permissions``
+            option, the ``644`` permissions will first be copied to the
+            resulting compiled file and then ``chmod ug+x`` will be applied on
+            top of that to give a resulting permission on the file of
+            ``rwxr-xr-- (754)``.
 
-            If an invalid value is supplied for the ``permissions`` option, only the default permissions are copied to the compiled file.
+            If an invalid value is supplied for the ``permissions`` option,
+            only the default permissions are copied to the compiled file.
 
 
 Here is an example:
@@ -314,19 +372,168 @@ Here is an example:
     module/desktop:
         on_startup:
             compile:
-                - source: modules/scripts/executable.sh.template
+                - content: modules/scripts/executable.sh.template
                   target: ${XDG_CONFIG_HOME}/bin/executable.sh
                   permissions: 0o555
-                - source: modules/desktop/conky_module.template
+                - content: modules/desktop/conky_module.template
 
             run:
                 - shell: conky -c {modules/desktop/conky_module.template}
                 - shell: polybar bar
 
-Notice that the shell command ``conky -c {modules/desktop/conky_module.template}`` is replaced with something like ``conky -c /path/to/compiled/template.temp``.
+Notice that the shell command ``conky -c
+{modules/desktop/conky_module.template}`` is replaced with something like
+``conky -c /tmp/astrality/compiled.conky_module.template``.
 
 .. note::
-    All relative file paths are interpreted relative to the :ref:`config directory<config_directory>` of Astrality.
+    All relative file paths are interpreted relative to the :ref:`config
+    directory<config_directory>` of Astrality.
+
+
+.. _symlink_action:
+
+Symlink files
+-------------
+
+You can ``symlink`` a file or directory to a target destination. Directories
+will be recursively symlinked, leaving any non-conflicting files intact. The
+``symlink`` action have the following available parameters.
+
+    ``content:``
+        The target of the symlinking, with other words a path to a file or
+        directory with the actual file content.
+
+        If ``to`` is a directory, Astrality will create an identical
+        directory hierarchy at the ``from`` directory path and create
+        separate symlinks for each file in ``to``.
+
+    ``target:``
+        Where to place the symlink(s).
+
+        .. caution::
+            This is the *location* of the symlink, **not** where the symlink
+            *points to*.
+
+    ``include`` *[Optional]*
+        *Default:* ``'(.+)'``
+
+        Regular expression restricting which filenames that should be
+        symlinked. By default Astrality will try to symlink all files.
+
+        If you specify a capture group, astrality will use the captured string
+        as the symlink name. For example, ``include: 'symlink\.(.+)'`` will
+        match the file "symlink.wallpaper.jpeg" and rename the symlink to
+        "wallpaper.jpeg".
+
+.. note::
+    If you astrality encounters an existing **file** where it is supposed to
+    place a symbolic link, it will rename the existing file to "filename.bak".
+
+.. _copy_action:
+
+Copy files
+----------
+
+You can ``copy`` a file or directory to a target destination. Directories will
+be recursively copied, leaving non-conflicting files intact. The ``copy``
+action have the following available parameters.
+
+    ``content:``
+        Where to copy *from*, with other words a path to a file or directory
+        with existing content to be copied.
+
+        If ``content`` is a directory, Astrality will create an identical
+        directory hierarchy at the ``to`` directory path and recursively
+        copy all files.
+
+    ``target:``
+        A path specifying where to copy *to*.
+        Any non-conflicting files at the target destination will be left alone.
+
+    ``include`` *[Optional]*
+        *Default:* ``'(.+)'``
+
+        Regular expression restricting which filenames that should be
+        copied. By default Astrality will try to copy all files.
+
+        If you specify a capture group, astrality will use the captured string
+        as the name for the copied file. For example, ``include: 'copy\.(.+)'``
+        will copy the file "copy.binary.blob" and rename the copy to
+        "binary.blob".
+
+    ``permissions:`` *[Optional]*
+        *Default:* Same permissions as the original file(s).
+
+        See :ref:`compilation permissions <compile_action_permissions>` for
+        more information.
+
+
+
+.. _stow_action:
+
+Stow a directory
+----------------
+
+Often you want to:
+
+#. Move all content from a directory in your dotfile repository to a specific
+   target directory, while...
+#. Compiling any template according to a consistent naming scheme, and...
+#. Symlink or copy the remaining files which are *not* templates.
+
+The ``stow`` action type allows you to do just that! Stow has the following
+available parameters:
+
+    ``content:``
+        Path to a directory of mixed content, i.e. both templates and
+        non-templates.
+
+    ``target:``
+        Path to directory where processed content should be placed.
+        Templates will be compiled to ``target``, and the remaining files will
+        be treated according to the ``non_templates`` parameter.
+
+    ``templates:`` *[Optional]*
+        *Default:* ``'template\.(.+)'``
+
+        Regular expression restricting which filenames that should be compiled
+        as templates. By default, Astrality will only compile files named
+        "template.*" and rename the compilation target to "*".
+
+        See the compile action :ref:`include parameter <compile_action_include>`
+        for more information.
+
+    ``non_templates:`` *[Optional]*
+        *Default:* ``'symlink'``
+
+        *Accepts:* ``symlink``, ``copy``, ``ignore``
+
+        What to do with files that do not match the ``templates`` regex.
+
+    ``permissions:`` *[Optional]*
+        *Default:* Same permissions as the original file(s).
+
+        See :ref:`compilation permissions <compile_action_permissions>` for
+        more information.
+
+
+Here is an example module which compiles all files matching the glob
+``$XDG_CONFIG_HOME/**/*.t``, and places the *compiled* template besides the
+template, but *without* the file extension ".t". It leaves all other files
+alone:
+
+.. code-block:: yaml
+
+    # $ASTRALITY_CONFIG_HOME/astrality.yml
+
+    module/dotfiles:
+        on_startup:
+            stow:
+                content: $XDG_CONFIG_HOME
+                target: $XDG_CONFIG_HOME
+                templates: '(.+)\.t'
+                non_templates: ignore
+
 
 
 .. _run_action:
@@ -419,7 +626,7 @@ An example of a module using ``trigger`` actions:
         on_modified:
             templates/A.template:
                 compile:
-                    source: templates/A.template
+                    content: templates/A.template
 
                 run: shell_command_dependent_on_templateA
 
@@ -438,7 +645,7 @@ This is equivalent to writing the following module:
                   to_section: a_stuff
 
             compile:
-                source: templates/templateA
+                content: templates/templateA
 
             run:
                 - shell: startup_command
@@ -451,7 +658,7 @@ This is equivalent to writing the following module:
                 to_section: a_stuff
 
             compile:
-                source: templateA
+                content: templateA
 
             run:
                 - shell: shell_command_dependent_on_templateA
@@ -459,7 +666,7 @@ This is equivalent to writing the following module:
         on_modified:
             templates/templateA:
                 compile:
-                    source: templates/templateA
+                    content: templates/templateA
 
                 run:
                     - shell: shell_command_dependent_on_templateA
@@ -479,14 +686,19 @@ The execution order of module actions
 The order of action execution is as follows:
 
     #. :ref:`context_import <context_import_action>` for each module.
+    #. :ref:`symlink <symlink_action>` for each module.
+    #. :ref:`copy <copy_action>` for each module.
     #. :ref:`compile <compile_action>` for each module.
+    #. :ref:`stow <stow_action>` for each module.
     #. :ref:`run <run_action>` for each module.
 
-Modules are iterated over from top to bottom such that they appear in ``astrality.yml``.
-This ensures the following invariants:
+Modules are iterated over from top to bottom such that they appear in
+``astrality.yml``. This ensures the following invariants:
 
-    * When you compile templates, all ``context`` imports have been performed, and are available for placeholder substitution.
-    * When you run shell commands, all templates have been compiled, and are available for reference.
+    * When you compile templates, all ``context`` imports have been performed,
+      and are available for placeholder substitution.
+    * When you run shell commands, all (non-)templates have been
+      compiled/copied/symlinked, and are available for reference.
 
 
 .. _modules_global_config:
@@ -523,19 +735,20 @@ Global configuration options for all your modules are specified in ``astrality.y
 
     *Useful when you are dependent on shell commands running sequantially.*
 
-``recompile_modified_templates:``
+``reprocess_modified_files:``
     *Default:* ``false``
 
     If enabled, Astrality will watch for file modifications in
     ``$ASTRALITY_CONFIG_HOME``.
-    All ``compile_action`` items that contain ``template`` paths that have been
-    modified will be compiled again.
+    All files that have been compiled or copied to a destination will be
+    recompiled or recopied if they are modified.
 
     .. hint::
         You can have more fine-grained control over exactly *what* happens when
-        a file is modified by using the ``on_modified`` :ref:`module event <modules_action_blocks>`.
-        This way you can run shell commands, import context values, and compile
-        arbitrary templates when specific files are modified on disk.
+        a file is modified by using the ``on_modified`` :ref:`module event
+        <modules_action_blocks>`. This way you can run shell commands, import
+        context values, and compile arbitrary templates when specific files are
+        modified on disk.
 
     .. caution::
         At the moment, Astrality only watches for file changes recursively within

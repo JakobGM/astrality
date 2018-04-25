@@ -155,12 +155,11 @@ class Module:
                 path=Path(path_string),
                 config_directory=self.directory,
             )
-            action_blocks['on_modified'][modified_path] = \
-                ActionBlock(
-                    action_block=action_block_dict,
-                    directory=self.directory,
-                    replacer=self.interpolate_string,
-                    context_store=self.context_store,
+            action_blocks['on_modified'][modified_path] = ActionBlock(
+                action_block=action_block_dict,
+                directory=self.directory,
+                replacer=self.interpolate_string,
+                context_store=self.context_store,
             )
         self.action_blocks = action_blocks
 
@@ -205,6 +204,50 @@ class Module:
                 path=trigger.absolute_path,
             )
 
+    def symlink(
+        self,
+        block_name: str,
+        path: Optional[Path] = None,
+    ) -> None:
+        """
+        Execute all symlink actions specified in block_name[:path].
+
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
+        """
+        action_block = self.get_action_block(name=block_name, path=path)
+        action_block.symlink()
+
+        # Symlink from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            self.symlink(
+                block_name=trigger.block,
+                path=trigger.absolute_path,
+            )
+
+    def copy(
+        self,
+        block_name: str,
+        path: Optional[Path] = None,
+    ) -> None:
+        """
+        Execute all copy actions specified in block_name[:path].
+
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
+        """
+        action_block = self.get_action_block(name=block_name, path=path)
+        action_block.copy()
+
+        # Symlink from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            self.copy(
+                block_name=trigger.block,
+                path=trigger.absolute_path,
+            )
+
     def compile(
         self,
         block_name: str,
@@ -223,6 +266,28 @@ class Module:
         triggers = action_block.triggers()
         for trigger in triggers:
             self.compile(
+                block_name=trigger.block,
+                path=trigger.absolute_path,
+            )
+
+    def stow(
+        self,
+        block_name: str,
+        path: Optional[Path] = None,
+    ) -> None:
+        """
+        Execute all stow actions specified in block_name[:path].
+
+        :param block_name: Name of block such as 'on_startup'.
+        :param path: Absolute path in case of block_name == 'on_modified'.
+        """
+        action_block = self.get_action_block(name=block_name, path=path)
+        action_block.stow()
+
+        # Symlink from triggered action blocks
+        triggers = action_block.triggers()
+        for trigger in triggers:
+            self.stow(
                 block_name=trigger.block,
                 path=trigger.absolute_path,
             )
@@ -407,8 +472,8 @@ class ModuleManager:
             config=config.get('config/modules', {}),
             config_directory=self.config_directory,
         )
-        self.recompile_modified_templates = \
-            self.global_modules_config.recompile_modified_templates
+        self.reprocess_modified_files = \
+            self.global_modules_config.reprocess_modified_files
 
         self.modules: Dict[str, Module] = {}
 
@@ -519,7 +584,19 @@ class ModuleManager:
                         trigger='on_event',
                         module=self.modules[module_name],
                     )
+                    self.symlink(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
+                    self.copy(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
                     self.compile_templates(
+                        trigger='on_event',
+                        module=self.modules[module_name],
+                    )
+                    self.stow(
                         trigger='on_event',
                         module=self.modules[module_name],
                     )
@@ -545,6 +622,20 @@ class ModuleManager:
             in self.modules.values()
         )
 
+    def _iter_modules(self, modules: Optional[Module]) -> Iterable[Module]:
+        """
+        Return iterable from module(s) input.
+
+        This is a small helper function as it is used in most of the actions.
+
+        :return: If given a single module, return a 1-tuple containing that
+            module. Else, returns all the modules managed by the ModuleManager.
+        """
+        if isinstance(modules, Module):
+            return (modules, )
+        else:
+            return self.modules.values()
+
     def import_context_sections(
         self,
         trigger: str,
@@ -559,44 +650,67 @@ class ModuleManager:
         """
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
-        modules: Iterable[Module]
-        if isinstance(module, Module):
-            modules = (module, )
-        else:
-            modules = self.modules.values()
-
+        modules = self._iter_modules(module)
         for module in modules:
             module.import_context(block_name=trigger)
+
+    def symlink(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
+        """Create symlinks defined by the managed modules."""
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
+
+        modules = self._iter_modules(module)
+        for module in modules:
+            module.symlink(block_name=trigger)
+
+    def copy(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
+        """Copy according to action block `trigger` in managed modules."""
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
+
+        modules = self._iter_modules(module)
+        for module in modules:
+            module.copy(block_name=trigger)
 
     def compile_templates(
         self,
         trigger: str,
         module: Optional[Module] = None,
     ) -> None:
-        """
-        Compile the module templates specified by the `templates` option.
-
-        Trigger is one of 'on_startup', 'on_event', or 'on_exit'.
-        This determines which section of the module is used to get the compile
-        specification from.
-        """
+        """Compile the module templates specified by the `templates` option."""
         assert trigger in ('on_startup', 'on_event', 'on_exit',)
 
-        modules: Iterable[Module]
-        if isinstance(module, Module):
-            modules = (module, )
-        else:
-            modules = self.modules.values()
-
+        modules = self._iter_modules(module)
         for module in modules:
             module.compile(block_name=trigger)
+
+    def stow(
+        self,
+        trigger: str,
+        module: Optional[Module] = None,
+    ) -> None:
+        """Perform `stow` action of managed modules."""
+        assert trigger in ('on_startup', 'on_event', 'on_exit',)
+
+        modules = self._iter_modules(module)
+        for module in modules:
+            module.stow(block_name=trigger)
 
     def startup(self):
         """Run all startup actions specified by the managed modules."""
         assert not self.startup_done
 
         self.import_context_sections('on_startup')
+        self.symlink('on_startup')
+        self.copy('on_startup')
         self.compile_templates('on_startup')
+        self.stow('on_startup')
 
         for module in self.modules.values():
             logger.info(f'[module/{module.name}] Running startup commands.')
@@ -627,9 +741,11 @@ class ModuleManager:
 
         Also close all temporary file handlers created by the modules.
         """
-        # First import context and compile templates
         self.import_context_sections('on_exit')
+        self.symlink('on_exit')
+        self.copy('on_exit')
         self.compile_templates('on_exit')
+        self.stow('on_exit')
 
         # Then run all shell commands
         for module in self.modules.values():
@@ -638,13 +754,6 @@ class ModuleManager:
                 block_name='on_exit',
                 default_timeout=self.global_modules_config.run_timeout,
             )
-
-        if hasattr(self, 'temp_files'):
-            for temp_file in self.temp_files:
-                temp_file.close()
-
-            # Prevent files from being closed again
-            del self.temp_files
 
         # Stop watching config directory for file changes
         self.directory_watcher.stop()
@@ -667,13 +776,12 @@ class ModuleManager:
                 f'[module/{module.name}] on_modified:{modified} triggered.',
             )
 
-            # First import context sections in on_modified block
             module.import_context(block_name='on_modified', path=modified)
-
-            # Now compile templates specified in on_modified block
+            module.symlink(block_name='on_modified', path=modified)
+            module.copy(block_name='on_modified', path=modified)
             module.compile(block_name='on_modified', path=modified)
+            module.stow(block_name='on_modified', path=modified)
 
-            # Lastly, run commands specified in on_modified block
             logger.info(f'[module/{module.name}] Running modified commands.')
             module.run(
                 'on_modified',
@@ -748,9 +856,9 @@ class ModuleManager:
         Recompile any modified template if configured.
 
         This requires setting the global setting:
-        recompile_modified_templates: true
+        reprocess_modified_files: true
         """
-        if not self.recompile_modified_templates:
+        if not self.reprocess_modified_files:
             return
 
         # Run any compile action a new if that compile action uses the modifed
@@ -760,6 +868,15 @@ class ModuleManager:
                 for compile_action in action_block._compile_actions:
                     if modified in compile_action:
                         compile_action.execute()
+
+                for stow_action in action_block._stow_actions:
+                    if modified in stow_action:
+                        stow_action.execute()
+
+                # TODO: Test this branch
+                for copy_action in action_block._copy_actions:
+                    if modified in copy_action:
+                        copy_action.execute()
 
     def interpolate_string(self, string: str) -> str:
         """

@@ -42,7 +42,7 @@ def test_executing_several_action_blocks(test_config_directory, tmpdir):
     action_block_dict = {
         'import_context': {'from_path': 'context/mercedes.yml'},
         'compile': [{
-            'source': 'templates/a_car.template',
+            'content': 'templates/a_car.template',
             'target': str(target),
         }],
         'run': {'shell': 'touch ' + str(touched)},
@@ -108,9 +108,9 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
 
     action_block_dict = {
         'compile': [
-            {'source': str(template1), 'target': str(target1)},
-            {'source': str(template1), 'target': str(target2)},
-            {'source': str(template2), 'target': str(target3)},
+            {'content': str(template1), 'target': str(target1)},
+            {'content': str(template1), 'target': str(target2)},
+            {'content': str(template2), 'target': str(target3)},
         ],
     }
 
@@ -128,3 +128,68 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
         template1: {target1, target2},
         template2: {target3},
     }
+
+
+def test_symlinking(action_block_factory, create_temp_files):
+    """Action blocks should symlink properly."""
+    file1, file2, file3, file4 = create_temp_files(4)
+    file2.write_text('original')
+
+    action_block = action_block_factory(
+        symlink=[
+            {'content': str(file1), 'target': str(file2)},
+            {'content': str(file3), 'target': str(file4)},
+        ],
+    )
+    action_block.symlink()
+
+    assert file2.is_symlink()
+    assert file2.resolve() == file1
+    assert file4.is_symlink()
+    assert file4.resolve() == file3
+
+    # Existing files should be backed up
+    assert Path(str(file2) + '.bak').read_text() == 'original'
+
+
+def test_copying(action_block_factory, create_temp_files):
+    """Action blocks should copy properly."""
+    file1, file2, file3, file4 = create_temp_files(4)
+    file2.write_text('original')
+    file4.write_text('some other content')
+
+    action_block = action_block_factory(
+        copy=[
+            {'content': str(file1), 'target': str(file2)},
+            {'content': str(file3), 'target': str(file4)},
+        ],
+    )
+    action_block.copy()
+
+    # Check if content has been copied
+    assert file2.read_text() == file1.read_text()
+    assert file4.read_text() == file3.read_text()
+
+
+def test_stowing(action_block_factory, create_temp_files):
+    """Action blocks should stow properly."""
+    template, target = create_temp_files(2)
+    template.write_text('{{ env.EXAMPLE_ENV_VARIABLE }}')
+    symlink_target = template.parent / 'symlink_me'
+    symlink_target.touch()
+
+    action_block = action_block_factory(
+        stow={
+            'content': str(template.parent),
+            'target': str(target.parent),
+            'templates': r'file(0).temp',
+            'non_templates': 'symlink',
+        },
+    )
+    action_block.stow()
+
+    # Check if template has been compiled
+    assert Path(target.parent / '0').read_text() == 'test_value'
+
+    # Check if non_template has been symlinked
+    assert (template.parent / 'symlink_me').resolve() == symlink_target

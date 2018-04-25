@@ -14,9 +14,19 @@ Versioning <http://semver.org/spec/v2.0.0.html>`_.
 Added
 -----
 
+- New ``symlink`` action type.
+- New ``copy`` action type.
+- New ``stow`` action type. This action allows you to either compile+symlink
+  or compile+copy, bisecting a directory based on filename regular expression
+  matching.
 - You can now compile all templates recursively within a directory. Just set
-  ``source`` to a directory path. ``target`` must be a directory as well, and
+  ``content`` to a directory path. ``target`` must be a directory as well, and
   the relative file hierarchy is preserved.
+- You can now specify which filenames are considered templates when compiling
+  directories recursively.
+- Template target filenames can now be renamed by specifying a regular
+  expression capture group.
+- Non-template files can now be either symlinked, copied, or ignored.
 - The run action now supports ``timeout`` option, in order to set
   ``run_timeout`` on command-by-command basis.
 - ``compile`` actions now support an optional ``permissions`` field for
@@ -78,12 +88,16 @@ Changed
 - The ``trigger`` action now follows recursive ``trigger`` actions. Beware of
   circular trigger chains!
 
+- ``recompile_modified_templates`` has been renamed to
+  ``reprocess_modified_files``, as this option now also includes copied files.
+
 - Astrality will now only recompile templates that have already been compiled
-  when ``recompile_modified_templates`` is set to ``true``.
+  when ``reprocess_modified_files`` is set to ``true``.
 
 - The ``template`` compile action keyword has now been replaced with
-  ``source``. This keyword makes more sense when we add support for compiling
-  all templates within a directory.
+  ``content``. This keyword makes more sense when we add support for compiling
+  all templates within a directory. It also stays consistent with the new action
+  types that have been added.
 
   *Old syntax*
 
@@ -97,7 +111,7 @@ Changed
   .. code-block:: yaml
 
       compile:
-          - source: path/to/template
+          - content: path/to/template
 
 - The module list items within the module ``requires`` option is now
   a dictionary, where shell commands are specified under the ``shell`` keyword.
