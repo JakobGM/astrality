@@ -2,7 +2,7 @@
 
 import logging
 import os
-import stat
+import shutil
 from functools import partial
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
@@ -153,8 +153,7 @@ def compile_template(
         target_file.write(result)
 
     # Copy template's file permissions to compiled target file
-    template_permissions = stat.S_IMODE(template.stat().st_mode)
-    target.chmod(template_permissions)
+    shutil.copymode(template, target)
 
     if permissions:
         result = run_shell(
