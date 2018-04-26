@@ -1,4 +1,4 @@
-module/solar_desktop:
+solar_desktop:
     # A module for changing your wallpaper based on the suns position in the
     # sky, while changing the font color of two conky modules to fit the
     # wallpaper's colors. This module demonstrates more advanced features.

@@ -1,3 +1,3 @@
-module/burma:
+burma:
     enabled: True
     safe: False

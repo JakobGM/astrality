@@ -1,4 +1,5 @@
 """Test module for global module configuration options."""
+import logging
 import shutil
 import time
 from pathlib import Path
@@ -14,7 +15,9 @@ from astrality.config import (
     GlobalModulesConfig,
     ModuleSource,
 )
+from astrality.tests.utils import RegexCompare
 from astrality.utils import run_shell
+
 
 @pytest.fixture
 def modules_application_config():
@@ -78,9 +81,6 @@ def test_enabled_modules(test_config_directory):
     assert oslo in tuple(modules_config.external_module_sources)
     assert trondheim in tuple(modules_config.external_module_sources)
 
-    # Test that all module config files are correctly set
-    assert oslo_path / 'config.yml' in modules_config.external_module_config_files
-    assert trondheim_path / 'config.yml' in modules_config.external_module_config_files
 
 def test_external_module(test_config_directory):
     modules_directory_path = test_config_directory / 'test_modules'
@@ -91,9 +91,9 @@ def test_external_module(test_config_directory):
 
     oslo_path = test_config_directory / 'test_modules' / 'oslo'
     assert oslo.directory == oslo_path
-    assert oslo.trusted == True
+    assert oslo.trusted is True
     assert oslo.relative_directory_path == Path('oslo')
-    assert oslo.config_file == oslo_path / 'config.yml'
+    assert oslo.modules_file == oslo_path / 'modules.yml'
 
 
 def test_retrieval_of_external_module_config(test_config_directory):
@@ -104,7 +104,7 @@ def test_retrieval_of_external_module_config(test_config_directory):
     )
 
     assert external_module_source.config({}) == {
-        f'module/burma::burma': {
+        'module/burma::burma': {
             'enabled': True,
             'safe': False,
         },
@@ -117,8 +117,10 @@ class TestModuleSource:
         assert ModuleSource.type(of='name') == GlobalModuleSource
         assert ModuleSource.type(of='category::name') == DirectoryModuleSource
         assert ModuleSource.type(of='github::user/repo') == GithubModuleSource
-        assert ModuleSource.type(of='github::user/repo::module') == GithubModuleSource
-        assert ModuleSource.type(of='github::user/repo::*') == GithubModuleSource
+        assert ModuleSource.type(of='github::user/repo::module') \
+            == GithubModuleSource
+        assert ModuleSource.type(of='github::user/repo::*') \
+            == GithubModuleSource
 
     def test_detection_of_all_module_directories_within_a_directory(
         self,
@@ -135,7 +137,9 @@ class TestModuleSource:
 class TestDirectoryModuleSource:
     """Test of object responsible for module(s) defined in a directory."""
 
-    def test_which_enabling_statements_represents_directory_module_sources(self):
+    def test_which_enabling_statements_represents_directory_module_sources(
+        self,
+    ):
         assert DirectoryModuleSource.represented_by(
             module_name='category::name',
         )
@@ -172,7 +176,7 @@ class TestDirectoryModuleSource:
                 enabling_statement=enabling_statement,
                 modules_directory=test_config_directory / 'freezed_modules',
             )
-            config = directory_module.config({})
+            directory_module.config({})
 
     def test_recursive_module_directory(
         self,
@@ -183,7 +187,7 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'test_modules',
         )
-        assert directory_module.config({}) == {
+        assert directory_module.modules({}) == {
             'module/recursive/directory::bulgaria': {
                 'on_startup': {
                     'run': "echo 'Greetings from Bulgaria!'",
@@ -514,7 +518,11 @@ class TestEnabledModules:
 
         for sources in enabled_modules.source_types.values():
             assert len(sources) == 1
-        assert len(caplog.record_tuples) == 1
+        assert (
+            'astrality',
+            logging.ERROR,
+            RegexCompare(r'Invalid module name syntax.+'),
+        ) in caplog.record_tuples
 
         enabled_modules.compile_config_files({})
         assert 'global' in enabled_modules

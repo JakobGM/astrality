@@ -11,11 +11,13 @@ from pathlib import Path
 from typing import (
     Any,
     Dict,
+    ClassVar,
     List,
     Optional,
     Pattern,
     Set,
     Tuple,
+    TYPE_CHECKING,
     Type,
     Iterable,
     Union,
@@ -30,6 +32,9 @@ from astrality.exceptions import (
 )
 from astrality.github import clone_repo, clone_or_pull_repo
 from astrality.resolver import Resolver
+
+if TYPE_CHECKING:
+    from astrality.module import ModuleConfigDict  # noqa
 
 Context = Dict[str, Resolver]
 
@@ -232,7 +237,7 @@ def insert_into(
     return context
 
 
-def create_config_directory(path: Optional[Path]=None, empty=False) -> Path:
+def create_config_directory(path: Optional[Path] = None, empty=False) -> Path:
     """Create application configuration directory and return its path."""
     if not path:
         path = resolve_config_directory()
@@ -322,9 +327,32 @@ ModuleConfig = Dict[str, Any]
 class ModuleSource(ABC):
     """Superclass for the source of an enabled module."""
 
+    # Directory containing "modules.yml" and "context.yml"
     directory: Path
-    config_file: Path
-    _config: Dict[Any, Any]
+
+    # Path to "modules.yml"
+    modules_file: Path
+
+    # Path to "context.yml"
+    context_file: Path
+
+    # Name syntax defining how to enable this module source type
+    name_syntax: ClassVar[Pattern]
+
+    # What to prepend to module names in order to avoid name collisions
+    prepend: str
+
+    # String specifying which modules that are enabled in module source
+    enabled_module: str
+
+    # Cached property containing module configurations
+    _modules: Dict[str, 'ModuleConfigDict']
+
+    # Cached property containing module context
+    _context: compiler.Context
+
+    # Cached property containing entire configuration, modules + context
+    _config: Dict
 
     @abstractmethod
     def __init__(
@@ -335,16 +363,81 @@ class ModuleSource(ABC):
         """Initialize a module source from an enabling statement."""
         raise NotImplementedError
 
-    @property
-    @abstractmethod
-    def name_syntax(self) -> Pattern:
-        """Regular expression for the name syntax of the module source type."""
-        raise NotImplementedError
+    def modules(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
+        """
+        Return modules defined in modules source.
 
-    @abstractmethod
-    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
-        """Return the dictionary containing the module configuration."""
-        raise NotImplementedError
+        :param context: Context used when compiling "modules.yml".
+        :return: Modules dictionary, with module name keys prepended with
+            '/module', and module configuration values.
+        """
+        if not self.modules_file.exists():
+            return {}
+
+        if hasattr(self, '_modules'):
+            return self._modules
+
+        modules = filter_config_file(
+            config_file=self.modules_file,
+            context=context,
+            enabled_module_name=self.enabled_module,
+            prepend=self.prepend,
+        )
+
+        self._modules = {
+            f'module/{module_name}': module_config
+            for module_name, module_config
+            in modules.items()
+        }
+        return self._modules
+
+    def context(self, context: compiler.Context = {}) -> Dict:
+        """
+        Return context defined in module source.
+
+        :param context: Context used when compiling "context.yml".
+        :return: Context dictionary.
+        """
+        if not self.context_file.exists():
+            return {}
+
+        if hasattr(self, '_context'):
+            return self._context
+
+        module_context: compiler.Context = dict_from_config_file(  # type: ignore  # noqa
+            config_file=self.context_file,
+            context=context,
+        )
+        self._context = {
+            f'context/{section_name}': section_content
+            for section_name, section_content
+            in module_context.items()
+        }
+        return self._context
+
+    def config(self, context: compiler.Context = {}) -> Dict:
+        """
+        Return all configuration options defined in module source.
+
+        This includes modules (prepended with 'module/') and context (prepended
+        with 'context/'.
+
+        :param context: Context used when compiling "modules.yml" and
+            "context.yml".
+        :return: Module and context dictionary.
+        """
+        if hasattr(self, '_config'):
+            return self._config
+
+        config = self.modules(context=context)
+        context = self.context(context=context)
+        config.update(context)
+        self._config = config
+        return self._config
+
+    def __contains__(self, module_name: str) -> bool:
+        """Return True if this source contains enabled module_name."""
+        return 'module/' + module_name in self._config
 
     @classmethod
     def represented_by(cls, module_name: str) -> bool:
@@ -362,16 +455,12 @@ class ModuleSource(ABC):
             f'Tried to enable invalid module name syntax "{of}".',
         )
 
-    @abstractmethod
-    def __contains__(self, module_name: str) -> bool:
-        """Return True module source contains module `module_name`."""
-        raise NotImplementedError
-
 
 class GlobalModuleSource(ModuleSource):
-    """Module defined in `astrality.yml`."""
+    """Module defined in `$ASTRALITY_CONFIG_HOME/modules.yml`."""
 
-    name_syntax = re.compile(r'^(\w+|\*)$')
+    name_syntax = re.compile(r'^(\w+|\*)$')  # type: ignore
+    prepend = ''
 
     def __init__(
         self,
@@ -384,10 +473,8 @@ class GlobalModuleSource(ModuleSource):
 
         assert modules_directory.is_absolute()
         self.directory = modules_directory
-
-    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
-        """Return configuration related to global module (TODO)."""
-        return {}
+        self.modules_file = modules_directory / 'modules.yml'
+        self.context_file = modules_directory / 'context.yml'
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if the module name is enabled."""
@@ -404,7 +491,7 @@ class GlobalModuleSource(ModuleSource):
 class GithubModuleSource(ModuleSource):
     """Module defined in a GitHub repository."""
 
-    name_syntax = re.compile(r'^github::.+/.+(::(\w+|\*))?$')
+    name_syntax = re.compile(r'^github::.+/.+(::(\w+|\*))?$')  # type: ignore
     _config: ApplicationConfig
 
     def __init__(
@@ -424,61 +511,38 @@ class GithubModuleSource(ModuleSource):
         assert self.represented_by(
             module_name=enabling_statement['name'],
         )
+        assert modules_directory.is_absolute()
+
         specified_module = enabling_statement['name']
         self.autoupdate = enabling_statement.get('autoupdate', False)
 
         github_path, *enabled_modules = specified_module[8:].split('::')
-
         if len(enabled_modules) > 0:
-            self.enabled_module_name = enabled_modules[0]
+            self.enabled_module = enabled_modules[0]
         else:
-            # Enable all modules since all have been enabled
-            self.enabled_module_name = '*'
+            self.enabled_module = '*'
 
         self.github_user, self.github_repo = github_path.split('/')
+        self.prepend = f'github::{self.github_user}/{self.github_repo}::'
 
-        assert modules_directory.is_absolute()
-        self.modules_directory = modules_directory
         self.directory = modules_directory \
-            / self.github_user / self.github_repo
-        self.config_file = self.directory / 'config.yml'
+            / self.github_user \
+            / self.github_repo
+        self.modules_file = self.directory / 'modules.yml'
+        self.context_file = self.directory / 'context.yml'
 
-    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
-        """
-        Return the contents of config.yml.
-
-        All disabled modules are removed from the configuration dictionary.
-        """
-        if hasattr(self, '_config'):
-            return self._config
-
-        # The repository already exists, so it is assumed that the user wants
-        # the repository cloned
         if not self.directory.is_dir():
             clone_repo(
                 user=self.github_user,
                 repository=self.github_repo,
-                modules_directory=self.modules_directory,
+                modules_directory=modules_directory,
             )
         elif self.autoupdate:
             clone_or_pull_repo(
                 user=self.github_user,
                 repository=self.github_repo,
-                modules_directory=self.modules_directory,
+                modules_directory=modules_directory,
             )
-
-        self._config = filter_config_file(
-            config_file=self.config_file,
-            context=context,
-            enabled_module_name=self.enabled_module_name,
-            prepend=f'github::{self.github_user}/{self.github_repo}::',
-        )
-
-        return self._config
-
-    def __contains__(self, module_name: str) -> bool:
-        """Return True if GitHub module repo is enabled."""
-        return 'module/' + module_name in self._config
 
     def __eq__(self, other) -> bool:
         """
@@ -506,38 +570,28 @@ class DirectoryModuleSource(ModuleSource):
     Specifically: `$ASTRALITY_CONFIG_HOME/{modules_directory}/config.yml
     """
 
-    name_syntax = re.compile(r'^(?!github::).+::(\w+|\*)$')
+    name_syntax = re.compile(r'^(?!github::).+::(\w+|\*)$')  # type: ignore
 
     def __init__(
         self,
         enabling_statement: EnablingStatement,
         modules_directory: Path,
     ) -> None:
-        """Initialize an ExternalModule object."""
+        """Initialize an DirectoryModuleSource object."""
         assert self.represented_by(
             module_name=enabling_statement['name'],
         )
-        relative_directory_path, self.enabled_module_name = \
+        assert modules_directory.is_absolute()
+
+        relative_directory_path, self.enabled_module = \
             enabling_statement['name'].split('::')
         self.relative_directory_path = Path(relative_directory_path)
-
-        assert modules_directory.is_absolute()
-        self.directory = modules_directory / self.relative_directory_path
-
-        self.config_file = self.directory / 'config.yml'
+        self.prepend = str(self.relative_directory_path) + '::'
         self.trusted = enabling_statement.get('trusted', True)
 
-    def config(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
-        """Return the module configuration defined in directory."""
-        if not hasattr(self, '_config'):
-            self._config = filter_config_file(
-                config_file=self.config_file,
-                context=context,
-                enabled_module_name=self.enabled_module_name,
-                prepend=str(self.relative_directory_path) + '::',
-            )
-
-        return self._config
+        self.directory = modules_directory / self.relative_directory_path
+        self.modules_file = self.directory / 'modules.yml'
+        self.context_file = self.directory / 'context.yml'
 
     def __repr__(self):
         """Human-readable representation of a DirectoryModuleSource object."""
@@ -557,10 +611,6 @@ class DirectoryModuleSource(ModuleSource):
             return self.directory == other.directory
         except AttributeError:  # pragma: no cover
             return False
-
-    def __contains__(self, module_name: str) -> bool:
-        """Return True if source contains module named `module_name`."""
-        return 'module/' + module_name in self._config
 
 
 class EnabledModules:
@@ -646,8 +696,9 @@ class EnabledModules:
             return tuple(
                 path.name
                 for path
-                in within.iterdir()
-                if (path / 'config.yml').is_file()
+                in within.glob('**/*')
+                if (path / 'modules.yml').is_file() or
+                (path / 'context.yml').is_file()
             )
         except FileNotFoundError:
             logger.error(
@@ -764,12 +815,6 @@ class GlobalModulesConfig:
         ):
             yield source
 
-    @property
-    def external_module_config_files(self) -> Iterable[Path]:
-        """Yield all absolute paths to module config files."""
-        for external_module_source in self.external_module_sources:
-            yield external_module_source.config_file
-
     def compile_config_files(
         self,
         context: Dict[str, Resolver],
@@ -783,13 +828,15 @@ def filter_config_file(
     context: Dict[str, Resolver],
     enabled_module_name: str,
     prepend: str,
-) -> ModuleConfig:
+) -> Dict[str, 'ModuleConfigDict']:
     """
     Return a filtered dictionary representing `config_file`.
 
     Only modules given by `enabled_module_name` are kept, and their names
     are prepended with `prepend`.
     """
+    assert config_file.name == 'modules.yml'
+
     try:
         modules_dict = dict_from_config_file(
             config_file=config_file,
@@ -815,9 +862,9 @@ def filter_config_file(
         )
         raise MisconfiguredConfigurationFile
 
-    sections = tuple(modules_dict.keys())
+    modules = tuple(modules_dict.keys())
     if enabled_module_name != '*' \
-            and 'module/' + enabled_module_name not in sections:
+            and enabled_module_name not in modules:
         raise NonExistentEnabledModule
 
     # We rename each module to module/{self.name}.module_name
@@ -825,21 +872,16 @@ def filter_config_file(
     # from a third party with the same name as another managed module.
     # This way you can use a module named "conky" from two third parties,
     # in addition to providing your own.
-    for section in sections:
-        if len(section) > 7 and section[:7].lower() == 'module/':
-            # This section defines a module
+    for module_name in modules:
+        if not enabled_module_name == '*' \
+           and enabled_module_name != module_name:
+            # The module is not enabled, remove the module
+            modules_dict.pop(module_name)
+            continue
 
-            module_name = section[7:]
-            if not enabled_module_name == '*' \
-               and enabled_module_name != module_name:
-                # The module is not enabled, remove the module
-                modules_dict.pop(section)
-                continue
+        # Replace the module name with folder_name.module_name
+        non_conflicting_module_name = prepend + module_name
+        module_section = modules_dict.pop(module_name)
+        modules_dict[non_conflicting_module_name] = module_section
 
-            # Replace the module name with folder_name.module_name
-            non_conflicting_module_name = \
-                'module/' + prepend + module_name
-            module_section = modules_dict.pop(section)
-            modules_dict[non_conflicting_module_name] = module_section
-
-    return modules_dict
+    return modules_dict  # type: ignore

@@ -1,0 +1,8 @@
+brazil:
+    on_startup:
+        run: echo Greetings from Brazil!
+
+
+argentina:
+    on_startup:
+        run: echo Greetings from Argentina

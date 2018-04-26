@@ -1,0 +1,3 @@
+USA:
+    on_startup:
+        run: echo Greetings from the USA!

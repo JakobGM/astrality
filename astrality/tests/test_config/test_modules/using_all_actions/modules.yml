@@ -1,4 +1,4 @@
-module/vietnam:
+vietnam:
     on_startup:
         import_context:
             from_path: south_context.yml

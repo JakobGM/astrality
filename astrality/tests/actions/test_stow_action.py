@@ -96,12 +96,12 @@ def test_symlinking_non_templates(test_config_directory, tmpdir):
     assert (temp_dir / 'recursive' / 'empty.template').is_file()
 
     # The rest should be symlinked
-    assert (temp_dir / 'config.yml').is_symlink()
-    assert (temp_dir / 'config.yml').resolve() == templates / 'config.yml'
+    assert (temp_dir / 'modules.yml').is_symlink()
+    assert (temp_dir / 'modules.yml').resolve() == templates / 'modules.yml'
 
     # Symlinked files should be not considered as a managed file, as it is
     # self-updating.
-    assert templates / 'config.yml' not in stow_action.managed_files()
+    assert templates / 'modules.yml' not in stow_action.managed_files()
 
 
 def test_copying_non_template_files(test_config_directory, tmpdir):
@@ -130,10 +130,10 @@ def test_copying_non_template_files(test_config_directory, tmpdir):
     assert (temp_dir / 'recursive' / 'empty.template').is_file()
 
     # The rest should be copied
-    assert (temp_dir / 'config.yml').is_file()
-    assert (temp_dir / 'config.yml').read_text() == \
-        (templates / 'config.yml').read_text()
+    assert (temp_dir / 'modules.yml').is_file()
+    assert (temp_dir / 'modules.yml').read_text() == \
+        (templates / 'modules.yml').read_text()
 
     # Copied files should be considered as a managed file, as it needs to be
     # copied again if modified.
-    assert templates / 'config.yml' in stow_action.managed_files()
+    assert templates / 'modules.yml' in stow_action.managed_files()
