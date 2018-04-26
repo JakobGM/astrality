@@ -1,4 +1,4 @@
-.. _example_configuration
+.. _example_configuration:
 
 Example configuration
 =====================
