@@ -40,6 +40,11 @@ Added
 Changed
 -------
 
+- ``astrality.yml`` has now been split into three separate files:
+  ``astrality.yml`` for global configuration options, ``modules.yml``
+  for global modules, and ``context.yml`` for global context.
+- Directory module config file ``config.yml`` has been renamed and
+  split into ``modules.yml`` and ``context.yml``. See point above.
 - The ``run`` module action is now a dictionary instead of a string. This
   enables us to support additional future options, such as ``timeout``. Now you
   specify the shell command to be run as a string value keyed to ``shell``.
