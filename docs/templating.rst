@@ -4,61 +4,43 @@
 Templating
 ==========
 
-Use cases
-=========
-
-The use of Astrality templates allows you to:
-
-* Centralize configuration in one single file.
-* Establish a single source of truth for configuration options which are used in several configuration files.
-* Make changes that are applied to several configuration files at once, making it easier to experiment with configurations that are interdependent.
-* Insert :ref:`environment variables <parameter_expansion>` and :ref:`command substitutions <command_substitution>` in configuration files that otherwise can not support them.
-* :ref:`Dynamically manipulate <context_import_action>` placeholders in your templates.
-* Making configurations more portable. Any references to display devices, network interfaces, usernames, etc., can be quickly changed when deploying on a new machine.
-* Making it easier to switch between "blocks" of configurations, like quickly changing the color scheme of your terminal emulators, desktop manager and/or other desktop applications. 
-  This can be done by changing only one line of ``astrality.yml``.
-* Use more powerful constructs, such as for-loops and if-statements, in configuration files in order to simplify configuration.
-
-
 .. _template_files:
 
 Template files
 ==============
 
-Templates can be of any file type, named whatever you want, and placed at any desirable path.
-It is customary, however, to place templates within a directory named ``$ASTRALITY_CONFIG_HOME/modules/name_of_application``,
-and to use the ``.template`` filename extension.
-Replace ``name_of_application`` with the name of the application that will use the compiled template.
-
+Templates can be of any file type, named whatever you want, and placed at any
+desirable path. If you want to write a template for a file named "example.conf"
+it is recommended that you name it "template.example.conf".
 
 .. _context:
 
 Context
 =======
 
-When you write templates, you use ``{{ placeholders }}`` which Astrality replaces with values defined in so-called ``context`` sections defined in ``astrality.yml``. 
-Context sections **must** be named ``context/descriptive_name`` and placed at the root indentation level of ``astrality.yml``.
+When you write templates, you use ``{{ placeholders }}`` which Astrality
+replaces with values defined in so-called ``context`` sections defined in
+``$ASTRALITY_CONFIG_HOME/context.yml``.
 
-An example:
+Here is an example which defines context values in "context.yml":
 
 .. code-block:: none
 
-    # $ASTRALITY_CONFIG_HOME/astrality.yml
+    # $ASTRALITY_CONFIG_HOME/context.yml
 
-    context/machine:
-        user: {{ env.USER }}
-        os: {{ 'uname' | shell }}
-        hostname: {{ 'hostname' | shell }}
+    machine:
+        user: jakobgm
+        os: linux
+        hostname: hyperion
 
-    context/fonts:
+    fonts:
         1: FuraCode Nerd Font
         2: FuraMono Nerd Font
 
 
 .. warning::
-    Context section names, and any identifiers within a context block (i.e. anything left of a colon), must be valid Python 2.x `identifiers <http://jinja.pocoo.org/docs/2.10/api/#notes-on-identifiers>`_.
-    In other words, they must match the regular expression ``[a-zA-Z_][a-zA-Z0-9_]*``, i.e. use ASCII letters, numbers, and underscores.
-    The exception is numeric names, such as in the ``context/fonts`` section above.
+    Context keys (anything left of a colon) can only consist of ASCII letters,
+    numbers and underscores.
     **No spaces are allowed**.
 
 
@@ -67,7 +49,9 @@ An example:
 Inserting context variables into your templates
 -----------------------------------------------
 
-You should now be able to insert context values into your templates. You can refer to context variables in your templates by using the syntax ``{{ context_section.variable_name }}``.
+You should now be able to insert context values into your templates. You can
+refer to context variables in your templates by using the syntax
+``{{ context_section.variable_name }}``.
 
 Using the contexts defined above, you could write the following template:
 
@@ -77,20 +61,22 @@ Using the contexts defined above, you could write the following template:
     home-directory = /home/{{ machine.user }}
     machine-name = {{ machine.hostname }}
 
-When Astrality :ref:`compiles your template <template_how_to_compile>` the result would be:
+When Astrality :ref:`compiles your template <template_how_to_compile>` the
+result would be:
 
 .. code-block:: dosini
 
     font-type = 'FuraCode Nerd Font'
-    home-directory = /home/your_username
-    machine-name = your_hostname
+    home-directory = /home/jakobgm
+    machine-name = hyperion
 
 .. hint::
-    You can create arbitrarily nested structures within context sections. For instance:
+    You can create arbitrarily nested structures within context sections. For
+    instance:
 
     .. code-block:: yaml
 
-        context/cosmetics:
+        cosmetics:
             fonts:
                 1:
                     family: FuraCode
@@ -99,7 +85,8 @@ When Astrality :ref:`compiles your template <template_how_to_compile>` the resul
                     family: FuraMono
                     font_size: 9
 
-    And refer to those nested variables with "dotted" syntax ``{{ cosmetics.fonts.1.family }}``.
+    And refer to those nested variables with "dotted" syntax
+    ``{{ cosmetics.fonts.1.family }}``.
 
 
 .. _env_context:
@@ -107,8 +94,9 @@ When Astrality :ref:`compiles your template <template_how_to_compile>` the resul
 The ``env`` context
 -------------------
 
-Astrality automatically inserts a context section at runtime named ``env``. It contains all your environment variables.
-You can therefore insert environment variables into your templates by writing::
+Astrality automatically inserts a context section at runtime named ``env``. It
+contains all your environment variables. You can therefore insert environment
+variables into your templates by writing::
 
     {{ env.ENVIRONMENT_VARIABLE_NAME }}
 
@@ -118,14 +106,18 @@ You can therefore insert environment variables into your templates by writing::
 Undefined context values
 ------------------------
 
-When you refer to a context value which is not defined, it will be replaced with an empty string, and logged as a warning in Astrality's standard output.
+When you refer to a context value which is not defined, it will be replaced
+with an empty string, and logged as a warning in Astrality's standard output.
 
 .. _context_fallback_values:
 
 Default fallback context values
 -------------------------------
 
-Sometimes you want to refer to context variables in your templates, but you want to insert a fallback value in case the context variable is not defined at compile time. This is often the case when referring to environment variables. Defining a fallback value is easy::
+Sometimes you want to refer to context variables in your templates, but you
+want to insert a fallback value in case the context variable is not defined at
+compile time. This is often the case when referring to environment variables.
+Defining a fallback value is easy::
 
     {{ env.ENVIRONMENT_VARIABLE_NAME or 'defualt value' }}
 
@@ -135,14 +127,16 @@ Sometimes you want to refer to context variables in your templates, but you want
 Integer placeholder resolution
 ------------------------------
 
-There exists another way to define fallback values, which sometimes is much more useful.
-It can be used by naming your context sections, subsections, and/or values with numeric values.
+There exists another way to define fallback values, which sometimes is much
+more useful.
 
-Let's define context values with integer names.
+Let's define context values with integer names:
 
 .. code-block:: yaml
 
-    section/fonts:
+    # $ASTRALITY_CONFIG_HOME/context.yml
+
+    fonts:
         1: FuraCode Nerd Font
         2: FuraMono Nerd Font
 
@@ -158,10 +152,15 @@ And it will be compiled to::
     secondary-font = 'FuraMono Nerd Font'
     tertiary-font = 'FuraMono Nerd Font'
 
-With other words, references to *non-existent* numeric context identifiers are replaced with the greatest *available* numeric context identifier at the same indentation level.
+With other words, references to *non-existent* numeric context identifiers are
+replaced with the greatest *available* numeric context identifier at the same
+indentation level.
 
 .. hint::
-    This construct can be very useful when you are expecting to change the underlying context of templates. Defining font types and color schemes using numeric identifiers allows you to switch between themes which define a different number of fonts and colors to be used.
+    This construct can be very useful when you are expecting to change the
+    underlying context of templates. Defining font types and color schemes
+    using numeric identifiers allows you to switch between themes which define
+    a different number of fonts and colors to be used!
 
 
 .. _jinja2:
@@ -185,57 +184,39 @@ Useful constructs include:
     `Conditionals <http://jinja.pocoo.org/docs/2.10/templates/#if>`_:
         For only including template content if some conditions(s) are satisfied.
 
-A somewhat normal use case for advanced templating is key, value iteration. If you define the following color scheme context:
-
-.. code-block:: yaml
-
-    context/color_scheme:
-        bg: 282828
-        fg: ebdbb2
-        red: cc241d
-        green: 98971a
-        yellow: d79921
-
-And write the following template::
-
-    {% for key, value in color_scheme %}
-        {{ key }} = '0x{{ value|upper }}'
-    {% endfor %}
-
-It would result in the following compiled template::
-
-    bg = '0x282828'
-    fg = '0xEBDBB2'
-    red = '0xCC241D'
-    green = '0x98971A'
-    yellow = '0xD79921'
-
 
 .. _shell_filter:
 
 The ``shell`` filter
 --------------------
 
-Astrality provides an additional ``shell`` template filter in addition to the standard Jinja2 filters. The syntax is::
+Astrality provides an additional ``shell`` template filter in addition to the
+standard Jinja2 filters. The syntax is::
 
     {{ 'shell command' | shell }}
 
 .. note::
-    Shell commands are run from the directory which contains the configuration for the template compilation, most often ``$ASTRALITY_CONFIG_HOME``.
-    If you need to refer to paths outside this directory, you can use absolute paths, e.g. ``{{ 'cat ~/.bashrc' | shell }}``.
+    Shell commands are run from the directory which contains the configuration
+    for the template compilation, most often ``$ASTRALITY_CONFIG_HOME``. If you
+    need to refer to paths outside this directory, you can use absolute paths,
+    e.g. ``{{ 'cat ~/.bashrc' | shell }}``.
 
-You can use the :ref:`command substitution <command_substitution>` syntax in a context section of ``astrality.yml`` and get much of the same functionality, but with the ``shell`` filter you can specify a timeout in seconds::
+You can specify a timeout for the shell command given in seconds::
 
     {{ 'shell command' | shell(5) }}
 
 The default timeout is 2 seconds.
 
-To provide a fallback value for functions that time out or return non-zero exit codes, do::
+To provide a fallback value for functions that time out or return non-zero exit
+codes, do::
 
     {{ 'shell command' | shell(1.5, 'fallback value') }}
 
 .. caution::
-    The quotes around the shell command are important, since if you ommit the quotes, you end up refering to a context value instead. Though, this *can* be done intentionally when you have defined a shell command in a context variable.
+    The quotes around the shell command are important, since if you ommit the
+    quotes, you end up refering to a context value instead. Though, this *can*
+    be done intentionally when you have defined a shell command in a context
+    variable.
 
 
 .. _template_how_to_compile:
@@ -243,45 +224,42 @@ To provide a fallback value for functions that time out or return non-zero exit 
 How to compile templates
 ========================
 
-Now that you know how to write Astrality templates, you might wonder how to actually *compile* these templates. In order to do this, you need to:
+Now that you know how to write Astrality templates, you might wonder how to
+actually *compile* these templates. You can instruct Astrality to compile
+templates by defining a module in "$ASTRALITY_CONFIG_HOME/modules.yml".
+More on this on the next page of this documentation, but here is a simple
+example:
 
-    #. Create an Astrality :ref:`module <modules>`.
-    #. Specify when to compile the template, by using an :ref:`action block <modules_action_blocks>` within the module.
-    #. Inserting a :ref:`compile action <compile_action>` into such an event block, telling Astrality to compile your template.
-
-Here is a very simple example that demonstrate how to compile a template to a target path.
 Let us assume that you have written the following template:
 
 .. code-block:: dosini
 
-    # Source: $ASTRALITY_CONFIG_HOME/modules/test/template
-    
+    # Source: $ASTRALITY_CONFIG_HOME/templates/some_template
+
     current_user={{ host.user }}
 
-Where you want to replace ``{{ host.user }}`` with your username. Let us define the context value used for insertion:
+Where you want to replace ``{{ host.user }}`` with your username. Let us define
+the context value used for insertion in "$ASTRALITY_CONFIG_HOME/context.yml":
+
+.. code-block:: yaml
+
+    # Source: $ASTRALITY_CONFIG_HOME/context.yml
+
+    host:
+        user: {{ env.USER }}
+
+In order to compile this template to ``$XDG_CONFIG_HOME/config.ini`` we write
+the following module, which will compile the template on Astrality startup:
 
 .. code-block:: yaml
 
     # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
 
-    context/host:
-        user: {{ env.USER }}
-
-In order to compile this template to ``/tmp/config.ini`` we write the following module, 
-which will compile the template on Astrality startup:
-
-.. code-block:: yaml
-
-    # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
-
-    context/host:
-        user: {{ env.USER }}
-
-    module/some_name:
+    my_module:
         on_startup:
             compile:
-                - content: modules/test/template
-                  target: /tmp/config.ini
+                - content: templates/template
+                  target: $XDG_CONFIG_HOME/config.ini
 
 Now we can compile the template by starting Astrality:
 
@@ -293,8 +271,9 @@ The result should be:
 
 .. code-block:: dosini
 
-    # Source: /tmp/config.ini
-    
+    # Source: $XDG_CONFIG_HOME/config.ini
+
     current_user=yourusername
 
-This is probably a bit overwhelming. I recommend to just continue to the next page to get a more gentle introduction to these concepts.
+This is probably a bit overwhelming. I recommend to just continue to the next
+page to get a more gentle introduction to these concepts.

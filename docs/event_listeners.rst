@@ -30,7 +30,7 @@ Module event listeners are defined within the :ref:`module block <modules_how_to
 
 .. code-block:: yaml
 
-    module/some_dynamic_module:
+    some_dynamic_module:
         event_listener:
             type: type_of_event_listener
 
@@ -109,7 +109,7 @@ These coordinates can be obtained from `this website <https://www.latlong.net/>`
 
 .. code-block:: yaml
 
-    module/daylight_module:
+    daylight_module:
         event_listener:
             type: daylight
 
@@ -146,7 +146,7 @@ These coordinates can be obtained from `this website <https://www.latlong.net/>`
 
 .. code-block:: yaml
 
-    module/solar_module:
+    solar_module:
         event_listener:
             type: solar
 
@@ -174,7 +174,7 @@ Events
 
 .. code-block:: yaml
 
-    module/static_module:
+    static_module:
         ...
 
 
@@ -209,7 +209,7 @@ Events
 
 .. code-block:: yaml
 
-    module/european_tue_to_sat_work_week:
+    european_tue_to_sat_work_week:
         event_listener:
             type: time_of_day
             monday: ''
@@ -238,7 +238,7 @@ Events
 
 .. code-block:: yaml
 
-    module/weekday_module:
+    weekday_module:
         event_listener:
             type: weekday
 
@@ -272,7 +272,7 @@ If the configured time interval is of zero length, Astrality uses ``hours: 1`` i
 
 .. code-block:: yaml
 
-    module/periodic_module:
+    periodic_module:
         event_listener:
             type: periodic
             hours: 8

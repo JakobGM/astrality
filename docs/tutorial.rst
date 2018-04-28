@@ -24,9 +24,9 @@ compile them.
 
 .. code-block:: yaml
 
-    # $ASTRALITY_CONFIG_HOME/astrality.yml
+    # ~/.config/astrality/modules.yml
 
-    module/dotfiles:
+    dotfiles:
         on_startup:
             compile:
                 content: $XDG_CONFIG_HOME
@@ -47,11 +47,11 @@ Let us go through the module configuration step-by-step:
 We can now compile all such templates within *$XDG_CONFIG_HOME* by running
 ``astrality`` from the shell. But we would like to *automatically* recompile
 templates when we modify them or create new ones. You can achieve this by
-enabling ``reprocess_modified_files``:
+enabling ``reprocess_modified_files`` in ``astrality.yml``:
 
 .. code-block:: yaml
 
-    # $ASTRALITY_CONFIG_HOME/astrality.yml
+    # ~/.config/astrality/astrality.yml
 
     config/modules:
         reprocess_modified_files: true
@@ -73,18 +73,15 @@ while non-templates should be symlinked instead. This combination of
 :ref:`symlink <symlink_action>` and :ref:`compile <compile_action>` actions can
 be done with the :ref:`stow <stow_action>` action.
 
-Move ``astrality.yml`` to the root of your dotfiles repository. Set ``export
-ASTRALITY_CONFIG_HOME=~/.dotfiles``. Finally, modify the dotfiles module
-accordingly:
+Move ``modules.yml`` and ``astrality.yml`` to the root of your dotfiles
+repository. Set ``export ASTRALITY_CONFIG_HOME=~/.dotfiles``. Finally, modify
+the dotfiles module accordingly:
 
 .. code-block:: yaml
 
-    # ~/.dotfiles/astrality.yml
+    # ~/.dotfiles/modules.yml
 
-    config/modules:
-        reprocess_modified_files: true
-
-    module/dotfiles:
+    dotfiles:
         on_startup:
             stow:
                 - content: home
@@ -128,11 +125,11 @@ After having found seven fitting wallpapers, we name them according to the weekd
     saturday.jpeg
     sunday.jpeg
 
-Now we need to create a module with a ``weekday`` event listener in ``astrality.yml``:
+Now we need to create a module with a ``weekday`` event listener in ``modules.yml``:
 
 .. code-block:: yaml
 
-    module/weekday_wallpaper:
+    weekday_wallpaper:
         event_listener:
             type: weekday
 
@@ -141,7 +138,7 @@ We also need a way of setting the desktop wallpaper from the shell. Here we are 
 
 .. code-block:: yaml
 
-    module/weekday_wallpaper:
+    weekday_wallpaper:
         event_listener:
             type: weekday
 
@@ -153,7 +150,7 @@ Now Astrality will set the appropriate wallpaper on startup. We still have a sma
 
 .. code-block:: yaml
 
-    module/weekday_wallpaper:
+    weekday_wallpaper:
         event_listener:
             type: weekday
 
@@ -169,7 +166,7 @@ Or, alternatively, we can just :ref:`trigger <trigger_action>` the ``on_startup`
 
 .. code-block:: yaml
 
-    module/weekday_wallpaper:
+    weekday_wallpaper:
         event_listener:
             type: weekday
 
