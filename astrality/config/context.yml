@@ -1,0 +1,85 @@
+host:
+    # Here we define some context values which often change between host
+    # computers, and are therefore practical to use in our templates.
+    displays:
+        # All displays defined here are used in the polybar module. It creates
+        # one bar for each of the display handles, where the bar identifier is
+        # the same as the display handle. This way you can start a polybar for
+        # the primary screen by running:
+        #     polybar --config {modules/polybar/config.template} HDMI2
+        primary:
+            handle: HDMI2
+            dpi: 96
+
+        secondary:
+            handle: eDP1
+            dpi: 96
+
+
+    interfaces:
+        wlan:
+            # You can also use command substitution in order to insert the
+            # standard output of a shell command into a configuration option.
+            #
+            # This is also used by the polybar template to point the
+            # wireless-internet polybar module to the correct interface.
+            handle: {{ 'iwconfig 2>/dev/null | grep -o "^\w*"' | shell }}
+
+        ethernet:
+            handle: eno0
+
+    commands:
+        # Here we define some commands that might change between hosts
+        # with different stacks, i.e. systemd vs init, or wayland vs Xorg
+        shutdown: systemctl poweroff -i
+        reboot: systemctl reboot -i
+
+        # In order to insert our global IP into a template, we can now do:
+        # host.commands.global_ip | shell within placeholder delimiters
+        global_ip: 'wget http://checkip.dyndns.org/ -O - -o /dev/null | cut -d: -f 2 | cut -d\< -f 1 | xargs'
+
+
+fonts:
+    # Here we define some context values for fonts that we want to use in
+    # several different configurations, another common use case for context
+    # values in templates.
+
+    # You can use integer indexed variables in order to have fallback values.
+    # If fonts:4/5/6 on so on is used in a template, but it is not
+    # defined, it will be replaced with ast:fonts:3 instead. This is
+    # useful when you dont want to assume how many fonts you want to use when
+    # you write your templates.
+    #
+    # Here we define the main fonts used across our applications. Where 1
+    # is the primary font, 2 the secondary font, and so on.
+    1:
+        name: FuraCode Nerd Font
+        size: 8
+
+    2:
+        name: FuraCode Nerd Font Mono
+        size: 8
+
+    3:
+        name: RobotoMono Nerd Font
+        size: 8
+
+    # We also add some configurations which are specific for some application
+    # types.
+    terminal:
+        size: 10
+
+    status_bar:
+        size: 8
+
+
+color_schemes_config:
+    # These are context values used by the GitHub module:
+    # github.com/jakobgm/color-schemes.astrality
+    # See the README of this repository for more information.
+
+    # Enable the following color scheme:
+    enabled: gruvbox_dark
+
+    # Import the color scheme into the following context section
+    context_section: colors

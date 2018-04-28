@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from pathlib import Path
 from shutil import rmtree
 
@@ -13,7 +12,6 @@ from astrality.config import (
     insert_into,
     resolve_config_directory,
 )
-from astrality.module import ModuleManager
 from astrality.utils import generate_expanded_env_dict
 
 
@@ -39,10 +37,12 @@ class TestAllConfigFeaturesFromDummyConfig:
 
     def test_non_existing_variable(self, dummy_config):
         with pytest.raises(KeyError):
-            assert dummy_config['context/section2']['not_existing_option'] is None
+            assert dummy_config['context/section2']['not_existing_option'] \
+                is None
 
     def test_environment_variable_interpolation(self, dummy_config):
-        assert dummy_config['context/section3']['env_variable'] == 'test_value, hello'
+        assert dummy_config['context/section3']['env_variable'] \
+            == 'test_value, hello'
 
 
 def test_config_directory_name(conf):
@@ -58,8 +58,9 @@ def test_generation_of_expanded_env_dict():
     assert len(env_dict) == len(os.environ)
 
     for name, value in os.environ.items():
-        if not '$' in value:
+        if '$' not in value:
             assert env_dict[name] == value
+
 
 def test_insert_context_section():
     context = compiler.context({'context/section1': {'key_one': 'value_one'}})
@@ -95,7 +96,10 @@ def test_insert_context_section():
 
 
 class TestResolveConfigDirectory:
-    def test_setting_directory_using_application_env_variable(self, monkeypatch):
+    def test_setting_directory_using_application_env_variable(
+        self,
+        monkeypatch,
+    ):
         monkeypatch.setattr(
             os,
             'environ',
@@ -116,9 +120,13 @@ class TestResolveConfigDirectory:
         )
         assert resolve_config_directory() == Path('/xdg/dir/astrality')
 
-    def test_using_standard_config_dir_when_nothing_else_is_specified(self, monkeypatch):
+    def test_using_standard_config_dir_when_nothing_else_is_specified(
+        self,
+        monkeypatch,
+    ):
         monkeypatch.setattr(os, 'environ', {})
-        assert resolve_config_directory() == Path('~/.config/astrality').expanduser()
+        assert resolve_config_directory() \
+            == Path('~/.config/astrality').expanduser()
 
 
 class TestCreateConfigDirectory:
@@ -153,6 +161,7 @@ class TestCreateConfigDirectory:
         assert 'modules' in dir_contents
         rmtree(created_config_dir)
 
+
 @pytest.yield_fixture
 def dir_with_compilable_files(tmpdir):
     config_dir = Path(tmpdir)
@@ -162,7 +171,7 @@ def dir_with_compilable_files(tmpdir):
         'key2: {{ "echo test" | shell }}'
     )
 
-    module_file = config_dir / 'config.yml'
+    module_file = config_dir / 'modules.yml'
     module_file.write_text(
         'key1: {{ env.EXAMPLE_ENV_VARIABLE }}\n'
         'key2: {{ "echo test" | shell }}'
@@ -173,6 +182,7 @@ def dir_with_compilable_files(tmpdir):
     os.remove(config_file)
     os.remove(module_file)
     config_dir.rmdir()
+
 
 class TestUsingConfigFilesWithPlaceholders:
     def test_dict_from_config_file(self, dir_with_compilable_files):
@@ -187,5 +197,5 @@ class TestUsingConfigFilesWithPlaceholders:
 
     def test_get_user_configuration(self, dir_with_compilable_files):
         user_conf = user_configuration(dir_with_compilable_files)
-        assert user_conf['key1'] == 'test_value'
-        assert user_conf['key2'] == 'test'
+        assert user_conf['config/key1'] == 'test_value'
+        assert user_conf['config/key2'] == 'test'

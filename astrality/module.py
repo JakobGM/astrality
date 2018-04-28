@@ -619,11 +619,13 @@ class ModuleManager:
         Also, if hot_reload is True, we reinstantiate the ModuleManager object
         if the application configuration has been modified.
         """
-        config_file = \
-            self.application_config['_runtime']['config_directory'] \
-            / 'astrality.yml'
+        config_files = (
+            self.config_directory / 'astrality.yml',
+            self.config_directory / 'modules.yml',
+            self.config_directory / 'context.yml',
+        )
 
-        if modified == config_file:
+        if modified in config_files:
             self.on_application_config_modified()
             return
         else:

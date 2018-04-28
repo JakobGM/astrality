@@ -172,9 +172,9 @@ def test_hot_reloading(
     test_config_directory
 ):
     template_target1, template_target2 = test_template_targets
-    config1 = test_config_directory / 'astrality1.yml'
-    config2 = test_config_directory / 'astrality2.yml'
-    target_config = test_config_directory / 'astrality.yml'
+    config1 = test_config_directory / 'modules1.yml'
+    config2 = test_config_directory / 'modules2.yml'
+    target_config = test_config_directory / 'modules.yml'
 
     # Copy the first configuration into place
     shutil.copy(str(config1), str(target_config))
@@ -182,6 +182,7 @@ def test_hot_reloading(
     application_config1 = dict_from_config_file(
         config1,
         context={},
+        prepend='module/',
     )
     application_config1.update(default_global_options)
     application_config1.update(_runtime)

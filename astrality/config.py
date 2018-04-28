@@ -94,6 +94,7 @@ def infer_config_location(
     """
     if not config_directory:
         config_directory = resolve_config_directory()
+
     config_file = Path(config_directory, 'astrality.yml')
 
     if not config_file.is_file():
@@ -114,15 +115,16 @@ def infer_config_location(
 def dict_from_config_file(
     config_file: Path,
     context: Dict[str, Resolver],
+    prepend: str = '',
 ) -> ApplicationConfig:
     """
     Return a dictionary that reflects the contents of `config_file`.
 
-    Environment variables are interpolated like this:
-        {{ env:NAME_OF_ENV_VARIABLE }} -> os.environ[NAME_OF_ENV_VARIABLE]
+    `config` file is compiled as a Jinja template with `context`.
 
-    And shell commands can be inserted like this:
-        {{ 'shell command' | shell }}
+    :param config_file: YAML file path.
+    :param context: Jinja2 context.
+    :param prepend: Prepend string to each root dictionary key.
     """
     if not config_file.is_file():  # pragma: no cover
         error_msg = f'Could not load config file "{config_file}".'
@@ -136,7 +138,11 @@ def dict_from_config_file(
     )
     conf_dict = load(StringIO(config_string), Loader=Loader)
 
-    return conf_dict
+    return {
+        prepend + str(key): value
+        for key, value
+        in conf_dict.items()
+    }
 
 
 def infer_runtime_variables_from_config(
@@ -164,12 +170,9 @@ def user_configuration(
     """
     Return Resolver object containing the users configuration.
 
-    Create a configuration dictionary which should directly reflect the
-    hierarchy of a typical `astrality.yml` file. Users should be able to insert
-    elements from their configuration directly into conky module templates. The
-    mapping should be:
-
-    ${astrality:fonts:1} -> config['fonts']['1']
+    Configuration is read from astrality.yml, modules.yml and context.yml,
+    and merged into a single dictionary, where the keys are prepended with
+    'config/', 'module/', and 'context/' respectively.
 
     In addition, the section config['_runtime'] is inserted, which contains
     several items specifying runtime specific values. Example keys are:
@@ -179,12 +182,45 @@ def user_configuration(
     """
     config_directory, config_file = infer_config_location(config_directory)
 
-    config = dict_from_config_file(config_file=config_file, context={})
-    config.update(infer_runtime_variables_from_config(
+    # First get global context, which we can use when compiling other files
+    context_file = config_directory / 'context.yml'
+    if context_file.exists():
+        global_context = dict_from_config_file(
+            config_file=context_file,
+            context={},
+        )
+    else:
+        global_context = {}
+
+    # Global configuration options
+    config = dict_from_config_file(  # type: ignore
+        config_file=config_file,
+        context=global_context,
+        prepend='config/',
+    )
+    config.update({
+        'context/' + str(key): value
+        for key, value
+        in global_context.items()
+    })
+
+    # Globally defined modules
+    modules_file = config_directory / 'modules.yml'
+    if modules_file.exists():
+        modules_config = dict_from_config_file(  # type: ignore
+            config_file=modules_file,
+            context=global_context,
+            prepend='module/',
+        )
+        config.update(modules_config)
+
+    # Some metadata used by other classes, stored in '_runtime' key
+    runtime = infer_runtime_variables_from_config(
         config_directory,
         config_file,
         config,
-    ))
+    )
+    config.update(runtime)
 
     # Insert default global settings that are not specified
     user_settings = config.get('config/astrality', {})

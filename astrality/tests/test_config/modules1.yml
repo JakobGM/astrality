@@ -1,7 +1,4 @@
-config/astrality:
-    hot_reload_config: true
-
-module/A:
+A:
     on_startup:
         compile:
             - content: templates/no_context.template
