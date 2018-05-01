@@ -229,45 +229,6 @@ def user_configuration(
     return config
 
 
-def insert_into(
-    context: Context,
-    from_config_file: Path,
-    section: Optional[str],
-    from_section: Optional[str],
-) -> Context:
-    """
-    Import section(s) from config file into config dictionary.
-
-    If `section` and `from_section` are given:
-    The method overwrites `config[section]` with the values from [from_section]
-    defined in `from_config_file`.
-
-    Else:
-    All sections are imported from `from_config_file`.
-    """
-    logger.info(
-        f'Importing context section {section} from {str(from_config_file)}',
-    )
-
-    contexts = Context(dict_from_config_file(
-        from_config_file,
-        context=context,
-    ))
-
-    if from_section and section is None:
-        # If only from section is specified, keep the section name
-        section = from_section
-
-    if section and from_section:
-        # A specific source and target section has been specified
-        context[section] = contexts[from_section]
-    else:
-        # All sections should be merged into the context
-        context.update(contexts)
-
-    return context
-
-
 def create_config_directory(path: Optional[Path] = None, empty=False) -> Path:
     """Create application configuration directory and return its path."""
     if not path:

@@ -1,5 +1,6 @@
 """Tests for Context class."""
 from math import inf
+from pathlib import Path
 
 import pytest
 
@@ -173,3 +174,34 @@ class TestContextClass:
         context1.update(context2)
         expected_result = Context({'key1': 1, 'key2': 2})
         assert context1 == expected_result
+
+
+def test_importing_context_from_compiled_yml_file():
+    """YAML files should be importable into the context."""
+    context = Context({'section1': {'key_one': 'value_one'}})
+    assert context['section1']['key_one'] == 'value_one'
+
+    test_config_file = Path(__file__).parent / 'test_config' / 'test.yml'
+    context.import_context(
+        from_path=test_config_file,
+        from_section='section2',
+        to_section='new_section',
+    )
+
+    assert context['section1']['key_one'] == 'value_one'
+    assert context['new_section']['var3'] == 'value1'
+
+    context.import_context(
+        from_path=test_config_file,
+        from_section='section3',
+        to_section='section3',
+    )
+    assert context['section3']['env_variable'] == 'test_value, hello'
+
+    context.import_context(
+        from_path=test_config_file,
+        from_section='section1',
+        to_section='section1',
+    )
+    assert context['section1']['var2'] == 'value1/value2'
+    assert 'key_one' not in context['section1']

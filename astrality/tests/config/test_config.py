@@ -9,7 +9,6 @@ from astrality.config import (
     create_config_directory,
     dict_from_config_file,
     user_configuration,
-    insert_into,
     resolve_config_directory,
 )
 from astrality.context import Context
@@ -61,39 +60,6 @@ def test_generation_of_expanded_env_dict():
     for name, value in os.environ.items():
         if '$' not in value:
             assert env_dict[name] == value
-
-
-def test_insert_context_section():
-    context = compiler.context({'context/section1': {'key_one': 'value_one'}})
-    assert context['section1']['key_one'] == 'value_one'
-
-    test_config_file = Path(__file__).parents[1] / 'test_config' / 'test.yml'
-    context = insert_into(
-        context=context,
-        section='new_section',
-        from_config_file=test_config_file,
-        from_section='section2'
-    )
-
-    assert context['section1']['key_one'] == 'value_one'
-    assert context['new_section']['var3'] == 'value1'
-
-    context = insert_into(
-        context=context,
-        section='section3',
-        from_config_file=test_config_file,
-        from_section='section3'
-    )
-    assert context['section3']['env_variable'] == 'test_value, hello'
-
-    context = insert_into(
-        context=context,
-        section='section1',
-        from_config_file=test_config_file,
-        from_section='section1'
-    )
-    assert context['section1']['var2'] == 'value1/value2'
-    assert 'key_one' not in context['section1']
 
 
 class TestResolveConfigDirectory:
