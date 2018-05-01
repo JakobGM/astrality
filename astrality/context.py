@@ -2,6 +2,7 @@
 
 from math import inf
 from numbers import Number
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -12,6 +13,8 @@ from typing import (
     Optional,
     Union,
 )
+
+from astrality import utils
 
 
 Real = Union[int, float]
@@ -24,9 +27,9 @@ class Context:
     Dictionary-like object whith integer index resolution.
 
     An example of its functionality:
-    replacements = Context({
-    'colors': {1: 'CACCFD', 2: 'BACBEB'}
-    })
+    >>> replacements = Context({
+    >>> 'colors': {1: 'CACCFD', 2: 'BACBEB'}
+    >>> })
     replacements['colors'][1]
     >>> 'CACCFD'
     replacements['colors'][2]
@@ -58,6 +61,33 @@ class Context:
         for key in self._dict.keys():
             if isinstance(key, Number):
                 self._max_key = max(key, self._max_key)
+
+    def import_context(
+        self,
+        from_path: Path,
+        from_section: Optional[str] = None,
+        to_section: Optional[str] = None,
+    ) -> None:
+        """
+        Insert context values from yml file.
+
+        :param from_path: Path to .yml file or directory containing
+            "context.yml".
+        :param from_section: If given, only import specific section from path.
+        :param to_section: If given, rename from_section to to_section.
+        """
+        new_context = utils.compile_yaml(
+            path=from_path,
+            context=self,
+        )
+
+        if from_section is None and to_section is None:
+            self.update(new_context)
+        elif from_section and to_section:
+            self[to_section] = new_context[from_section]
+        else:
+            assert from_section
+            self[from_section] = new_context[from_section]
 
     def __eq__(self, other) -> bool:
         """Check if content is identical to other Context or dictionary."""
@@ -92,7 +122,7 @@ class Context:
         try:
             # Return excact hit if present
             return self._dict[key]
-        except KeyError as key_error:
+        except KeyError:
             # The key is not present. See if we can resolve the use of another
             # one through integer key priority.
             if self._max_key > -inf:

@@ -1,5 +1,6 @@
 """General utility functions which are used across the application."""
 
+from io import StringIO
 import logging
 import os
 import re
@@ -7,8 +8,21 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, TypeVar, Union
 
+from astrality import compiler
+from astrality.context import Context
 
 logger = logging.getLogger('astrality')
+
+from yaml import load  # noqa
+try:
+    from yaml import CLoader as Loader  # type: ignore
+    logger.info('Using LibYAML bindings for faster .yml parsing.')
+except ImportError:  # pragma: no cover
+    from yaml import Loader
+    logger.warning(
+        'LibYAML not installed.'
+        'Using somewhat slower pure python implementation.',
+    )
 
 
 def run_shell(
@@ -147,3 +161,27 @@ def resolve_targets(
         filtered_targets[content_file] = renamed_target_file
 
     return filtered_targets
+
+
+def compile_yaml(
+    path: Path,
+    context: Context,
+) -> Dict:
+    """
+    Return datastructure from compiled YAML jinja2 template.
+
+    :param path: YAML template file path.
+    :param context: Jinja2 context.
+    """
+    if not path.is_file():  # pragma: no cover
+        error_msg = f'Could not load config file "{path}".'
+        logger.critical(error_msg)
+        raise FileNotFoundError(error_msg)
+
+    config_string = compiler.compile_template_to_string(
+        template=path,
+        context=context,
+        shell_command_working_directory=path.parent,
+    )
+
+    return load(StringIO(config_string), Loader=Loader)

@@ -40,7 +40,7 @@ from typing import (
 from mypy_extensions import TypedDict
 
 from astrality import compiler, utils
-from astrality.config import expand_path, insert_into, GlobalModulesConfig
+from astrality.config import expand_path, GlobalModulesConfig
 from astrality.context import Context
 
 
@@ -181,11 +181,10 @@ class ImportContextAction(Action):
             # Null object does nothing
             return None
 
-        insert_into(  # type: ignore
-            context=self.context_store,
-            from_config_file=self.option(key='from_path', path=True),
-            section=self.option(key='to_section'),
+        self.context_store.import_context(
+            from_path=self.option(key='from_path', path=True),
             from_section=self.option(key='from_section'),
+            to_section=self.option(key='to_section'),
         )
 
 

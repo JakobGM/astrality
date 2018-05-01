@@ -3,6 +3,8 @@
 from pathlib import Path
 
 from astrality.actions import ImportContextAction
+from astrality.context import Context
+
 
 def test_null_object_pattern():
     """Test initializing action with no behaviour."""
@@ -10,9 +12,10 @@ def test_null_object_pattern():
         options={},
         directory=Path('/'),
         replacer=lambda x: x,
-        context_store={},
+        context_store=Context(),
     )
     import_context_action.execute()
+
 
 def test_importing_entire_file(context_directory):
     """
@@ -23,7 +26,7 @@ def test_importing_entire_file(context_directory):
     context_import_dict = {
         'from_path': 'several_sections.yml',
     }
-    context_store = {}
+    context_store = Context()
     import_context_action = ImportContextAction(
         options=context_import_dict,
         directory=context_directory,
@@ -44,13 +47,14 @@ def test_importing_entire_file(context_directory):
     }
     assert context_store == expected_context
 
+
 def test_importing_specific_section(context_directory):
     """Test importing specific sections from context file."""
     context_import_dict = {
         'from_path': 'several_sections.yml',
         'from_section': 'section1',
     }
-    context_store = {'original': 'value'}
+    context_store = Context({'original': 'value'})
     import_context_action = ImportContextAction(
         options=context_import_dict,
         directory=context_directory,
@@ -59,14 +63,15 @@ def test_importing_specific_section(context_directory):
     )
     import_context_action.execute()
 
-    expected_context = {
+    expected_context = Context({
         'original': 'value',
         'section1': {
             'k1_1': 'v1_1',
             'k1_2': 'v1_2',
         },
-    }
+    })
     assert context_store == expected_context
+
 
 def test_replacer_function_being_used(context_directory):
     """
@@ -79,7 +84,7 @@ def test_replacer_function_being_used(context_directory):
         'from_section': 'from',
         'to_section': 'to',
     }
-    context_store = {}
+    context_store = Context()
 
     def replacer(option: str) -> str:
         if option == 'path':
@@ -106,6 +111,7 @@ def test_replacer_function_being_used(context_directory):
         },
     }
 
+
 def test_that_replacer_is_run_every_time(context_directory):
     """
     The replacer should be run a new every time self.execute() is invoked.
@@ -115,7 +121,7 @@ def test_that_replacer_is_run_every_time(context_directory):
         'from_section': 'section1',
         'to_section': 'whatever',
     }
-    context_store = {}
+    context_store = Context()
 
     class Replacer:
         def __init__(self) -> None:
