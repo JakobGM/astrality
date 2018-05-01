@@ -42,18 +42,25 @@ class Context:
 
     def __init__(
         self,
-        content: Optional[Union['Context', dict]] = None,
+        content: Optional[Union['Context', dict, Path]] = None,
     ) -> None:
         """
-        Initialize a Context instance from another Context or dictionary.
+        Contstruct context object.
 
-        If not given an argument, an empty Context object is initialized.
+        :param content: Either dictionar, Context or Path object. If Path, then
+            content is compiled as a YAML template and imported.
+            If not given an argument, an empty Context object is initialized.
         """
         self._dict = {}
         self._max_key: Real = float(-inf)
 
-        if isinstance(content, (Context, dict,)):
+        if isinstance(content, (dict, Context,)):
             self.update(content)
+        elif isinstance(content, Path):
+            if content.is_file():
+                self.import_context(from_path=content)
+            elif (content / 'context.yml').is_file():
+                self.import_context(from_path=content / 'context.yml')
         elif content is not None:
             raise ValueError('Context initialized with wrong argument type.')
 

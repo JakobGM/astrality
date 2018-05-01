@@ -1,6 +1,7 @@
 """Tests for Context class."""
 from math import inf
 from pathlib import Path
+import shutil
 
 import pytest
 
@@ -205,3 +206,49 @@ def test_importing_context_from_compiled_yml_file():
     )
     assert context['section1']['var2'] == 'value1/value2'
     assert 'key_one' not in context['section1']
+
+
+def test_instantiating_context_object_with_path():
+    """Paths should be read into the context object."""
+    test_context = Path(__file__).parent / 'test_config' / 'test.yml'
+    context = Context(test_context)
+    assert context == Context({
+        'section1': {
+            'var1': 'value1',
+            'var2': 'value1/value2',
+        },
+        'section2': {
+            'var3': 'value1',
+            'empty_string_var': '',
+        },
+        'section3': {
+            'env_variable': 'test_value, hello',
+        },
+        'section4': {
+            1: 'primary_value',
+        },
+    })
+
+
+def test_instantiating_with_directory_path(tmpdir):
+    """Path directory should load context.yml."""
+    test_context = Path(__file__).parent / 'test_config' / 'test.yml'
+    shutil.copy(str(test_context), str(Path(tmpdir, 'context.yml')))
+
+    context = Context(Path(tmpdir))
+    assert context == Context({
+        'section1': {
+            'var1': 'value1',
+            'var2': 'value1/value2',
+        },
+        'section2': {
+            'var3': 'value1',
+            'empty_string_var': '',
+        },
+        'section3': {
+            'env_variable': 'test_value, hello',
+        },
+        'section4': {
+            1: 'primary_value',
+        },
+    })
