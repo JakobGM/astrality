@@ -13,7 +13,7 @@ from astrality.compiler import (
     compile_template_to_string,
     jinja_environment,
 )
-from astrality.resolver import Resolver
+from astrality.context import Resolver
 
 
 @pytest.fixture

@@ -31,7 +31,7 @@ from astrality.exceptions import (
     NonExistentEnabledModule,
 )
 from astrality.github import clone_repo, clone_or_pull_repo
-from astrality.resolver import Resolver
+from astrality.context import Resolver
 
 if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa

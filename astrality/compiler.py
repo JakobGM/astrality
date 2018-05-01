@@ -15,7 +15,7 @@ from jinja2 import (
 )
 
 from astrality.utils import generate_expanded_env_dict
-from astrality.resolver import Resolver
+from astrality.context import Resolver
 from astrality.utils import run_shell
 
 Context = Dict[str, Resolver]

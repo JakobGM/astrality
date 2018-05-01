@@ -11,7 +11,7 @@ import pytest
 
 from astrality import event_listener
 from astrality.module import Module, ModuleManager
-from astrality.resolver import Resolver
+from astrality.context import Resolver
 from astrality.tests.utils import RegexCompare
 from astrality.utils import generate_expanded_env_dict
 

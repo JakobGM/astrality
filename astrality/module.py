@@ -35,7 +35,7 @@ from astrality.event_listener import (
     event_listener_factory,
 )
 from astrality.filewatcher import DirectoryWatcher
-from astrality.resolver import Resolver
+from astrality.context import Resolver
 from astrality.requirements import Requirement, RequirementDict
 from astrality.utils import cast_to_list
 

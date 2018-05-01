@@ -3,7 +3,7 @@ from math import inf
 
 import pytest
 
-from astrality.resolver import Resolver
+from astrality.context import Resolver
 
 
 class TestResolverClass:
