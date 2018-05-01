@@ -52,9 +52,6 @@ def simple_application_config(
     config.update(default_global_options)
     config.update(_runtime)
 
-    config['context/env'] = expanded_env_dict
-    config['context/fonts'] = {1: 'FuraMono Nerd Font'}
-
     # Increase run timeout, so that we can inspect the shell results
     config['config/modules'] = {'run_timeout': 2}
     return config
@@ -68,12 +65,20 @@ def module(
     return Module(
         module_config=valid_module_section,
         module_directory=test_config_directory,
+        context_store=Context({
+            'fonts': {1: 'FuraMono Nerd Font'},
+        })
     )
 
 
 @pytest.fixture
 def single_module_manager(simple_application_config):
-    return ModuleManager(simple_application_config)
+    return ModuleManager(
+        config=simple_application_config,
+        context=Context({
+            'fonts': {1: 'FuraMono Nerd Font'},
+        }),
+    )
 
 
 class TestModuleClass:
@@ -299,7 +304,12 @@ class TestModuleClass:
 
         compiled_template_content = 'some text\n' + os.environ['USER'] \
             + '\nFuraMono Nerd Font'
-        module_manager = ModuleManager(simple_application_config)
+        module_manager = ModuleManager(
+            config=simple_application_config,
+            context=Context({
+                'fonts': {1: 'FuraMono Nerd Font'},
+            }),
+        )
         directory = module_manager.config_directory
 
         caplog.clear()
@@ -342,7 +352,12 @@ def test_running_finished_tasks_command(
         hour=12,
     )
     freezer.move_to(thursday)
-    module_manager = ModuleManager(simple_application_config)
+    module_manager = ModuleManager(
+        simple_application_config,
+        context=Context({
+            'fonts': {1: 'FuraMono Nerd Font'},
+        }),
+    )
 
     caplog.clear()
     module_manager.finish_tasks()
@@ -405,7 +420,12 @@ def test_has_unfinished_tasks(simple_application_config, freezer):
     freezer.move_to(midday)
 
     # At instanziation, the module should have unfinished tasks
-    weekday_module = ModuleManager(simple_application_config)
+    weekday_module = ModuleManager(
+        simple_application_config,
+        context=Context({
+            'fonts': {1: 'FuraMono Nerd Font'},
+        }),
+    )
     assert weekday_module.has_unfinished_tasks() is True
 
     # After finishing tasks, there should be no unfinished tasks (duh!)
@@ -475,7 +495,6 @@ def config_with_modules(default_global_options):
             'enabled': False,
             'event_listener': 'static',
         },
-        'context/fonts': {1: 'FuraCode Nerd Font'},
         '_runtime': {
             'config_directory': Path(__file__).parents[3],
             'temp_directory': '/tmp',
@@ -498,7 +517,12 @@ def test_import_sections_on_event(config_with_modules, freezer):
     }]
 
     config_with_modules.pop('module/solar_module')
-    module_manager = ModuleManager(config_with_modules)
+    module_manager = ModuleManager(
+        config_with_modules,
+        context=Context({
+            'fonts': {1: 'FuraCode Nerd Font'},
+        }),
+    )
 
     assert module_manager.application_context['fonts'] \
         == Context({1: 'FuraCode Nerd Font'})
@@ -506,9 +530,6 @@ def test_import_sections_on_event(config_with_modules, freezer):
     sunday = datetime(year=2018, month=2, day=4)
     freezer.move_to(sunday)
     module_manager.finish_tasks()
-
-    # Make application_context comparisons easier
-    del module_manager.application_context._dict['env']
 
     # Startup does not count as a event, so no context has been imported
     assert module_manager.application_context == Context({
@@ -545,10 +566,12 @@ def test_import_sections_on_startup(config_with_modules, freezer):
         'from_section': '{event}',
     }]
     config_with_modules.pop('module/solar_module')
-    module_manager = ModuleManager(config_with_modules)
-
-    # Remove 'env' context for easier comparisons
-    del module_manager.application_context._dict['env']
+    module_manager = ModuleManager(
+        config=config_with_modules,
+        context=Context({
+            'fonts': {1: 'FuraCode Nerd Font'},
+        }),
+    )
 
     # Before finishing tasks, no context sections are imported
     assert module_manager.application_context['fonts'] \
@@ -579,8 +602,11 @@ class TestModuleManager:
         ModuleManager(conf)
 
     @pytest.mark.slow
-    def test_using_finish_tasks_on_example_configuration(self, conf):
-        module_manager = ModuleManager(conf)
+    def test_using_finish_tasks_on_example_configuration(self, conf, context):
+        module_manager = ModuleManager(
+            config=conf,
+            context=context,
+        )
         module_manager.finish_tasks()
 
     def test_number_of_modules_instanziated_by_module_manager(

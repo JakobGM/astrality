@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from astrality.config import dict_from_config_file
+from astrality.context import Context
 from astrality.module import ModuleManager
 
 
@@ -328,9 +329,6 @@ def test_recompile_templates_when_modified(
                 },
             },
         },
-        'context/section': {
-            1: 'value',
-        },
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
@@ -338,7 +336,12 @@ def test_recompile_templates_when_modified(
         'reprocess_modified_files': True,
     }
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        context=Context({
+            'section': {1: 'value'},
+        })
+    )
 
     # Sanity check before beginning testing
     with open(template) as file:
@@ -440,14 +443,16 @@ def test_importing_context_on_modification(
                 },
             },
         },
-        'context/car': {
-            'manufacturer': 'Tesla',
-        },
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        context=Context({
+            'car': {'manufacturer': 'Tesla'},
+        }),
+    )
     module_manager.finish_tasks()
 
     # Sanity check before modifying file1
@@ -482,9 +487,6 @@ def test_that_stowed_templates_are_also_watched(
                 },
             },
         },
-        'context/section': {
-            1: 'value',
-        },
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
@@ -492,7 +494,12 @@ def test_that_stowed_templates_are_also_watched(
         'reprocess_modified_files': True,
     }
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        context=Context({
+            'section': {1: 'value'},
+        }),
+    )
 
     # Sanity check before beginning testing
     with open(template) as file:

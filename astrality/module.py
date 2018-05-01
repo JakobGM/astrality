@@ -21,7 +21,6 @@ from typing import (
 from mypy_extensions import TypedDict
 
 from astrality.actions import ActionBlock, ActionBlockDict
-from astrality.compiler import context
 from astrality.config import (
     ApplicationConfig,
     GlobalModulesConfig,
@@ -372,14 +371,23 @@ class Module:
 
 
 class ModuleManager:
-    """A manager for operating on a set of modules."""
+    """
+    A manager for operating on a set of modules.
 
-    def __init__(self, config: ApplicationConfig) -> None:
+    :param config: Modules and global configuration options.
+    :param context: Global context.
+    """
+
+    def __init__(
+        self,
+        config: ApplicationConfig,
+        context: Context = Context(),
+    ) -> None:
         """Initialize a ModuleManager object from `astrality.yml` dict."""
         self.config_directory = Path(config['_runtime']['config_directory'])
         self.temp_directory = Path(config['_runtime']['temp_directory'])
         self.application_config = config
-        self.application_context: Context = Context()
+        self.application_context = context
 
         self.startup_done = False
         self.last_module_events: Dict[str, str] = {}
@@ -394,20 +402,20 @@ class ModuleManager:
 
         self.modules: Dict[str, Module] = {}
 
-        # Application context is used in compiling external config sources
-        application_context = context(config)
-
         # Insert externally managed modules
         for external_module_source \
                 in self.global_modules_config.external_module_sources:
-            module_directory = external_module_source.directory
+            # Insert context defined in external configuration
+            module_context = external_module_source.context(
+                context=self.application_context,
+            )
+            module_context.update(self.application_context)
+            self.application_context = module_context
 
             module_configs = external_module_source.config(
-                context=application_context,
+                context=self.application_context,
             )
-
-            # Insert context defined in external configuration
-            self.application_context.update(context(module_configs))
+            module_directory = external_module_source.directory
 
             for section, options in module_configs.items():
                 module_config = {section: options}
@@ -427,10 +435,6 @@ class ModuleManager:
                     global_modules_config=self.global_modules_config,
                 )
                 self.modules[module.name] = module
-
-        # Update the context from `astrality.yml`, overwriting any defined
-        # contexts in external modules in the case of naming conflicts
-        self.application_context.update(application_context)
 
         # Insert modules defined in `astrality.yml`
         for section, options in config.items():
@@ -648,13 +652,16 @@ class ModuleManager:
             return
 
         # Hot reloading is enabled, get the new configuration dict
-        new_application_config = user_configuration(
+        new_application_config, new_context = user_configuration(
             config_directory=self.config_directory,
         )
 
         try:
             # Reinstantiate this object
-            new_module_manager = ModuleManager(new_application_config)
+            new_module_manager = ModuleManager(
+                config=new_application_config,
+                context=new_context,
+            )
 
             # Run all old exit actions, since the new config is valid
             self.exit()

@@ -75,12 +75,15 @@ def main(logging_level: str = 'INFO', test: bool = False):
         signal.signal(signal.SIGTERM, exit_handler)
 
     try:
-        config = user_configuration()
+        config, global_context = user_configuration()
 
         # Delay further actions if configuration says so
         time.sleep(config['config/astrality']['startup_delay'])
 
-        module_manager = ModuleManager(config)
+        module_manager = ModuleManager(
+            config=config,
+            context=global_context,
+        )
         module_manager.finish_tasks()
 
         while True:

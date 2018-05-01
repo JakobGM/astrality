@@ -11,6 +11,7 @@ from astrality.config import (
     ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
     user_configuration,
 )
+from astrality.context import Context
 from astrality.module import Module, ModuleManager
 from astrality.utils import generate_expanded_env_dict
 
@@ -33,7 +34,15 @@ def conf():
     """Return the configuration object for the example configuration."""
     this_test_file = os.path.abspath(__file__)
     conf_path = Path(this_test_file).parents[1] / 'config'
-    return user_configuration(conf_path)
+    return user_configuration(conf_path)[0]
+
+
+@pytest.fixture(scope='session', autouse=True)
+def context():
+    """Return the context object for the example configuration."""
+    this_test_file = os.path.abspath(__file__)
+    conf_path = Path(this_test_file).parents[1] / 'config'
+    return user_configuration(conf_path)[1]
 
 
 @pytest.fixture
@@ -91,6 +100,7 @@ def template_directory(test_config_directory):
 def module_factory(test_config_directory):
     """Return Module factory for testing."""
     def _module_factory(
+        name='test',
         on_startup=None,
         on_modified=None,
         on_exit=None,
@@ -102,7 +112,7 @@ def module_factory(test_config_directory):
     ) -> Module:
         """Return module with specified action blocks and config."""
         module = Module(
-            module_config={'module/test': {}},
+            module_config={f'module/{name}': {}},
             module_directory=module_directory,
             replacer=replacer,
             context_store=context_store,
@@ -119,6 +129,38 @@ def module_factory(test_config_directory):
         return module
 
     return _module_factory
+
+
+@pytest.fixture
+def module_manager_factory(default_global_options, _runtime):
+    """Return ModuleManager factory for testing."""
+    default_global_options.update(_runtime)
+
+    def _module_manager_factory(
+        *modules,
+        context=Context(),
+    ) -> ModuleManager:
+        """Return ModuleManager object with given modules and context."""
+        module_manager = ModuleManager(
+            config=default_global_options,
+            context=context,
+        )
+        module_manager.modules = {
+            module.name: module
+            for module
+            in modules
+        }
+
+        # Insert correct context for all actions
+        for module in modules:
+            for block in module.all_action_blocks():
+                for action_type in ActionBlock.action_types:
+                    for actions in getattr(block, f'_{action_type}_actions'):
+                        actions.context_store = context
+
+        return module_manager
+
+    return _module_manager_factory
 
 
 @pytest.fixture
@@ -151,6 +193,7 @@ def action_block_factory(test_config_directory):
     """Return action block factory function for testing."""
 
     def _action_block_factory(
+        import_context={},
         compile={},
         copy={},
         run={},
@@ -158,10 +201,11 @@ def action_block_factory(test_config_directory):
         symlink={},
         directory=test_config_directory,
         replacer=lambda x: x,
-        context_store={},
+        context_store=Context(),
     ):
         """Return module with given parameters."""
         config = {
+            'import_context': import_context,
             'compile': compile,
             'copy': copy,
             'run': run,

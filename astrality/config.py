@@ -32,6 +32,7 @@ from astrality.exceptions import (
 )
 from astrality.github import clone_repo, clone_or_pull_repo
 from astrality.context import Context
+from astrality import utils
 
 if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa
@@ -164,7 +165,7 @@ def infer_runtime_variables_from_config(
 
 def user_configuration(
     config_directory: Optional[Path] = None,
-) -> ApplicationConfig:
+) -> Tuple[ApplicationConfig, Context]:
     """
     Return dictionary containing the users configuration.
 
@@ -196,11 +197,6 @@ def user_configuration(
         context=global_context,
         prepend='config/',
     )
-    config.update({
-        'context/' + str(key): value
-        for key, value
-        in global_context.items()
-    })
 
     # Globally defined modules
     modules_file = config_directory / 'modules.yml'
@@ -226,7 +222,7 @@ def user_configuration(
         ASTRALITY_DEFAULT_GLOBAL_SETTINGS['config/astrality'].copy()
     config['config/astrality'].update(user_settings)
 
-    return config
+    return config, global_context
 
 
 def create_config_directory(path: Optional[Path] = None, empty=False) -> Path:
@@ -396,15 +392,10 @@ class ModuleSource(ABC):
         if hasattr(self, '_context'):
             return self._context
 
-        module_context: compiler.Context = dict_from_config_file(  # type: ignore  # noqa
-            config_file=self.context_file,
+        self._context = Context(utils.compile_yaml(
+            path=self.context_file,
             context=context,
-        )
-        self._context = Context({
-            f'context/{section_name}': section_content
-            for section_name, section_content
-            in module_context.items()
-        })
+        ))
         return self._context
 
     def config(self, context: Context = Context()) -> Dict:
@@ -421,10 +412,7 @@ class ModuleSource(ABC):
         if hasattr(self, '_config'):
             return self._config
 
-        config = self.modules(context=context)
-        context = self.context(context=context)
-        config.update(context._dict)
-        self._config = config
+        self._config = self.modules(context=context)
         return self._config
 
     def __contains__(self, module_name: str) -> bool:

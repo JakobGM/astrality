@@ -4,7 +4,8 @@ import time
 
 import pytest
 
-from astrality.module import ModuleManager, GlobalModulesConfig
+from astrality.context import Context
+from astrality.module import ModuleManager
 
 
 def test_that_external_modules_are_brought_in(
@@ -105,19 +106,20 @@ def test_that_external_module_contexts_are_imported_correctly(
             'modules_directory': 'test_modules',
             'enabled_modules': [{'name': 'module_with_context::*', }],
         },
-        'context/china': {
+    }
+
+    context = Context({
+        'china': {
             'capitol': 'beijing',
         },
-    }
+    })
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(application_config, context=context)
 
-    expected_context = {
+    expected_context = Context({
         'laos': {'capitol': 'vientiane'},
         'china': {'capitol': 'beijing'},
-    }
-    assert len(module_manager.application_context) == 2
-    for key, value in expected_context.items():
-        assert module_manager.application_context[key] == value
+    })
+    assert module_manager.application_context == expected_context

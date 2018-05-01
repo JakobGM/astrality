@@ -210,7 +210,10 @@ class TestDirectoryModuleSource:
                     'run': 'echo Greetings from the USA!',
                 },
             },
-            'context/geography': {
+        }
+
+        assert directory_module.context({}) == {
+            'geography': {
                 'USA': {
                     'capitol': 'Washington D.C.',
                 },
@@ -232,7 +235,10 @@ class TestDirectoryModuleSource:
                     'run': 'echo Greetings from Brazil!',
                 },
             },
-            'context/geography': {
+        }
+
+        assert directory_module.context({}) == {
+            'geography': {
                 'brazil': {
                     'capitol': 'Brasilia',
                 },
@@ -423,7 +429,10 @@ class TestGithubModuleSource:
                     'run': "echo 'Greetings from Ghana!'",
                 },
             },
-            'context/geography': {
+        }
+
+        assert github_module_source.context({}) == {
+            'geography': {
                 'botswana': {
                     'capitol': 'Gaborone',
                 },
