@@ -57,7 +57,7 @@ Implementation:
 - Run exit command after confirming validity of astrality.yml
 - {module.template_name} replacement with __format__?
 - Skip period_change_commands if self.type == static
-- Use hash on Resolver to determine if a template needs recompilation.
+- Use hash on Context to determine if a template needs recompilation.
 - Fix all # type: ignore and and force error on missing annotations
 - Use timedelta.max in Static timer
 - Use dictionaries as return value of RunAction.execute(). Better null object pattern.

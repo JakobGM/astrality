@@ -44,7 +44,7 @@ Here we offer a quick overview of the most relevant python modules in the code b
 ``astrality.event_listener``:
     Implements all the types of module event listeners as subclasses of ``EventListener``.
 
-``astrality.resolver``:
+``astrality.context``:
     Defines a dictionary-like data structure which contains context values, passed off to Jinja2 template compilation.
 
 ``astrality.compiler``:

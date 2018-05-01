@@ -1,4 +1,4 @@
-"""Tests for Resolver class."""
+"""Tests for Context class."""
 from math import inf
 
 import pytest
@@ -6,7 +6,7 @@ import pytest
 from astrality.context import Context
 
 
-class TestResolverClass:
+class TestContextClass:
     def test_initialization_of_config_class_with_no_config_parser(self):
         Context()
 
@@ -41,7 +41,7 @@ class TestResolverClass:
 
     def test_getting_item_from_empty_config(self):
         config = Context()
-        with pytest.raises(KeyError) as exception:
+        with pytest.raises(KeyError):
             config['empty_config_with_no_key']
 
     def test_accessing_existing_key(self):
@@ -109,7 +109,11 @@ class TestResolverClass:
         config['4'] = 'test'
         config['font'] = 'Comic Sans'
         config['5'] = '8'
-        assert list(config.items()) == [('4', 'test',), ('font', 'Comic Sans',), ('5', '8',)]
+        assert list(config.items()) == [
+            ('4', 'test',),
+            ('font', 'Comic Sans',),
+            ('5', '8',),
+        ]
 
     def test_keys(self):
         config = Context()
@@ -146,26 +150,26 @@ class TestResolverClass:
         config.update(another_conf_dict)
         assert config == merged_conf_dicts
 
-    def test_resolver_class(self):
-        resolver = Context()
-        resolver[1] = 'firs_value'
-        resolver[2] = 'second_value'
-        resolver['string_key'] = 'string_value'
+    def test_context_class(self):
+        context = Context()
+        context[1] = 'firs_value'
+        context[2] = 'second_value'
+        context['string_key'] = 'string_value'
 
-        assert resolver[1] == 'firs_value'
-        assert resolver[2] == 'second_value'
-        assert resolver[3] == 'second_value'
-        assert resolver['string_key'] == 'string_value'
+        assert context[1] == 'firs_value'
+        assert context[2] == 'second_value'
+        assert context[3] == 'second_value'
+        assert context['string_key'] == 'string_value'
 
-    def test_initializing_resolver_with_resolver(self):
-        resolver1 = Context({'key1': 1})
-        resolver2 = Context(resolver1)
-        assert resolver1 == resolver2
+    def test_initializing_context_with_context(self):
+        context1 = Context({'key1': 1})
+        context2 = Context(context1)
+        assert context1 == context2
 
-    def test_updating_resolver_with_resolver(self):
-        resolver1 = Context({'key1': 1})
-        resolver2 = Context({'key2': 2})
+    def test_updating_context_with_context(self):
+        context1 = Context({'key1': 1})
+        context2 = Context({'key2': 2})
 
-        resolver1.update(resolver2)
+        context1.update(context2)
         expected_result = Context({'key1': 1, 'key2': 2})
-        assert resolver1 == expected_result
+        assert context1 == expected_result
