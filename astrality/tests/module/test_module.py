@@ -11,7 +11,7 @@ import pytest
 
 from astrality import event_listener
 from astrality.module import Module, ModuleManager
-from astrality.context import Resolver
+from astrality.context import Context
 from astrality.tests.utils import RegexCompare
 from astrality.utils import generate_expanded_env_dict
 
@@ -501,19 +501,19 @@ def test_import_sections_on_event(config_with_modules, freezer):
     module_manager = ModuleManager(config_with_modules)
 
     assert module_manager.application_context['fonts'] \
-        == {1: 'FuraCode Nerd Font'}
+        == Context({1: 'FuraCode Nerd Font'})
 
     sunday = datetime(year=2018, month=2, day=4)
     freezer.move_to(sunday)
     module_manager.finish_tasks()
 
     # Make application_context comparisons easier
-    module_manager.application_context.pop('env')
+    del module_manager.application_context._dict['env']
 
     # Startup does not count as a event, so no context has been imported
-    assert module_manager.application_context == {
-        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
-    }
+    assert module_manager.application_context == Context({
+        'fonts': Context({1: 'FuraCode Nerd Font'}),
+    })
 
     monday = datetime(year=2018, month=2, day=5)
     freezer.move_to(monday)
@@ -521,8 +521,8 @@ def test_import_sections_on_event(config_with_modules, freezer):
 
     # The event has now changed, so context should be imported
     assert module_manager.application_context == {
-        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
-        'week': Resolver({'day': 'monday'}),
+        'fonts': Context({1: 'FuraCode Nerd Font'}),
+        'week': Context({'day': 'monday'}),
     }
 
 
@@ -548,7 +548,7 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     module_manager = ModuleManager(config_with_modules)
 
     # Remove 'env' context for easier comparisons
-    module_manager.application_context.pop('env')
+    del module_manager.application_context._dict['env']
 
     # Before finishing tasks, no context sections are imported
     assert module_manager.application_context['fonts'] \
@@ -559,8 +559,8 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     freezer.move_to(sunday)
     module_manager.finish_tasks()
     assert module_manager.application_context == {
-        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
-        'start_day': Resolver({'day': 'sunday'}),
+        'fonts': Context({1: 'FuraCode Nerd Font'}),
+        'start_day': Context({'day': 'sunday'}),
     }
 
     # 'now_day' should now be added, but 'start_day' should remain unchanged
@@ -568,9 +568,9 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     freezer.move_to(monday)
     module_manager.finish_tasks()
     assert module_manager.application_context == {
-        'fonts': Resolver({1: 'FuraCode Nerd Font'}),
-        'start_day': Resolver({'day': 'sunday'}),
-        'day_now': Resolver({'day': 'monday'}),
+        'fonts': Context({1: 'FuraCode Nerd Font'}),
+        'start_day': Context({'day': 'sunday'}),
+        'day_now': Context({'day': 'monday'}),
     }
 
 

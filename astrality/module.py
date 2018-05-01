@@ -20,7 +20,6 @@ from typing import (
 
 from mypy_extensions import TypedDict
 
-from astrality import compiler
 from astrality.actions import ActionBlock, ActionBlockDict
 from astrality.compiler import context
 from astrality.config import (
@@ -35,7 +34,7 @@ from astrality.event_listener import (
     event_listener_factory,
 )
 from astrality.filewatcher import DirectoryWatcher
-from astrality.context import Resolver
+from astrality.context import Context
 from astrality.requirements import Requirement, RequirementDict
 from astrality.utils import cast_to_list
 
@@ -96,7 +95,7 @@ class Module:
         module_config: ModuleConfig,
         module_directory: Path,
         replacer: Callable[[str], str] = lambda string: string,
-        context_store: compiler.Context = {},
+        context_store: Context = Context(),
         global_modules_config: Optional[GlobalModulesConfig] = None,
     ) -> None:
         """
@@ -380,7 +379,7 @@ class ModuleManager:
         self.config_directory = Path(config['_runtime']['config_directory'])
         self.temp_directory = Path(config['_runtime']['temp_directory'])
         self.application_config = config
-        self.application_context: Dict[str, Resolver] = {}
+        self.application_context: Context = Context()
 
         self.startup_done = False
         self.last_module_events: Dict[str, str] = {}

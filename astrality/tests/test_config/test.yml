@@ -1,15 +1,15 @@
-context/section1:
+section1:
     var1: value1
     var2: value1/value2
 
 
-context/section2:
+section2:
     # Comment
     var3: value1
     empty_string_var: ''
 
-context/section3:
+section3:
     env_variable: {{ env.EXAMPLE_ENV_VARIABLE }}, hello
 
-context/section4:
+section4:
     1: primary_value

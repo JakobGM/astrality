@@ -31,12 +31,10 @@ from astrality.exceptions import (
     NonExistentEnabledModule,
 )
 from astrality.github import clone_repo, clone_or_pull_repo
-from astrality.context import Resolver
+from astrality.context import Context
 
 if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa
-
-Context = Dict[str, Resolver]
 
 logger = logging.getLogger('astrality')
 
@@ -114,7 +112,7 @@ def infer_config_location(
 
 def dict_from_config_file(
     config_file: Path,
-    context: Dict[str, Resolver],
+    context: Context,
     prepend: str = '',
 ) -> ApplicationConfig:
     """
@@ -168,7 +166,7 @@ def user_configuration(
     config_directory: Optional[Path] = None,
 ) -> ApplicationConfig:
     """
-    Return Resolver object containing the users configuration.
+    Return dictionary containing the users configuration.
 
     Configuration is read from astrality.yml, modules.yml and context.yml,
     and merged into a single dictionary, where the keys are prepended with
@@ -185,12 +183,12 @@ def user_configuration(
     # First get global context, which we can use when compiling other files
     context_file = config_directory / 'context.yml'
     if context_file.exists():
-        global_context = dict_from_config_file(
+        global_context = Context(dict_from_config_file(
             config_file=context_file,
-            context={},
-        )
+            context=Context(),
+        ))
     else:
-        global_context = {}
+        global_context = Context()
 
     # Global configuration options
     config = dict_from_config_file(  # type: ignore
@@ -251,12 +249,9 @@ def insert_into(
         f'Importing context section {section} from {str(from_config_file)}',
     )
 
-    # Context files do not insert context values, as that would cause a lot
-    # of complexity for end users. Old context values will be inserted
-    # for placeholders, etc.
-    contexts = compiler.context(dict_from_config_file(
+    contexts = Context(dict_from_config_file(
         from_config_file,
-        context={},
+        context=context,
     ))
 
     if from_section and section is None:
@@ -385,7 +380,7 @@ class ModuleSource(ABC):
     _modules: Dict[str, 'ModuleConfigDict']
 
     # Cached property containing module context
-    _context: compiler.Context
+    _context: Context
 
     # Cached property containing entire configuration, modules + context
     _config: Dict
@@ -399,7 +394,7 @@ class ModuleSource(ABC):
         """Initialize a module source from an enabling statement."""
         raise NotImplementedError
 
-    def modules(self, context: Dict[str, Resolver]) -> Dict[Any, Any]:
+    def modules(self, context: Context) -> Dict[Any, Any]:
         """
         Return modules defined in modules source.
 
@@ -427,7 +422,7 @@ class ModuleSource(ABC):
         }
         return self._modules
 
-    def context(self, context: compiler.Context = {}) -> Dict:
+    def context(self, context: Context = Context()) -> Context:
         """
         Return context defined in module source.
 
@@ -435,7 +430,7 @@ class ModuleSource(ABC):
         :return: Context dictionary.
         """
         if not self.context_file.exists():
-            return {}
+            return Context()
 
         if hasattr(self, '_context'):
             return self._context
@@ -444,14 +439,14 @@ class ModuleSource(ABC):
             config_file=self.context_file,
             context=context,
         )
-        self._context = {
+        self._context = Context({
             f'context/{section_name}': section_content
             for section_name, section_content
             in module_context.items()
-        }
+        })
         return self._context
 
-    def config(self, context: compiler.Context = {}) -> Dict:
+    def config(self, context: Context = Context()) -> Dict:
         """
         Return all configuration options defined in module source.
 
@@ -467,7 +462,7 @@ class ModuleSource(ABC):
 
         config = self.modules(context=context)
         context = self.context(context=context)
-        config.update(context)
+        config.update(context._dict)
         self._config = config
         return self._config
 
@@ -745,7 +740,7 @@ class EnabledModules:
 
     def compile_config_files(
         self,
-        context: Dict[str, Resolver],
+        context: Context,
     ):
         """Compile all config templates with context."""
         for source in (
@@ -853,7 +848,7 @@ class GlobalModulesConfig:
 
     def compile_config_files(
         self,
-        context: Dict[str, Resolver],
+        context: Context,
     ):
         """Compile all config templates with context."""
         self.enabled_modules.compile_config_files(context)
@@ -861,7 +856,7 @@ class GlobalModulesConfig:
 
 def filter_config_file(
     config_file: Path,
-    context: Dict[str, Resolver],
+    context: Context,
     enabled_module_name: str,
     prepend: str,
 ) -> Dict[str, 'ModuleConfigDict']:

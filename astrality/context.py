@@ -1,4 +1,4 @@
-"""Module defining Resolver class for templating context handling."""
+"""Module defining Context class for templating context handling."""
 
 from math import inf
 from numbers import Number
@@ -19,12 +19,12 @@ Key = Union[str, Real]
 Value = Any
 
 
-class Resolver:
+class Context:
     """
     Dictionary-like object whith integer index resolution.
 
     An example of its functionality:
-    replacements = Resolver({
+    replacements = Context({
     'colors': {1: 'CACCFD', 2: 'BACBEB'}
     })
     replacements['colors'][1]
@@ -35,24 +35,24 @@ class Resolver:
     >>> 'BACBEB'
     """
 
-    _dict: Union['Resolver', Dict[Key, Value]]
+    _dict: Dict[Key, Value]
 
     def __init__(
         self,
-        content: Optional[Union['Resolver', dict]] = None,
+        content: Optional[Union['Context', dict]] = None,
     ) -> None:
         """
-        Initialize a Resolver instance from another Resolver or dictionary.
+        Initialize a Context instance from another Context or dictionary.
 
-        If not given an argument, an empty Resolver object is initialized.
+        If not given an argument, an empty Context object is initialized.
         """
         self._dict = {}
         self._max_key: Real = float(-inf)
 
-        if isinstance(content, (Resolver, dict,)):
+        if isinstance(content, (Context, dict,)):
             self.update(content)
         elif content is not None:
-            raise ValueError('Resolver initialized with wrong argument type.')
+            raise ValueError('Context initialized with wrong argument type.')
 
         # Determine the greatest number index inserted
         for key in self._dict.keys():
@@ -60,14 +60,14 @@ class Resolver:
                 self._max_key = max(key, self._max_key)
 
     def __eq__(self, other) -> bool:
-        """Check if content is identical to other Resolver or dictionary."""
-        if isinstance(other, Resolver):
+        """Check if content is identical to other Context or dictionary."""
+        if isinstance(other, Context):
             return self._dict == other._dict
         elif isinstance(other, dict):
             return self._dict == other
         else:
             raise RuntimeError(
-                f'Resolver comparison with unknown type "{type(other)}"',
+                f'Context comparison with unknown type "{type(other)}"',
             )
 
     def __setitem__(self, key: Key, value: Value) -> None:
@@ -76,8 +76,8 @@ class Resolver:
             self._max_key = max(key, self._max_key)
 
         if isinstance(value, dict):
-            # Insterted dictionaries are cast to Resolver instances
-            self._dict[key] = Resolver(value)
+            # Insterted dictionaries are cast to Context instances
+            self._dict[key] = Context(value)
         else:
             self._dict[key] = value
 
@@ -115,38 +115,38 @@ class Resolver:
             return defualt
 
     def __iter__(self) -> Iterable[Value]:
-        """Return iterable of Resolver object."""
+        """Return iterable of Context object."""
         return self._dict.__iter__()
 
     def __repr__(self) -> str:
-        """Return human-readable representation of Resolver object."""
-        return f'Resolver({self._dict.__repr__()})'
+        """Return human-readable representation of Context object."""
+        return f'Context({self._dict.__repr__()})'
 
     def __str__(self) -> str:
-        """Return string representation of Resolver object."""
-        return f'Resolver({self._dict.__str__()})'
+        """Return string representation of Context object."""
+        return f'Context({self._dict.__str__()})'
 
     def __len__(self) -> int:
-        """Return the number of key inserted into the Resolver object."""
+        """Return the number of key inserted into the Context object."""
         return self._dict.__len__()
 
     def __contains__(self, key: Key) -> bool:
-        """Return true if `key` is inserted into Resolver object."""
+        """Return true if `key` is inserted into Context object."""
         return self._dict.__contains__(key)
 
     def items(self) -> ItemsView[Key, Value]:
-        """Return all key, value pairs of the Resolver object."""
+        """Return all key, value pairs of the Context object."""
         return self._dict.items()
 
     def keys(self) -> KeysView[Key]:
-        """Return all keys which have been inserted into the Resolver object."""
+        """Return all keys which have been inserted into the Context object."""
         return self._dict.keys()
 
     def values(self) -> ValuesView[Value]:
-        """Return all values inserted into the Resolver object."""
+        """Return all values inserted into the Context object."""
         return self._dict.values()
 
-    def update(self, other: Union['Resolver', dict]) -> None:
-        """Overwrite all items from other onto the Resolver object."""
+    def update(self, other: Union['Context', dict]) -> None:
+        """Overwrite all items from other onto the Context object."""
         for key, value in other.items():
             self.__setitem__(key, value)

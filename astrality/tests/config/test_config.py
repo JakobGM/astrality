@@ -12,6 +12,7 @@ from astrality.config import (
     insert_into,
     resolve_config_directory,
 )
+from astrality.context import Context
 from astrality.utils import generate_expanded_env_dict
 
 
@@ -20,28 +21,28 @@ def dummy_config():
     test_conf = Path(__file__).parents[1] / 'test_config' / 'test.yml'
     return dict_from_config_file(
         config_file=test_conf,
-        context={},
+        context=Context(),
     )
 
 
 class TestAllConfigFeaturesFromDummyConfig:
     def test_normal_variable(self, dummy_config):
-        assert dummy_config['context/section1']['var1'] == 'value1'
+        assert dummy_config['section1']['var1'] == 'value1'
 
     def test_variable_interpolation(self, dummy_config):
-        assert dummy_config['context/section1']['var2'] == 'value1/value2'
-        assert dummy_config['context/section2']['var3'] == 'value1'
+        assert dummy_config['section1']['var2'] == 'value1/value2'
+        assert dummy_config['section2']['var3'] == 'value1'
 
     def test_empty_string_variable(self, dummy_config):
-        assert dummy_config['context/section2']['empty_string_var'] == ''
+        assert dummy_config['section2']['empty_string_var'] == ''
 
     def test_non_existing_variable(self, dummy_config):
         with pytest.raises(KeyError):
-            assert dummy_config['context/section2']['not_existing_option'] \
+            assert dummy_config['section2']['not_existing_option'] \
                 is None
 
     def test_environment_variable_interpolation(self, dummy_config):
-        assert dummy_config['context/section3']['env_variable'] \
+        assert dummy_config['section3']['env_variable'] \
             == 'test_value, hello'
 
 

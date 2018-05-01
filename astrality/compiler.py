@@ -15,10 +15,9 @@ from jinja2 import (
 )
 
 from astrality.utils import generate_expanded_env_dict
-from astrality.context import Resolver
+from astrality.context import Context
 from astrality.utils import run_shell
 
-Context = Dict[str, Resolver]
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
 logger = logging.getLogger('astrality')
@@ -41,9 +40,9 @@ def context(config: ApplicationConfig) -> Context:
 
     Only sections named context/* are considered to be context sections, and
     these sections are returned with 'context/' stripped away, and with their
-    contents cast to a Resolver instance.
+    contents cast to a Context instance.
     """
-    contents: Context = {}
+    contents: Context = Context()
     for section_name, section in config.items():
         if not isinstance(section_name, str) or \
            not len(section_name) > 8 or \
@@ -51,7 +50,7 @@ def context(config: ApplicationConfig) -> Context:
             continue
         else:
             category = section_name[8:]
-            contents[category] = Resolver(section)
+            contents[category] = Context(section)
 
     return contents
 

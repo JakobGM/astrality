@@ -1,19 +1,19 @@
-context/sunrise:
+sunrise:
     1: FC6F42
     2: DB4E38
 
-context/morning:
+morning:
     1: 5BA276
     2: 76B087
 
-context/afternoon:
+afternoon:
     1: FC6F42
     2: DB4E38
 
-context/sunset:
+sunset:
     2: 9B3A1A
     1: FEE676
 
-context/night:
+night:
     1: CACCFD
     2: 3F72E8

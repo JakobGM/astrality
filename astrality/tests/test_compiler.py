@@ -13,7 +13,7 @@ from astrality.compiler import (
     compile_template_to_string,
     jinja_environment,
 )
-from astrality.context import Resolver
+from astrality.context import Context
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_logging_undefined_variables(jinja_test_env, expanded_env_dict, caplog):
 
 def test_integer_indexed_templates(jinja_test_env):
     template = jinja_test_env.get_template('integer_indexed')
-    context = Resolver({'section': {1: 'one', 2: 'two'}})
+    context = Context({'section': {1: 'one', 2: 'two'}})
     assert template.render(context) == 'one\ntwo\ntwo'
 
 
@@ -113,20 +113,20 @@ def test_environment_variable_interpolation_by_preprocessing_conf_yaml_file():
     )
 
     expected_result = \
-'''context/section1:
+'''section1:
     var1: value1
     var2: value1/value2
 
 
-context/section2:
+section2:
     # Comment
     var3: value1
     empty_string_var: ''
 
-context/section3:
+section3:
     env_variable: test_value, hello
 
-context/section4:
+section4:
     1: primary_value'''
     assert expected_result == result
 

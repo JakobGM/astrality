@@ -41,6 +41,7 @@ from mypy_extensions import TypedDict
 
 from astrality import compiler, utils
 from astrality.config import expand_path, insert_into, GlobalModulesConfig
+from astrality.context import Context
 
 
 Replacer = Callable[[str], str]
@@ -74,7 +75,7 @@ class Action(abc.ABC):
         ],
         directory: Path,
         replacer: Replacer,
-        context_store: compiler.Context,
+        context_store: Context,
     ) -> None:
         """Contstruct action object."""
         # If no options are provided, use null object pattern
