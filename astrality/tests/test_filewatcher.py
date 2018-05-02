@@ -13,7 +13,6 @@ def watch_dir(tmpdir):
     """Instanciate a directory watcher and stop it after its use."""
     watched_directory = Path(tmpdir)
     test_file1 = watched_directory / 'tmp_test_file1'
-
     recursive_dir = watched_directory / 'test_folder'
     test_file2 = recursive_dir / 'tmp_test_file2'
 
@@ -109,6 +108,6 @@ def test_filesystem_watcher(watch_dir):
     test_file2.write_text('test')
 
     # Both the touch event and the write event are considered of interest
-    time.sleep(0.7)
+    time.sleep(2)
     assert event_saver.argument == test_file2
     assert event_saver.called >= 2
