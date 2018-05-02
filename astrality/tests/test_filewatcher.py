@@ -92,7 +92,7 @@ def test_filesystem_watcher(watch_dir):
     with open(test_file1, 'w') as file:
         file.write('test_content')
 
-    time.sleep(0.7)
+    time.sleep(2)
     assert event_saver.argument == test_file1
     assert event_saver.called >= 1
 
@@ -100,7 +100,7 @@ def test_filesystem_watcher(watch_dir):
     recursive_dir.mkdir(parents=True)
 
     # Subdirectories are not of interest
-    time.sleep(0.7)
+    time.sleep(2)
     assert event_saver.argument == test_file1
     assert event_saver.called >= 1
 

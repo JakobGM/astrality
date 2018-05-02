@@ -134,7 +134,7 @@ def test_on_modified_event_in_module(modules_config):
 
     # Trigger the on_modified event
     empty_template.write_text('new content')
-    time.sleep(1)
+    time.sleep(2)
 
     # And assert that the new template has been compiled
     assert empty_template_target.is_file()
@@ -199,7 +199,7 @@ def test_hot_reloading(
 
     # We now "edit" the configuration file
     shutil.copy(str(config2), str(target_config))
-    time.sleep(0.7)
+    time.sleep(2)
 
     # Since hot reloading is enabled, the new template target should be
     # compiled, and the old one cleaned up
@@ -208,7 +208,7 @@ def test_hot_reloading(
 
     # And we switch back again
     shutil.copy(str(config1), str(target_config))
-    time.sleep(0.7)
+    time.sleep(2)
     assert template_target1.is_file()
     assert not template_target2.is_file()
 
@@ -242,6 +242,7 @@ def three_watchable_files(test_config_directory):
         os.remove(file3)
 
 
+@pytest.mark.slow
 def test_all_three_actions_in_on_modified_block(
     three_watchable_files,
     test_config_directory,
@@ -295,7 +296,7 @@ def test_all_three_actions_in_on_modified_block(
 
     # Now modify file2 such that the on_modified block is triggered
     file2.write_text('some new content')
-    time.sleep(0.7)
+    time.sleep(2)
 
     # The on_modified run command should now have been executed
     assert file3.is_file()
@@ -303,6 +304,7 @@ def test_all_three_actions_in_on_modified_block(
     module_manager.exit()
 
 
+@pytest.mark.slow
 def test_recompile_templates_when_modified(three_watchable_files):
     template, target, _ = three_watchable_files
     template.touch()
@@ -340,13 +342,14 @@ def test_recompile_templates_when_modified(three_watchable_files):
 
     # Now write to the template and see if it is recompiled
     template.write_text('{{ section.2 }}')
-    time.sleep(0.7)
+    time.sleep(2)
     with open(target) as file:
         assert file.read() == 'value'
 
     module_manager.exit()
 
 
+@pytest.mark.slow
 def test_recompile_templates_when_modified_overridden(three_watchable_files):
     """
     If a file is watched in a on_modified block, it should override the
@@ -394,7 +397,7 @@ def test_recompile_templates_when_modified_overridden(three_watchable_files):
     # Now write to the template and see if it is *compiled*, but the on_modified
     # command is run instead
     template.write_text('{{ section.2 }}')
-    time.sleep(0.7)
+    time.sleep(2)
     with open(target) as file:
         assert file.read() == ''
     assert touch_target.is_file()
@@ -402,6 +405,7 @@ def test_recompile_templates_when_modified_overridden(three_watchable_files):
     module_manager.exit()
 
 
+@pytest.mark.slow
 def test_importing_context_on_modification(
     three_watchable_files,
     test_config_directory,
@@ -435,7 +439,7 @@ def test_importing_context_on_modification(
     # After modifying file1, Mercedes should have been imported
     file1.touch()
     file1.write_text('new content, resulting in importing Mercedes')
-    time.sleep(0.7)
+    time.sleep(2)
     assert module_manager.application_context['car']['manufacturer'] \
         == 'Mercedes'
 
@@ -481,7 +485,7 @@ def test_that_stowed_templates_are_also_watched(three_watchable_files):
 
     # Now write to the template and see if it is recompiled
     template.write_text('{{ section.2 }}')
-    time.sleep(0.7)
+    time.sleep(2)
     with open(target) as file:
         assert file.read() == 'value'
 

@@ -328,7 +328,7 @@ def test_running_finished_tasks_command(
             logging.INFO,
             RegexCompare(
                 r'\[Compiling\] Template: ".+/templates/test_template.conf" '
-                r'-> Target: "/tmp/compiled_result"'
+                r'-> Target: ".*compiled_result"'
             ),
         ),
         (
