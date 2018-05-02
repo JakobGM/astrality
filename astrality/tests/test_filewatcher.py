@@ -9,28 +9,14 @@ from astrality.filewatcher import DirectoryWatcher
 
 
 @pytest.yield_fixture
-def test_files():
-    """Return paths related to two test files and cleanup afterwards."""
-    watched_directory = Path('/tmp/astrality').resolve()
+def watch_dir(tmpdir):
+    """Instanciate a directory watcher and stop it after its use."""
+    watched_directory = Path(tmpdir)
     test_file1 = watched_directory / 'tmp_test_file1'
 
     recursive_dir = watched_directory / 'test_folder'
     test_file2 = recursive_dir / 'tmp_test_file2'
 
-    yield watched_directory, recursive_dir, test_file1, test_file2
-
-    # Cleanup files
-    if test_file1.is_file():
-        os.remove(test_file1)
-    if test_file2.is_file():
-        os.remove(test_file2)
-    if recursive_dir.is_dir():
-        shutil.rmtree(recursive_dir)
-
-
-@pytest.yield_fixture
-def watch_dir():
-    """Instanciate a directory watcher and stop it after its use."""
     class EventSaver:
         """Mock class for testing callback function."""
 
@@ -44,19 +30,33 @@ def watch_dir():
     event_saver = EventSaver()
 
     # Watch a temporary directory
-    watched_directory = Path('/tmp/astrality').resolve()
     dir_watcher = DirectoryWatcher(
         directory=watched_directory,
         on_modified=event_saver.save_argument,
     )
 
-    yield dir_watcher, event_saver
+    yield (
+        watched_directory,
+        recursive_dir,
+        test_file1,
+        test_file2,
+        dir_watcher,
+        event_saver,
+    )
 
     dir_watcher.stop()
 
+    # Cleanup files
+    if test_file1.is_file():
+        os.remove(test_file1)
+    if test_file2.is_file():
+        os.remove(test_file2)
+    if recursive_dir.is_dir():
+        shutil.rmtree(recursive_dir)
+
 
 @pytest.mark.slow
-def test_filesystem_watcher(test_files, watch_dir):
+def test_filesystem_watcher(watch_dir):
     """
     Test correct callback invocation on directory watching.
 
@@ -65,8 +65,14 @@ def test_filesystem_watcher(test_files, watch_dir):
     check if the lower bound of calls is satisfied, but do not test the exact
     number of calls to on_modified.
     """
-    watched_directory, recursive_dir, test_file1, test_file2 = test_files
-    dir_watcher, event_saver = watch_dir
+    (
+        watched_directory,
+        recursive_dir,
+        test_file1,
+        test_file2,
+        dir_watcher,
+        event_saver,
+    ) = watch_dir
 
     # Start watching the directory
     dir_watcher.start()
