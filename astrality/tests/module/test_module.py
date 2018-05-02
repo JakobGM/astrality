@@ -19,7 +19,7 @@ from astrality.utils import generate_expanded_env_dict
 @pytest.fixture
 def valid_module_section():
     return {
-        'module/test_module': {
+        'test_module': {
             'enabled': True,
             'event_listener': {'type': 'weekday'},
             'on_startup': {
@@ -37,18 +37,17 @@ def valid_module_section():
             'on_exit': {
                 'run': [{'shell': 'echo exit'}],
             },
-        }
+        },
     }
 
 
 @pytest.fixture
 def simple_application_config(
-    valid_module_section,
     expanded_env_dict,
     default_global_options,
     _runtime,
 ):
-    config = valid_module_section.copy()
+    config = {}
     config.update(default_global_options)
     config.update(_runtime)
 
@@ -63,7 +62,8 @@ def module(
     test_config_directory,
 ):
     return Module(
-        module_config=valid_module_section,
+        name='test_module',
+        module_config=valid_module_section['test_module'],
         module_directory=test_config_directory,
         context_store=Context({
             'fonts': {1: 'FuraMono Nerd Font'},
@@ -72,9 +72,10 @@ def module(
 
 
 @pytest.fixture
-def single_module_manager(simple_application_config):
+def single_module_manager(simple_application_config, valid_module_section):
     return ModuleManager(
         config=simple_application_config,
+        modules=valid_module_section,
         context=Context({
             'fonts': {1: 'FuraMono Nerd Font'},
         }),
@@ -87,55 +88,26 @@ class TestModuleClass:
         self,
         valid_module_section,
     ):
-        assert Module.valid_class_section(
-            section=valid_module_section,
+        assert Module.valid_module(
+            name='test',
+            config=valid_module_section,
             requires_timeout=2,
             requires_working_directory=Path('/'),
         ) is True
 
     def test_valid_class_section_method_with_disabled_module_section(self):
         disabled_module_section = {
-            'module/disabled_test_module': {
-                'enabled': False,
-                'on_startup': {'run': ['test']},
-                'on_event': {'run': ['']},
-                'on_exit': {'run': ['whatever']},
-            }
+            'enabled': False,
+            'on_startup': {'run': ['test']},
+            'on_event': {'run': ['']},
+            'on_exit': {'run': ['whatever']},
         }
-        assert Module.valid_class_section(
-            section=disabled_module_section,
+        assert Module.valid_module(
+            name='test',
+            config=disabled_module_section,
             requires_timeout=2,
             requires_working_directory=Path('/'),
         ) is False
-
-    def test_valid_class_section_method_with_invalid_section(self):
-        invalid_module_section = {
-            'context/fonts': {
-                'some_key': 'some_value',
-            }
-        }
-        assert Module.valid_class_section(
-            section=invalid_module_section,
-            requires_timeout=2,
-            requires_working_directory=Path('/'),
-        ) is False
-
-    def test_valid_class_section_with_wrongly_sized_dict(
-        self,
-        valid_module_section,
-    ):
-        invalid_module_section = valid_module_section
-        invalid_module_section.update({'module/valid2': {'enabled': True}})
-
-        with pytest.raises(RuntimeError):
-            Module.valid_class_section(
-                section=invalid_module_section,
-                requires_timeout=2,
-                requires_working_directory=Path('/'),
-            )
-
-    def test_module_name(self, module):
-        assert module.name == 'test_module'
 
     def test_module_event_listener_class(self, module):
         assert isinstance(module.event_listener, event_listener.Weekday)
@@ -145,7 +117,8 @@ class TestModuleClass:
         test_config_directory
     ):
         static_module = Module(
-            module_config={'module/static': {}},
+            name='static',
+            module_config={},
             module_directory=test_config_directory,
         )
         assert isinstance(static_module.event_listener, event_listener.Static)
@@ -267,8 +240,11 @@ class TestModuleClass:
         _runtime,
         caplog,
     ):
-        application_config = {
-            'module/test_module': {
+        application_config = {}
+        application_config.update(default_global_options)
+        application_config.update(_runtime)
+        modules = {
+            'test_module': {
                 'on_startup': {
                     'compile': [
                         {'content': '/not/existing'},
@@ -277,10 +253,10 @@ class TestModuleClass:
             },
         }
 
-        application_config.update(default_global_options)
-        application_config.update(_runtime)
-
-        module_manager = ModuleManager(application_config)
+        module_manager = ModuleManager(
+            config=application_config,
+            modules=modules,
+        )
 
         caplog.clear()
         module_manager.finish_tasks()
@@ -289,13 +265,14 @@ class TestModuleClass:
 
     def test_compilation_of_template(
         self,
+        valid_module_section,
         simple_application_config,
         module,
         conf,
         caplog,
     ):
-        simple_application_config[
-            'module/test_module'
+        valid_module_section[
+            'test_module'
         ][
             'event_listener'
         ][
@@ -306,6 +283,7 @@ class TestModuleClass:
             + '\nFuraMono Nerd Font'
         module_manager = ModuleManager(
             config=simple_application_config,
+            modules=valid_module_section,
             context=Context({
                 'fonts': {1: 'FuraMono Nerd Font'},
             }),
@@ -341,6 +319,7 @@ class TestModuleClass:
 
 def test_running_finished_tasks_command(
     simple_application_config,
+    valid_module_section,
     freezer,
     caplog,
 ):
@@ -354,6 +333,7 @@ def test_running_finished_tasks_command(
     freezer.move_to(thursday)
     module_manager = ModuleManager(
         simple_application_config,
+        modules=valid_module_section,
         context=Context({
             'fonts': {1: 'FuraMono Nerd Font'},
         }),
@@ -414,14 +394,19 @@ def test_running_finished_tasks_command(
     ]
 
 
-def test_has_unfinished_tasks(simple_application_config, freezer):
+def test_has_unfinished_tasks(
+    simple_application_config,
+    valid_module_section,
+    freezer,
+):
     # Move time to midday
     midday = datetime.now().replace(hour=12, minute=0)
     freezer.move_to(midday)
 
     # At instanziation, the module should have unfinished tasks
     weekday_module = ModuleManager(
-        simple_application_config,
+        config=simple_application_config,
+        modules=valid_module_section,
         context=Context({
             'fonts': {1: 'FuraMono Nerd Font'},
         }),
@@ -451,10 +436,20 @@ def test_has_unfinished_tasks(simple_application_config, freezer):
 
 @pytest.fixture
 def config_with_modules(default_global_options):
-    return {
+    config = {
         'config/astrality': default_global_options['config/astrality'],
-        'context/env': generate_expanded_env_dict(),
-        'module/solar_module': {
+        '_runtime': {
+            'config_directory': Path(__file__).parents[3],
+            'temp_directory': '/tmp',
+        }
+    }
+
+    context = Context({
+        'env': generate_expanded_env_dict(),
+    })
+
+    modules = {
+        'solar_module': {
             'enabled': True,
             'event_listener': {
                 'type': 'solar',
@@ -478,7 +473,7 @@ def config_with_modules(default_global_options):
                 'run': [{'shell': 'echo solar exit'}],
             },
         },
-        'module/weekday_module': {
+        'weekday_module': {
             'enabled': True,
             'event_listener': {'type': 'weekday'},
             'on_startup': {
@@ -491,34 +486,35 @@ def config_with_modules(default_global_options):
                 'run': [{'shell': 'echo weekday exit'}],
             },
         },
-        'module/disabled_module': {
+        'disabled_module': {
             'enabled': False,
             'event_listener': 'static',
         },
-        '_runtime': {
-            'config_directory': Path(__file__).parents[3],
-            'temp_directory': '/tmp',
-        }
     }
+
+    return config, modules, context
 
 
 @pytest.fixture
 def module_manager(config_with_modules):
-    return ModuleManager(config_with_modules)
+    return ModuleManager(*config_with_modules)
 
 
 def test_import_sections_on_event(config_with_modules, freezer):
-    config_with_modules[
-        'module/weekday_module'
+    config, modules, context = config_with_modules
+
+    modules[
+        'weekday_module'
     ]['on_event']['import_context'] = [{
         'to_section': 'week',
         'from_path': 'astrality/tests/templates/weekday.yml',
         'from_section': '{event}',
     }]
 
-    config_with_modules.pop('module/solar_module')
+    modules.pop('solar_module')
     module_manager = ModuleManager(
-        config_with_modules,
+        config=config,
+        modules=modules,
         context=Context({
             'fonts': {1: 'FuraCode Nerd Font'},
         }),
@@ -548,9 +544,11 @@ def test_import_sections_on_event(config_with_modules, freezer):
 
 
 def test_import_sections_on_startup(config_with_modules, freezer):
+    config, modules, context = config_with_modules
+
     # Insert day the module was started into 'start day'
-    config_with_modules[
-        'module/weekday_module'
+    modules[
+        'weekday_module'
     ]['on_startup']['import_context'] = [{
         'to_section': 'start_day',
         'from_path': 'astrality/tests/templates/weekday.yml',
@@ -558,16 +556,17 @@ def test_import_sections_on_startup(config_with_modules, freezer):
     }]
 
     # Insert the current day into 'day_now'
-    config_with_modules[
-        'module/weekday_module'
+    modules[
+        'weekday_module'
     ]['on_event']['import_context'] = [{
         'to_section': 'day_now',
         'from_path': 'astrality/tests/templates/weekday.yml',
         'from_section': '{event}',
     }]
-    config_with_modules.pop('module/solar_module')
+    modules.pop('solar_module')
     module_manager = ModuleManager(
-        config=config_with_modules,
+        config=config,
+        modules=modules,
         context=Context({
             'fonts': {1: 'FuraCode Nerd Font'},
         }),
@@ -602,9 +601,15 @@ class TestModuleManager:
         ModuleManager(conf)
 
     @pytest.mark.slow
-    def test_using_finish_tasks_on_example_configuration(self, conf, context):
+    def test_using_finish_tasks_on_example_configuration(
+        self,
+        conf,
+        modules,
+        context,
+    ):
         module_manager = ModuleManager(
             config=conf,
+            modules=modules,
             context=context,
         )
         module_manager.finish_tasks()
@@ -621,7 +626,9 @@ def test_time_until_next_event_of_several_modules(
     module_manager,
     freezer,
 ):
-    solar_event_listener = event_listener.Solar(config_with_modules)
+    config, modules, context = config_with_modules
+
+    solar_event_listener = event_listener.Solar(modules)
     noon = solar_event_listener.location.sun()['noon']
 
     one_minute = timedelta(minutes=1)
@@ -639,12 +646,18 @@ def test_detection_of_new_event_involving_several_modules(
     config_with_modules,
     freezer,
 ):
+    config, modules, context = config_with_modules
+
     # Move time to right before noon
-    solar_event_listener = event_listener.Solar(config_with_modules)
+    solar_event_listener = event_listener.Solar(modules)
     noon = solar_event_listener.location.sun()['noon']
     one_minute = timedelta(minutes=1)
     freezer.move_to(noon - one_minute)
-    module_manager = ModuleManager(config_with_modules)
+    module_manager = ModuleManager(
+        config=config,
+        modules=modules,
+        context=context,
+    )
 
     # All modules should now considered to have now events
     assert module_manager.has_unfinished_tasks() is True
@@ -684,8 +697,8 @@ def test_that_shell_filter_is_run_from_config_directory(
     shell_filter_template_target = Path(
         '/tmp/astrality/shell_filter_working_directory.template',
     )
-    config = {
-        'module/A': {
+    modules = {
+        'A': {
             'on_startup': {
                 'compile': [
                     {
@@ -696,9 +709,15 @@ def test_that_shell_filter_is_run_from_config_directory(
             },
         },
     }
+
+    config = {}
     config.update(default_global_options)
     config.update(_runtime)
-    module_manager = ModuleManager(config)
+
+    module_manager = ModuleManager(
+        config=config,
+        modules=modules,
+    )
     module_manager.execute(action='compile', block='on_startup')
 
     with open(shell_filter_template_target) as compiled:
@@ -737,8 +756,8 @@ def test_that_only_startup_event_block_is_run_on_startup(
     freezer.move_to(thursday)
 
     test_file1, test_file2 = two_test_file_paths
-    application_config = {
-        'module/A': {
+    modules = {
+        'A': {
             'event_listener': {'type': 'weekday'},
             'on_startup': {
                 'run': [{'shell': 'touch ' + str(test_file1)}],
@@ -748,9 +767,14 @@ def test_that_only_startup_event_block_is_run_on_startup(
             },
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     # Before call to finish_tasks, no actions should have been performed
     assert not test_file1.is_file() and not test_file2.is_file()
@@ -768,8 +792,8 @@ def test_trigger_event_module_action(
     default_global_options,
     _runtime,
 ):
-    application_config = {
-        'module/A': {
+    modules = {
+        'A': {
             'event_listener': {'type': 'weekday'},
             'on_startup': {
                 'trigger': [
@@ -799,9 +823,15 @@ def test_trigger_event_module_action(
             },
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
-    module_manager = ModuleManager(application_config)
+
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     # Check that all run commands have been imported into startup block
     results = tuple(module_manager.modules['A'].execute(
@@ -851,8 +881,8 @@ def test_not_using_list_when_specifiying_trigger_action(
     conf_path,
     default_global_options,
 ):
-    application_config = {
-        'module/A': {
+    modules = {
+        'A': {
             'on_startup': {
                 'trigger': {'block': 'on_event'},
             },
@@ -860,13 +890,20 @@ def test_not_using_list_when_specifiying_trigger_action(
                 'run': [{'shell': 'echo on_event'}],
             },
         },
+    }
+
+    application_config = {
         '_runtime': {
             'config_directory': conf_path,
             'temp_directory': Path('/tmp/astrality'),
         },
     }
     application_config.update(default_global_options)
-    module_manager = ModuleManager(application_config)
+
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     # Check that all run commands have been imported into startup block
     result = module_manager.modules['A'].execute(

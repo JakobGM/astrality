@@ -163,6 +163,6 @@ class TestUsingConfigFilesWithPlaceholders:
         }
 
     def test_get_user_configuration(self, dir_with_compilable_files):
-        user_conf, _ = user_configuration(dir_with_compilable_files)
+        user_conf, *_ = user_configuration(dir_with_compilable_files)
         assert user_conf['config/key1'] == 'test_value'
         assert user_conf['config/key2'] == 'test'

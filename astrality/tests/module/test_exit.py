@@ -20,8 +20,9 @@ def test_that_all_exit_actions_are_correctly_performed(
     test_config_directory,
     test_target,
 ):
-    application_config = {
-        'module/car': {
+    application_config = {}
+    modules = {
+        'car': {
             'on_startup': {
                 'import_context': {
                     'from_path': 'context/mercedes.yml',
@@ -45,7 +46,10 @@ def test_that_all_exit_actions_are_correctly_performed(
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     # Before we start, the template target should not exist
     assert not test_target.is_file()

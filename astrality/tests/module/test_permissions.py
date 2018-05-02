@@ -20,8 +20,8 @@ def test_compiling_template_with_specific_permissions(
     template = test_config_directory / 'templates' / 'empty.template'
     target = Path(tmpdir) / 'target'
 
-    application_config = {
-        'module/test': {
+    modules = {
+        'test': {
             'on_startup': {
                 'compile': {
                     'content': str(template),
@@ -31,10 +31,15 @@ def test_compiling_template_with_specific_permissions(
             },
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
     module_manager.finish_tasks()
 
     assert (target.stat().st_mode & 0o777) == expected_permission

@@ -28,15 +28,15 @@ def test_use_of_string_interpolations_of_module(
     c_template.write_text('')
     c_target = temp_dir / 'c.target'
 
-    application_config = {
-        'module/A': {
+    modules = {
+        'A': {
             'on_startup': {
                 'compile': [
                     {'content': str(a_template)}
                 ],
             },
         },
-        'module/B': {
+        'B': {
             'on_modified': {
                 str(b_on_modified): {
                     'compile': [
@@ -48,7 +48,7 @@ def test_use_of_string_interpolations_of_module(
                 },
             }
         },
-        'module/C': {
+        'C': {
             'on_exit': {
                 'compile': {
                     'content': str(c_template),
@@ -58,10 +58,15 @@ def test_use_of_string_interpolations_of_module(
         },
     }
 
+    application_config = {}
     application_config.update(default_global_options)
     _runtime['_runtime']['config_directory'] = temp_dir
     application_config.update(_runtime)
-    module_manager = ModuleManager(application_config)
+
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     # Compile twice to double check that only one temporary file is inserted
     module_manager.modules['A'].execute(

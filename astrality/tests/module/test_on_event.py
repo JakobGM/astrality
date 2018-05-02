@@ -31,23 +31,28 @@ def test_that_only_changed_events_are_run(
 ):
     file1, file2, file3 = three_temporary_files
 
-    application_config = {
-        'module/weekday': {
+    modules = {
+        'weekday': {
             'event_listener': {'type': 'weekday'},
             'on_event': {'run': {'shell': 'touch ' + str(file1)}},
         },
-        'module/periodic': {
+        'periodic': {
             'event_listener': {'type': 'periodic', 'days': 1, 'hours': 12},
             'on_event': {'run': {'shell': 'touch ' + str(file2)}},
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
     # Move to a monday
     freezer.move_to('2018-02-19')
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
     module_manager.finish_tasks()
 
     # No on_event should have been run

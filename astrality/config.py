@@ -165,7 +165,7 @@ def infer_runtime_variables_from_config(
 
 def user_configuration(
     config_directory: Optional[Path] = None,
-) -> Tuple[ApplicationConfig, Context]:
+) -> Tuple[ApplicationConfig, Dict, Context]:
     """
     Return dictionary containing the users configuration.
 
@@ -206,7 +206,6 @@ def user_configuration(
             context=global_context,
             prepend='module/',
         )
-        config.update(modules_config)
 
     # Some metadata used by other classes, stored in '_runtime' key
     runtime = infer_runtime_variables_from_config(
@@ -222,7 +221,7 @@ def user_configuration(
         ASTRALITY_DEFAULT_GLOBAL_SETTINGS['config/astrality'].copy()
     config['config/astrality'].update(user_settings)
 
-    return config, global_context
+    return config, modules_config, global_context
 
 
 def create_config_directory(path: Optional[Path] = None, empty=False) -> Path:
@@ -365,18 +364,12 @@ class ModuleSource(ABC):
         if hasattr(self, '_modules'):
             return self._modules
 
-        modules = filter_config_file(
+        self._modules = filter_config_file(
             config_file=self.modules_file,
             context=context,
             enabled_module_name=self.enabled_module,
             prepend=self.prepend,
         )
-
-        self._modules = {
-            f'module/{module_name}': module_config
-            for module_name, module_config
-            in modules.items()
-        }
         return self._modules
 
     def context(self, context: Context = Context()) -> Context:
@@ -417,7 +410,7 @@ class ModuleSource(ABC):
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if this source contains enabled module_name."""
-        return 'module/' + module_name in self._config
+        return module_name in self._config
 
     @classmethod
     def represented_by(cls, module_name: str) -> bool:

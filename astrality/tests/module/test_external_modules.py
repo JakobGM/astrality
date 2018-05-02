@@ -21,16 +21,21 @@ def test_that_external_modules_are_brought_in(
                 {'name': '*'},
             ],
         },
-        'module/cambodia': {
+    }
+
+    modules = {
+        'cambodia': {
             'enabled_modules': True,
         },
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
-    thailand_path = test_config_directory / 'test_modules' / 'thailand'
     assert tuple(module_manager.modules.keys()) == (
         'thailand::thailand',
         'cambodia',

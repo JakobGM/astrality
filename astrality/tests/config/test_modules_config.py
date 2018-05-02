@@ -103,8 +103,8 @@ def test_retrieval_of_external_module_config(test_config_directory):
         modules_directory=test_config_directory / 'test_modules',
     )
 
-    assert external_module_source.config({}) == {
-        'module/burma::burma': {
+    assert external_module_source.modules({}) == {
+        'burma::burma': {
             'enabled': True,
             'safe': False,
         },
@@ -188,7 +188,7 @@ class TestDirectoryModuleSource:
             modules_directory=test_config_directory / 'test_modules',
         )
         assert directory_module.modules({}) == {
-            'module/recursive/directory::bulgaria': {
+            'recursive/directory::bulgaria': {
                 'on_startup': {
                     'run': "echo 'Greetings from Bulgaria!'",
                 },
@@ -204,8 +204,8 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
-        assert directory_module.config({}) == {
-            'module/north_america::USA': {
+        assert directory_module.modules({}) == {
+            'north_america::USA': {
                 'on_startup': {
                     'run': 'echo Greetings from the USA!',
                 },
@@ -229,8 +229,8 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
-        assert directory_module.config({}) == {
-            'module/south_america::brazil': {
+        assert directory_module.modules({}) == {
+            'south_america::brazil': {
                 'on_startup': {
                     'run': 'echo Greetings from Brazil!',
                 },
@@ -418,13 +418,14 @@ class TestGithubModuleSource:
             },
             modules_directory=modules_directory,
         )
-        assert github_module_source.config({}) == {
-            'module/github::jakobgm/test-module.astrality::botswana': {
+
+        assert github_module_source.modules({}) == {
+            'github::jakobgm/test-module.astrality::botswana': {
                 'on_startup': {
                     'run': "echo 'Greetings from Botswana!'",
                 },
             },
-            'module/github::jakobgm/test-module.astrality::ghana': {
+            'github::jakobgm/test-module.astrality::ghana': {
                 'on_startup': {
                     'run': "echo 'Greetings from Ghana!'",
                 },
@@ -455,7 +456,7 @@ class TestGithubModuleSource:
         )
 
         # The repository is lazely cloned, so we need to get the config
-        config = github_module_source.config({})
+        github_module_source.modules({})
 
         repo_dir = modules_directory / 'jakobgm' / 'test-module.astrality'
         assert repo_dir.is_dir()
@@ -481,7 +482,7 @@ class TestGithubModuleSource:
             },
             modules_directory=modules_directory,
         )
-        config = github_module_source.config({})
+        github_module_source.modules({})
 
         # The autoupdating should update the module to origin/master
         # containing the README.rst file

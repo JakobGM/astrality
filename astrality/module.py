@@ -91,7 +91,8 @@ class Module:
 
     def __init__(
         self,
-        module_config: ModuleConfig,
+        name: str,
+        module_config: ModuleConfigDict,
         module_directory: Path,
         replacer: Callable[[str], str] = lambda string: string,
         context_store: Context = Context(),
@@ -111,11 +112,7 @@ class Module:
             'on_startup': {'run': ['echo weekday is {event}']},
         }
         """
-        # Can only initialize one module at a time
-        assert len(module_config) == 1
-
-        section: str = next(iter(module_config.keys()))
-        self.name: str = section[7:]
+        self.name = name
 
         # The source directory for the module, determining how to interpret
         # relative paths in the module config
@@ -125,7 +122,7 @@ class Module:
         self.replace = replacer
 
         # Extract configuration content
-        module_config_content: ModuleConfigDict = module_config[section]
+        module_config_content: ModuleConfigDict = module_config
 
         # Use static event_listener if no event_listener is specified
         self.event_listener: EventListener = \
@@ -317,32 +314,19 @@ class Module:
         )
 
     @staticmethod
-    def valid_class_section(
-        section: ModuleConfig,
+    def valid_module(
+        name: str,
+        config: ModuleConfigDict,
         requires_timeout: Union[int, float],
         requires_working_directory: Path,
     ) -> bool:
         """Check if the given dict represents a valid enabled module."""
-        if not len(section) == 1:
-            raise RuntimeError(
-                'Tried to check module section with dict '
-                'which does not have exactly one item.',
-            )
-
-        try:
-            module_name = next(iter(section.keys()))
-            valid_module_name = \
-                module_name.split('/')[0].lower() == 'module'  # type: ignore
-            enabled = section[module_name].get('enabled', True)
-            if not (valid_module_name and enabled):
-                return False
-
-        except KeyError:
+        if not config.get('enabled', True):
             return False
 
         # The module is enabled, now check if all requirements are satisfied
         requires: List[RequirementDict] = cast_to_list(
-            section[module_name].get(
+            config.get(
                 'requires',
                 {},
             ),
@@ -360,7 +344,7 @@ class Module:
             return True
         else:
             logger.warning(
-                f'[{module_name}] ' +
+                f'[module/{name}] ' +
                 ", ".join([
                     repr(requirement)
                     for requirement
@@ -381,6 +365,7 @@ class ModuleManager:
     def __init__(
         self,
         config: ApplicationConfig,
+        modules: Dict[str, ModuleConfigDict] = {},
         context: Context = Context(),
     ) -> None:
         """Initialize a ModuleManager object from `astrality.yml` dict."""
@@ -417,17 +402,22 @@ class ModuleManager:
             )
             module_directory = external_module_source.directory
 
-            for section, options in module_configs.items():
-                module_config = {section: options}
+            for module_name, module_config in module_configs.items():
+                if module_name \
+                        not in self.global_modules_config.enabled_modules:
+                    continue
 
-                if not Module.valid_class_section(
-                    section=module_config,
-                    requires_timeout=self.global_modules_config.requires_timeout,  # noqa
+                if not Module.valid_module(
+                    name=module_name,
+                    config=module_config,
+                    requires_timeout=self.global_modules_config.
+                    requires_timeout,  # noqa
                     requires_working_directory=module_directory,
-                ) or section not in self.global_modules_config.enabled_modules:
+                ):
                     continue
 
                 module = Module(
+                    name=module_name,
                     module_config=module_config,
                     module_directory=module_directory,
                     replacer=self.interpolate_string,
@@ -437,18 +427,21 @@ class ModuleManager:
                 self.modules[module.name] = module
 
         # Insert modules defined in `astrality.yml`
-        for section, options in config.items():
-            module_config = {section: options}
-
+        for module_name, module_config in modules.items():
             # Check if this module should be included
-            if not Module.valid_class_section(
-                section=module_config,
+            if module_name not in self.global_modules_config.enabled_modules:
+                continue
+
+            if not Module.valid_module(
+                name=module_name,
+                config=module_config,
                 requires_timeout=self.global_modules_config.requires_timeout,
                 requires_working_directory=self.config_directory,
-            ) or section not in self.global_modules_config.enabled_modules:
+            ):
                 continue
 
             module = Module(
+                name=module_name,
                 module_config=module_config,
                 module_directory=self.config_directory,
                 replacer=self.interpolate_string,
@@ -652,7 +645,7 @@ class ModuleManager:
             return
 
         # Hot reloading is enabled, get the new configuration dict
-        new_application_config, new_context = user_configuration(
+        new_application_config, new_modules, new_context = user_configuration(
             config_directory=self.config_directory,
         )
 
@@ -660,6 +653,7 @@ class ModuleManager:
             # Reinstantiate this object
             new_module_manager = ModuleManager(
                 config=new_application_config,
+                modules=new_modules,
                 context=new_context,
             )
 

@@ -26,8 +26,8 @@ def modules_config(
         / 'templates' / 'no_context.template'
     secondary_template_target = temp_directory / 'secondary_template.tmp'
 
-    config = {
-        'module/A': {
+    modules = {
+        'A': {
             'on_modified': {
                 str(empty_template): {
                     'compile': [
@@ -44,12 +44,16 @@ def modules_config(
                 },
             },
         },
-        'module/B': {},
+        'B': {},
     }
+
+    config = {}
     config.update(default_global_options)
     config.update(_runtime)
+
     yield (
         config,
+        modules,
         empty_template,
         empty_template_target,
         touch_target,
@@ -69,9 +73,12 @@ def modules_config(
 
 
 def test_modified_commands_of_module(modules_config):
-    config, empty_template, empty_template_target, touch_target, *_ \
+    config, modules, empty_template, empty_template_target, touch_target, *_ \
         = modules_config
-    module_manager = ModuleManager(config)
+    module_manager = ModuleManager(
+        config=config,
+        modules=modules,
+    )
     result = module_manager.modules['A'].execute(
         action='run',
         block='on_modified',
@@ -83,13 +90,17 @@ def test_modified_commands_of_module(modules_config):
 def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
     (
         config,
+        modules,
         empty_template,
         empty_template_target,
         touch_target,
         secondary_template,
         secondary_template_target,
     ) = modules_config
-    module_manager = ModuleManager(config)
+    module_manager = ModuleManager(
+        config=config,
+        modules=modules,
+    )
 
     # PS: Disabling the directory watcher is not necessary, as it is done in
     # the startup method.
@@ -113,13 +124,17 @@ def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
 def test_on_modified_event_in_module(modules_config):
     (
         config,
+        modules,
         empty_template,
         empty_template_target,
         touch_target,
         secondary_template,
         secondary_template_target,
     ) = modules_config
-    module_manager = ModuleManager(config)
+    module_manager = ModuleManager(
+        config=config,
+        modules=modules,
+    )
 
     # Start the file watcher by invoking the startup command indirectly
     # through finish_tasks() method
@@ -180,16 +195,20 @@ def test_hot_reloading(
     # Copy the first configuration into place
     shutil.copy(str(config1), str(target_config))
 
-    application_config1 = dict_from_config_file(
+    modules1 = dict_from_config_file(
         config1,
         context={},
-        prepend='module/',
     )
+
+    application_config1 = {}
     application_config1.update(default_global_options)
     application_config1.update(_runtime)
     application_config1['config/astrality']['hot_reload_config'] = True
 
-    module_manager = ModuleManager(application_config1)
+    module_manager = ModuleManager(
+        config=application_config1,
+        modules=modules1,
+    )
 
     # Before beginning, the template should not be compiled
     assert not template_target1.is_file()
@@ -257,8 +276,8 @@ def test_all_three_actions_in_on_modified_block(
     mercedes_context = test_config_directory / 'context' / 'mercedes.yml'
     tesla_context = test_config_directory / 'context' / 'tesla.yml'
 
-    application_config = {
-        'module/car': {
+    modules = {
+        'car': {
             'on_startup': {
                 'import_context': {
                     'from_path': str(mercedes_context),
@@ -282,10 +301,15 @@ def test_all_three_actions_in_on_modified_block(
             },
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     # Sanity check before beginning testing
     assert not file1.is_file()
@@ -320,8 +344,8 @@ def test_recompile_templates_when_modified(
     template, target, _ = three_watchable_files
     template.touch()
 
-    application_config = {
-        'module/module_name': {
+    modules = {
+        'module_name': {
             'on_startup': {
                 'compile': {
                     'content': str(template),
@@ -330,6 +354,8 @@ def test_recompile_templates_when_modified(
             },
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
     application_config['config/modules'] = {
@@ -338,6 +364,7 @@ def test_recompile_templates_when_modified(
 
     module_manager = ModuleManager(
         config=application_config,
+        modules=modules,
         context=Context({
             'section': {1: 'value'},
         })
@@ -375,8 +402,8 @@ def test_recompile_templates_when_modified_overridden(
     template, target, touch_target = three_watchable_files
     template.touch()
 
-    application_config = {
-        'module/module_name': {
+    modules = {
+        'module_name': {
             'on_startup': {
                 'compile': {
                     'content': str(template),
@@ -389,17 +416,22 @@ def test_recompile_templates_when_modified_overridden(
                 },
             },
         },
-        'context/section': {
-            1: 'value',
-        },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
     application_config['config/modules'] = {
         'reprocess_modified_files': True,
     }
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+        context=Context({
+            'section': {1: 'value'},
+        }),
+    )
 
     # Sanity check before beginning testing
     with open(template) as file:
@@ -433,8 +465,8 @@ def test_importing_context_on_modification(
     file1, *_ = three_watchable_files
     mercedes_context = test_config_directory / 'context' / 'mercedes.yml'
 
-    application_config = {
-        'module/module_name': {
+    modules = {
+        'module_name': {
             'on_modified': {
                 str(file1): {
                     'import_context': {
@@ -444,11 +476,14 @@ def test_importing_context_on_modification(
             },
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
     module_manager = ModuleManager(
         config=application_config,
+        modules=modules,
         context=Context({
             'car': {'manufacturer': 'Tesla'},
         }),
@@ -476,8 +511,8 @@ def test_that_stowed_templates_are_also_watched(
     template, target, _ = three_watchable_files
     template.touch()
 
-    application_config = {
-        'module/module_name': {
+    modules = {
+        'module_name': {
             'on_startup': {
                 'stow': {
                     'content': str(template),
@@ -488,6 +523,8 @@ def test_that_stowed_templates_are_also_watched(
             },
         },
     }
+
+    application_config = {}
     application_config.update(default_global_options)
     application_config.update(_runtime)
     application_config['config/modules'] = {
@@ -496,6 +533,7 @@ def test_that_stowed_templates_are_also_watched(
 
     module_manager = ModuleManager(
         config=application_config,
+        modules=modules,
         context=Context({
             'section': {1: 'value'},
         }),

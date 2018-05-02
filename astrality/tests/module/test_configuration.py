@@ -99,13 +99,19 @@ def test_enabling_of_modules_defined_different_places(
                 {'name': 'india'},
             ],
         },
-        'module/india': {},     # Enabled
-        'module/pakistan': {},  # Not enabled
+    }
+
+    modules = {
+        'india': {},     # Enabled
+        'pakistan': {},  # Not enabled
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     assert len(module_manager.modules) == 2
     assert 'south_america::brazil' in module_manager.modules
@@ -119,13 +125,19 @@ def test_enabling_of_all_modules(
         'config/modules': {
             'modules_directory': 'freezed_modules',
         },
-        'module/india': {},     # Enabled
-        'module/pakistan': {},  # Not enabled
+    }
+
+    modules = {
+        'india': {},     # Enabled
+        'pakistan': {},  # Not enabled
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     assert len(module_manager.modules) == 5
     assert 'india' in module_manager.modules
@@ -162,13 +174,19 @@ def test_using_three_different_module_sources(
                 {'name': 'italy'},
             ],
         },
-        'module/italy': {},
-        'module/spain': {},
+    }
+
+    modules = {
+        'italy': {},
+        'spain': {},
     }
     application_config.update(default_global_options)
     application_config.update(_runtime)
 
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(
+        config=application_config,
+        modules=modules,
+    )
 
     assert len(module_manager.modules) == 4
     assert 'north_america::USA' in module_manager.modules

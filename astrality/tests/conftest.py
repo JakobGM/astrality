@@ -42,6 +42,13 @@ def context():
     """Return the context object for the example configuration."""
     this_test_file = os.path.abspath(__file__)
     conf_path = Path(this_test_file).parents[1] / 'config'
+    return user_configuration(conf_path)[2]
+
+@pytest.fixture(scope='session', autouse=True)
+def modules():
+    """Return the modules object for the example configuration."""
+    this_test_file = os.path.abspath(__file__)
+    conf_path = Path(this_test_file).parents[1] / 'config'
     return user_configuration(conf_path)[1]
 
 
@@ -112,7 +119,8 @@ def module_factory(test_config_directory):
     ) -> Module:
         """Return module with specified action blocks and config."""
         module = Module(
-            module_config={f'module/{name}': {}},
+            name=name,
+            module_config={},
             module_directory=module_directory,
             replacer=replacer,
             context_store=context_store,
