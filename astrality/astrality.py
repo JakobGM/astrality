@@ -75,7 +75,7 @@ def main(logging_level: str = 'INFO', test: bool = False):
         signal.signal(signal.SIGTERM, exit_handler)
 
     try:
-        config, modules, global_context = user_configuration()
+        config, modules, global_context, directory = user_configuration()
 
         # Delay further actions if configuration says so
         time.sleep(config['config/astrality']['startup_delay'])
@@ -84,6 +84,7 @@ def main(logging_level: str = 'INFO', test: bool = False):
             config=config,
             modules=modules,
             context=global_context,
+            directory=directory,
         )
         module_manager.finish_tasks()
 

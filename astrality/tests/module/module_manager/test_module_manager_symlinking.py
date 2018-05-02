@@ -2,11 +2,12 @@
 
 from pathlib import Path
 
+from astrality.module import ModuleManager
+
 
 def test_symlinking_in_on_startup_block(
     action_block_factory,
     module_factory,
-    module_manager,
     create_temp_files,
 ):
     """ModuleManager should symlink properly."""
@@ -20,6 +21,8 @@ def test_symlinking_in_on_startup_block(
         ],
     )
     module = module_factory(on_startup=action_block)
+
+    module_manager = ModuleManager()
     module_manager.modules = {'test': module}
     module_manager.finish_tasks()
 

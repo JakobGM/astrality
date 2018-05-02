@@ -2,12 +2,13 @@
 
 from pathlib import Path
 
+from astrality.module import ModuleManager
+
 
 def test_copying_in_on_modified_block(
     action_block_factory,
     create_temp_files,
     module_factory,
-    module_manager,
 ):
     """Module should copy properly."""
     file1, file2, file3, file4 = create_temp_files(4)
@@ -21,6 +22,8 @@ def test_copying_in_on_modified_block(
         ],
     )
     module = module_factory(on_modified=action_block, path=Path('/a/b/c'))
+
+    module_manager = ModuleManager()
     module_manager.modules = {'test': module}
     module_manager.on_modified(Path('/a/b/c'))
 

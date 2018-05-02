@@ -45,14 +45,6 @@ class TestAllConfigFeaturesFromDummyConfig:
             == 'test_value, hello'
 
 
-def test_config_directory_name(conf):
-    assert str(conf['_runtime']['config_directory'])[-7:] == '/config'
-
-
-def test_name_of_config_file(conf):
-    assert '/astrality.yml' in str(conf['_runtime']['config_file'])
-
-
 def test_generation_of_expanded_env_dict():
     env_dict = generate_expanded_env_dict()
     assert len(env_dict) == len(os.environ)

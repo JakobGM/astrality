@@ -12,12 +12,7 @@ from astrality.module import ModuleManager
 
 
 @pytest.yield_fixture
-def modules_config(
-    test_config_directory,
-    default_global_options,
-    _runtime,
-    temp_directory,
-):
+def modules_config(test_config_directory, temp_directory):
     empty_template = test_config_directory / 'templates' / 'empty.template'
     empty_template_target = Path('/tmp/astrality/empty_temp_template')
     touch_target = temp_directory / 'touched'
@@ -47,12 +42,7 @@ def modules_config(
         'B': {},
     }
 
-    config = {}
-    config.update(default_global_options)
-    config.update(_runtime)
-
     yield (
-        config,
         modules,
         empty_template,
         empty_template_target,
@@ -73,10 +63,9 @@ def modules_config(
 
 
 def test_modified_commands_of_module(modules_config):
-    config, modules, empty_template, empty_template_target, touch_target, *_ \
+    modules, empty_template, empty_template_target, touch_target, *_ \
         = modules_config
     module_manager = ModuleManager(
-        config=config,
         modules=modules,
     )
     result = module_manager.modules['A'].execute(
@@ -89,7 +78,6 @@ def test_modified_commands_of_module(modules_config):
 
 def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
     (
-        config,
         modules,
         empty_template,
         empty_template_target,
@@ -97,10 +85,8 @@ def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
         secondary_template,
         secondary_template_target,
     ) = modules_config
-    module_manager = ModuleManager(
-        config=config,
-        modules=modules,
-    )
+
+    module_manager = ModuleManager(modules=modules)
 
     # PS: Disabling the directory watcher is not necessary, as it is done in
     # the startup method.
@@ -123,7 +109,6 @@ def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
 
 def test_on_modified_event_in_module(modules_config):
     (
-        config,
         modules,
         empty_template,
         empty_template_target,
@@ -131,10 +116,8 @@ def test_on_modified_event_in_module(modules_config):
         secondary_template,
         secondary_template_target,
     ) = modules_config
-    module_manager = ModuleManager(
-        config=config,
-        modules=modules,
-    )
+
+    module_manager = ModuleManager(modules=modules)
 
     # Start the file watcher by invoking the startup command indirectly
     # through finish_tasks() method
@@ -183,8 +166,6 @@ def test_template_targets():
 @pytest.mark.slow
 def test_hot_reloading(
     test_template_targets,
-    default_global_options,
-    _runtime,
     test_config_directory
 ):
     template_target1, template_target2 = test_template_targets
@@ -200,11 +181,7 @@ def test_hot_reloading(
         context={},
     )
 
-    application_config1 = {}
-    application_config1.update(default_global_options)
-    application_config1.update(_runtime)
-    application_config1['config/astrality']['hot_reload_config'] = True
-
+    application_config1 = {'config/astrality': {'hot_reload_config': True}}
     module_manager = ModuleManager(
         config=application_config1,
         modules=modules1,
@@ -267,8 +244,6 @@ def three_watchable_files(test_config_directory):
 
 def test_all_three_actions_in_on_modified_block(
     three_watchable_files,
-    default_global_options,
-    _runtime,
     test_config_directory,
 ):
     file1, file2, file3 = three_watchable_files
@@ -301,15 +276,7 @@ def test_all_three_actions_in_on_modified_block(
             },
         },
     }
-
-    application_config = {}
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
-    module_manager = ModuleManager(
-        config=application_config,
-        modules=modules,
-    )
+    module_manager = ModuleManager(modules=modules)
 
     # Sanity check before beginning testing
     assert not file1.is_file()
@@ -336,11 +303,7 @@ def test_all_three_actions_in_on_modified_block(
     module_manager.exit()
 
 
-def test_recompile_templates_when_modified(
-    three_watchable_files,
-    default_global_options,
-    _runtime,
-):
+def test_recompile_templates_when_modified(three_watchable_files):
     template, target, _ = three_watchable_files
     template.touch()
 
@@ -355,13 +318,7 @@ def test_recompile_templates_when_modified(
         },
     }
 
-    application_config = {}
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-    application_config['config/modules'] = {
-        'reprocess_modified_files': True,
-    }
-
+    application_config = {'config/modules': {'reprocess_modified_files': True}}
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,
@@ -390,11 +347,7 @@ def test_recompile_templates_when_modified(
     module_manager.exit()
 
 
-def test_recompile_templates_when_modified_overridden(
-    three_watchable_files,
-    default_global_options,
-    _runtime,
-):
+def test_recompile_templates_when_modified_overridden(three_watchable_files):
     """
     If a file is watched in a on_modified block, it should override the
     reprocess_modified_files option.
@@ -418,13 +371,7 @@ def test_recompile_templates_when_modified_overridden(
         },
     }
 
-    application_config = {}
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-    application_config['config/modules'] = {
-        'reprocess_modified_files': True,
-    }
-
+    application_config = {'config/modules': {'reprocess_modified_files': True}}
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,
@@ -457,8 +404,6 @@ def test_recompile_templates_when_modified_overridden(
 
 def test_importing_context_on_modification(
     three_watchable_files,
-    default_global_options,
-    _runtime,
     test_config_directory,
 ):
     """Test that context values are imported in on_modified blocks."""
@@ -476,13 +421,7 @@ def test_importing_context_on_modification(
             },
         },
     }
-
-    application_config = {}
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
     module_manager = ModuleManager(
-        config=application_config,
         modules=modules,
         context=Context({
             'car': {'manufacturer': 'Tesla'},
@@ -502,11 +441,7 @@ def test_importing_context_on_modification(
 
 
 @pytest.mark.slow
-def test_that_stowed_templates_are_also_watched(
-    three_watchable_files,
-    default_global_options,
-    _runtime,
-):
+def test_that_stowed_templates_are_also_watched(three_watchable_files):
     """Stowing template instead of compiling it should still be watched."""
     template, target, _ = three_watchable_files
     template.touch()
@@ -524,13 +459,7 @@ def test_that_stowed_templates_are_also_watched(
         },
     }
 
-    application_config = {}
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-    application_config['config/modules'] = {
-        'reprocess_modified_files': True,
-    }
-
+    application_config = {'config/modules': {'reprocess_modified_files': True}}
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,

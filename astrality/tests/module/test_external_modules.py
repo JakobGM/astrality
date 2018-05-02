@@ -8,11 +8,7 @@ from astrality.context import Context
 from astrality.module import ModuleManager
 
 
-def test_that_external_modules_are_brought_in(
-    test_config_directory,
-    default_global_options,
-    _runtime,
-):
+def test_that_external_modules_are_brought_in(test_config_directory):
     application_config = {
         'config/modules': {
             'modules_directory': 'test_modules',
@@ -28,9 +24,6 @@ def test_that_external_modules_are_brought_in(
             'enabled_modules': True,
         },
     }
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,
@@ -65,8 +58,6 @@ def temp_test_files(test_config_directory):
 def test_correct_relative_paths_used_in_external_module(
     temp_test_files,
     test_config_directory,
-    default_global_options,
-    _runtime,
 ):
     application_config = {
         'config/modules': {
@@ -74,10 +65,7 @@ def test_correct_relative_paths_used_in_external_module(
             'enabled_modules': [{'name': 'using_all_actions::*'}],
         },
     }
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
-    module_manager = ModuleManager(application_config)
+    module_manager = ModuleManager(config=application_config)
 
     compile_target, touch_target, watch_touch_target, watched_file = temp_test_files
 
@@ -103,8 +91,6 @@ def test_correct_relative_paths_used_in_external_module(
 
 def test_that_external_module_contexts_are_imported_correctly(
     test_config_directory,
-    default_global_options,
-    _runtime,
 ):
     application_config = {
         'config/modules': {
@@ -118,10 +104,10 @@ def test_that_external_module_contexts_are_imported_correctly(
             'capitol': 'beijing',
         },
     })
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
-    module_manager = ModuleManager(application_config, context=context)
+    module_manager = ModuleManager(
+        config=application_config,
+        context=context,
+    )
 
     expected_context = Context({
         'laos': {'capitol': 'vientiane'},

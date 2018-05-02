@@ -3,7 +3,8 @@ import shutil
 
 import pytest
 
-from astrality.module import GlobalModulesConfig, Module, ModuleManager
+from astrality.module import GlobalModulesConfig, ModuleManager
+
 
 def test_modules_config_explicitly_enabled_modules(
     test_config_directory,
@@ -44,7 +45,9 @@ def test_modules_config_implicitly_enabled_modules(
 
     assert 'burma::burma' in global_modules_config.enabled_modules
     assert 'india' in global_modules_config.enabled_modules
-    assert 'burma::only_defined_accepted' not in global_modules_config.enabled_modules
+    assert 'burma::only_defined_accepted' \
+        not in global_modules_config.enabled_modules
+
 
 def test_modules_config_several_implicitly_enabled_modules(
     test_config_directory,
@@ -64,6 +67,7 @@ def test_modules_config_several_implicitly_enabled_modules(
 
     assert 'two_modules::bhutan' in global_modules_config.enabled_modules
     assert 'two_modules::bangladesh' in global_modules_config.enabled_modules
+
 
 def test_modules_config_where_all_modules_are_enabled(
     test_config_directory,
@@ -87,10 +91,7 @@ def test_modules_config_where_all_modules_are_enabled(
     assert 'two_modules::bangladesh' in global_modules_config.enabled_modules
 
 
-def test_enabling_of_modules_defined_different_places(
-    default_global_options,
-    _runtime,
-):
+def test_enabling_of_modules_defined_different_places():
     application_config = {
         'config/modules': {
             'modules_directory': 'freezed_modules',
@@ -100,14 +101,10 @@ def test_enabling_of_modules_defined_different_places(
             ],
         },
     }
-
     modules = {
         'india': {},     # Enabled
         'pakistan': {},  # Not enabled
     }
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,
@@ -117,10 +114,8 @@ def test_enabling_of_modules_defined_different_places(
     assert 'south_america::brazil' in module_manager.modules
     assert 'india' in module_manager.modules
 
-def test_enabling_of_all_modules(
-    default_global_options,
-    _runtime,
-):
+
+def test_enabling_of_all_modules():
     application_config = {
         'config/modules': {
             'modules_directory': 'freezed_modules',
@@ -131,8 +126,6 @@ def test_enabling_of_all_modules(
         'india': {},     # Enabled
         'pakistan': {},  # Not enabled
     }
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
 
     module_manager = ModuleManager(
         config=application_config,
@@ -157,9 +150,8 @@ def delete_jakobgm(test_config_directory):
     if location.is_dir():
         shutil.rmtree(location)
 
+
 def test_using_three_different_module_sources(
-    default_global_options,
-    _runtime,
     test_config_directory,
     delete_jakobgm,
 ):
@@ -180,9 +172,6 @@ def test_using_three_different_module_sources(
         'italy': {},
         'spain': {},
     }
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,
@@ -190,6 +179,8 @@ def test_using_three_different_module_sources(
 
     assert len(module_manager.modules) == 4
     assert 'north_america::USA' in module_manager.modules
-    assert 'github::jakobgm/test-module.astrality::botswana' in module_manager.modules
-    assert 'github::jakobgm/test-module.astrality::ghana' in module_manager.modules
+    assert 'github::jakobgm/test-module.astrality::botswana' \
+        in module_manager.modules
+    assert 'github::jakobgm/test-module.astrality::ghana' \
+        in module_manager.modules
     assert 'italy' in module_manager.modules

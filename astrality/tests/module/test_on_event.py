@@ -24,8 +24,6 @@ def three_temporary_files(test_config_directory):
 
 
 def test_that_only_changed_events_are_run(
-    default_global_options,
-    _runtime,
     three_temporary_files,
     freezer,
 ):
@@ -42,17 +40,10 @@ def test_that_only_changed_events_are_run(
         },
     }
 
-    application_config = {}
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
     # Move to a monday
     freezer.move_to('2018-02-19')
 
-    module_manager = ModuleManager(
-        config=application_config,
-        modules=modules,
-    )
+    module_manager = ModuleManager(modules=modules)
     module_manager.finish_tasks()
 
     # No on_event should have been run

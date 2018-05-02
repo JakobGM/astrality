@@ -358,19 +358,21 @@ class ModuleManager:
     """
     A manager for operating on a set of modules.
 
-    :param config: Modules and global configuration options.
+    :param config: Global configuration options.
+    :param modules: Dictionary containing globally defined modules.
     :param context: Global context.
+    :param directory: Directory containing global configuration.
     """
 
     def __init__(
         self,
-        config: ApplicationConfig,
+        config: ApplicationConfig = {},
         modules: Dict[str, ModuleConfigDict] = {},
         context: Context = Context(),
+        directory: Path = Path(__file__).parent / 'tests' / 'test_config',
     ) -> None:
         """Initialize a ModuleManager object from `astrality.yml` dict."""
-        self.config_directory = Path(config['_runtime']['config_directory'])
-        self.temp_directory = Path(config['_runtime']['temp_directory'])
+        self.config_directory = directory
         self.application_config = config
         self.application_context = context
 
@@ -645,7 +647,12 @@ class ModuleManager:
             return
 
         # Hot reloading is enabled, get the new configuration dict
-        new_application_config, new_modules, new_context = user_configuration(
+        (
+            new_application_config,
+            new_modules,
+            new_context,
+            directory,
+        ) = user_configuration(
             config_directory=self.config_directory,
         )
 
@@ -655,6 +662,7 @@ class ModuleManager:
                 config=new_application_config,
                 modules=new_modules,
                 context=new_context,
+                directory=directory,
             )
 
             # Run all old exit actions, since the new config is valid

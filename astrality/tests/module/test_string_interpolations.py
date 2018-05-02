@@ -7,8 +7,6 @@ from astrality.module import ModuleManager
 
 
 def test_use_of_string_interpolations_of_module(
-    default_global_options,
-    _runtime,
     tmpdir,
     caplog,
     template_directory,
@@ -58,14 +56,9 @@ def test_use_of_string_interpolations_of_module(
         },
     }
 
-    application_config = {}
-    application_config.update(default_global_options)
-    _runtime['_runtime']['config_directory'] = temp_dir
-    application_config.update(_runtime)
-
     module_manager = ModuleManager(
-        config=application_config,
         modules=modules,
+        directory=temp_dir,
     )
 
     # Compile twice to double check that only one temporary file is inserted

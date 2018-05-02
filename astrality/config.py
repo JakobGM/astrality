@@ -144,40 +144,15 @@ def dict_from_config_file(
     }
 
 
-def infer_runtime_variables_from_config(
-    config_directory: Path,
-    config_file: Path,
-    config: ApplicationConfig,
-) -> Dict[str, Dict[str, Path]]:
-    """Return infered runtime variables based on config file."""
-    temp_directory = Path(os.environ.get('TMPDIR', '/tmp')) / 'astrality'
-    if not temp_directory.is_dir():
-        os.mkdir(temp_directory)
-
-    return {
-        '_runtime': {
-            'config_directory': config_directory,
-            'config_file': config_file,
-            'temp_directory': temp_directory,
-        },
-    }
-
-
 def user_configuration(
     config_directory: Optional[Path] = None,
-) -> Tuple[ApplicationConfig, Dict, Context]:
+) -> Tuple[ApplicationConfig, Dict, Context, Path]:
     """
     Return dictionary containing the users configuration.
 
     Configuration is read from astrality.yml, modules.yml and context.yml,
     and merged into a single dictionary, where the keys are prepended with
     'config/', 'module/', and 'context/' respectively.
-
-    In addition, the section config['_runtime'] is inserted, which contains
-    several items specifying runtime specific values. Example keys are:
-    - config_directory
-    - config_file
-    - temp_directory
     """
     config_directory, config_file = infer_config_location(config_directory)
 
@@ -207,21 +182,13 @@ def user_configuration(
             prepend='module/',
         )
 
-    # Some metadata used by other classes, stored in '_runtime' key
-    runtime = infer_runtime_variables_from_config(
-        config_directory,
-        config_file,
-        config,
-    )
-    config.update(runtime)
-
     # Insert default global settings that are not specified
     user_settings = config.get('config/astrality', {})
     config['config/astrality'] = \
         ASTRALITY_DEFAULT_GLOBAL_SETTINGS['config/astrality'].copy()
     config['config/astrality'].update(user_settings)
 
-    return config, modules_config, global_context
+    return config, modules_config, global_context, config_directory
 
 
 def create_config_directory(path: Optional[Path] = None, empty=False) -> Path:

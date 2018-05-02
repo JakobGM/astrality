@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -6,21 +7,19 @@ from astrality.module import ModuleManager
 
 
 @pytest.yield_fixture
-def test_target(temp_directory):
-    test_target = temp_directory / 'test_target.temp'
+def test_target(tmpdir):
+    test_target = Path(tmpdir) / 'test_target.temp'
 
-    yield  test_target
+    yield test_target
 
     if test_target.is_file():
         os.remove(test_target)
 
+
 def test_that_all_exit_actions_are_correctly_performed(
-    default_global_options,
-    _runtime,
     test_config_directory,
     test_target,
 ):
-    application_config = {}
     modules = {
         'car': {
             'on_startup': {
@@ -43,13 +42,8 @@ def test_that_all_exit_actions_are_correctly_performed(
             },
         },
     }
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
 
-    module_manager = ModuleManager(
-        config=application_config,
-        modules=modules,
-    )
+    module_manager = ModuleManager(modules=modules)
 
     # Before we start, the template target should not exist
     assert not test_target.is_file()

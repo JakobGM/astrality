@@ -2,12 +2,13 @@
 
 from pathlib import Path
 
+from astrality.module import ModuleManager
+
 
 def test_stowing(
     action_block_factory,
     create_temp_files,
     module_factory,
-    module_manager,
 ):
     """ModuleManager should stow properly."""
     template, target = create_temp_files(2)
@@ -26,6 +27,8 @@ def test_stowing(
     module = module_factory(
         on_exit=action_block,
     )
+
+    module_manager = ModuleManager()
     module_manager.modules = {'test': module}
     module_manager.exit()
 

@@ -1,7 +1,6 @@
 """Application wide fixtures."""
 import copy
 import os
-import shutil
 from pathlib import Path
 
 import pytest
@@ -44,6 +43,7 @@ def context():
     conf_path = Path(this_test_file).parents[1] / 'config'
     return user_configuration(conf_path)[2]
 
+
 @pytest.fixture(scope='session', autouse=True)
 def modules():
     """Return the modules object for the example configuration."""
@@ -59,36 +59,15 @@ def expanded_env_dict():
 
 
 @pytest.fixture
-def default_global_options():
-    """Return dictionary containing all default global options."""
-    return copy.deepcopy(ASTRALITY_DEFAULT_GLOBAL_SETTINGS)
-
-
-@pytest.fixture
-def _runtime(temp_directory, test_config_directory):
-    return {'_runtime': {
-        'config_directory': test_config_directory,
-        'temp_directory': temp_directory,
-    }}
-
-
-@pytest.fixture
 def test_config_directory():
     """Return path to test config directory."""
     return Path(__file__).parent / 'test_config'
 
 
 @pytest.yield_fixture
-def temp_directory():
+def temp_directory(tmpdir):
     """Return path to temporary directory, and cleanup afterwards."""
-    temp_dir = Path('/tmp/astrality')
-    if not temp_dir.is_dir():
-        os.makedirs(temp_dir)
-
-    yield temp_dir
-
-    # Cleanup temp dir after test has been run
-    shutil.rmtree(temp_dir, ignore_errors=True)
+    return Path(tmpdir)
 
 
 @pytest.fixture
@@ -140,17 +119,14 @@ def module_factory(test_config_directory):
 
 
 @pytest.fixture
-def module_manager_factory(default_global_options, _runtime):
+def module_manager_factory():
     """Return ModuleManager factory for testing."""
-    default_global_options.update(_runtime)
-
     def _module_manager_factory(
         *modules,
         context=Context(),
     ) -> ModuleManager:
         """Return ModuleManager object with given modules and context."""
         module_manager = ModuleManager(
-            config=default_global_options,
             context=context,
         )
         module_manager.modules = {
@@ -169,15 +145,6 @@ def module_manager_factory(default_global_options, _runtime):
         return module_manager
 
     return _module_manager_factory
-
-
-@pytest.fixture
-def module_manager(
-    default_global_options,
-    _runtime,
-):
-    default_global_options.update(_runtime)
-    return ModuleManager(default_global_options)
 
 
 @pytest.fixture

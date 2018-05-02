@@ -10,8 +10,6 @@ from astrality.module import ModuleManager
         ("100", 0o100),
 ])
 def test_compiling_template_with_specific_permissions(
-    default_global_options,
-    _runtime,
     test_config_directory,
     tmpdir,
     specified_permission,
@@ -32,12 +30,7 @@ def test_compiling_template_with_specific_permissions(
         },
     }
 
-    application_config = {}
-    application_config.update(default_global_options)
-    application_config.update(_runtime)
-
     module_manager = ModuleManager(
-        config=application_config,
         modules=modules,
     )
     module_manager.finish_tasks()
