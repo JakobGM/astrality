@@ -141,7 +141,7 @@ class TestModuleClass:
         assert (
             'astrality.actions',
             logging.INFO,
-            'Running command "echo /tmp/compiled_result".',
+            RegexCompare(r'Running command "echo .+compiled_result"\.'),
         ) in caplog.record_tuples
 
     @freeze_time('2018-01-27')
