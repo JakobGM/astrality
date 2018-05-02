@@ -164,7 +164,7 @@ def test_use_of_replacer(template_directory, tmpdir):
     assert (target.stat().st_mode & 0o777) == 0o777
 
 
-def test_that_current_directory_is_set_correctly(template_directory):
+def test_that_current_directory_is_set_correctly(template_directory, tmpdir):
     """Shell commmand filters should be run from `directory`."""
     compile_dict = {
         'content': str(
@@ -172,7 +172,7 @@ def test_that_current_directory_is_set_correctly(template_directory):
         ),
     }
 
-    directory=Path('/tmp')
+    directory = Path(tmpdir)
     compile_action = CompileAction(
         options=compile_dict,
         directory=directory,
@@ -180,7 +180,7 @@ def test_that_current_directory_is_set_correctly(template_directory):
         context_store={},
     )
     target = list(compile_action.execute().values())[0]
-    assert target.read_text() == '/tmp'
+    assert target.read_text() == tmpdir
 
 
 def test_retrieving_all_compiled_templates(template_directory, tmpdir):
