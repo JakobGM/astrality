@@ -512,11 +512,14 @@ class ModuleManager:
 
     def time_until_next_event(self) -> timedelta:
         """Time left until first event change of any of the modules managed."""
-        return min(
-            module.event_listener.time_until_next_event()
-            for module
-            in self.modules.values()
-        )
+        try:
+            return min(
+                module.event_listener.time_until_next_event()
+                for module
+                in self.modules.values()
+            )
+        except ValueError:
+            return timedelta.max
 
     def execute(
         self,

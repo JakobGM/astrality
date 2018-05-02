@@ -11,7 +11,7 @@ from astrality.filewatcher import DirectoryWatcher
 @pytest.yield_fixture
 def test_files():
     """Return paths related to two test files and cleanup afterwards."""
-    watched_directory = Path('/tmp/astrality')
+    watched_directory = Path('/tmp/astrality').resolve()
     test_file1 = watched_directory / 'tmp_test_file1'
 
     recursive_dir = watched_directory / 'test_folder'
@@ -44,7 +44,7 @@ def watch_dir():
     event_saver = EventSaver()
 
     # Watch a temporary directory
-    watched_directory = Path('/tmp/astrality')
+    watched_directory = Path('/tmp/astrality').resolve()
     dir_watcher = DirectoryWatcher(
         directory=watched_directory,
         on_modified=event_saver.save_argument,
