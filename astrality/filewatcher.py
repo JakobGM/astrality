@@ -41,9 +41,10 @@ class DirectoryWatcher:
             try:
                 self.observer.stop()
                 self.observer.join()
-            except RuntimeError:
+            except (RuntimeError, SystemError):
                 # TODO: Understand exactly what join() does, and why
                 # it sometimes throws a RuntimeError
+                # Also find out why MacOS throws SystemError
                 pass
 
 
