@@ -1,6 +1,7 @@
 """Module for directory modification watching."""
 
 from pathlib import Path
+from sys import platform
 from typing import Callable
 
 from watchdog.events import FileModifiedEvent, FileSystemEventHandler
@@ -58,6 +59,24 @@ class DirectoryEventHandler(FileSystemEventHandler):
     def on_modified(self, event: FileModifiedEvent) -> None:
         """Call on_modified callback function on modifed event in dir."""
         if event.is_directory:
-            return
+            if platform != 'darwin':
+                return
 
-        self._on_modified(Path(event.src_path).absolute())
+            # FSEvents on MacOS only supplies the directory containing the
+            # modified file. We need to find the modified file manually...
+            files_in_directory = [
+                path
+                for path
+                in Path(event.src_path).glob('**/*')
+                if not path.is_dir()
+            ]
+            if len(files_in_directory) > 0:
+                modified_path = max(
+                    files_in_directory,
+                    key=lambda path: path.stat().st_mtime_ns,
+                )
+                self._on_modified(modified_path)
+            else:
+                return None
+        else:
+            self._on_modified(Path(event.src_path).absolute())

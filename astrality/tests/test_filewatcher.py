@@ -93,8 +93,7 @@ def test_filesystem_watcher(watch_dir):
     assert event_saver.called == 0
 
     # But when we write to it, it is considered "modified"
-    with open(test_file1, 'w') as file:
-        file.write('test_content')
+    test_file1.write_text('test_content')
 
     assert retry(lambda: event_saver.argument == test_file1)
     assert event_saver.called == 1
@@ -104,7 +103,7 @@ def test_filesystem_watcher(watch_dir):
 
     # Subdirectories are not of interest
     assert retry(lambda: event_saver.argument == test_file1)
-    assert event_saver.called == 1
+    assert retry(lambda: event_saver.called == 1)
 
     # Create a file in the subdirectory
     test_file2.write_text('test')
