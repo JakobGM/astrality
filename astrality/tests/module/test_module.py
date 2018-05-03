@@ -363,12 +363,12 @@ def test_running_finished_tasks_command(
         (
             'astrality.actions',
             logging.INFO,
-            'Running command "echo /tmp/compiled_result".',
+            RegexCompare(r'Running command "echo .+compiled_result"\.'),
         ),
         (
             'astrality',
             logging.INFO,
-            '/tmp/compiled_result\n',
+            RegexCompare(r'.+compiled_result\n'),
         ),
     ]
 
