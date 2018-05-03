@@ -34,16 +34,19 @@ class Retry:
         retries.
     :param tries: Number of attempts.
     :param delay: Seconds to sleep between each attempt.
+    :param increase_delay: Increase delay for each attempt.
     """
 
     def __init__(
         self,
-        tries: int = 100,
+        tries: int = 10,
         delay: Union[int, float] = 0.1,
+        increase_delay: Union[int, float] = 0.3,
     ) -> None:
         """Retry object constructor."""
         self.tries = tries
         self.delay = delay
+        self.increase = increase_delay
 
     def __call__(self, expression: Callable[[], Any]) -> bool:
         """
@@ -62,5 +65,6 @@ class Retry:
                 pass
 
             time.sleep(self.delay)
+            self.delay += self.increase  # type: ignore
 
         return expression()
