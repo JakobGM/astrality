@@ -67,7 +67,7 @@ def test_config_directory():
 @pytest.yield_fixture
 def temp_directory(tmpdir):
     """Return path to temporary directory, and cleanup afterwards."""
-    return Path(tmpdir)
+    return Path(tmpdir).resolve()
 
 
 @pytest.fixture

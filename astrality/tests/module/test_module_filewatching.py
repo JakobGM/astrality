@@ -1,7 +1,7 @@
 """Tests for module manager behaviour related to file system modifications."""
 import os
 import shutil
-import time
+from sys import platform
 from pathlib import Path
 
 import pytest
@@ -11,11 +11,13 @@ from astrality.context import Context
 from astrality.module import ModuleManager
 from astrality.tests.utils import Retry
 
+MACOS = platform == 'darwin'
+
 
 @pytest.yield_fixture
 def modules_config(test_config_directory, temp_directory):
     empty_template = test_config_directory / 'templates' / 'empty.template'
-    empty_template_target = Path('/tmp/astrality/empty_temp_template')
+    empty_template_target = empty_template.parent / 'empty_temp_template'
     touch_target = temp_directory / 'touched'
 
     secondary_template = test_config_directory \
@@ -107,6 +109,7 @@ def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
     assert Retry()(lambda: touch_target.is_file())
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 def test_on_modified_event_in_module(modules_config):
     (
         modules,
@@ -124,8 +127,7 @@ def test_on_modified_event_in_module(modules_config):
     module_manager.finish_tasks()
 
     # Assert that the template file is really empty as a sanity check
-    with open(empty_template) as file:
-        assert file.read() == ''
+    assert empty_template.read_text() == ''
 
     # And that target files are not created yet
     assert not touch_target.is_file()
@@ -163,6 +165,7 @@ def test_template_targets():
         os.remove(template_target2)
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 @pytest.mark.slow
 def test_hot_reloading(
     test_template_targets,
@@ -185,6 +188,7 @@ def test_hot_reloading(
     module_manager = ModuleManager(
         config=application_config1,
         modules=modules1,
+        directory=test_config_directory,
     )
 
     # Before beginning, the template should not be compiled
@@ -215,6 +219,9 @@ def test_hot_reloading(
     if target_config.is_file():
         os.remove(target_config)
 
+    # Stop the filewatcher
+    module_manager.directory_watcher.stop()
+
 
 @pytest.yield_fixture
 def three_watchable_files(test_config_directory):
@@ -241,6 +248,7 @@ def three_watchable_files(test_config_directory):
         os.remove(file3)
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 @pytest.mark.slow
 def test_all_three_actions_in_on_modified_block(
     three_watchable_files,
@@ -302,6 +310,7 @@ def test_all_three_actions_in_on_modified_block(
     module_manager.exit()
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 @pytest.mark.slow
 def test_recompile_templates_when_modified(three_watchable_files):
     template, target, _ = three_watchable_files
@@ -343,10 +352,15 @@ def test_recompile_templates_when_modified(three_watchable_files):
     assert Retry()(lambda: target.read_text() == 'value')
 
     module_manager.exit()
+    module_manager.directory_watcher.stop()
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 @pytest.mark.slow
-def test_recompile_templates_when_modified_overridden(three_watchable_files):
+def test_recompile_templates_when_modified_overridden(
+    three_watchable_files,
+    test_config_directory,
+):
     """
     If a file is watched in a on_modified block, it should override the
     reprocess_modified_files option.
@@ -377,6 +391,7 @@ def test_recompile_templates_when_modified_overridden(three_watchable_files):
         context=Context({
             'section': {1: 'value'},
         }),
+        directory=test_config_directory,
     )
 
     # Sanity check before beginning testing
@@ -401,6 +416,7 @@ def test_recompile_templates_when_modified_overridden(three_watchable_files):
     module_manager.exit()
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 @pytest.mark.slow
 def test_importing_context_on_modification(
     three_watchable_files,
@@ -441,6 +457,7 @@ def test_importing_context_on_modification(
     )
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 @pytest.mark.slow
 def test_that_stowed_templates_are_also_watched(three_watchable_files):
     """Stowing template instead of compiling it should still be watched."""

@@ -257,9 +257,14 @@ def test_contains_with_uncompiled_template(template_directory, tmpdir):
 
 def test_compiling_entire_directory(test_config_directory, tmpdir):
     """All directory contents should be recursively compiled."""
-    temp_dir = Path(tmpdir)
+    temp_dir = Path(tmpdir).resolve()
     templates = \
         test_config_directory / 'test_modules' / 'using_all_actions'
+
+    # TODO: Make this unecessary
+    for file in templates.glob('**/*.tmp'):
+        file.unlink()
+
     compile_dict = {
         'content': str(templates),
         'target': str(temp_dir),

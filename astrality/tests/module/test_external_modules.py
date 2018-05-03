@@ -1,12 +1,15 @@
 """Test module for the use of external modules."""
 import os
-import time
+from sys import platform
 
 import pytest
 
 from astrality.context import Context
 from astrality.module import ModuleManager
 from astrality.tests.utils import Retry
+
+
+MACOS = platform == 'darwin'
 
 
 def test_that_external_modules_are_brought_in(test_config_directory):
@@ -56,6 +59,7 @@ def temp_test_files(test_config_directory):
             os.remove(file)
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 def test_correct_relative_paths_used_in_external_module(
     temp_test_files,
     test_config_directory,
@@ -89,6 +93,11 @@ def test_correct_relative_paths_used_in_external_module(
         lambda: compile_target.read_text() == "Vietnam's capitol is Hanoi",
     )
     assert retry(lambda: watch_touch_target.is_file())
+
+    touch_target.unlink()
+    compile_target.unlink()
+    watch_touch_target.unlink()
+    watched_file.write_text('')
 
 
 def test_that_external_module_contexts_are_imported_correctly(

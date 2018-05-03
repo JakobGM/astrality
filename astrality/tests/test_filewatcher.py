@@ -1,12 +1,15 @@
 import os
 import shutil
-import time
+from sys import platform
 from pathlib import Path
 
 import pytest
 
 from astrality.filewatcher import DirectoryWatcher
 from astrality.tests.utils import Retry
+
+
+MACOS = platform == 'darwin'
 
 
 @pytest.yield_fixture
@@ -56,6 +59,7 @@ def watch_dir(tmpdir):
         shutil.rmtree(recursive_dir)
 
 
+@pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 @pytest.mark.slow
 def test_filesystem_watcher(watch_dir):
     """

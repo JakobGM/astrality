@@ -627,6 +627,9 @@ class ModuleManager:
         )
 
         if modified in config_files:
+            logger.info(
+                f'$ASTRALITY_CONFIG_HOME/{modified.name} has been modified!',
+            )
             self.on_application_config_modified()
             return
         else:
@@ -645,11 +648,19 @@ class ModuleManager:
         Reloadnig the module manager only occurs if the user has configured
         `hot_reload_config`.
         """
-        if not self.application_config['config/astrality']['hot_reload_config']:
+        if not self.application_config.get(
+            'config/astrality',
+            {},
+        ).get(
+            'hot_reload_config',
+            False,
+        ):
             # Hot reloading is not enabled, so we return early
+            logger.info('"hot_reload" disabled.')
             return
 
         # Hot reloading is enabled, get the new configuration dict
+        logger.info('Reloading $ASTRALITY_CONFIG_HOME...')
         (
             new_application_config,
             new_modules,
@@ -727,3 +738,7 @@ class ModuleManager:
     def __len__(self) -> int:
         """Return the number of managed modules."""
         return len(self.modules)
+
+    def __del__(self) -> None:
+        """Close filesystem watcher if enabled."""
+        self.directory_watcher.stop()
