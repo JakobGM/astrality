@@ -126,12 +126,12 @@ class TestModuleSource:
         self,
         test_config_directory,
     ):
-        assert tuple(EnabledModules.module_directories(
+        assert sorted(tuple(EnabledModules.module_directories(
             within=test_config_directory / 'freezed_modules',
-        )) == (
+        ))) == sorted((
             'north_america',
             'south_america',
-        )
+        ))
 
 
 class TestDirectoryModuleSource:
@@ -497,14 +497,23 @@ class TestEnabledModules:
     ):
         enabled_modules = EnabledModules([], Path('/'), Path('/'))
 
-        assert enabled_modules.process_enabling_statements(
-            enabling_statements=[
-                {'name': '*::*'}
-            ],
-            modules_directory=test_config_directory / 'freezed_modules',
-        ) == [{'name': 'north_america::*'}, {'name': 'south_america::*'}]
-        assert enabled_modules.all_directory_modules_enabled == True
-        assert enabled_modules.all_global_modules_enabled == False
+        enabled = sorted(map(
+            lambda x: tuple(x.items()),
+            enabled_modules.process_enabling_statements(
+                enabling_statements=[
+                    {'name': '*::*'}
+                ],
+                modules_directory=test_config_directory / 'freezed_modules',
+            ),
+        ))
+        expected = sorted(map(
+            lambda x: tuple(x.items()),
+            [{'name': 'north_america::*'}, {'name': 'south_america::*'}],
+        ))
+        assert enabled == expected
+
+        assert enabled_modules.all_directory_modules_enabled is True
+        assert enabled_modules.all_global_modules_enabled is False
 
 
     @pytest.mark.slow
