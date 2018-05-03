@@ -229,7 +229,7 @@ class CompileAction(Action):
             # and insert it into the configuration options.
             template = self.option(key='content', path=True)
             target = self._create_temp_file(template.name)
-            self._options['target'] = str(target)  # type: ignore
+            self._options['target'] = str(target)
 
         # These might either be file paths or directory paths
         template_source = self.option(key='content', path=True)
@@ -276,7 +276,7 @@ class CompileAction(Action):
 
         :return: Path object pointing to the created temporary file.
         """
-        temp_file = NamedTemporaryFile(  # type: ignore
+        temp_file = NamedTemporaryFile(
             prefix=name + '-',
             # dir=Path(self.temp_directory),
         )
@@ -460,7 +460,7 @@ class StowAction(Action):
             return
 
         # Create equivalent compile action based on stow config
-        compile_options: CompileDict = {  # type: ignore
+        compile_options: CompileDict = {
             'content': self._options['content'],
             'target': self._options['target'],
             'include': self._options.get('templates', r'template\.(.+)'),
@@ -508,7 +508,7 @@ class StowAction(Action):
         if non_templates_action.lower() == 'copy':
             NonTemplatesAction = CopyAction
         else:
-            NonTemplatesAction = SymlinkAction  # type: ignore
+            NonTemplatesAction = SymlinkAction
 
         self.non_templates_action = NonTemplatesAction(
             options=non_templates_options,
@@ -756,13 +756,13 @@ class ActionBlock:
 
         for identifier, action_type in self.action_types.items():
             # Create and persist a list of all ImportContextAction objects
-            action_configs = utils.cast_to_list(  # type: ignore
-                self.action_block.get(identifier, {}),  # type: ignore
+            action_configs = utils.cast_to_list(
+                self.action_block.get(identifier, {}),
             )
             setattr(
                 self,
                 f'_{identifier}_actions',
-                [action_type(  # type: ignore
+                [action_type(
                     options=action_config,
                     directory=directory,
                     replacer=replacer,

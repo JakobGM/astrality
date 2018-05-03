@@ -167,7 +167,7 @@ def user_configuration(
         global_context = Context()
 
     # Global configuration options
-    config = dict_from_config_file(  # type: ignore
+    config = dict_from_config_file(
         config_file=config_file,
         context=global_context,
         prepend='config/',
@@ -176,7 +176,7 @@ def user_configuration(
     # Globally defined modules
     modules_file = config_directory / 'modules.yml'
     if modules_file.exists():
-        modules_config = dict_from_config_file(  # type: ignore
+        modules_config = dict_from_config_file(
             config_file=modules_file,
             context=global_context,
             prepend='module/',
@@ -399,7 +399,7 @@ class ModuleSource(ABC):
 class GlobalModuleSource(ModuleSource):
     """Module defined in `$ASTRALITY_CONFIG_HOME/modules.yml`."""
 
-    name_syntax = re.compile(r'^(\w+|\*)$')  # type: ignore
+    name_syntax = re.compile(r'^(\w+|\*)$')
     prepend = ''
 
     def __init__(
@@ -431,7 +431,7 @@ class GlobalModuleSource(ModuleSource):
 class GithubModuleSource(ModuleSource):
     """Module defined in a GitHub repository."""
 
-    name_syntax = re.compile(r'^github::.+/.+(::(\w+|\*))?$')  # type: ignore
+    name_syntax = re.compile(r'^github::.+/.+(::(\w+|\*))?$')
     _config: ApplicationConfig
 
     def __init__(
@@ -510,7 +510,7 @@ class DirectoryModuleSource(ModuleSource):
     Specifically: `$ASTRALITY_CONFIG_HOME/{modules_directory}/config.yml
     """
 
-    name_syntax = re.compile(r'^(?!github::).+::(\w+|\*)$')  # type: ignore
+    name_syntax = re.compile(r'^(?!github::).+::(\w+|\*)$')
 
     def __init__(
         self,
