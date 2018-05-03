@@ -9,6 +9,7 @@ import pytest
 from astrality.config import dict_from_config_file
 from astrality.context import Context
 from astrality.module import ModuleManager
+from astrality.tests.utils import Retry
 
 
 @pytest.yield_fixture
@@ -103,8 +104,7 @@ def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
         assert file.read() == 'new content'
 
     # And that the new file has been touched
-    time.sleep(0.5)
-    assert touch_target.is_file()
+    assert Retry()(lambda: touch_target.is_file())
 
 
 def test_on_modified_event_in_module(modules_config):
@@ -134,20 +134,20 @@ def test_on_modified_event_in_module(modules_config):
 
     # Trigger the on_modified event
     empty_template.write_text('new content')
-    time.sleep(2)
 
     # And assert that the new template has been compiled
-    assert empty_template_target.is_file()
-    with open(empty_template_target) as file:
-        assert file.read() == 'new content'
+    retry = Retry()
+    assert retry(lambda: empty_template_target.is_file())
+    assert retry(lambda: empty_template_target.read_text() == 'new content')
 
     # Assert that also templates from other modules are compiled
-    assert secondary_template_target.is_file()
-    with open(secondary_template_target) as file:
-        assert file.read() == 'one\ntwo\nthree'
+    assert retry(lambda: secondary_template_target.is_file())
+    assert retry(
+        lambda: secondary_template_target.read_text() == 'one\ntwo\nthree',
+    )
 
     # And that the new file has been touched
-    assert touch_target.is_file()
+    assert retry(lambda: touch_target.is_file())
 
 
 @pytest.yield_fixture
@@ -199,18 +199,17 @@ def test_hot_reloading(
 
     # We now "edit" the configuration file
     shutil.copy(str(config2), str(target_config))
-    time.sleep(2)
 
     # Since hot reloading is enabled, the new template target should be
     # compiled, and the old one cleaned up
-    assert template_target2.is_file()
-    assert not template_target1.is_file()
+    retry = Retry()
+    assert retry(lambda: template_target2.is_file())
+    assert retry(lambda: not template_target1.is_file())
 
     # And we switch back again
     shutil.copy(str(config1), str(target_config))
-    time.sleep(2)
-    assert template_target1.is_file()
-    assert not template_target2.is_file()
+    assert retry(lambda: template_target1.is_file())
+    assert retry(lambda: not template_target2.is_file())
 
     # Cleanup config file
     if target_config.is_file():
@@ -296,10 +295,9 @@ def test_all_three_actions_in_on_modified_block(
 
     # Now modify file2 such that the on_modified block is triggered
     file2.write_text('some new content')
-    time.sleep(2)
 
     # The on_modified run command should now have been executed
-    assert file3.is_file()
+    assert Retry()(lambda: file3.is_file())
 
     module_manager.exit()
 
@@ -342,9 +340,7 @@ def test_recompile_templates_when_modified(three_watchable_files):
 
     # Now write to the template and see if it is recompiled
     template.write_text('{{ section.2 }}')
-    time.sleep(2)
-    with open(target) as file:
-        assert file.read() == 'value'
+    assert Retry()(lambda: target.read_text() == 'value')
 
     module_manager.exit()
 
@@ -397,10 +393,10 @@ def test_recompile_templates_when_modified_overridden(three_watchable_files):
     # Now write to the template and see if it is *compiled*, but the on_modified
     # command is run instead
     template.write_text('{{ section.2 }}')
-    time.sleep(2)
-    with open(target) as file:
-        assert file.read() == ''
-    assert touch_target.is_file()
+
+    retry = Retry()
+    assert retry(lambda: target.read_text() == '')
+    assert retry(lambda: touch_target.is_file())
 
     module_manager.exit()
 
@@ -439,9 +435,10 @@ def test_importing_context_on_modification(
     # After modifying file1, Mercedes should have been imported
     file1.touch()
     file1.write_text('new content, resulting in importing Mercedes')
-    time.sleep(2)
-    assert module_manager.application_context['car']['manufacturer'] \
-        == 'Mercedes'
+    assert Retry()(
+        lambda: module_manager.application_context
+        ['car']['manufacturer'] == 'Mercedes',
+    )
 
 
 @pytest.mark.slow
@@ -485,8 +482,6 @@ def test_that_stowed_templates_are_also_watched(three_watchable_files):
 
     # Now write to the template and see if it is recompiled
     template.write_text('{{ section.2 }}')
-    time.sleep(2)
-    with open(target) as file:
-        assert file.read() == 'value'
+    assert Retry()(lambda: target.read_text() == 'value')
 
     module_manager.exit()

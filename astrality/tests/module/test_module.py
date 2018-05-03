@@ -12,7 +12,7 @@ import pytest
 from astrality import event_listener
 from astrality.module import Module, ModuleManager
 from astrality.context import Context
-from astrality.tests.utils import RegexCompare
+from astrality.tests.utils import RegexCompare, Retry
 from astrality.utils import generate_expanded_env_dict
 
 
@@ -736,9 +736,10 @@ def test_that_only_startup_event_block_is_run_on_startup(
     # Now call finish_tasks for the first time, only startup event block should
     # be run
     module_manager.finish_tasks()
-    time.sleep(0.5)
-    assert test_file1.is_file()
-    assert not test_file2.is_file()
+
+    retry = Retry()
+    assert retry(lambda: test_file1.is_file())
+    assert retry(lambda: not test_file2.is_file())
 
 
 def test_trigger_event_module_action(test_config_directory):

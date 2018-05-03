@@ -6,6 +6,7 @@ import pytest
 
 from astrality.context import Context
 from astrality.module import ModuleManager
+from astrality.tests.utils import Retry
 
 
 def test_that_external_modules_are_brought_in(test_config_directory):
@@ -82,11 +83,12 @@ def test_correct_relative_paths_used_in_external_module(
 
     # Now modify the observed file, and see if on_modified is triggered
     watched_file.write_text('This watched file has been modified')
-    time.sleep(0.7)
 
-    with open(compile_target, 'r') as file:
-        assert file.read() == "Vietnam's capitol is Hanoi"
-    assert watch_touch_target.is_file()
+    retry = Retry()
+    assert retry(
+        lambda: compile_target.read_text() == "Vietnam's capitol is Hanoi",
+    )
+    assert retry(lambda: watch_touch_target.is_file())
 
 
 def test_that_external_module_contexts_are_imported_correctly(

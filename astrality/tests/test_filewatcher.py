@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from astrality.filewatcher import DirectoryWatcher
+from astrality.tests.utils import Retry
 
 
 @pytest.yield_fixture
@@ -21,6 +22,7 @@ def watch_dir(tmpdir):
 
         def __init__(self):
             self.called = 0
+            self.argument = None
 
         def save_argument(self, path: Path) -> None:
             self.called += 1
@@ -77,37 +79,36 @@ def test_filesystem_watcher(watch_dir):
     dir_watcher.start()
 
     # Nothing has been modified yet
-    assert not hasattr(event_saver, 'argument')
+    assert event_saver.argument is None
     assert event_saver.called == 0
 
     # Create an empty file
     test_file1.touch()
 
+    # We might have to try several times, as filewatching can be slow
+    retry = Retry()
+
     # New files are not considered "modified"
-    time.sleep(0.7)
-    assert not hasattr(event_saver, 'argument')
+    assert event_saver.argument is None
     assert event_saver.called == 0
 
     # But when we write to it, it is considered "modified"
     with open(test_file1, 'w') as file:
         file.write('test_content')
 
-    time.sleep(2)
-    assert event_saver.argument == test_file1
-    assert event_saver.called >= 1
+    assert retry(lambda: event_saver.argument == test_file1)
+    assert event_saver.called == 1
 
     # Create a directory in the watched directory
     recursive_dir.mkdir(parents=True)
 
     # Subdirectories are not of interest
-    time.sleep(2)
-    assert event_saver.argument == test_file1
-    assert event_saver.called >= 1
+    assert retry(lambda: event_saver.argument == test_file1)
+    assert event_saver.called == 1
 
     # Create a file in the subdirectory
     test_file2.write_text('test')
 
     # Both the touch event and the write event are considered of interest
-    time.sleep(2)
-    assert event_saver.argument == test_file2
-    assert event_saver.called >= 2
+    assert retry(lambda: event_saver.argument == test_file2)
+    assert event_saver.called == 2
