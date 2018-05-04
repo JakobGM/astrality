@@ -5,10 +5,9 @@ import os
 from pathlib import Path
 
 import pytest
-from jinja2 import Environment, UndefinedError
+from jinja2 import UndefinedError
 
 from astrality.compiler import (
-    cast_to_numeric,
     compile_template,
     compile_template_to_string,
     jinja_environment,
@@ -59,18 +58,6 @@ def test_compilation_of_jinja_template(test_templates_folder, expanded_env_dict)
 
     with open(target) as target:
         assert target.read() == 'test_value\nfallback_value\n'
-
-@pytest.mark.parametrize(('string,cast,resulting_type'), [
-    ('-2', -2, int),
-    ('0', 0, int),
-    ('1', 1, int),
-    ('1.5', 1.5, float),
-    ('one', 'one', str),
-])
-def test_cast_to_numeric(string, cast, resulting_type):
-    result = cast_to_numeric(string)
-    assert result == cast
-    assert isinstance(result, resulting_type)
 
 
 def test_run_shell_template_filter(test_templates_folder):
