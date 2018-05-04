@@ -52,6 +52,8 @@ fonts:
     #
     # Here we define the main fonts used across our applications. Where 1
     # is the primary font, 2 the secondary font, and so on.
+
+    # These fonts can be installed here: https://nerdfonts.com/
     1:
         name: FuraCode Nerd Font
         size: 8
