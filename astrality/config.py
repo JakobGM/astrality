@@ -179,7 +179,6 @@ def user_configuration(
         modules_config = dict_from_config_file(
             config_file=modules_file,
             context=global_context,
-            prepend='module/',
         )
 
     # Insert default global settings that are not specified
