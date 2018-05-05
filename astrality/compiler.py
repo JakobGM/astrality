@@ -14,9 +14,8 @@ from jinja2 import (
     make_logging_undefined,
 )
 
-from astrality.utils import generate_expanded_env_dict
+from astrality import utils
 from astrality.context import Context
-from astrality.utils import run_shell
 
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
@@ -47,11 +46,11 @@ def jinja_environment(
     )
 
     # Add env context containing all environment variables
-    env.globals['env'] = generate_expanded_env_dict()
+    env.globals['env'] = utils.generate_expanded_env_dict()
 
     # Add run shell command filter
     run_shell_from_working_directory = partial(
-        run_shell,
+        utils.run_shell,
         working_directory=shell_command_working_directory,
     )
     env.filters['shell'] = run_shell_from_working_directory
@@ -123,7 +122,7 @@ def compile_template(
     shutil.copymode(template, target)
 
     if permissions:
-        result = run_shell(
+        result = utils.run_shell(
             command=f'chmod {permissions} {target}',
             timeout=0,
             fallback=False,

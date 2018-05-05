@@ -100,7 +100,7 @@ def test_filesystem_watcher(watch_dir):
     test_file1.write_text('test_content')
 
     assert retry(lambda: event_saver.argument == test_file1)
-    assert event_saver.called == 1
+    assert event_saver.called >= 1
 
     # Create a directory in the watched directory
     recursive_dir.mkdir(parents=True)

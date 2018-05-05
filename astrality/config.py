@@ -6,7 +6,6 @@ import os
 import re
 from abc import ABC, abstractmethod
 from distutils.dir_util import copy_tree
-from io import StringIO
 from pathlib import Path
 from typing import (
     Any,
@@ -25,7 +24,6 @@ from typing import (
 
 from mypy_extensions import TypedDict
 
-from astrality import compiler
 from astrality.exceptions import (
     MisconfiguredConfigurationFile,
     NonExistentEnabledModule,
@@ -38,21 +36,7 @@ if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa
 
 logger = logging.getLogger('astrality')
-
-from yaml import load  # noqa
-try:
-    from yaml import CLoader as Loader  # type: ignore
-    logger.info('Using LibYAML bindings for faster .yml parsing.')
-except ImportError:  # pragma: no cover
-    from yaml import Loader
-    logger.warning(
-        'LibYAML not installed.'
-        'Using somewhat slower pure python implementation.',
-    )
-
-
 ApplicationConfig = Dict[str, Dict[str, Any]]
-
 ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'astrality': {
     'hot_reload_config': False,
     'startup_delay': 0,
@@ -111,31 +95,6 @@ def infer_config_location(
     return config_directory, config_file
 
 
-def dict_from_config_file(
-    config_file: Path,
-    context: Context,
-) -> ApplicationConfig:
-    """
-    Return a dictionary that reflects the contents of `config_file`.
-
-    `config` file is compiled as a Jinja template with `context`.
-
-    :param config_file: YAML file path.
-    :param context: Jinja2 context.
-    """
-    if not config_file.is_file():  # pragma: no cover
-        error_msg = f'Could not load config file "{config_file}".'
-        logger.critical(error_msg)
-        raise FileNotFoundError(error_msg)
-
-    config_string = compiler.compile_template_to_string(
-        template=config_file,
-        context=context,
-        shell_command_working_directory=config_file.parent,
-    )
-    return load(StringIO(config_string), Loader=Loader)
-
-
 def user_configuration(
     config_directory: Optional[Path] = None,
 ) -> Tuple[ApplicationConfig, Dict, Context, Path]:
@@ -150,16 +109,16 @@ def user_configuration(
     # First get global context, which we can use when compiling other files
     context_file = config_directory / 'context.yml'
     if context_file.exists():
-        global_context = Context(dict_from_config_file(
-            config_file=context_file,
+        global_context = Context(utils.compile_yaml(
+            path=context_file,
             context=Context(),
         ))
     else:
         global_context = Context()
 
     # Global configuration options
-    config = dict_from_config_file(
-        config_file=config_file,
+    config = utils.compile_yaml(
+        path=config_file,
         context=global_context,
     )
 
@@ -172,8 +131,8 @@ def user_configuration(
     # Globally defined modules
     modules_file = config_directory / 'modules.yml'
     if modules_file.exists():
-        modules_config = dict_from_config_file(
-            config_file=modules_file,
+        modules_config = utils.compile_yaml(
+            path=modules_file,
             context=global_context,
         )
 
@@ -767,8 +726,8 @@ def filter_config_file(
     assert config_file.name == 'modules.yml'
 
     try:
-        modules_dict = dict_from_config_file(
-            config_file=config_file,
+        modules_dict = utils.compile_yaml(
+            path=config_file,
             context=context,
         )
     except FileNotFoundError:
@@ -813,4 +772,4 @@ def filter_config_file(
         module_section = modules_dict.pop(module_name)
         modules_dict[non_conflicting_module_name] = module_section
 
-    return modules_dict  # type: ignore
+    return modules_dict

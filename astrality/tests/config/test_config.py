@@ -4,22 +4,19 @@ from shutil import rmtree
 
 import pytest
 
-from astrality import compiler
 from astrality.config import (
     create_config_directory,
-    dict_from_config_file,
-    user_configuration,
     resolve_config_directory,
 )
 from astrality.context import Context
-from astrality.utils import generate_expanded_env_dict
+from astrality.utils import generate_expanded_env_dict, compile_yaml
 
 
 @pytest.fixture
 def dummy_config():
     test_conf = Path(__file__).parents[1] / 'test_config' / 'test.yml'
-    return dict_from_config_file(
-        config_file=test_conf,
+    return compile_yaml(
+        path=test_conf,
         context=Context(),
     )
 
@@ -119,42 +116,3 @@ class TestCreateConfigDirectory:
         assert 'astrality.yml' in dir_contents
         assert 'modules' in dir_contents
         rmtree(created_config_dir)
-
-
-@pytest.yield_fixture
-def dir_with_compilable_files(tmpdir):
-    config_dir = Path(tmpdir)
-    config_file = config_dir / 'astrality.yml'
-    config_file.write_text(
-        'key1: {{ env.EXAMPLE_ENV_VARIABLE }}\n'
-        'key2: {{ "echo test" | shell }}'
-    )
-
-    module_file = config_dir / 'modules.yml'
-    module_file.write_text(
-        'key1: {{ env.EXAMPLE_ENV_VARIABLE }}\n'
-        'key2: {{ "echo test" | shell }}'
-    )
-
-    yield config_dir
-
-    os.remove(config_file)
-    os.remove(module_file)
-    config_dir.rmdir()
-
-
-class TestUsingConfigFilesWithPlaceholders:
-    def test_dict_from_config_file(self, dir_with_compilable_files):
-        config = dict_from_config_file(
-            config_file=dir_with_compilable_files / 'astrality.yml',
-            context={},
-        )
-        assert config == {
-            'key1': 'test_value',
-            'key2': 'test',
-        }
-
-    def test_get_user_configuration(self, dir_with_compilable_files):
-        user_conf, *_ = user_configuration(dir_with_compilable_files)
-        assert user_conf['key1'] == 'test_value'
-        assert user_conf['key2'] == 'test'

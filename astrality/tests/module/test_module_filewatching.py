@@ -1,15 +1,16 @@
 """Tests for module manager behaviour related to file system modifications."""
 import os
 import shutil
-from sys import platform
 from pathlib import Path
+from sys import platform
 
 import pytest
 
-from astrality.config import dict_from_config_file
+from astrality import utils
 from astrality.context import Context
 from astrality.module import ModuleManager
 from astrality.tests.utils import Retry
+
 
 MACOS = platform == 'darwin'
 
@@ -179,7 +180,7 @@ def test_hot_reloading(
     # Copy the first configuration into place
     shutil.copy(str(config1), str(target_config))
 
-    modules1 = dict_from_config_file(
+    modules1 = utils.compile_yaml(
         config1,
         context={},
     )
