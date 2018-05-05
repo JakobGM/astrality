@@ -11,7 +11,7 @@ def periodic():
     return Periodic({'type': 'periodic'})
 
 
-@pytest.mark.parametrize("event, is_event", [
+@pytest.mark.parametrize('event, is_event', [
     ('0', True),
     ('1', True),
     ('80', True),

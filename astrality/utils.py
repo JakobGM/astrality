@@ -88,11 +88,11 @@ def generate_expanded_env_dict() -> Dict[str, str]:
             env_dict[name] = os.path.expandvars(value)
         except ValueError as e:
             if 'invalid interpolation syntax' in str(e):
-                logger.warning(f'''
-                Could not use environment variable {name}={value}.
-                It is too complex for expansion, using unexpanded value
-                instead...
-                ''')
+                logger.warning(
+                    f'Could not use environment variable {name}={value}.'
+                    'It is too complex for expansion, using unexpanded value'
+                    'instead...',
+                )
                 env_dict[name] = value
             else:
                 raise

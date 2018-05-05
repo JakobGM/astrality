@@ -33,9 +33,9 @@ setup(
     author_email='jakobgm@gmail.com',
     description='A dynamic configuration file manager.',
     long_description=readme(),
-    license="MIT",
-    keywords="unix configuration management",
-    url="http://github.com/JakobGM/astrality",
+    license='MIT',
+    keywords='unix configuration management',
+    url='http://github.com/JakobGM/astrality',
 
     classifiers=[
         'Development Status :: 4 - Beta',

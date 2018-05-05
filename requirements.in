@@ -49,6 +49,12 @@ watchdog
 # For linting python files
 flake8
 
+# For enforcing trailing commas
+flake8-commas
+
+# For enforcing single quote string literals
+flake8-quotes
+
 # Sphinx extension which inspects type annotations when using autodoc
 sphinx-autodoc-typehints
 

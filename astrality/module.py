@@ -292,7 +292,7 @@ class Module:
 
             if absolute_path in performed_compilations:
                 # TODO: Is joining the right thing to do here?
-                return " ".join(
+                return ' '.join(
                     [
                         str(path)
                         for path
@@ -345,7 +345,7 @@ class Module:
         else:
             logger.warning(
                 f'[module/{name}] ' +
-                ", ".join([
+                ', '.join([
                     repr(requirement)
                     for requirement
                     in requirements
