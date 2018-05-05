@@ -184,7 +184,7 @@ def test_hot_reloading(
         context={},
     )
 
-    application_config1 = {'config/astrality': {'hot_reload_config': True}}
+    application_config1 = {'astrality': {'hot_reload_config': True}}
     module_manager = ModuleManager(
         config=application_config1,
         modules=modules1,
@@ -327,7 +327,7 @@ def test_recompile_templates_when_modified(three_watchable_files):
         },
     }
 
-    application_config = {'config/modules': {'reprocess_modified_files': True}}
+    application_config = {'modules': {'reprocess_modified_files': True}}
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,
@@ -384,7 +384,7 @@ def test_recompile_templates_when_modified_overridden(
         },
     }
 
-    application_config = {'config/modules': {'reprocess_modified_files': True}}
+    application_config = {'modules': {'reprocess_modified_files': True}}
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,
@@ -477,7 +477,7 @@ def test_that_stowed_templates_are_also_watched(three_watchable_files):
         },
     }
 
-    application_config = {'config/modules': {'reprocess_modified_files': True}}
+    application_config = {'modules': {'reprocess_modified_files': True}}
     module_manager = ModuleManager(
         config=application_config,
         modules=modules,

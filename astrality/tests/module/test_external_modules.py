@@ -14,7 +14,7 @@ MACOS = platform == 'darwin'
 
 def test_that_external_modules_are_brought_in(test_config_directory):
     application_config = {
-        'config/modules': {
+        'modules': {
             'modules_directory': 'test_modules',
             'enabled_modules': [
                 {'name': 'thailand::thailand'},
@@ -65,14 +65,19 @@ def test_correct_relative_paths_used_in_external_module(
     test_config_directory,
 ):
     application_config = {
-        'config/modules': {
+        'modules': {
             'modules_directory': 'test_modules',
             'enabled_modules': [{'name': 'using_all_actions::*'}],
         },
     }
     module_manager = ModuleManager(config=application_config)
 
-    compile_target, touch_target, watch_touch_target, watched_file = temp_test_files
+    (
+        compile_target,
+        touch_target,
+        watch_touch_target,
+        watched_file,
+    ) = temp_test_files
 
     # Sanity check before testing
     for file in (compile_target, touch_target, watch_touch_target,):
@@ -104,7 +109,7 @@ def test_that_external_module_contexts_are_imported_correctly(
     test_config_directory,
 ):
     application_config = {
-        'config/modules': {
+        'modules': {
             'modules_directory': 'test_modules',
             'enabled_modules': [{'name': 'module_with_context::*', }],
         },

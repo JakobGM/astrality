@@ -53,7 +53,7 @@ except ImportError:  # pragma: no cover
 
 ApplicationConfig = Dict[str, Dict[str, Any]]
 
-ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'config/astrality': {
+ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'astrality': {
     'hot_reload_config': False,
     'startup_delay': 0,
 }}
@@ -114,7 +114,6 @@ def infer_config_location(
 def dict_from_config_file(
     config_file: Path,
     context: Context,
-    prepend: str = '',
 ) -> ApplicationConfig:
     """
     Return a dictionary that reflects the contents of `config_file`.
@@ -123,7 +122,6 @@ def dict_from_config_file(
 
     :param config_file: YAML file path.
     :param context: Jinja2 context.
-    :param prepend: Prepend string to each root dictionary key.
     """
     if not config_file.is_file():  # pragma: no cover
         error_msg = f'Could not load config file "{config_file}".'
@@ -135,24 +133,17 @@ def dict_from_config_file(
         context=context,
         shell_command_working_directory=config_file.parent,
     )
-    conf_dict = load(StringIO(config_string), Loader=Loader)
-
-    return {
-        prepend + str(key): value
-        for key, value
-        in conf_dict.items()
-    }
+    return load(StringIO(config_string), Loader=Loader)
 
 
 def user_configuration(
     config_directory: Optional[Path] = None,
 ) -> Tuple[ApplicationConfig, Dict, Context, Path]:
     """
-    Return dictionary containing the users configuration.
+    Return instantiation parameters for ModuleManager.
 
-    Configuration is read from astrality.yml, modules.yml and context.yml,
-    and merged into a single dictionary, where the keys are prepended with
-    'config/', 'module/', and 'context/' respectively.
+    :return: Tuple containing: astrality.yml dictionary, global modules
+        dictionary, global context dictionary, and path to config directory.
     """
     config_directory, config_file = infer_config_location(config_directory)
 
@@ -170,8 +161,13 @@ def user_configuration(
     config = dict_from_config_file(
         config_file=config_file,
         context=global_context,
-        prepend='config/',
     )
+
+    # Insert default global settings that are not specified
+    user_settings = config.get('astrality', {})
+    config['astrality'] = \
+        ASTRALITY_DEFAULT_GLOBAL_SETTINGS['astrality'].copy()
+    config['astrality'].update(user_settings)
 
     # Globally defined modules
     modules_file = config_directory / 'modules.yml'
@@ -180,12 +176,6 @@ def user_configuration(
             config_file=modules_file,
             context=global_context,
         )
-
-    # Insert default global settings that are not specified
-    user_settings = config.get('config/astrality', {})
-    config['config/astrality'] = \
-        ASTRALITY_DEFAULT_GLOBAL_SETTINGS['config/astrality'].copy()
-    config['config/astrality'].update(user_settings)
 
     return config, modules_config, global_context, config_directory
 

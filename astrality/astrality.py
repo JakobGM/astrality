@@ -78,7 +78,7 @@ def main(logging_level: str = 'INFO', test: bool = False):
         config, modules, global_context, directory = user_configuration()
 
         # Delay further actions if configuration says so
-        time.sleep(config['config/astrality']['startup_delay'])
+        time.sleep(config['astrality']['startup_delay'])
 
         module_manager = ModuleManager(
             config=config,

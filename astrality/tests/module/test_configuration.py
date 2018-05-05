@@ -93,7 +93,7 @@ def test_modules_config_where_all_modules_are_enabled(
 
 def test_enabling_of_modules_defined_different_places():
     application_config = {
-        'config/modules': {
+        'modules': {
             'modules_directory': 'freezed_modules',
             'enabled_modules': [
                 {'name': 'south_america::brazil'},
@@ -117,7 +117,7 @@ def test_enabling_of_modules_defined_different_places():
 
 def test_enabling_of_all_modules():
     application_config = {
-        'config/modules': {
+        'modules': {
             'modules_directory': 'freezed_modules',
         },
     }
@@ -158,7 +158,7 @@ def test_using_three_different_module_sources(
     modules_directory = test_config_directory / 'freezed_modules'
 
     application_config = {
-        'config/modules': {
+        'modules': {
             'modules_directory': str(modules_directory),
             'enabled_modules': [
                 {'name': 'north_america::*'},

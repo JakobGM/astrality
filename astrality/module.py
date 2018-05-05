@@ -106,7 +106,7 @@ class Module:
         all.
 
         module_config example:
-        {'module/name':
+        {'name':
             'enabled': True,
             'event_listener': {'type': 'weekday'},
             'on_startup': {'run': ['echo weekday is {event}']},
@@ -381,7 +381,7 @@ class ModuleManager:
 
         # Get module configurations which are externally defined
         self.global_modules_config = GlobalModulesConfig(  # type: ignore
-            config=config.get('config/modules', {}),
+            config=config.get('modules', {}),
             config_directory=self.config_directory,
         )
         self.reprocess_modified_files = \
@@ -649,7 +649,7 @@ class ModuleManager:
         `hot_reload_config`.
         """
         if not self.application_config.get(
-            'config/astrality',
+            'astrality',
             {},
         ).get(
             'hot_reload_config',
