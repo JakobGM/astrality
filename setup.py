@@ -18,6 +18,7 @@ setup(
     install_requires=[
         'Jinja2',
         'astral',
+        'coloredlogs',
         'mypy_extensions',
         'pyyaml',
         'requests',

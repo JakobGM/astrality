@@ -51,3 +51,6 @@ flake8
 
 # Sphinx extension which inspects type annotations when using autodoc
 sphinx-autodoc-typehints
+
+# For colored log output
+coloredlogs

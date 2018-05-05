@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.6
 from argparse import ArgumentParser
+import coloredlogs
 import sys
 from pathlib import Path
 
@@ -11,6 +12,7 @@ sys.path.append(str(PROJECT_DIR))
 from astrality.astrality import main
 from astrality.config import resolve_config_directory, create_config_directory
 
+coloredlogs.install(fmt='%(asctime)s %(name)8s %(levelname)s\n%(message)s\n')
 config_dir = resolve_config_directory()
 
 parser = ArgumentParser(

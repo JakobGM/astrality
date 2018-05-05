@@ -12,10 +12,12 @@ babel==2.5.3              # via sphinx
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
 click==6.7                # via pip-tools
+coloredlogs==9.3.1
 docutils==0.14            # via sphinx
 first==2.0.1              # via pip-tools
 flake8==3.5.0
 freezegun==0.3.10         # via pytest-freezegun
+humanfriendly==4.12       # via coloredlogs
 idna==2.6                 # via requests
 imagesize==1.0.0          # via sphinx
 jinja2==2.10
