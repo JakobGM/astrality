@@ -16,12 +16,16 @@ def daylight_config():
         'elevation': 0,
     }
 
+
 @pytest.fixture
 def daylight(daylight_config):
     """A daylight event listener in Trondheim, Norway."""
     return Daylight(daylight_config)
 
+
 # --- Times around dawn ---
+
+
 @pytest.fixture
 def dawn(daylight):
     return daylight.construct_astral_location().sun()['dawn']
@@ -97,10 +101,10 @@ def test_time_left_before_new_event(daylight, before_dusk, freezer):
 def test_time_right_before_midnight(daylight, freezer):
     """
     This function requires special handling when the UTC time is later than all
-    daylight events within the same day, which is the case right before midnight.
+    daylight events within the same day, which is the case right before
+    midnight.
     """
 
-    timezone = daylight.location.timezone
     before_midnight = datetime(
         year=2019,
         month=12,
@@ -115,6 +119,11 @@ def test_time_right_before_midnight(daylight, freezer):
     time_left = daylight.time_until_next_event()
     assert 0 < time_left.total_seconds() < 60 * 60 * 24
 
-def test_time_until_night_when_other_periods_are_inbetween(daylight, before_dusk, freezer):
+
+def test_time_until_night_when_other_periods_are_inbetween(
+    daylight,
+    before_dusk,
+    freezer,
+):
     freezer.move_to(before_dusk - timedelta(hours=6))
-    assert daylight.time_until_next_event().total_seconds() == 120 + 6*60*60
+    assert daylight.time_until_next_event().total_seconds() == 120 + 6 * 60 * 60

@@ -58,5 +58,5 @@ def test_module_requires_option(caplog):
         RegexCompare(
             r'\[module/does_not_satisfy\] Module requirements: .+ '
             'Unsuccessful command: "command -v does_not_exist", !',
-        )
+        ),
     ) in caplog.record_tuples

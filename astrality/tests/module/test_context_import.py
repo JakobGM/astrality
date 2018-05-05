@@ -21,7 +21,7 @@ def test_importing_all_context_sections_from_file(
     })
 
     import_context = action_block_factory(
-        import_context={'from_path': str(context_file)}
+        import_context={'from_path': str(context_file)},
     )
     module = module_factory(on_startup=import_context)
     module_manager = module_manager_factory(module, context=original_context)

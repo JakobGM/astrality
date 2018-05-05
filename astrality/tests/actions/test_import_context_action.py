@@ -43,7 +43,7 @@ def test_importing_entire_file(context_directory):
         'section2': {
             'k2_1': 'v2_1',
             'k2_2': 'v2_2',
-        }
+        },
     }
     assert context_store == expected_context
 

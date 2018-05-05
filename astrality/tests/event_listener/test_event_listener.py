@@ -1,6 +1,12 @@
 import pytest
 
-from astrality.event_listener import Periodic, Solar, Static, Weekday, event_listener_factory
+from astrality.event_listener import (
+    Periodic,
+    Solar,
+    Static,
+    Weekday,
+    event_listener_factory,
+)
 
 
 @pytest.fixture

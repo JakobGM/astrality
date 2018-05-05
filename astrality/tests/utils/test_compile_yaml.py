@@ -15,13 +15,13 @@ def dir_with_compilable_files(tmpdir):
     config_file = config_dir / 'astrality.yml'
     config_file.write_text(
         'key1: {{ env.EXAMPLE_ENV_VARIABLE }}\n'
-        'key2: {{ "echo test" | shell }}'
+        'key2: {{ "echo test" | shell }}',
     )
 
     module_file = config_dir / 'modules.yml'
     module_file.write_text(
         'key1: {{ env.EXAMPLE_ENV_VARIABLE }}\n'
-        'key2: {{ "echo test" | shell }}'
+        'key2: {{ "echo test" | shell }}',
     )
 
     yield config_dir

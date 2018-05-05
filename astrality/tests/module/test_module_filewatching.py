@@ -11,7 +11,6 @@ from astrality.context import Context
 from astrality.module import ModuleManager
 from astrality.tests.utils import Retry
 
-
 MACOS = platform == 'darwin'
 
 
@@ -170,7 +169,7 @@ def test_template_targets():
 @pytest.mark.slow
 def test_hot_reloading(
     test_template_targets,
-    test_config_directory
+    test_config_directory,
 ):
     template_target1, template_target2 = test_template_targets
     config1 = test_config_directory / 'modules1.yml'
@@ -334,7 +333,7 @@ def test_recompile_templates_when_modified(three_watchable_files):
         modules=modules,
         context=Context({
             'section': {1: 'value'},
-        })
+        }),
     )
 
     # Sanity check before beginning testing

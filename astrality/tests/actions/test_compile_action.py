@@ -3,8 +3,6 @@
 import os
 from pathlib import Path
 
-import pytest
-
 from astrality.actions import CompileAction
 
 

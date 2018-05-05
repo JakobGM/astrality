@@ -124,7 +124,7 @@ html_sidebars = {
     '**': [
         'relations.html',  # needs 'show_related': True theme option to display
         'searchbox.html',
-    ]
+    ],
 }
 
 # Logo for the documentation
@@ -171,8 +171,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'astrality', 'Astrality Documentation',
-     [author], 1)
+    (master_doc, 'astrality', 'Astrality Documentation', [author], 1),
 ]
 
 
@@ -186,6 +185,3 @@ texinfo_documents = [
      author, 'Astrality', 'A dynamic, modular configuration file manager.',
      'Utility'),
 ]
-
-
-

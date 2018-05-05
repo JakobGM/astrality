@@ -6,6 +6,7 @@ from pathlib import Path
 
 from astrality.actions import RunAction
 
+
 def test_null_object_pattern():
     """Null objects should be executable."""
     run_action = RunAction(
@@ -15,6 +16,7 @@ def test_null_object_pattern():
         context_store={},
     )
     run_action.execute()
+
 
 def test_directory_of_executed_shell_command(tmpdir):
     """All commands should be run from `directory`."""
@@ -28,6 +30,7 @@ def test_directory_of_executed_shell_command(tmpdir):
     run_action.execute()
     assert (temp_dir / 'touched.tmp').is_file()
 
+
 def test_use_of_replacer(tmpdir):
     """All commands should be run from `directory`."""
     temp_dir = Path(tmpdir)
@@ -40,6 +43,7 @@ def test_use_of_replacer(tmpdir):
     command, result = run_action.execute()
     assert command == 'echo test'
     assert result == 'test'
+
 
 def test_run_timeout_specified_in_action_block(tmpdir):
     """
@@ -65,6 +69,7 @@ def test_run_timeout_specified_in_action_block(tmpdir):
     )
     _, result = run_action.execute(default_timeout=0)
     assert result == 'hi'
+
 
 def test_run_timeout_specified_in_execute(tmpdir, caplog):
     """
@@ -96,6 +101,7 @@ def test_run_timeout_specified_in_execute(tmpdir, caplog):
     _, result = run_action.execute(default_timeout=0.2)
     assert result == 'hi'
 
+
 def test_running_shell_command_with_non_zero_exit_code(caplog):
     """Shell commands with non-zero exit codes should log this."""
     run_action = RunAction(
@@ -108,6 +114,7 @@ def test_running_shell_command_with_non_zero_exit_code(caplog):
     run_action.execute()
     assert 'not found' in caplog.record_tuples[1][2]
     assert 'non-zero return code' in caplog.record_tuples[2][2]
+
 
 def test_running_shell_command_with_environment_variable(caplog):
     """Shell commands should have access to the environment."""
@@ -130,8 +137,9 @@ def test_running_shell_command_with_environment_variable(caplog):
             'astrality.utils',
             logging.INFO,
             os.environ['USER'] + '\n',
-        )
+        ),
     ]
+
 
 def test_that_environment_variables_are_expanded():
     """String parameters in any Action type should expand env variables."""

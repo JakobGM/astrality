@@ -4,6 +4,7 @@ from pathlib import Path
 
 from astrality.actions import TriggerAction
 
+
 def test_null_object_pattern():
     """Trigger action should be a dummy when no options are provided."""
     trigger_action = TriggerAction(
@@ -14,6 +15,7 @@ def test_null_object_pattern():
     )
     trigger = trigger_action.execute()
     assert trigger is None
+
 
 def test_triggering_non_on_modified_block():
     """
@@ -32,6 +34,7 @@ def test_triggering_non_on_modified_block():
     assert trigger.specified_path is None
     assert trigger.relative_path is None
     assert trigger.absolute_path is None
+
 
 def test_triggering_on_modified_block():
     """

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from astrality.requirements import Requirement
 
+
 def test_null_object_pattern():
     """Empty requirements should be considered satisfied."""
     successful_shell_requirement = Requirement(
@@ -11,6 +12,7 @@ def test_null_object_pattern():
         directory=Path('/'),
     )
     assert successful_shell_requirement
+
 
 def test_shell_command_requirement():
     """Requirement should be truthy when command returns 0 exit code."""
@@ -26,6 +28,7 @@ def test_shell_command_requirement():
     )
     assert not unsuccessful_shell_requirement
 
+
 def test_that_shell_commands_are_run_in_correct_diretory():
     """All shell commands should be run from 'directory'"""
     successful_shell_requirement = Requirement(
@@ -39,6 +42,7 @@ def test_that_shell_commands_are_run_in_correct_diretory():
         directory=Path('/'),
     )
     assert not unsuccessful_shell_requirement
+
 
 def test_shell_command_timeout():
     """Shell commands can time out."""
@@ -70,6 +74,7 @@ def test_shell_command_timeout():
     )
     assert not specified_does_timeout
 
+
 def test_environment_variable_requirement():
     """Requirement should be truthy when environment variable is available."""
     successful_env_requirement = Requirement(
@@ -83,6 +88,7 @@ def test_environment_variable_requirement():
         directory=Path('/'),
     )
     assert not unsuccessful_env_requirement
+
 
 def test_installed_requirement():
     """Requirement should be truthy when value is in $PATH."""

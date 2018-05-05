@@ -520,7 +520,7 @@ class TestEnabledModules:
             lambda x: tuple(x.items()),
             enabled_modules.process_enabling_statements(
                 enabling_statements=[
-                    {'name': '*::*'}
+                    {'name': '*::*'},
                 ],
                 modules_directory=test_config_directory / 'freezed_modules',
             ),

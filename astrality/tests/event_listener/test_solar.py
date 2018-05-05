@@ -16,12 +16,16 @@ def solar_config():
         'elevation': 0,
     }
 
+
 @pytest.fixture
 def solar(solar_config):
     """A solar event listener in Trondheim, Norway."""
     return Solar(solar_config)
 
+
 # --- Times around dawn ---
+
+
 @pytest.fixture
 def dawn(solar):
     return solar.construct_astral_location().sun()['dawn']
@@ -91,11 +95,15 @@ def test_that_sunset_is_correctly_identified_before_dusk(
 
 def test_location(solar):
     location = solar.construct_astral_location()
-    assert str(location) == 'CityNotImportant/RegionIsNotImportantEither, tz=UTC, lat=63.45, lon=10.42'
+    assert str(location) \
+        == 'CityNotImportant/RegionIsNotImportantEither, '\
+           'tz=UTC, lat=63.45, lon=10.42'
+
 
 def test_time_left_before_new_event(solar, before_dusk, freezer):
     freezer.move_to(before_dusk)
     assert solar.time_until_next_event().total_seconds() == 120
+
 
 def test_time_right_before_midnight(solar, freezer):
     """
@@ -103,7 +111,6 @@ def test_time_right_before_midnight(solar, freezer):
     solar events within the same day, which is the case right before midnight.
     """
 
-    timezone = solar.location.timezone
     before_midnight = datetime(
         year=2019,
         month=12,
@@ -117,6 +124,7 @@ def test_time_right_before_midnight(solar, freezer):
     # Test that the time left is within the bounds of 0 to 24 hours
     time_left = solar.time_until_next_event()
     assert 0 < time_left.total_seconds() < 60 * 60 * 24
+
 
 def test_config_event_listener_method():
     solar_event_listener_application_config = {'type': 'solar'}

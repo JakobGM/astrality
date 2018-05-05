@@ -20,7 +20,7 @@ class TestContextClass:
             'key1': 'value1',
             'key2': 'value2',
             'key3': ('one', 'two', 'three'),
-            'key4': {'key4-1': 'uno', 'key4-2': 'dos'}
+            'key4': {'key4-1': 'uno', 'key4-2': 'dos'},
         }
         config = Context(conf_dict)
         assert config == conf_dict
@@ -82,7 +82,7 @@ class TestContextClass:
             1: 'value2',
             2: {1: 'some_value'},
             'key3': ('one', 'two', 'three'),
-            'key4': {1: 'uno', 'key4-2': 'dos'}
+            'key4': {1: 'uno', 'key4-2': 'dos'},
         }
         config = Context(conf_dict)
         assert config == conf_dict
@@ -139,14 +139,14 @@ class TestContextClass:
         }
         another_conf_dict = {
             'key3': ('one', 'two', 'three'),
-            'key4': {1: 'uno', 'key4-2': 'dos'}
+            'key4': {1: 'uno', 'key4-2': 'dos'},
         }
         merged_conf_dicts = {
             'key1': 'value1',
             1: 'value2',
             2: {1: 'some_value'},
             'key3': ('one', 'two', 'three'),
-            'key4': {1: 'uno', 'key4-2': 'dos'}
+            'key4': {1: 'uno', 'key4-2': 'dos'},
         }
         config = Context(one_conf_dict)
         config.update(another_conf_dict)

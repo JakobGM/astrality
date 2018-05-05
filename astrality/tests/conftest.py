@@ -1,15 +1,11 @@
 """Application wide fixtures."""
-import copy
 import os
 from pathlib import Path
 
 import pytest
 
 from astrality.actions import ActionBlock
-from astrality.config import (
-    ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
-    user_configuration,
-)
+from astrality.config import user_configuration
 from astrality.context import Context
 from astrality.module import Module, ModuleManager
 from astrality.utils import generate_expanded_env_dict

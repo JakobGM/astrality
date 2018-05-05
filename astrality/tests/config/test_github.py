@@ -39,19 +39,20 @@ def test_cloning_non_existent_github_repository(tmpdir):
     github_user_directory = modules_directory / 'jakobgm'
     assert not github_user_directory.is_dir()
 
-    repository_directory = github_user_directory / 'i-will-never-create-this-repository'
+    repository_directory = github_user_directory \
+        / 'i-will-never-create-this-repository'
     assert not repository_directory.is_dir()
 
 
 @pytest.mark.slow
 def test_cloning_two_repositories(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
-    repo_dir = clone_repo(
+    clone_repo(
         user='jakobgm',
         repository='color-schemes.astrality',
         modules_directory=modules_directory,
     )
-    repo_dir = clone_repo(
+    clone_repo(
         user='jakobgm',
         repository='solar-desktop.astrality',
         modules_directory=modules_directory,
@@ -64,14 +65,14 @@ def test_cloning_two_repositories(tmpdir):
 @pytest.mark.slow
 def test_cloning_one_existent_and_one_non_existent_repo(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
-    repo_dir = clone_repo(
+    clone_repo(
         user='jakobgm',
         repository='color-schemes.astrality',
         modules_directory=modules_directory,
     )
 
     with pytest.raises(GithubModuleError):
-        repo_dir = clone_repo(
+        clone_repo(
             user='jakobgm',
             repository='i-will-never-create-this-repository',
             modules_directory=modules_directory,
@@ -84,16 +85,19 @@ def test_cloning_one_existent_and_one_non_existent_repo(tmpdir):
 @pytest.mark.slow
 def test_cloning_the_same_repo_twice(tmpdir):
     modules_directory = Path(tmpdir.mkdir('modules'))
-    repo_dir = clone_repo(
+    clone_repo(
         user='jakobgm',
         repository='color-schemes.astrality',
         modules_directory=modules_directory,
     )
 
-    config_file = modules_directory / 'jakobgm' / 'color-schemes.astrality' / 'config.yml'
+    config_file = modules_directory \
+        / 'jakobgm' \
+        / 'color-schemes.astrality' \
+        / 'config.yml'
     config_file.write_text('user edited')
 
-    repo_dir = clone_repo(
+    clone_repo(
         user='jakobgm',
         repository='color-schemes.astrality',
         modules_directory=modules_directory,
@@ -101,6 +105,7 @@ def test_cloning_the_same_repo_twice(tmpdir):
 
     with open(config_file) as file:
         assert file.read() == 'user edited'
+
 
 @pytest.mark.slow
 def test_clone_or_pull_repository_by_updating_outdated_repository(tmpdir):

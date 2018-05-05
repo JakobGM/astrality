@@ -59,14 +59,14 @@ def test_weekday_time_until_next_event_of_periodic_event_listener(freezer):
     now = datetime.now()
     freezer.move_to(now)
     default_periodic = Periodic({})
-    assert default_periodic.time_until_next_event().total_seconds() == 60*60
+    assert default_periodic.time_until_next_event().total_seconds() == 60 * 60
 
     fourty_minutes = timedelta(minutes=40)
     freezer.move_to(now + fourty_minutes)
-    assert default_periodic.time_until_next_event().total_seconds() == 20*60
+    assert default_periodic.time_until_next_event().total_seconds() == 20 * 60
 
     freezer.move_to(now + 2 * fourty_minutes)
-    assert default_periodic.time_until_next_event().total_seconds() == 40*60
+    assert default_periodic.time_until_next_event().total_seconds() == 40 * 60
 
 
 def test_enumeration_of_periodic_event_listener_events(freezer):

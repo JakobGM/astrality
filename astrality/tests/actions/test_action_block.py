@@ -73,7 +73,7 @@ def test_retrieving_triggers_from_action_block():
         'trigger': [
             {'block': 'on_startup'},
             {'block': 'on_modified', 'path': 'test.template'},
-        ]
+        ],
     }
     action_block = ActionBlock(
         action_block=action_block_dict,

@@ -30,7 +30,7 @@ def test_use_of_string_interpolations_of_module(
         'A': {
             'on_startup': {
                 'compile': [
-                    {'content': str(a_template)}
+                    {'content': str(a_template)},
                 ],
             },
         },
@@ -44,7 +44,7 @@ def test_use_of_string_interpolations_of_module(
                         },
                     ],
                 },
-            }
+            },
         },
         'C': {
             'on_exit': {
@@ -80,7 +80,7 @@ def test_use_of_string_interpolations_of_module(
     ) == 'one two ' + str(a_target)
 
     assert module_manager.modules['A'].interpolate_string(
-        '{leave/me/alone}'
+        '{leave/me/alone}',
     ) == '{leave/me/alone}'
 
     # Specified compilation targets should be inserted

@@ -2,7 +2,6 @@
 
 import logging
 import os
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -58,7 +57,7 @@ def module(
         module_directory=test_config_directory,
         context_store=Context({
             'fonts': {1: 'FuraMono Nerd Font'},
-        })
+        }),
     )
 
 
@@ -105,7 +104,7 @@ class TestModuleClass:
 
     def test_using_default_static_event_listener_when_no_event_listener_given(
         self,
-        test_config_directory
+        test_config_directory,
     ):
         static_module = Module(
             name='static',
@@ -171,7 +170,7 @@ class TestModuleClass:
                 'astrality.utils',
                 logging.INFO,
                 'saturday\n',
-            )
+            ),
         ]
 
     def test_running_module_on_event_command(
@@ -207,7 +206,7 @@ class TestModuleClass:
                 'astrality.utils',
                 logging.INFO,
                 f'{compiled_template}\n',
-            )
+            ),
         ]
 
     def test_running_module_exit_command(self, single_module_manager, caplog):
@@ -222,7 +221,7 @@ class TestModuleClass:
                 'astrality.utils',
                 logging.INFO,
                 'exit\n',
-            )
+            ),
         ]
 
     def test_missing_template_file(self, caplog):
@@ -273,13 +272,13 @@ class TestModuleClass:
         module_manager.execute(action='compile', block='on_startup')
 
         template_file = str(
-            (directory / '../templates/test_template.conf').resolve()
+            (directory / '../templates/test_template.conf').resolve(),
         )
         compiled_template = str(
             list(
                 module_manager.modules['test_module']
-                .performed_compilations()[Path(template_file)]
-            )[0]
+                .performed_compilations()[Path(template_file)],
+            )[0],
         )
 
         with open('/tmp/compiled_result', 'r') as file:
@@ -291,7 +290,7 @@ class TestModuleClass:
                 'astrality.compiler',
                 logging.INFO,
                 f'[Compiling] Template: "{template_file}" '
-                f'-> Target: "{compiled_template}"'
+                f'-> Target: "{compiled_template}"',
             ),
         ]
 
@@ -328,7 +327,7 @@ def test_running_finished_tasks_command(
             logging.INFO,
             RegexCompare(
                 r'\[Compiling\] Template: ".+/templates/test_template.conf" '
-                r'-> Target: ".*compiled_result"'
+                r'-> Target: ".*compiled_result"',
             ),
         ),
         (
@@ -358,7 +357,7 @@ def test_running_finished_tasks_command(
             'astrality.module',
             logging.INFO,
             '[module/test_module] New event "friday". '
-            'Executing actions.'
+            'Executing actions.',
         ),
         (
             'astrality.actions',
@@ -432,7 +431,7 @@ def config_with_modules():
                 'template_name': {
                     'content': 'astrality/tests/templates/test_template.conf',
                     'target': '/tmp/compiled_result',
-                }
+                },
             },
             'on_startup': {
                 'run': [{'shell': 'echo solar compiling {template_name}'}],
@@ -671,7 +670,7 @@ def test_that_shell_filter_is_run_from_config_directory(test_config_directory):
                     {
                         'content': str(shell_filter_template),
                         'target': str(shell_filter_template_target),
-                    }
+                    },
                 ],
             },
         },
@@ -768,7 +767,7 @@ def test_trigger_event_module_action(test_config_directory):
                 'templateA': {
                     'run': [{'shell': 'echo modified.templateA'}],
                     'compile': [
-                        {'content': 'templateA'}
+                        {'content': 'templateA'},
                     ],
                 },
             },
