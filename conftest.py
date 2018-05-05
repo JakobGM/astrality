@@ -4,7 +4,7 @@ import pytest
 
 def pytest_addoption(parser):
     """Add command line flags to pytest."""
-    parser.addoption('--runslow", action="store_true',
+    parser.addoption('--runslow', action='store_true',
                      default=False, help='run slow tests')
 
 

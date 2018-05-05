@@ -228,10 +228,12 @@ We use the python source code checker `flake8 <http://flake8.pycqa.org/en/latest
 You can lint your code locally by running ``flake8 .`` from the root of the repository.
 Integrating ``flake8`` into your workflow is recommended, there are plugins available for most popular `IDEs <https://foxmask.trigger-happy.eu/post/2016/02/17/pycharm-running-flake8/>`_ and `text-editors <https://github.com/nvie/vim-flake8>`_!
 
+You can instruct git to ensure flake8 compliance before every commit by running ``git config --bool flake8.strict true`` from your shell.
+
 In addition to this, some additional styling conventions are applied to the project:
 
 * String literals should use single quotes. With other words: ``'this is a string'`` instead of ``"this is a string"``.
-* Always use keyword arguments when invoking functions.
+* Try to use keyword arguments when calling functions, unless it is extremely clear from context.
 * Function arguments split over several lines should use trailing commas. With other words, we prefer to write code like this:
 
       .. code-block:: python
