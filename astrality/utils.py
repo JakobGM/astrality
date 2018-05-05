@@ -50,7 +50,7 @@ def run_shell(
         # We add just a small extra wait in case users specify 0 seconds,
         # in order to not print an error when a command is really quick.
         if timeout == 0:
-            process.wait(timeout=timeout + 0.1)
+            process.wait(timeout=0.1)
         else:
             process.wait(timeout=timeout)
 
@@ -69,6 +69,9 @@ def run_shell(
             return stdout.replace('\n', '')
 
     except subprocess.TimeoutExpired:
+        if timeout == 0:
+            return fallback
+
         logger.warning(
             f'The command "{command}" used more than {timeout} seconds in '
             'order to finish. The exit code can not be verified. This might be '
