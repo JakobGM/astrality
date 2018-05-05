@@ -17,7 +17,7 @@ from astral import Location
 
 
 EventListenerConfig = Dict[str, Union[str, int, float, None]]
-logger = logging.getLogger('astrality')
+logger = logging.getLogger(__name__)
 
 
 class EventListener(abc.ABC):

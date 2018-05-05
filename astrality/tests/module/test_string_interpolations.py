@@ -108,7 +108,7 @@ def test_use_of_string_interpolations_of_module(
         '{/not/here}',
     )
     assert caplog.record_tuples == [(
-        'astrality',
+        'astrality.module',
         logging.ERROR,
         'String placeholder {/not/here} could not be replaced. '
         '"/not/here" has not been compiled.',

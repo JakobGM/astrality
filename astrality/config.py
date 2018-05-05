@@ -35,7 +35,7 @@ from astrality import utils
 if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa
 
-logger = logging.getLogger('astrality')
+logger = logging.getLogger(__name__)
 ApplicationConfig = Dict[str, Dict[str, Any]]
 ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'astrality': {
     'hot_reload_config': False,

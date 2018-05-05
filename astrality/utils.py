@@ -11,7 +11,7 @@ from typing import Any, Dict, List, TypeVar, Union
 from astrality import compiler
 from astrality.context import Context
 
-logger = logging.getLogger('astrality')
+logger = logging.getLogger(__name__)
 
 from yaml import load  # noqa
 try:

@@ -64,8 +64,6 @@ def test_enabled_modules(test_config_directory):
 
     # Test that all ExternalModuleSource objects are created
     modules_directory_path = test_config_directory / 'test_modules'
-    oslo_path = modules_directory_path / 'oslo'
-    trondheim_path = modules_directory_path / 'trondheim'
 
     oslo = DirectoryModuleSource(
         enabling_statement={'name': 'oslo::*', 'trusted': True},
@@ -359,31 +357,48 @@ class TestGithubModuleSource:
         assert github_module_source.github_repo == 'astrality'
 
     @pytest.mark.slow
-    def test_that_enabled_repos_are_found(self, test_config_directory, delete_jakobgm):
+    def test_that_enabled_repos_are_found(
+        self,
+        test_config_directory,
+        delete_jakobgm,
+    ):
         github_module_source = GithubModuleSource(
-            enabling_statement={'name': 'github::jakobgm/test-module.astrality'},
+            enabling_statement={
+                'name': 'github::jakobgm/test-module.astrality',
+            },
             modules_directory=test_config_directory / 'test_modules',
         )
         github_module_source.config({})
 
-        assert 'github::jakobgm/test-module.astrality::botswana' in github_module_source
-        assert 'github::jakobgm/test-module.astrality::ghana' in github_module_source
+        assert 'github::jakobgm/test-module.astrality::botswana' \
+            in github_module_source
+        assert 'github::jakobgm/test-module.astrality::ghana' \
+            in github_module_source
 
-        assert 'github::jakobgm/test-module.astrality::non_existent' not in github_module_source
+        assert 'github::jakobgm/test-module.astrality::non_existent' \
+            not in github_module_source
         assert 'github::jakobgm/another_repo::ghana' not in github_module_source
         assert 'astrality' not in github_module_source
         assert 'jakobgm' not in github_module_source
 
     @pytest.mark.slow
-    def test_specific_github_modules_enabled(self, test_config_directory, delete_jakobgm):
+    def test_specific_github_modules_enabled(
+        self,
+        test_config_directory,
+        delete_jakobgm,
+    ):
         github_module_source = GithubModuleSource(
-            enabling_statement={'name': 'github::jakobgm/test-module.astrality::botswana'},
+            enabling_statement={
+                'name': 'github::jakobgm/test-module.astrality::botswana',
+            },
             modules_directory=test_config_directory / 'test_modules',
         )
         github_module_source.config({})
 
-        assert 'github::jakobgm/test-module.astrality::botswana' in github_module_source
-        assert 'github::jakobgm/test-module.astrality::ghana' not in github_module_source
+        assert 'github::jakobgm/test-module.astrality::botswana' \
+            in github_module_source
+        assert 'github::jakobgm/test-module.astrality::ghana' \
+            not in github_module_source
 
     @pytest.mark.slow
     def test_that_all_modules_enabled_syntaxes_behave_identically(
@@ -392,7 +407,9 @@ class TestGithubModuleSource:
         delete_jakobgm,
     ):
         github_module_source1 = GithubModuleSource(
-            enabling_statement={'name': 'github::jakobgm/test-module.astrality'},
+            enabling_statement={
+                'name': 'github::jakobgm/test-module.astrality',
+            },
             modules_directory=test_config_directory / 'test_modules',
         )
         github_module_source1.config({})
@@ -401,7 +418,9 @@ class TestGithubModuleSource:
         time.sleep(1)
 
         github_module_source2 = GithubModuleSource(
-            enabling_statement={'name': 'github::jakobgm/test-module.astrality::*'},
+            enabling_statement={
+                'name': 'github::jakobgm/test-module.astrality::*',
+            },
             modules_directory=test_config_directory / 'test_modules',
         )
         github_module_source2.config({})
@@ -515,7 +534,6 @@ class TestEnabledModules:
         assert enabled_modules.all_directory_modules_enabled is True
         assert enabled_modules.all_global_modules_enabled is False
 
-
     @pytest.mark.slow
     def test_enabled_detection(
         self,
@@ -538,7 +556,7 @@ class TestEnabledModules:
         for sources in enabled_modules.source_types.values():
             assert len(sources) == 1
         assert (
-            'astrality',
+            'astrality.config',
             logging.ERROR,
             RegexCompare(r'Invalid module name syntax.+'),
         ) in caplog.record_tuples
@@ -547,7 +565,8 @@ class TestEnabledModules:
         assert 'global' in enabled_modules
         assert 'south_america::brazil' in enabled_modules
         assert 'south_america::argentina' in enabled_modules
-        assert 'github::jakobgm/test-module.astrality::botswana' in enabled_modules
+        assert 'github::jakobgm/test-module.astrality::botswana' \
+            in enabled_modules
         assert 'github::jakobgm/test-module.astrality::ghana' in enabled_modules
 
         assert 'not_enabled' not in enabled_modules

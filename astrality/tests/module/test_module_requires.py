@@ -6,12 +6,13 @@ from pathlib import Path
 from astrality.module import Module
 from astrality.tests.utils import RegexCompare
 
+
 def test_module_requires_option(caplog):
     """Test that modules are disabled when they don't satisfy `requires`."""
     # Simple module that satisfies the requirements
     does_satisfy_requiremnets = {
         'enabled': True,
-        'requires': {'shell': 'command -v cd',},
+        'requires': {'shell': 'command -v cd'},
     }
     assert Module.valid_module(
         name='satisfies',
@@ -22,7 +23,7 @@ def test_module_requires_option(caplog):
 
     # Simple module that does not satisfy requirements
     does_not_satisfy_requirements = {
-        'requires': {'shell': 'command -v does_not_exist',},
+        'requires': {'shell': 'command -v does_not_exist'},
     }
     assert not Module.valid_module(
         name='does_not_satisfy',
@@ -31,18 +32,17 @@ def test_module_requires_option(caplog):
         requires_working_directory=Path('/'),
     )
     assert (
-        'astrality',
+        'astrality.module',
         logging.WARNING,
         '[module/does_not_satisfy] Module requirements: '
         'Unsuccessful command: "command -v does_not_exist", !',
     ) in caplog.record_tuples
 
-
     # Test failing one of many requirements
     does_not_satisfy_one_requirement = {
         'requires': [
-            {'shell': 'command -v cd',},
-            {'shell': 'command -v does_not_exist',},
+            {'shell': 'command -v cd'},
+            {'shell': 'command -v does_not_exist'},
         ],
     }
     caplog.clear()
@@ -53,10 +53,10 @@ def test_module_requires_option(caplog):
         requires_working_directory=Path('/'),
     )
     assert (
-        'astrality',
+        'astrality.module',
         logging.WARNING,
         RegexCompare(
-            '\[module/does_not_satisfy\] Module requirements: .+ '
+            r'\[module/does_not_satisfy\] Module requirements: .+ '
             'Unsuccessful command: "command -v does_not_exist", !',
         )
     ) in caplog.record_tuples

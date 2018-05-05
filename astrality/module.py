@@ -61,7 +61,7 @@ class ModuleActionBlocks(TypedDict):
 
 
 ModuleConfig = Dict[str, ModuleConfigDict]
-logger = logging.getLogger('astrality')
+logger = logging.getLogger(__name__)
 
 
 class Module:

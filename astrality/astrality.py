@@ -13,7 +13,7 @@ import time
 from astrality.config import user_configuration
 from astrality.module import ModuleManager
 
-logger = logging.getLogger('astrality')
+logger = logging.getLogger(__name__)
 
 
 def main(logging_level: str = 'INFO', test: bool = False):

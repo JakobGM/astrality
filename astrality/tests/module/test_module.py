@@ -127,7 +127,7 @@ class TestModuleClass:
             'Running command "echo saturday".',
         ) in caplog.record_tuples
         assert (
-            'astrality',
+            'astrality.utils',
             logging.INFO,
             'saturday\n',
         ) in caplog.record_tuples
@@ -156,7 +156,7 @@ class TestModuleClass:
 
         assert caplog.record_tuples == [
             (
-                'astrality',
+                'astrality.compiler',
                 logging.INFO,
                 RegexCompare(
                     r'\[Compiling\].+test_template\.conf.+compiled_result"',
@@ -168,7 +168,7 @@ class TestModuleClass:
                 'Running command "echo saturday".',
             ),
             (
-                'astrality',
+                'astrality.utils',
                 logging.INFO,
                 'saturday\n',
             )
@@ -204,7 +204,7 @@ class TestModuleClass:
                 f'Running command "echo {compiled_template}".',
             ),
             (
-                'astrality',
+                'astrality.utils',
                 logging.INFO,
                 f'{compiled_template}\n',
             )
@@ -219,7 +219,7 @@ class TestModuleClass:
                 'Running command "echo exit".',
             ),
             (
-                'astrality',
+                'astrality.utils',
                 logging.INFO,
                 'exit\n',
             )
@@ -288,7 +288,7 @@ class TestModuleClass:
         assert compiled_template_content == compiled_result
         assert caplog.record_tuples == [
             (
-                'astrality',
+                'astrality.compiler',
                 logging.INFO,
                 f'[Compiling] Template: "{template_file}" '
                 f'-> Target: "{compiled_template}"'
@@ -324,7 +324,7 @@ def test_running_finished_tasks_command(
     # Only startup commands should be finished at first
     assert caplog.record_tuples == [
         (
-            'astrality',
+            'astrality.compiler',
             logging.INFO,
             RegexCompare(
                 r'\[Compiling\] Template: ".+/templates/test_template.conf" '
@@ -337,7 +337,7 @@ def test_running_finished_tasks_command(
             'Running command "echo thursday".',
         ),
         (
-            'astrality',
+            'astrality.utils',
             logging.INFO,
             'thursday\n',
         ),
@@ -355,7 +355,7 @@ def test_running_finished_tasks_command(
     module_manager.finish_tasks()
     assert caplog.record_tuples == [
         (
-            'astrality',
+            'astrality.module',
             logging.INFO,
             '[module/test_module] New event "friday". '
             'Executing actions.'
@@ -366,7 +366,7 @@ def test_running_finished_tasks_command(
             RegexCompare(r'Running command "echo .+compiled_result"\.'),
         ),
         (
-            'astrality',
+            'astrality.utils',
             logging.INFO,
             RegexCompare(r'.+compiled_result\n'),
         ),

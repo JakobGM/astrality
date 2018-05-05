@@ -18,8 +18,7 @@ from astrality import utils
 from astrality.context import Context
 
 ApplicationConfig = Dict[str, Dict[str, Any]]
-
-logger = logging.getLogger('astrality')
+logger = logging.getLogger(__name__)
 
 
 def jinja_environment(
