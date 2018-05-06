@@ -136,30 +136,36 @@ class Module:
 
         # Create action block object for each available action block type
         action_blocks: ModuleActionBlocks = {'on_modified': {}}  # type: ignore
+        params = {
+            'directory': self.directory,
+            'replacer': self.interpolate_string,
+            'context_store': self.context_store,
+            'global_modules_config': global_modules_config,
+        }
+
         for block_name in ('on_startup', 'on_event', 'on_exit'):
             action_blocks[block_name] = ActionBlock(  # type: ignore
                 action_block=module_config_content.get(  # type: ignore
                     block_name,
                     {},
                 ),
-                directory=self.directory,
-                replacer=self.interpolate_string,
-                context_store=self.context_store,
-                global_modules_config=global_modules_config,
+                **params,
             )
-        for path_string, action_block_dict \
-                in module_config_content.get('on_modified', {}).items():
+
+        for path_string, action_block_dict in module_config_content.get(
+            'on_modified',
+            {},
+        ).items():
             modified_path = expand_path(
                 path=Path(path_string),
                 config_directory=self.directory,
             )
-            action_blocks['on_modified'][modified_path] = ActionBlock(
-                action_block=action_block_dict,
-                directory=self.directory,
-                replacer=self.interpolate_string,
-                context_store=self.context_store,
-                global_modules_config=global_modules_config,
+            action_blocks['on_modified'][modified_path] = \
+                ActionBlock(  # type: ignore
+                    action_block=action_block_dict,
+                    **params,
             )
+
         self.action_blocks = action_blocks
 
     def get_action_block(
