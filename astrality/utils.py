@@ -73,7 +73,7 @@ def run_shell(
             return fallback
         else:
             stdout = process.communicate()[0].strip('\n')
-            if log_success:
+            if log_success and stdout:
                 logger.info(stdout)
             return stdout
 
