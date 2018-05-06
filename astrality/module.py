@@ -120,13 +120,10 @@ class Module:
         # All user string options should be processed by the replacer
         self.replace = replacer
 
-        # Extract configuration content
-        module_config_content: ModuleConfigDict = module_config
-
         # Use static event_listener if no event_listener is specified
         self.event_listener: EventListener = \
             event_listener_factory(
-                module_config_content.get(
+                module_config.get(
                     'event_listener',
                     {'type': 'static'},
                 ),
@@ -145,14 +142,14 @@ class Module:
 
         for block_name in ('on_startup', 'on_event', 'on_exit'):
             action_blocks[block_name] = ActionBlock(  # type: ignore
-                action_block=module_config_content.get(  # type: ignore
+                action_block=module_config.get(  # type: ignore
                     block_name,
                     {},
                 ),
                 **params,
             )
 
-        for path_string, action_block_dict in module_config_content.get(
+        for path_string, action_block_dict in module_config.get(
             'on_modified',
             {},
         ).items():
