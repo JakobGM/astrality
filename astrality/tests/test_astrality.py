@@ -1,3 +1,4 @@
+import logging
 import os
 import signal
 import subprocess
@@ -41,3 +42,23 @@ def test_interrupt_of_main_process():
 @pytest.mark.slow
 def test_invocation_of_main_process():
     main(test=True)
+
+
+def test_enabling_specific_module_from_command_line(
+    caplog,
+    monkeypatch,
+    test_config_directory,
+):
+    """Modules parameter to main should enable specific module(s)."""
+    monkeypatch.setitem(
+        os.environ,
+        'ASTRALITY_CONFIG_HOME',
+        str(test_config_directory),
+    )
+    main(modules=['../test_modules/two_modules::bangladesh'], test=True)
+
+    assert (
+        'astrality.utils',
+        logging.INFO,
+        'Greetings from Dhaka!\n',
+    ) in caplog.record_tuples

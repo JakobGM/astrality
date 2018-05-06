@@ -174,7 +174,7 @@ class TestDirectoryModuleSource:
                 enabling_statement=enabling_statement,
                 modules_directory=test_config_directory / 'freezed_modules',
             )
-            directory_module.config({})
+            directory_module.modules({})
 
     def test_recursive_module_directory(
         self,
@@ -255,7 +255,7 @@ class TestDirectoryModuleSource:
             enabling_statement=enabling_statement,
             modules_directory=test_config_directory / 'freezed_modules',
         )
-        directory_module.config({})
+        directory_module.modules({})
 
         assert 'south_america::brazil' in directory_module
 
@@ -295,7 +295,8 @@ class TestGlobalModuleSource:
             enabling_statement={'name': 'enabled_module'},
             modules_directory=Path('/'),
         )
-        global_module_source.config({})
+        global_module_source.modules({})
+
         assert 'enabled_module' in global_module_source
         assert 'disabled_module' not in global_module_source
         assert '*' not in global_module_source

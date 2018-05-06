@@ -36,6 +36,12 @@ parser.add_argument(
     action='store_true',
 )
 parser.add_argument(
+    '-m',
+    '--module',
+    help='Manually define enabled module.',
+    action='append',
+)
+parser.add_argument(
     '-l',
     '--logging-level',
     help='Set the degree of logging of the application. Default: INFO.',
@@ -52,6 +58,7 @@ elif args.create_empty_config:
     create_config_directory(empty=True)
 else:
     logging_level = args.logging_level
-    main(logging_level=logging_level)
+    modules = args.module
+    main(modules=modules, logging_level=logging_level)
 
 # vim:filetype=python

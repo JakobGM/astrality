@@ -5,23 +5,29 @@
 import logging
 import os
 import signal
-from typing import Set
 import subprocess
 import sys
 import time
+from typing import Set, List
 
 from astrality.config import user_configuration
 from astrality.module import ModuleManager
 
+
 logger = logging.getLogger(__name__)
 
 
-def main(logging_level: str = 'INFO', test: bool = False):
+def main(
+    modules: List[str] = [],
+    logging_level: str = 'INFO',
+    test: bool = False,
+):
     """
     Run the main process for Astrality.
 
-    If test is set to True, then only one main loop is run as an integration
-    test.
+    :param modules: Modules to be enabled. If empty, use astrality.yml.
+    :param logging_level: Loging level.
+    :param test: If True, return after one iteration loop.
     """
     if 'ASTRALITY_LOGGING_LEVEL' in os.environ:
         # Override logging level if env variable is set
@@ -30,8 +36,9 @@ def main(logging_level: str = 'INFO', test: bool = False):
     # Set the logging level to the configured setting
     logging.basicConfig(level=logging_level)
 
-    # Quit old astrality instances
-    kill_old_astrality_processes()
+    if not modules:
+        # Quit old astrality instances
+        kill_old_astrality_processes()
 
     # How to quit this process
     def exit_handler(signal=None, frame=None) -> None:
@@ -75,14 +82,26 @@ def main(logging_level: str = 'INFO', test: bool = False):
         signal.signal(signal.SIGTERM, exit_handler)
 
     try:
-        config, modules, global_context, directory = user_configuration()
+        (
+            config,
+            module_configs,
+            global_context,
+            directory,
+        ) = user_configuration()
+
+        if modules:
+            config['modules']['enabled_modules'] = [
+                {'name': module_name}
+                for module_name
+                in modules
+            ]
 
         # Delay further actions if configuration says so
         time.sleep(config['astrality']['startup_delay'])
 
         module_manager = ModuleManager(
             config=config,
-            modules=modules,
+            modules=module_configs,
             context=global_context,
             directory=directory,
         )

@@ -36,11 +36,61 @@ if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa
 
 logger = logging.getLogger(__name__)
-ApplicationConfig = Dict[str, Dict[str, Any]]
-ASTRALITY_DEFAULT_GLOBAL_SETTINGS = {'astrality': {
-    'hot_reload_config': False,
-    'startup_delay': 0,
-}}
+
+
+class EnablingStatementRequired(TypedDict):
+    """Required items of astrality.yml::modules:enabled_modules."""
+
+    name: str
+
+
+class EnablingStatement(EnablingStatementRequired, total=False):
+    """Optional items of astrality.yml::modules:enabled_modules."""
+
+    trusted: bool
+    autoupdate: bool
+
+
+class GlobalModulesConfigDict(TypedDict, total=False):
+    """Optional items in astrality.yml::modules."""
+
+    requires_timeout: Union[int, float]
+    run_timeout: Union[int, float]
+    reprocess_modified_files: bool
+    modules_directory: str
+    enabled_modules: List[EnablingStatement]
+
+
+class GlobalAstralityConfigDict(TypedDict, total=False):
+    """Optional items in astrality.yml::astrality."""
+
+    hot_reload_config: bool
+    startup_delay: Union[int, float]
+
+
+class AstralityYAMLConfigDict(TypedDict, total=False):
+    """Optional items in astrality.yml."""
+
+    astrality: GlobalAstralityConfigDict
+    modules: GlobalModulesConfigDict
+
+
+ASTRALITY_DEFAULT_GLOBAL_SETTINGS: AstralityYAMLConfigDict = {
+    'astrality': {
+        'hot_reload_config': False,
+        'startup_delay': 0,
+    },
+    'modules': {
+        'requires_timeout': 1,
+        'run_timeout': 0,
+        'reprocess_modified_files': False,
+        'modules_directory': 'modules',
+        'enabled_modules': [
+            {'name': '*'},
+            {'name': '*::*'},
+        ],
+    },
+}
 
 
 def resolve_config_directory() -> Path:
@@ -97,7 +147,12 @@ def infer_config_location(
 
 def user_configuration(
     config_directory: Optional[Path] = None,
-) -> Tuple[ApplicationConfig, Dict, Context, Path]:
+) -> Tuple[
+    AstralityYAMLConfigDict,
+    Dict[str, 'ModuleConfigDict'],
+    Context,
+    Path,
+]:
     """
     Return instantiation parameters for ModuleManager.
 
@@ -117,26 +172,28 @@ def user_configuration(
         global_context = Context()
 
     # Global configuration options
-    config = utils.compile_yaml(
+    config: AstralityYAMLConfigDict = utils.compile_yaml(  # type: ignore
         path=config_file,
         context=global_context,
     )
 
     # Insert default global settings that are not specified
-    user_settings = config.get('astrality', {})
-    config['astrality'] = \
-        ASTRALITY_DEFAULT_GLOBAL_SETTINGS['astrality'].copy()
-    config['astrality'].update(user_settings)
+    for section_name in ('astrality', 'modules',):
+        section_content = config.get(section_name, {})
+        config[section_name] = ASTRALITY_DEFAULT_GLOBAL_SETTINGS[section_name].copy()  # type: ignore # noqa
+        config[section_name].update(section_content)  # type: ignore
 
     # Globally defined modules
     modules_file = config_directory / 'modules.yml'
     if modules_file.exists():
-        modules_config = utils.compile_yaml(
+        modules = utils.compile_yaml(
             path=modules_file,
             context=global_context,
         )
+    else:
+        modules = {}
 
-    return config, modules_config, global_context, config_directory
+    return config, modules, global_context, config_directory
 
 
 def create_config_directory(path: Optional[Path] = None, empty=False) -> Path:
@@ -210,22 +267,6 @@ def expand_globbed_path(path: Path, config_directory: Path) -> Set[Path]:
     return set(path for path in expanded_paths if path.is_file())
 
 
-class EnablingStatementRequired(TypedDict):
-    """The required fields of a config item which enables a specific module."""
-
-    name: str
-
-
-class EnablingStatement(EnablingStatementRequired, total=False):
-    """Dictionary defining an externally defined module."""
-
-    trusted: bool
-    autoupdate: bool
-
-
-ModuleConfig = Dict[str, Any]
-
-
 class ModuleSource(ABC):
     """Superclass for the source of an enabled module."""
 
@@ -253,8 +294,8 @@ class ModuleSource(ABC):
     # Cached property containing module context
     _context: Context
 
-    # Cached property containing entire configuration, modules + context
-    _config: Dict
+    # Options defined in astrality.yml
+    _config: Dict[str, 'ModuleConfigDict']
 
     @abstractmethod
     def __init__(
@@ -274,7 +315,7 @@ class ModuleSource(ABC):
             '/module', and module configuration values.
         """
         if not self.modules_file.exists():
-            return {}
+            self._modules = {}
 
         if hasattr(self, '_modules'):
             return self._modules
@@ -306,7 +347,10 @@ class ModuleSource(ABC):
         ))
         return self._context
 
-    def config(self, context: Context = Context()) -> Dict:
+    def config(
+        self,
+        context: Context = Context(),
+    ) -> Dict[str, 'ModuleConfigDict']:
         """
         Return all configuration options defined in module source.
 
@@ -325,7 +369,7 @@ class ModuleSource(ABC):
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if this source contains enabled module_name."""
-        return module_name in self._config
+        return module_name in self._modules
 
     @classmethod
     def represented_by(cls, module_name: str) -> bool:
@@ -380,7 +424,6 @@ class GithubModuleSource(ModuleSource):
     """Module defined in a GitHub repository."""
 
     name_syntax = re.compile(r'^github::.+/.+(::(\w+|\*))?$')
-    _config: ApplicationConfig
 
     def __init__(
         self,
@@ -477,17 +520,22 @@ class DirectoryModuleSource(ModuleSource):
         self.prepend = str(self.relative_directory_path) + '::'
         self.trusted = enabling_statement.get('trusted', True)
 
-        self.directory = modules_directory / self.relative_directory_path
+        self.directory = expand_path(
+            path=self.relative_directory_path,
+            config_directory=modules_directory,
+        )
         self.modules_file = self.directory / 'modules.yml'
         self.context_file = self.directory / 'context.yml'
 
     def __repr__(self):
         """Human-readable representation of a DirectoryModuleSource object."""
-        return f'DirectoryModuleSource(' \
-            'name={self.relative_directory_path}::'\
-            '{self.enabled_module_name}, '\
-            'directory={self.directory}, ' \
-            'trusted={self.trusted})'
+        return ''.join((
+            'DirectoryModuleSource(',
+            f'name={self.relative_directory_path}::',
+            f'{self.enabled_module_name}, ',
+            f'directory={self.directory}, ',
+            f'trusted={self.trusted})',
+        ))
 
     def __eq__(self, other) -> bool:
         """
@@ -608,9 +656,6 @@ class EnabledModules:
 
     def __contains__(self, module_name: str) -> bool:
         """Return True if the given module name is supposed to be enabled."""
-        if module_name[:7].lower() == 'module/':
-            module_name = module_name[7:]
-
         source_type = ModuleSource.type(of=module_name)
         for module_source in self.source_types[source_type]:
             if module_name in module_source:
@@ -625,16 +670,6 @@ class EnabledModules:
             for source
             in self.source_types.values()
         )
-
-
-class GlobalModulesConfigDict(TypedDict, total=False):
-    """Dictionary defining configuration options for Modules."""
-
-    requires_timeout: Union[int, float]
-    run_timeout: Union[int, float]
-    reprocess_modified_files: bool
-    modules_directory: str
-    enabled_modules: List[EnablingStatement]
 
 
 class GlobalModulesConfig:

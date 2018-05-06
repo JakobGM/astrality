@@ -22,7 +22,7 @@ from mypy_extensions import TypedDict
 
 from astrality.actions import ActionBlock, ActionBlockDict
 from astrality.config import (
-    ApplicationConfig,
+    AstralityYAMLConfigDict,
     GlobalModulesConfig,
     expand_path,
     user_configuration,
@@ -60,7 +60,6 @@ class ModuleActionBlocks(TypedDict):
     on_modified: Dict[Path, ActionBlock]
 
 
-ModuleConfig = Dict[str, ModuleConfigDict]
 logger = logging.getLogger(__name__)
 
 
@@ -366,7 +365,7 @@ class ModuleManager:
 
     def __init__(
         self,
-        config: ApplicationConfig = {},
+        config: AstralityYAMLConfigDict = {},
         modules: Dict[str, ModuleConfigDict] = {},
         context: Context = Context(),
         directory: Path = Path(__file__).parent / 'tests' / 'test_config',
@@ -380,7 +379,7 @@ class ModuleManager:
         self.last_module_events: Dict[str, str] = {}
 
         # Get module configurations which are externally defined
-        self.global_modules_config = GlobalModulesConfig(  # type: ignore
+        self.global_modules_config = GlobalModulesConfig(
             config=config.get('modules', {}),
             config_directory=self.config_directory,
         )
@@ -399,7 +398,7 @@ class ModuleManager:
             module_context.update(self.application_context)
             self.application_context = module_context
 
-            module_configs = external_module_source.config(
+            module_configs = external_module_source.modules(
                 context=self.application_context,
             )
             module_directory = external_module_source.directory

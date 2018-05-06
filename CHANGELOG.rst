@@ -36,6 +36,7 @@ Added
   variables by using the dictionary keys ``installed`` and ``env``
   respectively.
 - You can now set ``requires`` timeout on a case-by-case basis.
+- Add new ``--module`` CLI flag for running specific modules.
 
 Changed
 -------
