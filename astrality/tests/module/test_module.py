@@ -128,7 +128,7 @@ class TestModuleClass:
         assert (
             'astrality.utils',
             logging.INFO,
-            'saturday\n',
+            'saturday',
         ) in caplog.record_tuples
 
         caplog.clear()
@@ -169,7 +169,7 @@ class TestModuleClass:
             (
                 'astrality.utils',
                 logging.INFO,
-                'saturday\n',
+                'saturday',
             ),
         ]
 
@@ -205,7 +205,7 @@ class TestModuleClass:
             (
                 'astrality.utils',
                 logging.INFO,
-                f'{compiled_template}\n',
+                f'{compiled_template}',
             ),
         ]
 
@@ -220,7 +220,7 @@ class TestModuleClass:
             (
                 'astrality.utils',
                 logging.INFO,
-                'exit\n',
+                'exit',
             ),
         ]
 
@@ -338,7 +338,7 @@ def test_running_finished_tasks_command(
         (
             'astrality.utils',
             logging.INFO,
-            'thursday\n',
+            'thursday',
         ),
     ]
 
@@ -367,7 +367,7 @@ def test_running_finished_tasks_command(
         (
             'astrality.utils',
             logging.INFO,
-            RegexCompare(r'.+compiled_result\n'),
+            RegexCompare(r'.+compiled_result'),
         ),
     ]
 

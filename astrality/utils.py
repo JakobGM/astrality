@@ -64,9 +64,9 @@ def run_shell(
             )
             return fallback
         else:
-            stdout = process.communicate()[0]
+            stdout = process.communicate()[0].strip('\n')
             logger.info(stdout)
-            return stdout.replace('\n', '')
+            return stdout
 
     except subprocess.TimeoutExpired:
         if timeout == 0:

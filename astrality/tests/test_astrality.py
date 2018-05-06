@@ -60,5 +60,5 @@ def test_enabling_specific_module_from_command_line(
     assert (
         'astrality.utils',
         logging.INFO,
-        'Greetings from Dhaka!\n',
+        'Greetings from Dhaka!',
     ) in caplog.record_tuples

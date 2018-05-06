@@ -136,7 +136,7 @@ def test_running_shell_command_with_environment_variable(caplog):
         (
             'astrality.utils',
             logging.INFO,
-            os.environ['USER'] + '\n',
+            os.environ['USER'],
         ),
     ]
 
