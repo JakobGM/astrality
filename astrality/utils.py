@@ -30,12 +30,21 @@ def run_shell(
     fallback: Any = '',
     working_directory: Path = Path.home(),
     allow_error_codes: bool = False,
+    log_success: bool = True,
 ) -> str:
     """
     Return the standard output of a shell command.
 
     If the shell command has a non-zero exit code or times out, the function
     returns the `fallback` argument instead of the standard output.
+
+    :param command: Shell command to be executed.
+    :param timeout: How long to wait for return of command.
+    :param fallback: Default return value on timeout/error codes.
+    :param working_directory: Command working directory.
+    :param allow_error_codes: If error codes should return fallback.
+    :param log_success: If successful commands stdout should be logged.
+    :return: Stdout of command, or `fallback` on error/timeout.
     """
     process = subprocess.Popen(
         command,
@@ -64,7 +73,8 @@ def run_shell(
             return fallback
         else:
             stdout = process.communicate()[0].strip('\n')
-            logger.info(stdout)
+            if log_success:
+                logger.info(stdout)
             return stdout
 
     except subprocess.TimeoutExpired:

@@ -51,6 +51,7 @@ def jinja_environment(
     run_shell_from_working_directory = partial(
         utils.run_shell,
         working_directory=shell_command_working_directory,
+        log_success=False,
     )
     env.filters['shell'] = run_shell_from_working_directory
 
