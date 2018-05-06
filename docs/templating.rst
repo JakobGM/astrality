@@ -253,13 +253,12 @@ the following module, which will compile the template on Astrality startup:
 
 .. code-block:: yaml
 
-    # Source: $ASTRALITY_CONFIG_HOME/astrality.yml
+    # Source: $ASTRALITY_CONFIG_HOME/modules.yml
 
     my_module:
-        on_startup:
-            compile:
-                - content: templates/template
-                  target: $XDG_CONFIG_HOME/config.ini
+        compile:
+            - content: templates/template
+              target: $XDG_CONFIG_HOME/config.ini
 
 Now we can compile the template by starting Astrality:
 

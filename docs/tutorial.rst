@@ -27,11 +27,10 @@ compile them.
     # ~/.config/astrality/modules.yml
 
     dotfiles:
-        on_startup:
-            compile:
-                content: $XDG_CONFIG_HOME
-                target: $XDG_CONFIG_HOME
-                include: 'template\.(.+)'
+        compile:
+            content: $XDG_CONFIG_HOME
+            target: $XDG_CONFIG_HOME
+            include: 'template\.(.+)'
 
 Let us go through the module configuration step-by-step:
 
@@ -82,17 +81,16 @@ the dotfiles module accordingly:
     # ~/.dotfiles/modules.yml
 
     dotfiles:
-        on_startup:
-            stow:
-                - content: home
-                  target: ~
-                  templates: 'template\.(.+)'
-                  non_templates: symlink
+        stow:
+            - content: home
+                target: ~
+                templates: 'template\.(.+)'
+                non_templates: symlink
 
-                - content: etc
-                  target: /etc
-                  templates: 'template\.(.+)'
-                  non_templates: symlink
+            - content: etc
+                target: /etc
+                templates: 'template\.(.+)'
+                non_templates: symlink
 
 ``templates: 'template\.(.+)'`` and ``non_templates: symlink`` are actually the
 default options for the stow action, so we could have skipped specifying them

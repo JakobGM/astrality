@@ -59,7 +59,8 @@ for your configuration by running:
     $ astrality --create-example-config
     Copying over example config directory to "/home/example_username/.config/astrality".
 
-You should now edit ``$ASTRALITY_CONFIG_HOME/astrality.yml`` to fit your needs.
+You should now edit ``astrality.yml``, ``modules.yml``, and ``context.yml`` to
+fit your needs.
 
 The configuration file syntax
 =============================
@@ -95,10 +96,12 @@ this:
     the :ref:`documentation <shell_filter>` for the shell filter.
 
 .. note::
-    Shell commands in ``astrality.yml`` are run from
-    ``$ASTRALITY_CONFIG_HOME``. If you need to refer to paths outside this
-    directory, you can use absolute paths, e.g. ``{{ 'cat
-    ~/.home_directory_file' | shell }}``.
+    Shell commands are always executed from the same directory as the file
+    which contains the command substitution.
+
+    If you need to refer to paths outside this
+    directory, you can use absolute paths, e.g. 
+    ``{{ 'cat ~/.home_directory_file' | shell }}``.
 
 .. _configuration_options:
 

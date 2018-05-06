@@ -37,6 +37,8 @@ Added
   respectively.
 - You can now set ``requires`` timeout on a case-by-case basis.
 - Add new ``--module`` CLI flag for running specific modules.
+- ``on_startup`` blocks can now optionally be implicitly defined at the root
+  indentation level in the module.
 
 Changed
 -------

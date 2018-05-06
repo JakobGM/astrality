@@ -50,9 +50,9 @@ In a file named ``modules.yml`` within a :ref:`modules directory <modules_direct
 
 .. hint::
     A useful configuration structure is to define modules with "global
-    responsibilities" in ``astrality.yml``, and group the remaining modules in
-    seperate module directories by their categorical responsibilites (for
-    example "terminals").
+    responsibilities" in ``$ASTRALITY_CONFIG_HOME/modules.yml``, and group the
+    remaining modules in seperate module directories by their categorical
+    responsibilites (for example "terminals").
 
     Here "global responsibility" means having the responsibility to satisfy the
     dependecies of several other modules, such as defining context values used
@@ -157,6 +157,9 @@ have to define *when* to perform them. This is done by defining those
         Useful for compiling templates that don't need to change after they
         have been compiled.
 
+        Actions defined outside action blocks are considered to be part of this
+        block.
+
     .. _module_events_on_exit:
 
     ``on_exit``:
@@ -192,8 +195,10 @@ Demonstration of module action blocks:
 .. code-block:: yaml
 
     module_name:
+        ...startup actions (option 1)...
+
         on_startup:
-            ...startup actions...
+            ...startup actions (option 2)...
 
         on_event:
             ...event actions...
@@ -293,7 +298,7 @@ Then let us import the gruvbox *dark* color scheme into the "colors"
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yml
+    # Source file: $ASTRALITY_CONFIG_HOME/modules.yml
 
     color_scheme:
         on_startup:
@@ -302,22 +307,29 @@ Then let us import the gruvbox *dark* color scheme into the "colors"
                 from_section: gruvbox_dark
                 to_section: colors
 
-This is functionally equivalent to writing:
+This is functionally equivalent to writing the following global context file:
 
 .. code-block:: yaml
 
-    # Source file: $ASTRALITY_CONFIG_HOME/astrality.yml
+    # Source file: $ASTRALITY_CONFIG_HOME/context.yml
 
     colors:
         background: 282828
         foreground: ebdbb2
 
 .. hint::
-    You may wonder why you would want to use this kind of redirection when definining context variables. The advantages are:
+    You may wonder why you would want to use this kind of redirection when
+    definining context variables. The advantages are:
 
-        * You can now use ``{{ colors.foreground }}`` in all your templates instead of ``{{ gruvbox_dark.foreground }}``. Since your templates do not know exactly *which* color scheme you are using, you can easily change it in the future by editing only one line in ``astrality.yml``.
+        * You can now use ``{{ colors.foreground }}`` in all your templates
+          instead of ``{{ gruvbox_dark.foreground }}``. Since your templates do
+          not know exactly *which* color scheme you are using, you can easily
+          change it in the future by editing only one line in ``modules.yml``.
 
-        * You can use ``import_context`` in a ``on_event`` action block in order to change your colorscheme based on the time of day. Perhaps you want to use "gruvbox light" during daylight, but change to "gruvbox dark" after dusk?
+        * You can use ``import_context`` in a ``on_event`` action block in
+          order to change your colorscheme based on the time of day. Perhaps
+          you want to use "gruvbox light" during daylight, but change to
+          "gruvbox dark" after dusk?
 
 The available attributes for ``import_context`` are:
 
@@ -325,13 +337,15 @@ The available attributes for ``import_context`` are:
         A YAML formatted file containing :ref:`context sections <context>`.
 
     ``from_section``: *[Optional]*
-        Which context section to import from the file specified in ``from_path``.
+        Which context section to import from the file specified in
+        ``from_path``.
 
         If none is specified, all sections defined in ``from_path`` will be
         imported.
 
     ``to_section``: *[Optional]*
-        What you want to name the imported context section. If this attribute is omitted, Astrality will use the same name as ``from_section``.
+        What you want to name the imported context section. If this attribute
+        is omitted, Astrality will use the same name as ``from_section``.
 
         This option will only have an effect if ``from_section`` is specified.
 
@@ -423,16 +437,15 @@ Here is an example:
     # Source file: $ASTRALITY_CONFIG_HOME/modules.yml
 
     desktop:
-        on_startup:
-            compile:
-                - content: modules/scripts/executable.sh.template
-                  target: ${XDG_CONFIG_HOME}/bin/executable.sh
-                  permissions: 0o555
-                - content: modules/desktop/conky_module.template
+        compile:
+            - content: modules/scripts/executable.sh.template
+              target: ${XDG_CONFIG_HOME}/bin/executable.sh
+              permissions: 0o555
+            - content: modules/desktop/conky_module.template
 
-            run:
-                - shell: conky -c {modules/desktop/conky_module.template}
-                - shell: polybar bar
+        run:
+            - shell: conky -c {modules/desktop/conky_module.template}
+            - shell: polybar bar
 
 Notice that the shell command ``conky -c
 {modules/desktop/conky_module.template}`` is replaced with something like
@@ -580,12 +593,11 @@ alone:
     # Source file: $ASTRALITY_CONFIG_HOME/modules.yml
 
     dotfiles:
-        on_startup:
-            stow:
-                content: $XDG_CONFIG_HOME
-                target: $XDG_CONFIG_HOME
-                templates: '(.+)\.t'
-                non_templates: ignore
+        stow:
+            content: $XDG_CONFIG_HOME
+            target: $XDG_CONFIG_HOME
+            templates: '(.+)\.t'
+            non_templates: ignore
 
 
 

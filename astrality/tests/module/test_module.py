@@ -844,3 +844,92 @@ def test_not_using_list_when_specifiying_trigger_action(conf_path):
     assert result == (
         ('echo on_event', 'on_event',),
     )
+
+
+def test_defining_on_startup_block_at_root_indentation(caplog):
+    """Root indentation actions should be promoted to on_startup."""
+    # Test that no root actions are not affected
+    module_config = {
+        'on_startup': {
+            'run': [{'shell': 'echo on_startup'}],
+        },
+    }
+    assert Module.prepare_on_startup_block(
+        module_name='test',
+        module_config=module_config,
+    ) == {
+        'on_startup': {
+            'run': [{'shell': 'echo on_startup'}],
+        },
+    }
+
+    # Test that actions are moved into empty block
+    module_config = {
+        'run': [{'shell': 'touch stuff'}],
+        'compile': {'source': 'some/path'},
+    }
+    assert Module.prepare_on_startup_block(
+        module_name='test',
+        module_config=module_config,
+    ) == {
+        'on_startup': {
+            'run': [{'shell': 'touch stuff'}],
+            'compile': {'source': 'some/path'},
+        },
+    }
+
+    # Test that overwriting values are logged
+    caplog.clear()
+    module_config = {
+        'run': [{'shell': 'echo overwritten'}],
+        'on_startup': {
+            'run': [{'shell': 'echo original'}],
+        },
+    }
+    assert Module.prepare_on_startup_block(
+        module_name='test',
+        module_config=module_config,
+    ) == {
+        'on_startup': {
+            'run': [{'shell': 'echo overwritten'}],
+        },
+    }
+    assert caplog.record_tuples[0][1] == logging.ERROR
+
+    # Test that we only have partial overwrites
+    module_config = {
+        'stow': [{'content': 'new_stow'}],
+        'copy': {'content': 'new_copy'},
+        'on_startup': {
+            'run': [{'shell': 'run'}],
+            'stow': {'content': 'old_stow'},
+            'copy': {'content': 'old_copy'},
+        },
+        'on_exit': {},
+    }
+    assert Module.prepare_on_startup_block(
+        module_name='test',
+        module_config=module_config,
+    ) == {
+        'on_startup': {
+            'run': [{'shell': 'run'}],
+            'stow': [{'content': 'new_stow'}],
+            'copy': {'content': 'new_copy'},
+        },
+        'on_exit': {},
+    }
+
+    # Test that prepare_on_startup_block is actually used
+    module_config = {
+        'run': [{'shell': 'echo overwritten'}],
+        'on_startup': {
+            'run': [{'shell': 'echo original'}],
+        },
+    }
+    module = Module(
+        name='test_module',
+        module_config=module_config,
+        module_directory=Path('/'),
+    )
+    assert module.execute(action='run', block='on_startup') \
+        == (('echo overwritten', 'overwritten',),)

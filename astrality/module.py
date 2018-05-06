@@ -131,6 +131,12 @@ class Module:
 
         self.context_store = context_store
 
+        # Move root actions to 'on_startup' block
+        module_config = self.prepare_on_startup_block(
+            module_name=self.name,
+            module_config=module_config,
+        )
+
         # Create action block object for each available action block type
         action_blocks: ModuleActionBlocks = {'on_modified': {}}  # type: ignore
         params = {
@@ -164,6 +170,46 @@ class Module:
             )
 
         self.action_blocks = action_blocks
+
+    @staticmethod
+    def prepare_on_startup_block(
+        module_name: str,
+        module_config: ModuleConfigDict,
+    ) -> ModuleConfigDict:
+        """
+        Move actions at root indentation to on_startup block.
+
+        NB! Mutates module_config in-place.
+
+        :param module_config: Module configuration dictionary.
+        :return: Configuration dictionary with root actions moved to on_startup.
+        """
+        action_types = ActionBlock.action_types.keys()
+        root_level_action_types = [
+            action_type
+            for action_type
+            in action_types
+            if action_type in module_config
+        ]
+
+        if not root_level_action_types:
+            return module_config
+
+        if 'on_startup' in module_config:
+            logger.error(
+                f'[module/{module_name}] Actions defined both at root '
+                'indentation and in "on_startup" block. This is reduntant! '
+                'Root action types might overwrite "on_startup" actions.',
+            )
+        else:
+            module_config['on_startup'] = {}
+
+        for action_type in root_level_action_types:
+            module_config[
+                'on_startup'
+            ][action_type] = module_config.pop(action_type)  # type: ignore
+
+        return module_config
 
     def get_action_block(
         self,
