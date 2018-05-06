@@ -28,15 +28,15 @@ def jinja_test_env(test_templates_folder):
     )
 
 
-def test_rendering_environment_variables(jinja_test_env, expanded_env_dict):
+def test_rendering_environment_variables(jinja_test_env):
     template = jinja_test_env.get_template('env_vars')
-    assert template.render(env=expanded_env_dict) == \
+    assert template.render() == \
         'test_value\nfallback_value\n'
 
 
-def test_logging_undefined_variables(jinja_test_env, expanded_env_dict, caplog):
+def test_logging_undefined_variables(jinja_test_env, caplog):
     template = jinja_test_env.get_template('env_vars')
-    template.render(env=expanded_env_dict)
+    template.render()
     assert (
         'astrality.compiler',
         logging.WARNING,
@@ -50,14 +50,10 @@ def test_integer_indexed_templates(jinja_test_env):
     assert template.render(context) == 'one\ntwo\ntwo'
 
 
-def test_compilation_of_jinja_template(
-    test_templates_folder,
-    expanded_env_dict,
-):
+def test_compilation_of_jinja_template(test_templates_folder):
     template = test_templates_folder / 'env_vars'
     target = Path('/tmp/astrality') / template.name
-    context = {'env': expanded_env_dict}
-    compile_template(template, target, context, Path('/'))
+    compile_template(template, target, {}, Path('/'))
 
     with open(target) as target:
         assert target.read() == 'test_value\nfallback_value\n'

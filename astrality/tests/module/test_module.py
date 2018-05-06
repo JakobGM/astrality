@@ -12,7 +12,6 @@ from astrality import event_listener
 from astrality.module import Module, ModuleManager
 from astrality.context import Context
 from astrality.tests.utils import RegexCompare, Retry
-from astrality.utils import generate_expanded_env_dict
 
 
 @pytest.fixture
@@ -414,10 +413,7 @@ def test_has_unfinished_tasks(
 
 @pytest.fixture
 def config_with_modules():
-    context = Context({
-        'env': generate_expanded_env_dict(),
-    })
-
+    context = Context()
     modules = {
         'solar_module': {
             'enabled': True,

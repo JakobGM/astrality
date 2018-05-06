@@ -9,7 +9,7 @@ from astrality.config import (
     resolve_config_directory,
 )
 from astrality.context import Context
-from astrality.utils import generate_expanded_env_dict, compile_yaml
+from astrality.utils import compile_yaml
 
 
 @pytest.fixture
@@ -40,15 +40,6 @@ class TestAllConfigFeaturesFromDummyConfig:
     def test_environment_variable_interpolation(self, dummy_config):
         assert dummy_config['section3']['env_variable'] \
             == 'test_value, hello'
-
-
-def test_generation_of_expanded_env_dict():
-    env_dict = generate_expanded_env_dict()
-    assert len(env_dict) == len(os.environ)
-
-    for name, value in os.environ.items():
-        if '$' not in value:
-            assert env_dict[name] == value
 
 
 class TestResolveConfigDirectory:

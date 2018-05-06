@@ -45,7 +45,7 @@ def jinja_environment(
     )
 
     # Add env context containing all environment variables
-    env.globals['env'] = utils.generate_expanded_env_dict()
+    env.globals['env'] = os.environ
 
     # Add run shell command filter
     run_shell_from_working_directory = partial(

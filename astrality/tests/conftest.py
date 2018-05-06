@@ -8,7 +8,6 @@ from astrality.actions import ActionBlock
 from astrality.config import user_configuration
 from astrality.context import Context
 from astrality.module import Module, ModuleManager
-from astrality.utils import generate_expanded_env_dict
 
 
 @pytest.fixture
@@ -46,12 +45,6 @@ def modules():
     this_test_file = os.path.abspath(__file__)
     conf_path = Path(this_test_file).parents[1] / 'config'
     return user_configuration(conf_path)[1]
-
-
-@pytest.fixture
-def expanded_env_dict():
-    """Return expanded environment dictionary."""
-    return generate_expanded_env_dict()
 
 
 @pytest.fixture
