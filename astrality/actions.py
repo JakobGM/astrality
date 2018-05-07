@@ -347,7 +347,7 @@ class SymlinkAction(Action):
             include=include,
         )
         for content, symlink in links.items():
-            if symlink.is_file():
+            if symlink.is_file() and not symlink.is_symlink():
                 symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
 
             symlink.parent.mkdir(parents=True, exist_ok=True)
