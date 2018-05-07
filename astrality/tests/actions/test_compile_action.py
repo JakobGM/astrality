@@ -36,6 +36,41 @@ def test_compilation_of_template_to_temporary_file(template_directory):
     assert compilations[template].read_text() == 'one\ntwo\nthree'
 
 
+def test_that_dry_run_skips_compilation(template_directory, tmpdir, caplog):
+    """If dry_run is True, skip compilation of template"""
+    compilation_target = Path(tmpdir, 'target.tmp')
+    template = template_directory / 'no_context.template'
+    compile_dict = {
+        'content': 'no_context.template',
+        'target': str(compilation_target),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=template_directory,
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    caplog.clear()
+    compilations = compile_action.execute(dry_run=True)
+
+    # Check that the "compilation" is actually logged
+    assert 'SKIPPED:' in caplog.record_tuples[0][2]
+    assert str(template) in caplog.record_tuples[0][2]
+    assert str(compilation_target) in caplog.record_tuples[0][2]
+
+    # The template should still be returned
+    assert template in compilations
+
+    # And the compilation pair should be persisted
+    assert compile_action.performed_compilations() == {
+        template: {compilation_target},
+    }
+
+    # But the file should not be compiled
+    assert not compilations[template].exists()
+
+
 def test_compilation_to_specific_absolute_file_path(template_directory, tmpdir):
     """
     Compile to specified absolute target path.

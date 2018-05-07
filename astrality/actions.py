@@ -142,8 +142,12 @@ class Action(abc.ABC):
         )
 
     @abc.abstractmethod
-    def execute(self) -> Any:
-        """Execute defined action."""
+    def execute(self, dry_run: bool = False) -> Any:
+        """
+        Execute defined action.
+
+        :param dry_run: If external side effects should be skipped.
+        """
 
     def __repr__(self) -> str:
         """Return string representation of Action object."""
@@ -175,8 +179,13 @@ class ImportContextAction(Action):
     priority = 100
     context_store: compiler.Context
 
-    def execute(self) -> None:
-        """Import context section(s) according to user configuration block."""
+    def execute(self, dry_run: bool = False) -> None:
+        """
+        Import context section(s) according to user configuration block.
+
+        :param dry_run: This parameter is ignored, as import_context only has
+            internal side effects.
+        """
         if self.null_object:
             # Null object does nothing
             return None
@@ -215,10 +224,11 @@ class CompileAction(Action):
         self._performed_compilations: DefaultDict[Path, Set[Path]] = \
             defaultdict(set)
 
-    def execute(self) -> Dict[Path, Path]:
+    def execute(self, dry_run: bool = False) -> Dict[Path, Path]:
         """
         Compile template source to target destination.
 
+        :param dry_run: If True, skip and log compilation(s).
         :return: Dictionary with template content keys and target path values.
         """
         if self.null_object:
@@ -247,16 +257,25 @@ class CompileAction(Action):
             target=target_source,
             include=self.option(key='include', default=r'(.+)'),
         )
-
         permissions = self.option(key='permissions')
+
         for content_file, target_file in compile_pairs.items():
-            compiler.compile_template(
-                template=content_file,
-                target=target_file,
-                context=self.context_store,
-                shell_command_working_directory=self.directory,
-                permissions=permissions,
-            )
+            if dry_run:
+                logger = logging.getLogger(__name__)
+                logger.info(
+                    f'SKIPPED: '
+                    f'[Compiling] Template: "{content_file}" '
+                    f'-> Target: "{target_file}"',
+                )
+            else:
+                compiler.compile_template(
+                    template=content_file,
+                    target=target_file,
+                    context=self.context_store,
+                    shell_command_working_directory=self.directory,
+                    permissions=permissions,
+                )
+
             self._performed_compilations[content_file].add(target_file)
 
         return compile_pairs
@@ -329,10 +348,11 @@ class SymlinkAction(Action):
         self.symlinked_files: DefaultDict[Path, Set[Path]] = \
             defaultdict(set)
 
-    def execute(self) -> Dict[Path, Path]:
+    def execute(self, dry_run: bool = False) -> Dict[Path, Path]:
         """
         Symlink to `content` path from `target` path.
 
+        :param dry_run: If True, skip and log symlink creation(s).
         :return: Dictionary with content keys and symlink values.
         """
         if self.null_object:
@@ -346,13 +366,22 @@ class SymlinkAction(Action):
             target=target,
             include=include,
         )
+
+        logger = logging.getLogger(__name__)
         for content, symlink in links.items():
+            self.symlinked_files[content].add(symlink)
+            log_msg = f'[symlink] Content "{content}" -> Target: "{symlink}".'
+
+            if dry_run:
+                logger.info('SKIPPED: ' + log_msg)
+                continue
+
             if symlink.is_file() and not symlink.is_symlink():
                 symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
 
+            logger.info(log_msg)
             symlink.parent.mkdir(parents=True, exist_ok=True)
             symlink.symlink_to(content)
-            self.symlinked_files[content].add(symlink)
 
         return links
 
@@ -384,10 +413,11 @@ class CopyAction(Action):
         self.copied_files: DefaultDict[Path, Set[Path]] = \
             defaultdict(set)
 
-    def execute(self) -> Dict[Path, Path]:
+    def execute(self, dry_run: bool = False) -> Dict[Path, Path]:
         """
         Copy from `content` path to `target` path.
 
+        :param dry_run: If True, skip and log copy creation(s).
         :return: Dictionary with content keys and copy values.
         """
         if self.null_object:
@@ -403,12 +433,20 @@ class CopyAction(Action):
             target=target,
             include=include,
         )
+        logger = logging.getLogger(__name__)
         for content, copy in copies.items():
-            copy.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(str(content), str(copy))
             self.copied_files[content].add(copy)
 
-        if permissions:
+            log_msg = f'[copy] Content: "{content}" -> Target: "{target}".'
+            if dry_run:
+                logger.info('SKIPPED: ' + log_msg)
+                continue
+
+            logger.info(log_msg)
+            copy.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(str(content), str(copy))
+
+        if permissions and not dry_run:
             for copy in copies.values():
                 result = utils.run_shell(
                     command=f'chmod {permissions} "{copy}"',
@@ -517,10 +555,12 @@ class StowAction(Action):
             context_store=self.context_store,
         )
 
-    def execute(self) -> Dict[Path, Path]:
+    def execute(self, dry_run: bool = False) -> Dict[Path, Path]:
         """
         Stow directory source to target destination.
 
+        :param dry_run: If True, skip and log copies, symlinks, and
+            compilations.
         :return: Dictionary with source keys and target values.
             Contains compiled, symlinked, and copied files.
         """
@@ -528,10 +568,10 @@ class StowAction(Action):
             return {}
 
         if self.ignore_non_templates:
-            return self.compile_action.execute()
+            return self.compile_action.execute(dry_run=dry_run)
         else:
-            copies_or_links = self.non_templates_action.execute()
-            compilations = self.compile_action.execute()
+            copies_or_links = self.non_templates_action.execute(dry_run=dry_run)
+            compilations = self.compile_action.execute(dry_run=dry_run)
             compilations.update(copies_or_links)
             return compilations
 
@@ -579,15 +619,17 @@ class RunAction(Action):
 
     priority = 600
 
-    def execute(
+    def execute(  # type: ignore
         self,
         default_timeout: Union[int, float] = 0,
+        dry_run: bool = False,
     ) -> Optional[Tuple[str, str]]:
         """
         Execute shell command action.
 
         :param default_timeout: Run timeout in seconds if no specific value is
             specified in `options`.
+        :param dry_run: If True, skip and log commands to be executed.
         :return: 2-tuple containing the executed command and its resulting
             stdout.
         """
@@ -599,8 +641,13 @@ class RunAction(Action):
         timeout = self.option(key='timeout')
 
         logger = logging.getLogger(__name__)
-        logger.info(f'Running command "{command}".')
+        if dry_run:
+            logger.info(
+                f'SKIPPED: [run] Command: "{command}" (timeout={timeout}).',
+            )
+            return command, ''
 
+        logger.info(f'Running command "{command}".')
         result = utils.run_shell(
             command=command,
             timeout=timeout or default_timeout,
@@ -659,12 +706,13 @@ class TriggerAction(Action):
 
     priority = 0
 
-    def execute(self) -> Optional[Trigger]:
+    def execute(self, dry_run: bool = False) -> Optional[Trigger]:
         """
         Return trigger instruction.
 
         If no trigger is specified, return None.
 
+        :param dry_run: This parameter is ignored.
         :return: Optional :class:`.Trigger` instance.
         """
         if self.null_object:
@@ -712,6 +760,7 @@ class ActionBlock:
         must be an absolute path.
     :param replacer: Placeholder substitutor of string user options.
     :param context_store: A reference to the global context store.
+    :param dry_run: If file system actions should be printed and skipped.
     """
 
     _compile_actions: List[CompileAction]
@@ -771,34 +820,35 @@ class ActionBlock:
                 ],
             )
 
-    def import_context(self) -> None:
+    def import_context(self, dry_run: bool = False) -> None:
         """Import context into global context store."""
         for import_context_action in self._import_context_actions:
-            import_context_action.execute()
+            import_context_action.execute(dry_run=dry_run)
 
-    def symlink(self) -> None:
+    def symlink(self, dry_run: bool = False) -> None:
         """Symlink files."""
         for symlink_action in self._symlink_actions:
-            symlink_action.execute()
+            symlink_action.execute(dry_run=dry_run)
 
-    def copy(self) -> None:
+    def copy(self, dry_run: bool = False) -> None:
         """Copy files."""
         for copy_action in self._copy_actions:
-            copy_action.execute()
+            copy_action.execute(dry_run=dry_run)
 
-    def compile(self) -> None:
+    def compile(self, dry_run: bool = False) -> None:
         """Compile templates."""
         for compile_action in self._compile_actions:
-            compile_action.execute()
+            compile_action.execute(dry_run=dry_run)
 
-    def stow(self) -> None:
+    def stow(self, dry_run: bool = False) -> None:
         """Stow directory contents."""
         for stow_action in self._stow_actions:
-            stow_action.execute()
+            stow_action.execute(dry_run=dry_run)
 
     def run(
         self,
         default_timeout: Optional[Union[int, float]] = None,
+        dry_run: bool = False,
     ) -> Tuple[Tuple[str, str], ...]:
         """
         Run shell commands.
@@ -810,6 +860,7 @@ class ActionBlock:
         for run_action in self._run_actions:
             result = run_action.execute(
                 default_timeout=default_timeout or self.run_timeout,
+                dry_run=dry_run,
             )
             if result:
                 # Run action is not null object, so we can return results
@@ -818,20 +869,24 @@ class ActionBlock:
 
         return results
 
-    def triggers(self) -> Tuple[Trigger, ...]:
+    def triggers(self, dry_run: bool = False) -> Tuple[Trigger, ...]:
         """
         Return all trigger instructions specified in action block.
 
         :return: Tuple of Trigger objects specified in action block.
         """
         return tuple(
-            trigger_action.execute()  # type: ignore
+            trigger_action.execute(dry_run=dry_run)  # type: ignore
             for trigger_action
             in self._trigger_actions
             if not trigger_action.null_object
         )
 
-    def execute(self, default_timeout: Union[int, float]) -> None:
+    def execute(
+        self,
+        default_timeout: Union[int, float],
+        dry_run: bool = False,
+    ) -> None:
         """
         Execute all actions in action block.
 
@@ -842,7 +897,7 @@ class ActionBlock:
         """
         self.import_context()
         self.compile()
-        self.run(default_timeout=default_timeout)
+        self.run(default_timeout=default_timeout, dry_run=dry_run)
 
     def performed_compilations(self) -> DefaultDict[Path, Set[Path]]:
         """

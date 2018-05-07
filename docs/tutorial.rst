@@ -44,7 +44,10 @@ Let us go through the module configuration step-by-step:
   appearing after "template." should be used as the *compiled* target filename.
 
 We can now compile all such templates within *$XDG_CONFIG_HOME* by running
-``astrality`` from the shell. But we would like to *automatically* recompile
+``astrality`` from the shell. Before doing so, it is recommended to run
+``astrality --dry-run`` to see which actions that will be performed.
+
+But we would like to *automatically* recompile
 templates when we modify them or create new ones. You can achieve this by
 enabling ``reprocess_modified_files`` in ``astrality.yml``:
 

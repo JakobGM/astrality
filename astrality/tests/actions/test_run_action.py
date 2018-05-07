@@ -31,6 +31,30 @@ def test_directory_of_executed_shell_command(tmpdir):
     assert (temp_dir / 'touched.tmp').is_file()
 
 
+def test_that_dry_run_is_respected(tmpdir, caplog):
+    """If dry_run is True, no commands should be executed, only logged."""
+    temp_dir = Path(tmpdir)
+    run_action = RunAction(
+        options={'shell': 'touch touched.tmp', 'timeout': 1},
+        directory=temp_dir,
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    caplog.clear()
+    result = run_action.execute(dry_run=True)
+
+    # Command to be run and empty string should be returned
+    assert result == ('touch touched.tmp', '',)
+
+    # Command to be run should be logged
+    assert 'SKIPPED: ' in caplog.record_tuples[0][2]
+    assert 'touch touched.tmp' in caplog.record_tuples[0][2]
+
+    # Check that the command has *not* been run
+    assert not (temp_dir / 'touched.tmp').is_file()
+
+
 def test_use_of_replacer(tmpdir):
     """All commands should be run from `directory`."""
     temp_dir = Path(tmpdir)

@@ -39,6 +39,8 @@ Added
 - Add new ``--module`` CLI flag for running specific modules.
 - ``on_startup`` blocks can now optionally be implicitly defined at the root
   indentation level in the module.
+- You can now run astrality with ``--dry-run`` in order to check which actions
+  that will be executed.
 
 Changed
 -------

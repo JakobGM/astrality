@@ -84,6 +84,7 @@ class Module:
         order to replace relevant placeholders.
     :param global_modules_config: GlobalModulesConfig object specifying
         configuration options applicable to all modules, such as run_timeout.
+    :param dry_run: If file system actions should be printed and skipped.
     """
 
     action_blocks: ModuleActionBlocks
@@ -96,6 +97,7 @@ class Module:
         replacer: Callable[[str], str] = lambda string: string,
         context_store: Context = Context(),
         global_modules_config: Optional[GlobalModulesConfig] = None,
+        dry_run: bool = False,
     ) -> None:
         """
         Initialize Module object with a section from a config dictionary.
@@ -235,6 +237,7 @@ class Module:
         action: str,
         block: str,
         path: Optional[Path] = None,
+        dry_run: bool = False,
     ) -> Optional[Tuple[Tuple[str, str], ...]]:
         """
         Perform action defined in action block.
@@ -243,6 +246,7 @@ class Module:
             If passed 'all' then all actions types will be triggered.
         :param block_name: Name of block such as 'on_startup'.
         :param path: Absolute path in case of block_name == 'on_modified'.
+        :param dry_run: If external side-effects should be skipped.
         :return: Optional tuple of 2-tuples if run actions have been performed.
             First item is command being run, second item is the standard output
             of the shell command.
@@ -257,7 +261,12 @@ class Module:
 
             results: Tuple[Tuple[str, str], ...] = tuple()
             for action in all_actions:
-                result = self.execute(action=action, block=block, path=path)
+                result = self.execute(
+                    action=action,
+                    block=block,
+                    path=path,
+                    dry_run=dry_run,
+                )
                 if result:
                     results += result
 
@@ -267,7 +276,7 @@ class Module:
         assert isinstance(action, str)
         assert action in ActionBlock.action_types
         action_block = self.get_action_block(name=block, path=path)
-        results = getattr(action_block, action)()
+        results = getattr(action_block, action)(dry_run=dry_run)
 
         # We need to execute the same action in any triggered action block
         triggers = action_block.triggers()
@@ -276,6 +285,7 @@ class Module:
                 action=action,
                 block=trigger.block,
                 path=trigger.absolute_path,
+                dry_run=dry_run,
             )
             if result:
                 results += result
@@ -410,6 +420,7 @@ class ModuleManager:
     :param modules: Dictionary containing globally defined modules.
     :param context: Global context.
     :param directory: Directory containing global configuration.
+    :param dry_run: If file system actions should be printed and skipped.
     """
 
     def __init__(
@@ -418,11 +429,13 @@ class ModuleManager:
         modules: Dict[str, ModuleConfigDict] = {},
         context: Context = Context(),
         directory: Path = Path(__file__).parent / 'tests' / 'test_config',
+        dry_run: bool = False,
     ) -> None:
         """Initialize a ModuleManager object from `astrality.yml` dict."""
         self.config_directory = directory
         self.application_config = config
         self.application_context = context
+        self.dry_run = dry_run
 
         self.startup_done = False
         self.last_module_events: Dict[str, str] = {}
@@ -472,6 +485,7 @@ class ModuleManager:
                     replacer=self.interpolate_string,
                     context_store=self.application_context,
                     global_modules_config=self.global_modules_config,
+                    dry_run=dry_run,
                 )
                 self.modules[module.name] = module
 
@@ -496,6 +510,7 @@ class ModuleManager:
                 replacer=self.interpolate_string,
                 context_store=self.application_context,
                 global_modules_config=self.global_modules_config,
+                dry_run=dry_run,
             )
             self.modules[module.name] = module
 
@@ -607,6 +622,7 @@ class ModuleManager:
                 module.execute(
                     action=specific_action,
                     block=block,
+                    dry_run=self.dry_run,
                 )
 
     def startup(self):
@@ -653,6 +669,7 @@ class ModuleManager:
                 action='all',
                 block='on_modified',
                 path=modified,
+                dry_run=self.dry_run,
             )
 
         return triggered
@@ -756,16 +773,16 @@ class ModuleManager:
             for action_block in module.all_action_blocks():
                 for compile_action in action_block._compile_actions:
                     if modified in compile_action:
-                        compile_action.execute()
+                        compile_action.execute(dry_run=self.dry_run)
 
                 for stow_action in action_block._stow_actions:
                     if modified in stow_action:
-                        stow_action.execute()
+                        stow_action.execute(dry_run=self.dry_run)
 
                 # TODO: Test this branch
                 for copy_action in action_block._copy_actions:
                     if modified in copy_action:
-                        copy_action.execute()
+                        copy_action.execute(dry_run=self.dry_run)
 
     def interpolate_string(self, string: str) -> str:
         """
@@ -788,4 +805,5 @@ class ModuleManager:
 
     def __del__(self) -> None:
         """Close filesystem watcher if enabled."""
-        self.directory_watcher.stop()
+        if hasattr(self, 'directory_watcher'):
+            self.directory_watcher.stop()

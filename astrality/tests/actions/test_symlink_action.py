@@ -16,6 +16,31 @@ def test_null_object_pattern():
     symlink_action.execute()
 
 
+def test_symlink_dry_run(create_temp_files, caplog):
+    """If dry_run is True, only log and not symlink."""
+    content, target = create_temp_files(2)
+    symlink_action = SymlinkAction(
+        options={'content': str(content), 'target': str(target)},
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    caplog.clear()
+    result = symlink_action.execute(dry_run=True)
+
+    # We should log the symlink that had been performed
+    assert 'SKIPPED:' in caplog.record_tuples[0][2]
+    assert str(content) in caplog.record_tuples[0][2]
+    assert str(target) in caplog.record_tuples[0][2]
+
+    # We should also still return the intended result
+    assert result == {content: target}
+
+    # But the symlink should not be created in a dry run
+    assert not target.is_symlink()
+
+
 def test_symlink_action_using_all_parameters(tmpdir):
     """All three parameters should be respected."""
     temp_dir = Path(tmpdir) / 'content'

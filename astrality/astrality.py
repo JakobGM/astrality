@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 def main(
     modules: List[str] = [],
     logging_level: str = 'INFO',
+    dry_run: bool = False,
     test: bool = False,
 ):
     """
@@ -27,6 +28,7 @@ def main(
 
     :param modules: Modules to be enabled. If empty, use astrality.yml.
     :param logging_level: Loging level.
+    :param dry_run: If file system actions should be printed and skipped.
     :param test: If True, return after one iteration loop.
     """
     if 'ASTRALITY_LOGGING_LEVEL' in os.environ:
@@ -36,7 +38,7 @@ def main(
     # Set the logging level to the configured setting
     logging.basicConfig(level=logging_level)
 
-    if not modules:
+    if not modules and not dry_run:
         # Quit old astrality instances
         kill_old_astrality_processes()
 
@@ -104,6 +106,7 @@ def main(
             modules=module_configs,
             context=global_context,
             directory=directory,
+            dry_run=dry_run,
         )
         module_manager.finish_tasks()
 
@@ -114,8 +117,8 @@ def main(
                 module_manager.finish_tasks()
                 logger.info(f'Event change routine finished.')
 
-            if test:
-                logger.debug('Main loop interupted since argument test=True.')
+            if test or dry_run:
+                logger.debug('Main loop interupted due to --dry-run.')
                 return
             else:
                 logger.info(

@@ -33,9 +33,13 @@ def test_filtering_stowed_templates(test_config_directory, tmpdir):
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
     )
-    stow_action.execute()
+
+    # First testing if dry run is respected (too much work for a separate test)
+    stow_action.execute(dry_run=True)
+    assert len(list(temp_dir.iterdir())) == 0
 
     # We should have a total of two stowed files
+    stow_action.execute()
     assert len(list(temp_dir.iterdir())) == 2
     assert len(list((temp_dir / 'recursive').iterdir())) == 1
     assert (temp_dir / 'module.template').is_file()

@@ -16,6 +16,34 @@ def test_null_object_pattern():
     copy_action.execute()
 
 
+def test_if_dry_run_is_respected(create_temp_files, caplog):
+    """When dry_run is True, the copy action should only be logged."""
+    content, target = create_temp_files(2)
+    content.write_text('content')
+    target.write_text('target')
+
+    copy_action = CopyAction(
+        options={'content': str(content), 'target': str(target)},
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    caplog.clear()
+    result = copy_action.execute(dry_run=True)
+
+    # We should still return the copy pair
+    assert result == {content: target}
+
+    # We should log what would have been done
+    assert 'SKIPPED:' in caplog.record_tuples[0][2]
+    assert str(content) in caplog.record_tuples[0][2]
+    assert str(target) in caplog.record_tuples[0][2]
+
+    # But we should not copy the file under a dry run
+    assert target.read_text() == 'target'
+
+
 def test_copy_action_using_all_parameters(tmpdir):
     """All three parameters should be respected."""
     temp_dir = Path(tmpdir) / 'content'
