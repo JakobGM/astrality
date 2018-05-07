@@ -3,6 +3,7 @@
 from math import inf
 from numbers import Number
 from pathlib import Path
+import logging
 from typing import (
     Any,
     Dict,
@@ -88,12 +89,24 @@ class Context:
             context=self,
         )
 
+        logger = logging.getLogger(__name__)
         if from_section is None and to_section is None:
+            logger.info(
+                f'[import_context] All sections from "{from_path}".',
+            )
             self.update(new_context)
         elif from_section and to_section:
+            logger.info(
+                f'[import_context] Section "{from_section}" from "{from_path}" '
+                f'into section "{to_section}".',
+            )
             self[to_section] = new_context[from_section]
         else:
             assert from_section
+            logger.info(
+                f'[import_context] Section "{from_section}" '
+                f'from "{from_path}" ',
+            )
             self[from_section] = new_context[from_section]
 
     def __eq__(self, other) -> bool:
