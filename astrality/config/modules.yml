@@ -2,30 +2,10 @@ dotfiles:
     # This module automatically compiles all filenames within $XDG_CONFIG_HOME
     # prefixed with 'template.'. It removes the prefix for the compile target,
     # placing it in the same directory as the template.
-    on_startup:
-        compile:
-            content: $XDG_CONFIG_HOME
-            target: $XDG_CONFIG_HOME
-            include: 'template\.(.+)'
-
-
-polybar:
-    requires:
-        - installed: polybar
-
-    on_startup:
-        compile:
-            - content: modules/polybar/config.template
-
-        run:
-            - shell: killall -q polybar
-            - shell: polybar --config={modules/polybar/config.template} --reload HDMI2
-            - shell: polybar --config={modules/polybar/config.template} --reload eDP1
-
-    on_modified:
-        modules/polybar/config.template:
-            compile:
-                - content: modules/polybar/config.template
+    compile:
+        content: $XDG_CONFIG_HOME
+        target: $XDG_CONFIG_HOME
+        include: 'template\.(.+)'
 
 
 terminals:
@@ -47,9 +27,8 @@ terminals:
         - installed: 'alacritty'
         - installed: 'kitty'
 
-    on_startup:
-        compile:
-            - content: modules/terminals/alacritty.yml.template
-              target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
-            - content: modules/terminals/kitty.conf.template
-              target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf
+    compile:
+        - content: modules/terminals/alacritty.yml.template
+          target: {{ env.XDG_CONFIG_HOME }}/alacritty/alacritty.yml
+        - content: modules/terminals/kitty.conf.template
+          target: {{ env.XDG_CONFIG_HOME }}/kitty/kitty.conf

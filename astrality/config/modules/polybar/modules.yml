@@ -1,0 +1,17 @@
+polybar:
+    requires:
+        - installed: polybar
+
+    on_startup:
+        compile:
+            - content: config.template
+
+        run:
+            - shell: killall -q polybar
+            - shell: polybar --config={config.template} --reload HDMI2
+            - shell: polybar --config={config.template} --reload eDP1
+
+    on_modified:
+        modules/polybar/config.template:
+            compile:
+                - content: config.template
