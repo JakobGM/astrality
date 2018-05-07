@@ -176,6 +176,21 @@ class TestContextClass:
         expected_result = Context({'key1': 1, 'key2': 2})
         assert context1 == expected_result
 
+    def test_reverse_updating_context(self):
+        """Reverse update should not overwrite existing keys."""
+        context1 = Context({
+            'key1': 1,
+            'key2': 2,
+        })
+        context2 = Context({
+            'key2': 0,
+            'key3': 0,
+        })
+
+        context1.reverse_update(context2)
+        expected_result = Context({'key1': 1, 'key2': 2, 'key3': 0})
+        assert context1 == expected_result
+
 
 def test_importing_context_from_compiled_yml_file():
     """YAML files should be importable into the context."""

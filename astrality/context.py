@@ -200,3 +200,14 @@ class Context:
         """Overwrite all items from other onto the Context object."""
         for key, value in other.items():
             self.__setitem__(key, value)
+
+    def copy(self) -> 'Context':
+        """Return shallow copy of context."""
+        return Context(self._dict.copy())
+
+    def reverse_update(self, other: Union['Context', dict]) -> None:
+        """Update context while preserving conflicting keys."""
+        original_copy = self._dict.copy()
+        other_copy = other.copy()
+        other_copy.update(original_copy)
+        self.update(other_copy)
