@@ -207,7 +207,6 @@ class Context:
 
     def reverse_update(self, other: Union['Context', dict]) -> None:
         """Update context while preserving conflicting keys."""
-        original_copy = self._dict.copy()
         other_copy = other.copy()
-        other_copy.update(original_copy)
+        other_copy.update(self._dict)
         self.update(other_copy)
