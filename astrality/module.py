@@ -444,8 +444,7 @@ class ModuleManager:
             module_context = external_module_source.context(
                 context=self.application_context,
             )
-            module_context.update(self.application_context)
-            self.application_context = module_context
+            self.application_context.reverse_update(module_context)
 
             module_configs = external_module_source.modules(
                 context=self.application_context,
