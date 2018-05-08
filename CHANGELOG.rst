@@ -141,6 +141,9 @@ Changed
       requires:
           - shell: './shell/script'
 
+- Astrality now automatically quits if there is no reason for it to continue
+  running.
+
 
 Fixed
 -----

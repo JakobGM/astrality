@@ -20,6 +20,7 @@ setup(
         'astral',
         'coloredlogs',
         'mypy_extensions',
+        'psutil',
         'pyyaml',
         'requests',
         'watchdog',

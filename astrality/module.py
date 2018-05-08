@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 from pathlib import Path
+import psutil
 import re
 from typing import (
     Callable,
@@ -370,6 +371,15 @@ class Module:
             repl=replace_placeholders,
             string=string,
         )
+
+    @property
+    def keep_running(self) -> bool:
+        """Return True if Module needs to keep running."""
+        on_modifed = bool(self.action_blocks['on_modified'])
+        event_listener = bool(self.action_blocks['on_event']) \
+            and self.event_listener.type_ != 'static'
+
+        return on_modifed or event_listener
 
     @staticmethod
     def valid_module(
@@ -798,6 +808,19 @@ class ModuleManager:
         :return: Processed string.
         """
         return string
+
+    @property
+    def keep_running(self) -> bool:
+        """Return True if ModuleManager needs to keep running."""
+        if self.reprocess_modified_files:
+            return True
+
+        if any(module.keep_running for module in self.modules.values()):
+            return True
+
+        current_process = psutil.Process()
+        children = current_process.children(recursive=False)
+        return bool(children)
 
     def __len__(self) -> int:
         """Return the number of managed modules."""

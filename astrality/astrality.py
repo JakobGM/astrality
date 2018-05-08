@@ -120,6 +120,13 @@ def main(
             if test or dry_run:
                 logger.debug('Main loop interupted due to --dry-run.')
                 return
+            elif not module_manager.keep_running:
+                logger.info(
+                    'No more tasks to be performed. '
+                    'Executing on_exit blocks.',
+                )
+                module_manager.exit()
+                return
             else:
                 logger.info(
                     f'Waiting {module_manager.time_until_next_event()} '

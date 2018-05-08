@@ -60,3 +60,6 @@ sphinx-autodoc-typehints
 
 # For colored log output
 coloredlogs
+
+# For checking spawned subprocesses
+psutil

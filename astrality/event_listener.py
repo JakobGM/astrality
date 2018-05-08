@@ -10,7 +10,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 from math import inf
-from typing import Dict, Tuple, Union
+from typing import Dict, ClassVar, Tuple, Union
 
 import pytz
 from astral import Location
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 class EventListener(abc.ABC):
     """Class which defines different events."""
 
+    type_: ClassVar[str]
     events: Tuple[str, ...]
     default_event_listener_config: EventListenerConfig
 
@@ -74,6 +75,8 @@ class Solar(EventListener):
 
     It changes event after dawn, sunrise, morning, afternoon, sunset, dusk.
     """
+
+    type_ = 'solar'
 
     events: Tuple[str, ...] = (
         'sunrise',
@@ -167,6 +170,8 @@ class Solar(EventListener):
 class Daylight(Solar):
     """Event listener keeping track of daylight at specific location."""
 
+    type_ = 'daylight'
+
     events = ('day', 'night',)
     default_event_listener_config = {
         'type': 'daylight',
@@ -214,6 +219,7 @@ class Weekday(EventListener):
         'sunday',
     )
     default_event_listener_config = {'type': 'weekday'}
+    type_ = 'weekday'
 
     weekdays = dict(zip(range(0, 7), events))
 
@@ -231,6 +237,8 @@ class Weekday(EventListener):
 
 class Periodic(EventListener):
     """Constant frequency EventListener subclass."""
+
+    type_ = 'periodic'
 
     class Events(tuple):
         """Helper class to check for valid event values."""
@@ -308,6 +316,7 @@ class TimeOfDay(EventListener):
         'saturday': '',
         'sunday': '',
     }
+    type_ = 'time_of_day'
 
     def __init__(self, event_listener_config: EventListenerConfig) -> None:
         """Initialize time_of_day event listener based on config."""
@@ -420,6 +429,7 @@ class Static(EventListener):
 
     events = ('static',)
     default_event_listener_config = {'type': 'static'}
+    type_ = 'static'
 
     def _event(self) -> str:
         """Return the event 'static', as per specification."""
