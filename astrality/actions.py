@@ -376,7 +376,10 @@ class SymlinkAction(Action):
                 logger.info('SKIPPED: ' + log_msg)
                 continue
 
-            if symlink.is_file() and not symlink.is_symlink():
+            if symlink.resolve() == content:
+                continue
+
+            if symlink.is_file():
                 symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
 
             logger.info(log_msg)

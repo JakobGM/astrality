@@ -153,3 +153,33 @@ def test_symlinking_file_to_directory(tmpdir):
     assert symlink_action.symlinked_files == {
         file1: {target / 'file1'},
     }
+
+
+def test_running_symlink_action_twice(create_temp_files):
+    """Symlink action should be idempotent."""
+    content, target = create_temp_files(2)
+    content.write_text('content')
+    target.write_text('target')
+
+    symlink_options = {
+        'content': str(content),
+        'target': str(target),
+    }
+    symlink_action = SymlinkAction(
+        options=symlink_options,
+        directory=content.parent,
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    # Symlink first time
+    symlink_action.execute()
+    assert target.is_symlink()
+    assert target.read_text() == 'content'
+    assert (target.parent / (target.name + '.bak')).read_text() == 'target'
+
+    # Symlink one more time, and assert idempotency
+    symlink_action.execute()
+    assert target.is_symlink()
+    assert target.read_text() == 'content'
+    assert (target.parent / (target.name + '.bak')).read_text() == 'target'
