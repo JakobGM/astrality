@@ -379,7 +379,7 @@ class SymlinkAction(Action):
             if symlink.resolve() == content:
                 continue
 
-            if symlink.is_file():
+            if symlink.is_file() and not symlink.is_symlink():
                 symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
 
             logger.info(log_msg)
