@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from astrality.module import Module, ModuleManager
+from astrality.tests.utils import Retry
 
 
 def test_module_that_does_not_need_to_keep_running():
@@ -86,7 +87,9 @@ def test_that_no_reprocess_modified_files_does_not_cause_keep_running():
             },
         },
     )
-    assert module_manager.keep_running is False
+
+    # We have to retry here, as processes from earlier tests might interfer
+    assert Retry()(lambda: module_manager.keep_running is False)
 
 
 def test_that_module_manager_asks_its_modules_if_it_should_keep_running():
