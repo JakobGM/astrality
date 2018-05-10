@@ -388,7 +388,18 @@ class Module:
         requires_timeout: Union[int, float],
         requires_working_directory: Path,
     ) -> bool:
-        """Check if the given dict represents a valid enabled module."""
+        """
+        Check if the given dict represents a valid enabled module.
+
+        The method determines this by inspecting any requires items the module
+        might have specified.
+
+        :param name: Name of module, used for logging purposes.
+        :param config: Configuration dictionary of the module.
+        :param requires_timeout: Time to wait for shell command requirements.
+        :param requires_working_directory: CWD for shell commands.
+        :return: True if module should be enabled.
+        """
         if not config.get('enabled', True):
             return False
 
