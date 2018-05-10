@@ -41,6 +41,7 @@ Added
   indentation level in the module.
 - You can now run astrality with ``--dry-run`` in order to check which actions
   that will be executed.
+- Modules can now depend on other modules with the ``module`` requires keyword.
 
 Changed
 -------

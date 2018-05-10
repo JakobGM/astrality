@@ -111,11 +111,18 @@ keywords:
     You can also override the default timeout on a case-by-case basis by
     setting the ``timeout`` key to a numeric value (in seconds).
 
+``module``:
+    Module dependent on other module(s), specified with the same name syntax
+    as with :ref:`enabled_modules <modules_enabled_modules>`.
+
+    If a module is missing one or more module dependencies, it will be disabled,
+    and an error will be logged.
+
 
 *All* specified dependencies must be satisfied in order to enable the module.
 
-For example, if your module depends on the ``docker`` and ``docker-machine``
-shell commands being available, the environment variable ``$ENABLE_DOCKER``
+For example, if your module depends on the ``docker`` shell command, another
+module named ``docker-machine``, the environment variable ``$ENABLE_DOCKER``
 being set, and "my_docker_container" existing, you can check this by setting
 the following requirements:
 
@@ -126,7 +133,7 @@ the following requirements:
     docker:
         requires:
             - installed: docker
-            - installed: docker-machine
+            - module: docker-machine
             - env: ENABLE_DOCKER
             - shell: '[ $(docker ps -a | grep my_docker_container) ]'
               timeout: 10 # seconds

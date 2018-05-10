@@ -71,12 +71,3 @@ Actions module
     :undoc-members:
     :inherited-members:
     :show-inheritance:
-
-Requirements module
--------------------
-
-.. automodule:: astrality.requirements
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance:
