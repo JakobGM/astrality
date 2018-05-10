@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from astrality.requirements import Requirement
+from astrality.module import Module
 
 
 def test_null_object_pattern():
@@ -103,3 +104,54 @@ def test_installed_requirement():
         directory=Path('/'),
     )
     assert not unsuccessful_installed_requirement
+
+
+def test_requiring_a_global_module():
+    """You should be able to require global modules."""
+    moduleA = Module(
+        name='A',
+        module_config={'requires': [{'module': 'B'}]},
+        module_directory=Path(__file__).parent,
+    )
+    assert moduleA.depends_on == ('B',)
+
+    moduleB = Module(
+        name='B',
+        module_config={'run': {'shell': 'echo hi!'}},
+        module_directory=Path(__file__).parent,
+    )
+    assert moduleB.depends_on == tuple()
+
+    moduleC = Module(
+        name='C',
+        module_config={'requires': [{'module': 'D'}]},
+        module_directory=Path(__file__).parent,
+    )
+    assert moduleC.depends_on == ('D',)
+
+    assert Requirement.pop_missing_module_dependencies(
+        modules={'A': moduleA, 'B': moduleB, 'C': moduleC},
+    ) == {'A': moduleA, 'B': moduleB}
+
+
+def test_recursive_module_requirements():
+    """Missing dependencies should propagate."""
+    moduleA = Module(
+        name='A',
+        module_config={'requires': [{'module': 'B'}]},
+        module_directory=Path(__file__).parent,
+    )
+    moduleB = Module(
+        name='B',
+        module_config={'requires': [{'module': 'C'}]},
+        module_directory=Path(__file__).parent,
+    )
+    moduleC = Module(
+        name='C',
+        module_config={'requires': [{'module': 'D'}]},
+        module_directory=Path(__file__).parent,
+    )
+
+    assert Requirement.pop_missing_module_dependencies(
+        modules={'A': moduleA, 'B': moduleB, 'C': moduleC},
+    ) == {}

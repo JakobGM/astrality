@@ -1,13 +1,18 @@
 """Module for enforcing module 'requires' statements."""
 
+import logging
 import os
 import shutil
-from typing import Union
 from pathlib import Path
+from typing import Union, Dict, TYPE_CHECKING, Iterable
 
 from mypy_extensions import TypedDict
 
 from astrality import utils
+
+
+if TYPE_CHECKING:
+    from astrality.module import Module  # noqa
 
 
 class RequirementDict(TypedDict, total=False):
@@ -17,6 +22,7 @@ class RequirementDict(TypedDict, total=False):
     timeout: Union[int, float]
     env: str
     installed: str
+    module: str
 
 
 class Requirement:
@@ -76,6 +82,57 @@ class Requirement:
                 self.successful = False
             else:
                 self.repr += f'Program installed: "{program}" (OK), '
+
+    @staticmethod
+    def pop_missing_module_dependencies(
+        modules: Dict[str, 'Module'],
+    ) -> Dict[str, 'Module']:
+        """
+        Pop modules which miss their module dependencies.
+
+        :param modules: Dictionary containing modules.
+        :return: Dictionary with removed modules which miss their module
+            dependencies.
+        """
+        original_length = len(modules)
+
+        for module_name, module in list(modules.items()):
+            if not Requirement.satisfied_module_dependencies(
+                module=module,
+                enabled_modules=tuple(modules.keys()),
+            ):
+                del modules[module_name]
+                continue
+
+        if original_length != len(modules):
+            return Requirement.pop_missing_module_dependencies(
+                modules=modules,
+            )
+
+        return modules
+
+    @staticmethod
+    def satisfied_module_dependencies(
+        module: 'Module',
+        enabled_modules: Iterable[str],
+    ) -> bool:
+        """
+        Return True if all module dependencies of module are enabled.
+
+        :param module: Module to inspect for module dependencies.
+        :param enabled_modules: Iterable of enabled module names.
+        :return: True if all module dependencies are satisfied.
+        """
+        for module_dependency in module.depends_on:
+            if module_dependency not in enabled_modules:
+                logger = logging.getLogger(__name__)
+                logger.error(
+                    f'[module/{module.name}] Missing module dependency: '
+                    f'"{module_dependency}". Disabling module!',
+                )
+                return False
+        else:
+            return True
 
     def __bool__(self) -> bool:
         """Return True if all requirements are satisfied."""

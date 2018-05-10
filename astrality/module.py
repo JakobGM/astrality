@@ -89,6 +89,7 @@ class Module:
     """
 
     action_blocks: ModuleActionBlocks
+    depends_on: Tuple[str]
 
     def __init__(
         self,
@@ -173,6 +174,14 @@ class Module:
             )
 
         self.action_blocks = action_blocks
+
+        requirements = module_config.get('requires', [])
+        self.depends_on = tuple(  # type: ignore
+            requirement['module']  # type: ignore
+            for requirement
+            in requirements
+            if 'module' in requirement
+        )
 
     @staticmethod
     def prepare_on_startup_block(
@@ -380,6 +389,10 @@ class Module:
             and self.event_listener.type_ != 'static'
 
         return on_modifed or event_listener
+
+    def __repr__(self) -> str:
+        """Return string representation of Module object."""
+        return f'Module(name={self.name})'
 
     @staticmethod
     def valid_module(
