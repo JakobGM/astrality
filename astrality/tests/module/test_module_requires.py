@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 
-from astrality.module import Module
+from astrality.module import Module, ModuleManager
 from astrality.tests.utils import RegexCompare
 
 
@@ -60,3 +60,30 @@ def test_module_requires_option(caplog):
             'Unsuccessful command: "command -v does_not_exist", !',
         ),
     ) in caplog.record_tuples
+
+
+def test_module_module_dependencies():
+    """ModuleManager should remove modules with missing module dependencies."""
+    config = {
+        'modules': {
+            'modules_directory': 'freezed_modules',
+            'enabled_modules': [
+                {'name': 'north_america::*'},
+                {'name': 'A'},
+                {'name': 'B'},
+                {'name': 'C'},
+            ],
+        },
+    }
+    modules = {
+        'A': {'requires': {'module': 'north_america::USA'}},
+        'B': {'requires': [{'module': 'A'}]},
+        'C': {'requires': [{'module': 'D'}]},
+    }
+
+    module_manager = ModuleManager(
+        config=config,
+        modules=modules,
+    )
+    assert sorted(module_manager.modules.keys()) \
+        == sorted(['A', 'B', 'north_america::USA'])

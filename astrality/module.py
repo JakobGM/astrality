@@ -175,9 +175,9 @@ class Module:
 
         self.action_blocks = action_blocks
 
-        requirements = module_config.get('requires', [])
+        requirements = cast_to_list(module_config.get('requires', []))
         self.depends_on = tuple(  # type: ignore
-            requirement['module']  # type: ignore
+            requirement['module']
             for requirement
             in requirements
             if 'module' in requirement
@@ -547,6 +547,9 @@ class ModuleManager:
                 dry_run=dry_run,
             )
             self.modules[module.name] = module
+
+        # Remove modules which depends on other missing modules
+        Requirement.pop_missing_module_dependencies(self.modules)
 
         # Initialize the config directory watcher, but don't start it yet
         self.directory_watcher = DirectoryWatcher(
