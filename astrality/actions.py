@@ -61,18 +61,19 @@ class Action(abc.ABC):
 
     directory: Path
     priority: int
+    Options = Union[
+        'CompileDict',
+        'CopyDict',
+        'ImportContextDict',
+        'RunDict',
+        'StowDict',
+        'SymlinkDict',
+        'TriggerDict',
+    ]
 
     def __init__(
         self,
-        options: Union[
-            'CompileDict',
-            'CopyDict',
-            'ImportContextDict',
-            'RunDict',
-            'StowDict',
-            'SymlinkDict',
-            'TriggerDict',
-        ],
+        options: 'Action.Options',
         directory: Path,
         replacer: Replacer,
         context_store: Context,
@@ -761,12 +762,13 @@ class ActionBlock:
     """
     Class representing a module action block, e.g. 'on_startup'.
 
-    :param action_block: Dictinary containing all actions to be performed.
+    :param action_block: Dictionary containing all actions to be performed.
     :param directory: The directory used as anchor for relative paths. This
         must be an absolute path.
     :param replacer: Placeholder substitutor of string user options.
     :param context_store: A reference to the global context store.
-    :param dry_run: If file system actions should be printed and skipped.
+    :param module_name: Name of module owning ActionBlock.
+    :param global_modules_config: Global configuration object.
     """
 
     _compile_actions: List[CompileAction]
@@ -793,16 +795,13 @@ class ActionBlock:
         directory: Path,
         replacer: Replacer,
         context_store: compiler.Context,
+        module_name: str = '',
         global_modules_config: Optional[GlobalModulesConfig] = None,
     ) -> None:
-        """
-        Construct ActionBlock object.
-
-        Instantiates action types and appends to:
-        self._run_actions: List[RunAction], and so on...
-        """
+        """Construct ActionBlock object."""
         assert directory.is_absolute()
         self.action_block = action_block
+        self.module_name = module_name
 
         if global_modules_config:
             self.run_timeout = global_modules_config.run_timeout
@@ -811,20 +810,31 @@ class ActionBlock:
 
         for identifier, action_type in self.action_types.items():
             # Create and persist a list of all ImportContextAction objects
-            action_configs = utils.cast_to_list(
-                self.action_block.get(identifier, {}),
-            )
             setattr(
                 self,
                 f'_{identifier}_actions',
-                [action_type(
-                    options=action_config,
-                    directory=directory,
-                    replacer=replacer,
-                    context_store=context_store,
-                ) for action_config in action_configs
+                [
+                    action_type(
+                        options=action_options,
+                        directory=directory,
+                        replacer=replacer,
+                        context_store=context_store,
+                    )
+                    for action_options
+                    in self.action_options(identifier=identifier)
                 ],
             )
+
+    def action_options(self, identifier: str) -> List[Action.Options]:
+        """
+        Return all action configs of type 'identifier'.
+
+        :param identifier: Action type, such as 'run' or 'compile'.
+        :return: List of action options of that type.
+        """
+        return utils.cast_to_list(                  # type: ignore
+            self.action_block.get(identifier, {}),  # type: ignore
+        )
 
     def import_context(self, dry_run: bool = False) -> None:
         """Import context into global context store."""
@@ -918,3 +928,17 @@ class ActionBlock:
                 all_compilations[template] |= targets
 
         return all_compilations
+
+
+class SetupActionBlock(ActionBlock):
+    """Setup action block which only executes actions once."""
+
+    def action_options(self, identifier: str) -> List[Action.Options]:
+        """
+        Return action configs of 'identifier' type that have not been executed.
+
+        :param identifier: Action type, such as 'run' or 'compile'.
+        :return: List of action options of that type.
+        """
+        action_options = super().action_options(identifier)
+        return action_options

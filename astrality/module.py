@@ -21,7 +21,7 @@ from typing import (
 
 from mypy_extensions import TypedDict
 
-from astrality.actions import ActionBlock, ActionBlockDict
+from astrality.actions import ActionBlock, ActionBlockDict, SetupActionBlock
 from astrality.config import (
     AstralityYAMLConfigDict,
     GlobalModulesConfig,
@@ -46,6 +46,7 @@ class ModuleConfigDict(TypedDict, total=False):
     requires: Union[RequirementDict, List[RequirementDict]]
     event_listener: EventListenerConfig
 
+    setup: ActionBlockDict
     on_startup: ActionBlockDict
     on_exit: ActionBlockDict
     on_event: ActionBlockDict
@@ -55,6 +56,7 @@ class ModuleConfigDict(TypedDict, total=False):
 class ModuleActionBlocks(TypedDict):
     """Contents of Module().action_blocks."""
 
+    setup: ActionBlock
     on_startup: ActionBlock
     on_event: ActionBlock
     on_exit: ActionBlock
@@ -150,6 +152,15 @@ class Module:
             'global_modules_config': global_modules_config,
         }
 
+        # Create special case setup action block, it removes any action already
+        # performed.
+        action_blocks['setup'] = SetupActionBlock(  # type: ignore
+            action_block=module_config.get('setup', {}),
+            module_name=self.name,
+            **params,
+        )
+
+        # Create normal action blocks
         for block_name in ('on_startup', 'on_event', 'on_exit'):
             action_blocks[block_name] = ActionBlock(  # type: ignore
                 action_block=module_config.get(  # type: ignore
@@ -239,7 +250,7 @@ class Module:
             assert name == 'on_modified'
             return self.action_blocks[name][path]  # type: ignore
         else:
-            assert name in ('on_startup', 'on_event', 'on_exit',)
+            assert name in ('setup', 'on_startup', 'on_event', 'on_exit',)
             return self.action_blocks[name]  # type: ignore
 
     def execute(
@@ -305,6 +316,7 @@ class Module:
     def all_action_blocks(self) -> Iterable[ActionBlock]:
         """Return flatten tuple of all module action blocks."""
         return (
+            self.action_blocks['setup'],
             self.action_blocks['on_startup'],
             self.action_blocks['on_event'],
             self.action_blocks['on_exit'],
