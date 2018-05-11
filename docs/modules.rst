@@ -159,13 +159,22 @@ have to define *when* to perform them. This is done by defining those
 
     .. _module_events_on_startup:
 
+    ``setup``:
+        Tasks to be performed only once and never again. Can be used for
+        setting up dependencies.
+
+        Executed actions are written to
+        ``$XDG_DATA_HOME/astrality/setup.yml``, by default
+        ``$HOME/.local/share``. Modify this file if you want to re-execute
+        setup actions.
+
     ``on_startup``:
         Tasks to be performed when Astrality first starts up.
         Useful for compiling templates that don't need to change after they
         have been compiled.
 
-        Actions defined outside action blocks are considered to be part of this
-        block.
+        *Actions defined outside action blocks are considered to be part of this
+        block.*
 
     .. _module_events_on_exit:
 
@@ -204,6 +213,9 @@ Demonstration of module action blocks:
     module_name:
         ...startup actions (option 1)...
 
+        setup:
+            ...setup actions...
+
         on_startup:
             ...startup actions (option 2)...
 
@@ -214,8 +226,8 @@ Demonstration of module action blocks:
             ...shutdow actions...
 
         on_modified:
-            some/template/path:
-                ...some/template/path modified actions...
+            some/file/path:
+                ...some/file/path modified actions...
 
 .. note::
     On Astrality startup, the ``on_startup`` event will be triggered, but

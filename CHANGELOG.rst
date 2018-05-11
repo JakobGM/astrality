@@ -42,6 +42,7 @@ Added
 - You can now run astrality with ``--dry-run`` in order to check which actions
   that will be executed.
 - Modules can now depend on other modules with the ``module`` requires keyword.
+- Modules can now place action in a ``setup`` block, only to be executed once.
 
 Changed
 -------
