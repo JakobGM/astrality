@@ -12,12 +12,13 @@ from astrality.context import Context
 
 logger = logging.getLogger(__name__)
 
-from yaml import load  # noqa
+# Try to import PyYAML library for faster YAML parsing
+from yaml import dump, load  # noqa
 try:
-    from yaml import CLoader as Loader  # type: ignore
+    from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore
     logger.info('Using LibYAML bindings for faster .yml parsing.')
 except ImportError:  # pragma: no cover
-    from yaml import Loader
+    from yaml import Loader, Dumper
     logger.warning(
         'LibYAML not installed.'
         'Using somewhat slower pure python implementation.',
@@ -177,3 +178,26 @@ def compile_yaml(
     )
 
     return load(StringIO(config_string), Loader=Loader)
+
+
+def load_yaml(path: Path) -> Any:
+    """
+    Load content from YAML file.
+
+    :param path: Path to YAML formatted file.
+    :return: Contents of YAML file.
+    """
+    with open(path, 'r') as yaml_file:
+        return load(yaml_file.read(), Loader=Loader)
+
+
+def dump_yaml(path: Path, data: Dict) -> None:
+    """
+    Dump data to yaml file.
+
+    :param path: Path to file to be created.
+    :param data: Data to be dumped to file.
+    """
+    str_data = dump(data, Dumper=Dumper)
+    with open(path, 'w') as yaml_file:
+        yaml_file.write(str_data)

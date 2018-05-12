@@ -1,9 +1,11 @@
 """Application wide fixtures."""
 import os
 from pathlib import Path
+import shutil
 
 import pytest
 
+import astrality
 from astrality.actions import ActionBlock
 from astrality.config import user_configuration
 from astrality.context import Context
@@ -185,3 +187,21 @@ def action_block_factory(test_config_directory):
         )
 
     return _action_block_factory
+
+
+@pytest.yield_fixture(autouse=True)
+def patch_data_dir(tmpdir, monkeypatch):
+    """Set DATA_HOME directory to a test directory in all tests."""
+    data_dir = Path(tmpdir).parent / '.local' / 'share' / 'astrality'
+    data_dir.mkdir(parents=True)
+
+    monkeypatch.setattr(
+        astrality.executed_actions,
+        'xdg_data_home',
+        lambda x: data_dir,
+    )
+
+    yield data_dir
+
+    # Delete directory for next test
+    shutil.rmtree(str(data_dir))

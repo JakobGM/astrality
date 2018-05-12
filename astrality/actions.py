@@ -42,6 +42,7 @@ from mypy_extensions import TypedDict
 from astrality import compiler, utils
 from astrality.config import expand_path, GlobalModulesConfig
 from astrality.context import Context
+from astrality import executed_actions
 
 
 Replacer = Callable[[str], str]
@@ -941,4 +942,17 @@ class SetupActionBlock(ActionBlock):
         :return: List of action options of that type.
         """
         action_options = super().action_options(identifier)
-        return action_options
+        executed_setup_actions = executed_actions.ExecutedActions(
+            module_name=self.module_name,
+        )
+        not_executed = [
+            action_option
+            for action_option
+            in action_options
+            if not executed_setup_actions.executed(
+                action_type=identifier,
+                action_options=action_option,
+            )
+        ]
+        executed_setup_actions.save_checked_actions()
+        return not_executed
