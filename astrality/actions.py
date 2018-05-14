@@ -586,6 +586,9 @@ class StowAction(Action):
             as a set of target paths. If `non_templates` is 'copy', then these
             will be included as well.
         """
+        if self.null_object:
+            return {}
+
         managed_files = self.compile_action._performed_compilations.copy()
 
         if isinstance(self.non_templates_action, CopyAction):
