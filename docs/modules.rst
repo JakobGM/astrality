@@ -155,18 +155,19 @@ Action blocks
 
 When you want to assign :ref:`tasks <actions>` for Astrality to perform, you
 have to define *when* to perform them. This is done by defining those
-``actions`` in one of four available ``action blocks``.
+``actions`` in one of five available ``action blocks``.
 
     .. _module_events_on_startup:
 
-    ``setup``:
+    ``on_setup``:
         Tasks to be performed only once and never again. Can be used for
         setting up dependencies.
 
         Executed actions are written to
         ``$XDG_DATA_HOME/astrality/setup.yml``, by default
-        ``$HOME/.local/share``. Modify this file if you want to re-execute
-        setup actions.
+        ``$HOME/.local/share``. Execute ``astrality --reset-setup module_name``
+        if you want to re-execute a module's setup actions during the next
+        run.
 
     ``on_startup``:
         Tasks to be performed when Astrality first starts up.
@@ -213,7 +214,7 @@ Demonstration of module action blocks:
     module_name:
         ...startup actions (option 1)...
 
-        setup:
+        on_setup:
             ...setup actions...
 
         on_startup:

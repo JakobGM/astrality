@@ -198,6 +198,16 @@ def dump_yaml(path: Path, data: Dict) -> None:
     :param path: Path to file to be created.
     :param data: Data to be dumped to file.
     """
-    str_data = dump(data, Dumper=Dumper)
+    str_data = yaml_str(data)
     with open(path, 'w') as yaml_file:
         yaml_file.write(str_data)
+
+
+def yaml_str(data: Any) -> str:
+    """
+    Return YAML string representation of data.
+
+    :param data: Data to be converted to YAML string format.
+    :return: YAML string representation of python data structure.
+    """
+    return dump(data, Dumper=Dumper)

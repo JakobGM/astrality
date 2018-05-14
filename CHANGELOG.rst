@@ -43,6 +43,8 @@ Added
   that will be executed.
 - Modules can now depend on other modules with the ``module`` requires keyword.
 - Modules can now place action in a ``setup`` block, only to be executed once.
+- You can now execute ``astrality --reset-setup module_name`` in order to
+  clear executed module setup actions.
 
 Changed
 -------

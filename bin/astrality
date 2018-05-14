@@ -11,6 +11,7 @@ sys.path.append(str(PROJECT_DIR))
 
 from astrality.astrality import main
 from astrality.config import resolve_config_directory, create_config_directory
+from astrality.executed_actions import ExecutedActions
 
 coloredlogs.install(fmt='%(asctime)s %(name)8s %(levelname)s\n%(message)s\n')
 config_dir = resolve_config_directory()
@@ -46,6 +47,12 @@ parser.add_argument(
     action='append',
 )
 parser.add_argument(
+    '--reset-setup',
+    help='Reset all setup actions of module.',
+    action='append',
+    default=[],
+)
+parser.add_argument(
     '-l',
     '--logging-level',
     help='Set the degree of logging of the application. Default: INFO.',
@@ -55,6 +62,11 @@ parser.add_argument(
     nargs='?',
 )
 args = parser.parse_args()
+
+if args.reset_setup:
+    for module_name in args.reset_setup:
+        ExecutedActions(module_name=module_name).reset()
+    sys.exit(0)
 
 if args.create_example_config:
     create_config_directory(empty=False)

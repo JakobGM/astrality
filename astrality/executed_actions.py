@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+import logging
 
 from astrality import actions
 from astrality.config import expand_path
@@ -51,7 +52,7 @@ class ExecutedActions:
         action_options,
     ) -> bool:
         """
-        Return True if action config of action type has been saved earlier.
+        Return True if the specified action has not been executed earlier.
 
         :param action_type: Type of action, see ActionBlock.action_types.
         :param action_options: Configuration of action to be performed.
@@ -94,6 +95,29 @@ class ExecutedActions:
             path=self.path,
             data=file_data,
         )
+
+    def reset(self) -> None:
+        """Delete all executed module actions."""
+        file_data = utils.load_yaml(path=self.path)
+        reset_actions = file_data.pop(self.module, None)
+
+        logger = logging.getLogger(__name__)
+        if not reset_actions:
+            logger.error(
+                'No saved executed on_setup actions for module '
+                f'"{self.module}"!',
+            )
+        else:
+            logger.info(
+                f'Reset the following actions for module "{self.module}":\n' +
+                utils.yaml_str({self.module: reset_actions}),
+            )
+
+        utils.dump_yaml(
+            path=self.path,
+            data=file_data,
+        )
+        self.old_actions = {}
 
     @property
     def path(self) -> Path:
