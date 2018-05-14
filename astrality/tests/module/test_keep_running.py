@@ -84,8 +84,10 @@ def test_that_no_reprocess_modified_files_does_not_cause_keep_running():
         config={
             'modules': {
                 'reprocess_modified_files': False,
+                'enabled_modules': [{'name': 'A'}],
             },
         },
+        modules={'A': {}},
     )
 
     # We have to retry here, as processes from earlier tests might interfer

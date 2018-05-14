@@ -19,14 +19,14 @@ def test_that_actions_are_saved_to_file():
     executed_actions = ExecutedActions(module_name='github::user/repo::module')
 
     # This action has not been executed yet.
-    assert not executed_actions.executed(
+    assert executed_actions.is_new(
         action_type='run',
         action_options=action_option,
     )
 
     # We save checked actions, and now it should count as executed.
-    executed_actions.save_checked_actions()
-    assert executed_actions.executed(
+    executed_actions.write()
+    assert not executed_actions.is_new(
         action_type='run',
         action_options=action_option,
     )
@@ -34,7 +34,7 @@ def test_that_actions_are_saved_to_file():
     # The action should still be counted as executed between object lifetimes.
     del executed_actions
     executed_actions = ExecutedActions(module_name='github::user/repo::module')
-    assert executed_actions.executed(
+    assert not executed_actions.is_new(
         action_type='run',
         action_options=action_option,
     )

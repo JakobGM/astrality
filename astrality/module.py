@@ -56,7 +56,7 @@ class ModuleConfigDict(TypedDict, total=False):
 class ModuleActionBlocks(TypedDict):
     """Contents of Module().action_blocks."""
 
-    setup: ActionBlock
+    setup: SetupActionBlock
     on_startup: ActionBlock
     on_event: ActionBlock
     on_exit: ActionBlock
@@ -595,6 +595,9 @@ class ModuleManager:
             # is only run when the event *changes*
             self.last_module_events = self.module_events()
 
+            # Perform setup actions not yet executed
+            self.setup()
+
             # Perform all startup actions
             self.startup()
         elif self.last_module_events != self.module_events():
@@ -650,7 +653,7 @@ class ModuleManager:
         :module: Specific module to be executed. If not provided, then all
             managed modules will be executed.
         """
-        assert block in ('on_startup', 'on_event', 'on_exit',)
+        assert block in ('setup', 'on_startup', 'on_event', 'on_exit',)
 
         modules: Iterable[Module]
         if isinstance(module, Module):
@@ -673,6 +676,12 @@ class ModuleManager:
                     block=block,
                     dry_run=self.dry_run,
                 )
+
+    def setup(self) -> None:
+        """
+        Run setup actions specified by the managed modules, not yet executed.
+        """
+        self.execute(action='all', block='setup')
 
     def startup(self):
         """

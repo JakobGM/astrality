@@ -39,11 +39,6 @@ def test_interrupt_of_main_process():
     assert astrality_process.returncode == 0
 
 
-@pytest.mark.slow
-def test_invocation_of_main_process():
-    main(test=True)
-
-
 def test_enabling_specific_module_from_command_line(
     caplog,
     monkeypatch,

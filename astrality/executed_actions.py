@@ -37,14 +37,15 @@ class ExecutedActions:
     def __init__(self, module_name: str) -> None:
         """Construct ExecutedActions object."""
         self.module = module_name
-        self.file_data = utils.load_yaml(path=self.path)
-        self.executed_actions = self.file_data.setdefault(
+        self.new_actions = {}  # type: ignore
+
+        file_data = utils.load_yaml(path=self.path)
+        self.old_actions = file_data.setdefault(
             self.module,
             {},
         )
-        self.newly_executed_actions = False
 
-    def executed(
+    def is_new(
         self,
         action_type: str,
         action_options,
@@ -60,26 +61,35 @@ class ExecutedActions:
             # Empty actions can be disregarded.
             return False
 
-        has_been_executed = action_options in self.executed_actions.get(
+        is_new = action_options not in self.old_actions.get(
+            action_type,
+            [],
+        ) and action_options not in self.new_actions.get(
             action_type,
             [],
         )
 
-        if not has_been_executed:
-            self.executed_actions            \
+        if is_new:
+            self.new_actions                 \
                 .setdefault(action_type, []) \
                 .append(action_options)
-            self.newly_executed_actions = True
 
-        return has_been_executed
+        return is_new
 
-    def save_checked_actions(self) -> None:
+    def write(self) -> None:
         """Persist all actions that have been checked in object lifetime."""
-        if not self.newly_executed_actions:
+        if not self.new_actions:
             return
 
         file_data = utils.load_yaml(path=self.path)
-        file_data[self.module] = self.executed_actions
+        file_data.setdefault(self.module, {})
+
+        for action_type, action_options in self.new_actions.items():
+            file_data[self.module].setdefault(
+                action_type,
+                [],
+            ).extend(action_options)
+
         utils.dump_yaml(
             path=self.path,
             data=file_data,

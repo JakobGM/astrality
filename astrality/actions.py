@@ -942,17 +942,20 @@ class SetupActionBlock(ActionBlock):
         :return: List of action options of that type.
         """
         action_options = super().action_options(identifier)
-        executed_setup_actions = executed_actions.ExecutedActions(
-            module_name=self.module_name,
-        )
+
+        if not hasattr(self, 'executed_setup_actions'):
+            self.executed_setup_actions = executed_actions.ExecutedActions(
+                module_name=self.module_name,
+            )
+
         not_executed = [
             action_option
             for action_option
             in action_options
-            if not executed_setup_actions.executed(
+            if self.executed_setup_actions.is_new(
                 action_type=identifier,
                 action_options=action_option,
             )
         ]
-        executed_setup_actions.save_checked_actions()
+        self.executed_setup_actions.write()
         return not_executed
