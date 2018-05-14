@@ -21,7 +21,7 @@ def xdg_data_home(application: str) -> Path:
         config_directory=Path('/'),
     )
     application_data_home = xdg_data_home / application
-    application_data_home.mkdir(exist_ok=True)
+    application_data_home.mkdir(parents=True, exist_ok=True)
     return application_data_home
 
 
