@@ -9,7 +9,7 @@ from astrality.module import Module
 def test_that_module_block_is_persisted(patch_data_dir):
     """Module should create a 'setup' action block."""
     module_config = {
-        'setup': {
+        'on_setup': {
             'run': {
                 'shell': 'echo first time!',
             },
@@ -22,12 +22,15 @@ def test_that_module_block_is_persisted(patch_data_dir):
     }
 
     module = Module(**params)
-    assert isinstance(module.get_action_block(name='setup'), SetupActionBlock)
-    assert module.execute(action='run', block='setup') == (
+    assert isinstance(
+        module.get_action_block(name='on_setup'),
+        SetupActionBlock,
+    )
+    assert module.execute(action='run', block='on_setup') == (
         ('echo first time!', 'first time!',),
     )
 
     # After creating this module again, the run action should not be performed.
     del module
     module = Module(**params)
-    assert module.execute(action='run', block='setup') == tuple()
+    assert module.execute(action='run', block='on_setup') == tuple()

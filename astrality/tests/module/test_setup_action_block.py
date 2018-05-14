@@ -10,7 +10,7 @@ def test_that_setup_block_is_only_executed_once(tmpdir):
     touched = Path(tmpdir, 'touched.tmp')
     modules = {
         'A': {
-            'setup': {
+            'on_setup': {
                 'run': {
                     'shell': f'touch {touched}',
                 },

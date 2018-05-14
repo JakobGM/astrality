@@ -46,7 +46,7 @@ class ModuleConfigDict(TypedDict, total=False):
     requires: Union[RequirementDict, List[RequirementDict]]
     event_listener: EventListenerConfig
 
-    setup: ActionBlockDict
+    on_setup: ActionBlockDict
     on_startup: ActionBlockDict
     on_exit: ActionBlockDict
     on_event: ActionBlockDict
@@ -56,7 +56,7 @@ class ModuleConfigDict(TypedDict, total=False):
 class ModuleActionBlocks(TypedDict):
     """Contents of Module().action_blocks."""
 
-    setup: SetupActionBlock
+    on_setup: SetupActionBlock
     on_startup: ActionBlock
     on_event: ActionBlock
     on_exit: ActionBlock
@@ -154,8 +154,8 @@ class Module:
 
         # Create special case setup action block, it removes any action already
         # performed.
-        action_blocks['setup'] = SetupActionBlock(  # type: ignore
-            action_block=module_config.get('setup', {}),
+        action_blocks['on_setup'] = SetupActionBlock(  # type: ignore
+            action_block=module_config.get('on_setup', {}),
             module_name=self.name,
             **params,
         )
@@ -250,7 +250,7 @@ class Module:
             assert name == 'on_modified'
             return self.action_blocks[name][path]  # type: ignore
         else:
-            assert name in ('setup', 'on_startup', 'on_event', 'on_exit',)
+            assert name in ('on_setup', 'on_startup', 'on_event', 'on_exit',)
             return self.action_blocks[name]  # type: ignore
 
     def execute(
@@ -316,7 +316,7 @@ class Module:
     def all_action_blocks(self) -> Iterable[ActionBlock]:
         """Return flatten tuple of all module action blocks."""
         return (
-            self.action_blocks['setup'],
+            self.action_blocks['on_setup'],
             self.action_blocks['on_startup'],
             self.action_blocks['on_event'],
             self.action_blocks['on_exit'],
@@ -653,7 +653,7 @@ class ModuleManager:
         :module: Specific module to be executed. If not provided, then all
             managed modules will be executed.
         """
-        assert block in ('setup', 'on_startup', 'on_event', 'on_exit',)
+        assert block in ('on_setup', 'on_startup', 'on_event', 'on_exit',)
 
         modules: Iterable[Module]
         if isinstance(module, Module):
@@ -681,7 +681,7 @@ class ModuleManager:
         """
         Run setup actions specified by the managed modules, not yet executed.
         """
-        self.execute(action='all', block='setup')
+        self.execute(action='all', block='on_setup')
 
     def startup(self):
         """
