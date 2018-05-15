@@ -16,9 +16,6 @@ class ExecutedActions:
     :param module_name: Unique string id of module.
     """
 
-    # True if we have checked executed() on a new action configuration.
-    newly_executed_actions: bool
-
     # Path to file containing executed setup actions
     _path: Path
 
