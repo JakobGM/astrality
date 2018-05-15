@@ -1,10 +1,8 @@
 """Tests for astrality.executed_actions.ExecutedActions."""
 
-import os
-from pathlib import Path
 import logging
 
-from astrality.executed_actions import ExecutedActions, xdg_data_home
+from astrality.executed_actions import ExecutedActions
 
 
 def test_that_executed_action_path_is_monkeypatched_in_all_files():
@@ -15,26 +13,6 @@ def test_that_executed_action_path_is_monkeypatched_in_all_files():
     assert path.name == 'setup.yml'
     assert path.parent.name == 'astrality'
     assert 'test' in path.parents[3].name
-
-
-def test_xdg_data_home_default_location():
-    """Default location for XDG_DATA_HOME should be respected."""
-    default_dir = xdg_data_home('astrality')
-    assert default_dir == Path('~/.local/share/astrality').expanduser()
-    assert default_dir.is_dir()
-
-
-def test_xdg_data_home_using_environment_variable(monkeypatch, tmpdir):
-    """XDG_DATA_HOME environment variables should be respected."""
-    custom_data_home = Path(tmpdir, 'data')
-    monkeypatch.setattr(
-        os,
-        'environ',
-        {'XDG_DATA_HOME': str(custom_data_home)},
-    )
-    data_home = xdg_data_home('astrality')
-    assert data_home == custom_data_home / 'astrality'
-    assert data_home.is_dir()
 
 
 def test_that_actions_are_saved_to_file(caplog):

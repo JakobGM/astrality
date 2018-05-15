@@ -5,24 +5,8 @@ from pathlib import Path
 import logging
 
 from astrality import actions
-from astrality.config import expand_path
 from astrality import utils
-
-
-def xdg_data_home(application: str) -> Path:
-    """Return XDG directory standard path for application data."""
-    xdg_data_home = expand_path(
-        path=Path(
-            os.environ.get(
-                'XDG_DATA_HOME',
-                '$HOME/.local/share',
-            ),
-        ),
-        config_directory=Path('/'),
-    )
-    application_data_home = xdg_data_home / application
-    application_data_home.mkdir(parents=True, exist_ok=True)
-    return application_data_home
+from astrality.xdg import XDG
 
 
 class ExecutedActions:
@@ -34,6 +18,9 @@ class ExecutedActions:
 
     # True if we have checked executed() on a new action configuration.
     newly_executed_actions: bool
+
+    # Path to file containing executed setup actions
+    _path: Path
 
     def __init__(self, module_name: str) -> None:
         """Construct ExecutedActions object."""
@@ -125,8 +112,9 @@ class ExecutedActions:
         if hasattr(self, '_path'):
             return self._path
 
-        self._path: Path = xdg_data_home('astrality') / 'setup.yml'
-        if not self._path.exists():
+        xdg = XDG('astrality')
+        self._path = xdg.data(resource='setup.yml')
+        if os.stat(self._path).st_size == 0:
             self._path.touch()
             utils.dump_yaml(data={}, path=self._path)
 

@@ -190,18 +190,23 @@ def action_block_factory(test_config_directory):
 
 
 @pytest.yield_fixture(autouse=True)
-def patch_data_dir(tmpdir, monkeypatch):
-    """Set DATA_HOME directory to a test directory in all tests."""
+def patch_xdg_directory_standard(tmpdir, monkeypatch, request):
+    """During testing, the XDG directory standard is monkeypatched."""
+    if 'dont_patch_xdg' in request.keywords:
+        yield
+        return
+
     data_dir = Path(tmpdir).parent / '.local' / 'share' / 'astrality'
-    data_dir.mkdir(parents=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(
-        astrality.executed_actions,
-        'xdg_data_home',
-        lambda x: data_dir,
+        astrality.xdg.XDG,
+        'data_home',
+        data_dir,
     )
 
     yield data_dir
 
     # Delete directory for next test
-    shutil.rmtree(str(data_dir))
+    if data_dir.exists():
+        shutil.rmtree(str(data_dir))

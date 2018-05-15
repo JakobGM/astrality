@@ -6,7 +6,7 @@ from astrality.actions import SetupActionBlock
 from astrality.module import Module
 
 
-def test_that_module_block_is_persisted(patch_data_dir):
+def test_that_module_block_is_persisted():
     """Module should create a 'setup' action block."""
     module_config = {
         'on_setup': {
