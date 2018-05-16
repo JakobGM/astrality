@@ -59,6 +59,8 @@ getting started.
 **Here is gif demonstrating how Astrality is used to**:
 
 #) Automatically change the desktop wallpaper based on the sun's position in the sky.
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FJakobGM%2Fastrality.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FJakobGM%2Fastrality?ref=badge_shield)
+
 #) Dynamically change the font size, and implicitly the bar height, of `polybar <https://github.com/jaagr/polybar>`_.
 #) Simultaneously change the color scheme of `alacritty <https://github.com/jwilm/alacritty>`_, `kitty <https://github.com/kovidgoyal/kitty>`_, and polybar at the same time.
 
@@ -121,3 +123,7 @@ Configuration and further documentation
 ---------------------------------------
 
 I recommend taking a look at the `full documentation <https://astrality.readthedocs.io/>`_ of Astrality hosted at `Read the Docs <https://readthedocs.org>`_.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FJakobGM%2Fastrality.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FJakobGM%2Fastrality?ref=badge_large)
