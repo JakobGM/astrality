@@ -147,6 +147,11 @@ Changed
 
 - Astrality now automatically quits if there is no reason for it to continue
   running.
+- When no compilation target is specified for a compile action, Astrality
+  now creates a deterministic file within
+  ``$XDG_DATA_HOME/astrality/compilations`` to be used as the compilation
+  target. This behaves better than temporary files when programs expect
+  files to still be present after Astrality restarts.
 
 
 Fixed

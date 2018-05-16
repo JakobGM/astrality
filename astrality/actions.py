@@ -18,12 +18,12 @@ which could be imported and accessed independently from other modules.
 """
 
 import abc
+import hashlib
 import logging
 import os
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import (
     Any,
     Callable,
@@ -43,6 +43,7 @@ from astrality import compiler, utils
 from astrality.config import expand_path, GlobalModulesConfig
 from astrality.context import Context
 from astrality import executed_actions
+from astrality.xdg import XDG
 
 
 Replacer = Callable[[str], str]
@@ -237,10 +238,9 @@ class CompileAction(Action):
             # Null objects do nothing
             return {}
         elif 'target' not in self._options:
-            # If no target is specified, then we can create a temporary file
-            # and insert it into the configuration options.
+            # If no target is specified, we create a deterministic target.
             template = self.option(key='content', path=True)
-            target = self._create_temp_file(template.name)
+            target = self.create_compilation_target(template=template)
             self._options['target'] = str(target)
 
         # These might either be file paths or directory paths
@@ -291,26 +291,32 @@ class CompileAction(Action):
         """
         return self._performed_compilations.copy()
 
-    def _create_temp_file(self, name) -> Path:
+    def create_compilation_target(self, template: Path) -> Path:
         """
-        Create persisted tempory file.
+        Create compilation target for template with unspecified target.
 
-        :return: Path object pointing to the created temporary file.
+        Compilation targets are stored in $XDG_DATA_HOME/astrality/compilations.
+        For details regarding the implementation see:
+            https://www.peterbe.com/plog/best-hashing-function-in-python
+
+        :param name: Path to template to be compiled.
+        :return: Path to deterministicly determined compilation target.
         """
-        temp_file = NamedTemporaryFile(
-            prefix=name + '-',
-            # dir=Path(self.temp_directory),
-        )
+        # First dump the action configuration to YAML formatted string
+        yaml_config = utils.yaml_str(self._options)
 
-        # NB: These temporary files need to be persisted during the entirity of
-        # the scripts runtime, since the files are deleted when they go out of
-        # scope.
-        if not hasattr(self, 'temp_files'):
-            self.temp_files = [temp_file]
-        else:
-            self.temp_files.append(temp_file)
+        # Now encode the string into raw bytes
+        yaml_config_bytes = yaml_config.encode('utf-8', errors='ignore')
 
-        return Path(temp_file.name)
+        # Create a MD5 hash from the string, only using the first seven chars
+        yaml_config_md5 = hashlib.md5(yaml_config_bytes).hexdigest()[:7]
+
+        # Prepend the template name for readability
+        unique_name = template.name + '-' + yaml_config_md5
+
+        # Create compilation target in XDG data directory
+        compile_target = XDG().data(resource='compilations/' + unique_name)
+        return compile_target
 
     def __contains__(self, other) -> bool:
         """Return True if run action is responsible for template."""

@@ -372,3 +372,29 @@ def test_renaming_templates(test_config_directory, tmpdir):
     assert len(list((temp_dir / 'recursive').iterdir())) == 1
     assert (temp_dir / 'module').is_file()
     assert (temp_dir / 'recursive' / 'empty').is_file()
+
+
+def test_that_temporary_compile_targets_have_deterministic_paths(tmpdir):
+    """Created compilation targets should be deterministic."""
+    template_source = Path(tmpdir, 'template.tmp')
+    template_source.write_text('content')
+
+    compile_dict = {
+        'content': str(template_source),
+    }
+    compile_action1 = CompileAction(
+        options=compile_dict.copy(),
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+    compile_action2 = CompileAction(
+        options=compile_dict.copy(),
+        directory=Path('/'),
+        replacer=lambda x: x,
+        context_store={},
+    )
+
+    target1 = compile_action1.execute()[template_source]
+    target2 = compile_action2.execute()[template_source]
+    assert target1 == target2

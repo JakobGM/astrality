@@ -210,4 +210,8 @@ def yaml_str(data: Any) -> str:
     :param data: Data to be converted to YAML string format.
     :return: YAML string representation of python data structure.
     """
-    return dump(data, Dumper=Dumper)
+    return dump(
+        data,
+        Dumper=Dumper,
+        default_flow_style=False,
+    )

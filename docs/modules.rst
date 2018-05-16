@@ -400,11 +400,10 @@ Each template compilation action has the following available attributes:
         template. You can for instance refer to the file in :ref:`a shell
         command <run_action>`.
 
-        .. warning::
+        .. info::
             When you do not provide Astrality with a ``target`` path for
-            a template, Astrality will create a *temporary* file as the target
-            for compilation. This file will be automatically deleted when you
-            quit Astrality.
+            a template, Astrality will compile the template to
+            ``$XDG_DATA_HOME/astrality/compilations``.
 
     .. _compile_action_include:
 
