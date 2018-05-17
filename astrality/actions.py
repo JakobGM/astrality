@@ -42,7 +42,7 @@ from mypy_extensions import TypedDict
 from astrality import compiler, utils
 from astrality.config import expand_path, GlobalModulesConfig
 from astrality.context import Context
-from astrality import executed_actions
+from astrality import persistence
 from astrality.xdg import XDG
 
 
@@ -950,7 +950,7 @@ class SetupActionBlock(ActionBlock):
         action_options = super().action_options(identifier)
 
         if not hasattr(self, 'executed_setup_actions'):
-            self.executed_setup_actions = executed_actions.ExecutedActions(
+            self.executed_setup_actions = persistence.ExecutedActions(
                 module_name=self.module_name,
             )
 

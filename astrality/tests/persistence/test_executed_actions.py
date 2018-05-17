@@ -1,8 +1,8 @@
-"""Tests for astrality.executed_actions.ExecutedActions."""
+"""Tests for astrality.persistence.ExecutedActions."""
 
 import logging
 
-from astrality.executed_actions import ExecutedActions
+from astrality.persistence import ExecutedActions
 
 
 def test_that_executed_action_path_is_monkeypatched_in_all_files():

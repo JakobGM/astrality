@@ -11,7 +11,7 @@ sys.path.append(str(PROJECT_DIR))
 
 from astrality.astrality import main
 from astrality.config import resolve_config_directory, create_config_directory
-from astrality.executed_actions import ExecutedActions
+from astrality.persistence import ExecutedActions
 
 coloredlogs.install(fmt='%(asctime)s %(name)8s %(levelname)s\n%(message)s\n')
 config_dir = resolve_config_directory()
