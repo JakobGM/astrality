@@ -5,7 +5,7 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 
 from mypy_extensions import TypedDict
 
@@ -29,7 +29,8 @@ class CreationInfo(TypedDict):
     method: str
 
     # Last modification MD5 hash of created file
-    hash: str
+    # Set to None if PermissionError
+    hash: Optional[str]
 
 
 # Contents of $XDG_DATA_HOME/astrality/created_files.yml.
@@ -98,7 +99,13 @@ class CreatedFiles:
             if creation.get('content') != str(content):
                 creation['content'] = str(content)
                 creation['method'] = creation_method.value
-                creation['hash'] = hashlib.md5(target.read_bytes()).hexdigest()
+
+                try:
+                    creation['hash'] = hashlib.md5(
+                        target.read_bytes(),
+                    ).hexdigest()
+                except PermissionError:
+                    creation['hash'] = None
 
         if module_section != original:
             utils.dump_yaml(data=self.creations, path=self.path)
