@@ -11,7 +11,7 @@ sys.path.append(str(PROJECT_DIR))
 
 from astrality.astrality import main
 from astrality.config import resolve_config_directory, create_config_directory
-from astrality.persistence import ExecutedActions
+from astrality.persistence import ExecutedActions, CreatedFiles
 
 coloredlogs.install(fmt='%(asctime)s %(name)8s %(levelname)s\n%(message)s\n')
 config_dir = resolve_config_directory()
@@ -48,7 +48,13 @@ parser.add_argument(
 )
 parser.add_argument(
     '--reset-setup',
-    help='Reset all setup actions of module.',
+    help='Re-execute module setup actions on next run.',
+    action='append',
+    default=[],
+)
+parser.add_argument(
+    '--cleanup',
+    help='Delete files created by module.',
     action='append',
     default=[],
 )
@@ -62,10 +68,18 @@ parser.add_argument(
     nargs='?',
 )
 args = parser.parse_args()
+dry_run = args.dry_run
 
 if args.reset_setup:
     for module_name in args.reset_setup:
         ExecutedActions(module_name=module_name).reset()
+
+if args.cleanup:
+    created_files = CreatedFiles()
+    for module_name in args.cleanup:
+        created_files.cleanup(module=module_name, dry_run=dry_run)
+
+if args.reset_setup or args.cleanup:
     sys.exit(0)
 
 if args.create_example_config:
@@ -75,7 +89,6 @@ elif args.create_empty_config:
 else:
     logging_level = args.logging_level
     modules = args.module
-    dry_run = args.dry_run
     main(modules=modules, logging_level=logging_level, dry_run=dry_run)
 
 # vim:filetype=python
