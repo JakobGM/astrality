@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from astrality.actions import CopyAction
+from astrality.persistence import CreatedFiles
 
 
 def test_null_object_pattern():
@@ -12,6 +13,7 @@ def test_null_object_pattern():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     copy_action.execute()
 
@@ -27,6 +29,7 @@ def test_if_dry_run_is_respected(create_temp_files, caplog):
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     caplog.clear()
@@ -74,6 +77,7 @@ def test_copy_action_using_all_parameters(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     copy_action.execute()
 
@@ -117,6 +121,7 @@ def test_copying_without_renaming(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     copy_action.execute()
 
@@ -146,6 +151,7 @@ def test_copying_file_to_directory(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     copy_action.execute()
 
@@ -175,6 +181,7 @@ def test_setting_permissions_on_target_copy(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     copy_action.execute()
 

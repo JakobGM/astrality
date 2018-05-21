@@ -51,6 +51,19 @@ class CreatedFiles:
         """Constuct CreatedFiles object."""
         self.creations = utils.load_yaml(path=self.path)
 
+    def wrapper_for(self, module: str) -> 'ModuleCreatedFiles':
+        """
+        Return CreatedFiles object wrapper for specific module.
+
+        This allows you to not pass the module name when calling CreatedFiles
+        methods. This method is used by the ActionBlock object when creating
+        Action instances, allowing Action instances to save created files
+        without knowing which module it is part of.
+
+        :param module: Name of module that will create files with this object.
+        """
+        return ModuleCreatedFiles(creation_store=self, module=module)
+
     @property
     def path(self) -> Path:
         """Return path to file which stores files created by modules."""
@@ -158,6 +171,40 @@ class CreatedFiles:
     def __repr__(self) -> str:
         """Return string representation of CreatedFiles object."""
         return f'CreatedFiles(path={self.path})'
+
+
+class ModuleCreatedFiles:
+    """Wrapper Class for managing created files by specific module."""
+
+    def __init__(self, creation_store: CreatedFiles, module: str) -> None:
+        """
+        Construct CreatedFiles object wrapper for specific module.
+
+        :param creation_store: Created file object instance.
+        :param module: Name of module using object to persist created files.
+        """
+        self.module = module
+        self.creation_store = creation_store
+
+    def insert_creation(
+        self,
+        content: Path,
+        target: Path,
+        method: CreationMethod,
+    ) -> None:
+        """
+        Persist file created by self.module.
+
+        :param content: Path to content used to create new file.
+        :param target: Path to created file.
+        :param method: Action method used to create file.
+        """
+        self.creation_store.insert(
+            module=self.module,
+            contents=[content],
+            targets=[target],
+            creation_method=method,
+        )
 
 
 class ExecutedActions:

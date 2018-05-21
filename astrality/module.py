@@ -146,6 +146,7 @@ class Module:
         # Create action block object for each available action block type
         action_blocks: ModuleActionBlocks = {'on_modified': {}}  # type: ignore
         params = {
+            'module_name': self.name,
             'directory': self.directory,
             'replacer': self.interpolate_string,
             'context_store': self.context_store,
@@ -156,7 +157,6 @@ class Module:
         # performed.
         action_blocks['on_setup'] = SetupActionBlock(  # type: ignore
             action_block=module_config.get('on_setup', {}),
-            module_name=self.name,
             **params,
         )
 

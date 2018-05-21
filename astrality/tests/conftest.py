@@ -7,7 +7,7 @@ import pytest
 
 import astrality
 from astrality.actions import ActionBlock
-from astrality.config import user_configuration
+from astrality.config import GlobalModulesConfig, user_configuration
 from astrality.context import Context
 from astrality.module import Module, ModuleManager
 
@@ -184,6 +184,11 @@ def action_block_factory(test_config_directory):
             directory=directory,
             replacer=replacer,
             context_store=context_store,
+            global_modules_config=GlobalModulesConfig(
+                config={},
+                config_directory=test_config_directory,
+            ),
+            module_name='test',
         )
 
     return _action_block_factory
@@ -197,7 +202,11 @@ def patch_xdg_directory_standard(tmpdir, monkeypatch, request):
         return
 
     data_dir = Path(tmpdir).parent / '.local' / 'share' / 'astrality'
-    data_dir.mkdir(parents=True, exist_ok=True)
+
+    # Clear data directory before the test
+    if data_dir.exists():
+        shutil.rmtree(str(data_dir))
+    data_dir.mkdir(parents=True)
 
     monkeypatch.setattr(
         astrality.xdg.XDG,

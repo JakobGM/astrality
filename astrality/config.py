@@ -31,6 +31,7 @@ from astrality.exceptions import (
 from astrality.github import clone_repo, clone_or_pull_repo
 from astrality.context import Context
 from astrality import utils
+from astrality.persistence import CreatedFiles
 
 if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa
@@ -699,6 +700,7 @@ class GlobalModulesConfig:
             'run_timeout',
             0,
         )
+        self.created_files = CreatedFiles()
 
         # Determine the directory which contains external modules
         assert config_directory.is_absolute()

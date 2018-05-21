@@ -195,7 +195,7 @@ class TestModuleClass:
             .values(),
         )[0].pop()
 
-        assert caplog.record_tuples == [
+        for log_event in [
             (
                 'astrality.actions',
                 logging.INFO,
@@ -206,11 +206,12 @@ class TestModuleClass:
                 logging.INFO,
                 f'{compiled_template}',
             ),
-        ]
+        ]:
+            assert log_event in caplog.record_tuples
 
     def test_running_module_exit_command(self, single_module_manager, caplog):
         single_module_manager.exit()
-        assert caplog.record_tuples == [
+        for log_event in [
             (
                 'astrality.actions',
                 logging.INFO,
@@ -221,7 +222,8 @@ class TestModuleClass:
                 logging.INFO,
                 'exit',
             ),
-        ]
+        ]:
+            assert log_event in caplog.record_tuples
 
     def test_missing_template_file(self, caplog):
         modules = {

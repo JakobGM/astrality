@@ -6,18 +6,24 @@ from astrality.actions import ActionBlock
 from astrality.context import Context
 
 
-def test_null_object_pattern():
+def test_null_object_pattern(global_modules_config):
     """An empty action block should have no behaviour."""
     action_block = ActionBlock(
         action_block={},
         directory=Path('/'),
         replacer=lambda x: x,
         context_store=Context(),
+        global_modules_config=global_modules_config,
+        module_name='test',
     )
     action_block.execute(default_timeout=1)
 
 
-def test_executing_action_block_with_one_action(test_config_directory, tmpdir):
+def test_executing_action_block_with_one_action(
+    global_modules_config,
+    test_config_directory,
+    tmpdir,
+):
     """Action block behaviour with only one action specified."""
     temp_dir = Path(tmpdir)
     touched = temp_dir / 'touched.tmp'
@@ -31,13 +37,19 @@ def test_executing_action_block_with_one_action(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store=Context(),
+        global_modules_config=global_modules_config,
+        module_name='test',
     )
 
     action_block.execute(default_timeout=1)
     assert touched.is_file()
 
 
-def test_executing_several_action_blocks(test_config_directory, tmpdir):
+def test_executing_several_action_blocks(
+    test_config_directory,
+    tmpdir,
+    global_modules_config,
+):
     """Invoking execute() should execute all actions."""
     temp_dir = Path(tmpdir)
     target = temp_dir / 'target.tmp'
@@ -59,6 +71,8 @@ def test_executing_several_action_blocks(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store=context_store,
+        global_modules_config=global_modules_config,
+        module_name='test',
     )
 
     action_block.execute(default_timeout=1)
@@ -67,7 +81,7 @@ def test_executing_several_action_blocks(test_config_directory, tmpdir):
     assert touched.is_file()
 
 
-def test_retrieving_triggers_from_action_block():
+def test_retrieving_triggers_from_action_block(global_modules_config):
     """All trigger instructions should be returned."""
     action_block_dict = {
         'trigger': [
@@ -80,6 +94,8 @@ def test_retrieving_triggers_from_action_block():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store=Context(),
+        global_modules_config=global_modules_config,
+        module_name='test',
     )
 
     startup_trigger, on_modified_trigger = action_block.triggers()
@@ -91,19 +107,27 @@ def test_retrieving_triggers_from_action_block():
     assert on_modified_trigger.absolute_path == Path('/test.template')
 
 
-def test_retrieving_triggers_from_action_block_without_triggers():
+def test_retrieving_triggers_from_action_block_without_triggers(
+    global_modules_config,
+):
     """Action block with no triggers should return empty tuple."""
     action_block = ActionBlock(
         action_block={},
         directory=Path('/'),
         replacer=lambda x: x,
         context_store=Context(),
+        global_modules_config=global_modules_config,
+        module_name='test',
     )
 
     assert action_block.triggers() == tuple()
 
 
-def test_retrieving_all_compiled_templates(template_directory, tmpdir):
+def test_retrieving_all_compiled_templates(
+    global_modules_config,
+    template_directory,
+    tmpdir,
+):
     """All earlier compilations should be retrievable."""
     template1 = template_directory / 'empty.template'
     template2 = template_directory / 'no_context.template'
@@ -126,6 +150,8 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
         directory=template_directory,
         replacer=lambda x: x,
         context_store=Context(),
+        global_modules_config=global_modules_config,
+        module_name='test',
     )
 
     assert action_block.performed_compilations() == {}

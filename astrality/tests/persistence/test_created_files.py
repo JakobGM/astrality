@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-from astrality.persistence import CreatedFiles, CreationMethod
+from astrality.persistence import (
+    CreatedFiles,
+    CreationMethod,
+)
 
 
 def test_that_file_is_created_with_created_files():
@@ -201,3 +204,14 @@ def test_that_creations_are_properly_hashed(
     # But these should be different
     assert created_files.creations['name'][str(target1)]['hash'] \
         != created_files.creations['name'][str(target3)]['hash']
+
+
+def test_creating_created_files_object_for_specific_module(create_temp_files):
+    """You should be able to construct a CreatedFiles wrapper for a module."""
+    content, target = create_temp_files(2)
+    created_files = CreatedFiles().wrapper_for(module='my_module')
+    created_files.insert_creation(
+        content=content,
+        target=target,
+        method=CreationMethod.SYMLINK,
+    )

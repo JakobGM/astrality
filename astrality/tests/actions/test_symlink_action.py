@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from astrality.actions import SymlinkAction
+from astrality.persistence import CreatedFiles
 
 
 def test_null_object_pattern():
@@ -12,6 +13,7 @@ def test_null_object_pattern():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     symlink_action.execute()
 
@@ -24,6 +26,7 @@ def test_symlink_dry_run(create_temp_files, caplog):
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     caplog.clear()
@@ -71,6 +74,7 @@ def test_symlink_action_using_all_parameters(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     symlink_action.execute()
 
@@ -112,6 +116,7 @@ def test_symlinking_without_renaming(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     symlink_action.execute()
 
@@ -145,6 +150,7 @@ def test_symlinking_file_to_directory(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     symlink_action.execute()
 
@@ -170,6 +176,7 @@ def test_running_symlink_action_twice(create_temp_files):
         directory=content.parent,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     # Symlink first time

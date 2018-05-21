@@ -33,13 +33,13 @@ def dawn(daylight):
 
 @pytest.fixture
 def before_dawn(dawn):
-    delta = timedelta(minutes=-2)
+    delta = timedelta(minutes=-30)
     return dawn + delta
 
 
 @pytest.fixture
 def after_dawn(dawn):
-    delta = timedelta(minutes=2)
+    delta = timedelta(minutes=30)
     return dawn + delta
 
 

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from astrality.actions import StowAction
+from astrality.persistence import CreatedFiles
 
 
 def test_null_object_pattern():
@@ -12,6 +13,7 @@ def test_null_object_pattern():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     stow_action.execute()
 
@@ -32,6 +34,7 @@ def test_filtering_stowed_templates(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     # First testing if dry run is respected (too much work for a separate test)
@@ -64,6 +67,7 @@ def test_renaming_templates(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     stow_action.execute()
 
@@ -89,6 +93,7 @@ def test_symlinking_non_templates(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     stow_action.execute()
 
@@ -124,6 +129,7 @@ def test_copying_non_template_files(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     stow_action.execute()
 
