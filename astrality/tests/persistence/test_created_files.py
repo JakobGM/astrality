@@ -1,6 +1,7 @@
 """Tests for astrality.persistence.CreatedFiles."""
 
 from pathlib import Path
+import shutil
 
 from astrality.persistence import (
     CreatedFiles,
@@ -215,3 +216,76 @@ def test_creating_created_files_object_for_specific_module(create_temp_files):
         target=target,
         method=CreationMethod.SYMLINK,
     )
+
+
+def test_backup_method(tmpdir, create_temp_files, patch_xdg_directory_standard):
+    """Backup should perform backup of files not created by Astrality."""
+    external_file, created_file, created_file_content = create_temp_files(3)
+    external_file.write_text('original')
+    created_file.write_text('new')
+    created_file_content.write_text('content')
+
+    created_files = CreatedFiles()
+
+    # A module has created a file, without a collision
+    created_files.insert(
+        module='name',
+        creation_method=CreationMethod.COMPILE,
+        contents=[created_file_content],
+        targets=[created_file],
+    )
+
+    # The file should now be contained by the CreatedFiles object
+    assert created_file in created_files
+
+    # When we try to take a backup of the created file, we get None back,
+    # as there is no need to perform a backup.
+    assert created_files.backup(module='name', path=created_file) is None
+
+    # The existing external file is *not* part of the created files
+    assert external_file not in created_files
+
+    # The creation should have no backup
+    assert created_files.creations['name'][str(created_file)]['backup'] \
+        is None
+
+    # When we perform a backup, it is actually created
+    backup = created_files.backup(module='name', path=external_file)
+
+    # The backup contains the original filename in its new hashed filename
+    assert external_file.name in backup.name
+
+    # The content has been *moved* over
+    assert backup.read_text() == 'original'
+    assert not external_file.exists()
+
+    # And the contents have been saved to the correct path
+    assert backup.parent == patch_xdg_directory_standard / 'backups' / 'name'
+
+    # The backup should now have been inserted
+    assert created_files.creations['name'][str(external_file)]['backup'] \
+        == str(backup)
+
+    # If we now inform the creation, the backup info is kept
+    shutil.copy2(str(created_file_content), str(external_file))
+    created_files.insert(
+        module='name',
+        creation_method=CreationMethod.COPY,
+        contents=[created_file_content],
+        targets=[external_file],
+    )
+    assert created_files.creations['name'][str(external_file)]['backup']  \
+        == str(backup)
+
+    # But we also have the new information
+    assert created_files.creations['name'][str(external_file)]['method']  \
+        == 'copied'
+    assert created_files.creations['name'][str(external_file)]['content'] \
+        == str(created_file_content)
+
+    # Before the cleanup, we have the new content in place
+    assert external_file.read_text() == 'content'
+
+    # But when we clean up the module, the backup should be put back in place
+    created_files.cleanup('name')
+    assert external_file.read_text() == 'original'

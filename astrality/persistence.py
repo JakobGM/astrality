@@ -5,6 +5,7 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
+import shutil
 from typing import Dict, Iterable, List, Optional
 
 from mypy_extensions import TypedDict
@@ -31,6 +32,9 @@ class CreationInfo(TypedDict):
     # Last modification MD5 hash of created file
     # Set to None if PermissionError
     hash: Optional[str]
+
+    # Possible backup of replaced existing file
+    backup: Optional[str]
 
 
 # Contents of $XDG_DATA_HOME/astrality/created_files.yml.
@@ -112,6 +116,7 @@ class CreatedFiles:
             if creation.get('content') != str(content):
                 creation['content'] = str(content)
                 creation['method'] = creation_method.value
+                creation.setdefault('backup', None)  # type: ignore
 
                 try:
                     creation['hash'] = hashlib.md5(
@@ -149,9 +154,11 @@ class CreatedFiles:
         for creation, info in module_creations.items():
             creation_method = info['method']
             content = info['content']
+            backup = info['backup']
             log_msg = (
                 f'[Cleanup] Deleting "{creation}" '
-                f'({creation_method} content from "{content}")'
+                f'({creation_method} content from "{content}"). '
+                f'Backup replacement: {backup}.'
             )
             if dry_run:
                 logger.info('SKIPPED: ' + log_msg)
@@ -164,9 +171,43 @@ class CreatedFiles:
             else:
                 logger.info(log_msg + ' [No longer exists!]')
 
+            if backup and Path(backup).exists():
+                shutil.copy2(info['backup'], creation)  # type: ignore
+
         if not dry_run:
             self.creations.pop(module, None)
             utils.dump_yaml(data=self.creations, path=self.path)
+
+    def backup(self, module: str, path: Path) -> Optional[Path]:
+        """
+        Take backup of path if it is not created by Astrality.
+
+        :param module: Module requesting file to be backed up.
+        :param path: Path to file to back up.
+        :return: Optional path to backup file.
+        """
+        if path in self:
+            return None
+
+        filepath_hash = hashlib.md5(
+            str(path).encode('utf-8'),
+        ).hexdigest()[:7]
+        backup_filename = path.name + '-' + filepath_hash
+        backup = XDG().data(f'backups/{module}/{backup_filename}')
+        shutil.move(str(path), str(backup))
+
+        self.creations.setdefault(module, {})[str(path)] = {  # type: ignore
+            'backup': str(backup),
+        }
+        return backup
+
+    def __contains__(self, path) -> bool:
+        """Return True if path has been created by Astrality."""
+        return any(
+            str(path) in module_creations.keys()
+            for module_creations
+            in self.creations.values()
+        )
 
     def __repr__(self) -> str:
         """Return string representation of CreatedFiles object."""
