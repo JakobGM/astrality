@@ -21,7 +21,6 @@ import abc
 import hashlib
 import logging
 import os
-import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import (
@@ -470,7 +469,11 @@ class CopyAction(Action):
             copy.parent.mkdir(parents=True, exist_ok=True)
 
             self.creation_store.backup(path=copy)
-            shutil.copy(str(content), str(copy))
+            utils.copy(
+                source=content,
+                destination=copy,
+                follow_symlinks=False,
+            )
             self.creation_store.insert_creation(
                 content=content,
                 target=copy,

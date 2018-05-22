@@ -221,6 +221,25 @@ def yaml_str(data: Any) -> str:
     )
 
 
+def copy(
+    source: Union[str, Path],
+    destination: Union[str, Path],
+    follow_symlinks=True,
+) -> None:
+    """
+    Copy source path content to destination path.
+
+    :param source: Path to content to be copied.
+    :param destination: New path for content.
+    :param follow_symlinks: If True, symlinks are resolved before copying.
+    """
+    shutil.copy2(
+        src=str(source),
+        dst=str(destination),
+        follow_symlinks=follow_symlinks,
+    )
+
+
 def move(
     source: Union[str, Path],
     destination: Union[str, Path],
@@ -237,7 +256,7 @@ def move(
         src=str(source),
         dst=str(destination),
         copy_function=partial(
-            shutil.copy2,
+            copy,
             follow_symlinks=follow_symlinks,
         ),
     )
