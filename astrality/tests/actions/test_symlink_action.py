@@ -183,10 +183,46 @@ def test_running_symlink_action_twice(create_temp_files):
     symlink_action.execute()
     assert target.is_symlink()
     assert target.read_text() == 'content'
-    assert (target.parent / (target.name + '.bak')).read_text() == 'target'
+
+    # A backup shoud be created
+    backup = CreatedFiles().creations['test'][str(target)]['backup']
+    assert Path(backup).read_text() == 'target'
 
     # Symlink one more time, and assert idempotency
     symlink_action.execute()
     assert target.is_symlink()
     assert target.read_text() == 'content'
-    assert (target.parent / (target.name + '.bak')).read_text() == 'target'
+
+    backup = CreatedFiles().creations['test'][str(target)]['backup']
+    assert Path(backup).read_text() == 'target'
+
+
+def test_backup_of_symlink_target(create_temp_files):
+    """Overwritten copy targets should be backed up."""
+    target, content = create_temp_files(2)
+
+    # This file is the original and should be backed up
+    target.write_text('original')
+
+    # This is the new content which will be symlinked to
+    content.write_text('new')
+
+    symlink_options = {
+        'content': str(content.name),
+        'target': str(target),
+    }
+    symlink_action = SymlinkAction(
+        options=symlink_options,
+        directory=content.parent,
+        replacer=lambda x: x,
+        context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
+    )
+
+    # We replace the content by executing the action
+    symlink_action.execute()
+    assert target.resolve().read_text() == 'new'
+
+    # And when cleaning up the module, the backup should be restored
+    CreatedFiles().cleanup(module='test')
+    assert target.read_text() == 'original'

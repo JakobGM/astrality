@@ -17,6 +17,11 @@ def test_that_created_files_are_persisted(method, create_temp_files):
         target2,
         target3,
     ) = create_temp_files(6)
+
+    # Delete targets to prevent backups from being restored
+    for target in (target1, target2, target3):
+        target.unlink()
+
     modules = {
         'A': {
             method: [

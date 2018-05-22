@@ -186,3 +186,34 @@ def test_setting_permissions_on_target_copy(tmpdir):
     copy_action.execute()
 
     assert ((target / 'file1').stat().st_mode & 0o000777) == 0o777
+
+
+def test_backup_of_copy_target(create_temp_files):
+    """Overwritten copy targets should be backed up."""
+    target, content = create_temp_files(2)
+
+    # This file is the original and should be backed up
+    target.write_text('original')
+
+    # This is the new content copied to target
+    content.write_text('new')
+
+    copy_options = {
+        'content': str(content.name),
+        'target': str(target),
+    }
+    copy_action = CopyAction(
+        options=copy_options,
+        directory=content.parent,
+        replacer=lambda x: x,
+        context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
+    )
+
+    # We replace the content by executing the action
+    copy_action.execute()
+    assert target.read_text() == 'new'
+
+    # And when cleaning up the module, the backup should be restored
+    CreatedFiles().cleanup(module='test')
+    assert target.read_text() == 'original'

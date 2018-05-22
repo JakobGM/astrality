@@ -416,3 +416,34 @@ def test_that_temporary_compile_targets_have_deterministic_paths(tmpdir):
     target1 = compile_action1.execute()[template_source]
     target2 = compile_action2.execute()[template_source]
     assert target1 == target2
+
+
+def test_creation_of_backup(create_temp_files):
+    """Existing external files should be backed up."""
+    target, template = create_temp_files(2)
+
+    # This file is the original and should be backed up
+    target.write_text('original')
+
+    # This is the new content compiled to target
+    template.write_text('new')
+
+    compile_dict = {
+        'content': str(template.name),
+        'target': str(target),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=template.parent,
+        replacer=lambda x: x,
+        context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
+    )
+
+    # We replace the content by executing the action
+    compile_action.execute()
+    assert target.read_text() == 'new'
+
+    # And when cleaning up the module, the backup should be restored
+    CreatedFiles().cleanup(module='test')
+    assert target.read_text() == 'original'

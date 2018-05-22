@@ -101,8 +101,8 @@ class CreatedFiles:
         if not contents:
             return
 
+        modified = False
         module_section = self.creations.setdefault(module, {})
-        original = module_section.copy()
 
         for content, target in zip(contents, targets):
             # Do not insert files that actually do not exist
@@ -114,6 +114,7 @@ class CreatedFiles:
                 {},  # type: ignore
             )
             if creation.get('content') != str(content):
+                modified = True
                 creation['content'] = str(content)
                 creation['method'] = creation_method.value
                 creation.setdefault('backup', None)  # type: ignore
@@ -125,7 +126,7 @@ class CreatedFiles:
                 except PermissionError:
                     creation['hash'] = None
 
-        if module_section != original:
+        if modified:
             utils.dump_yaml(data=self.creations, path=self.path)
 
     def by(self, module) -> List[Path]:
@@ -180,13 +181,13 @@ class CreatedFiles:
 
     def backup(self, module: str, path: Path) -> Optional[Path]:
         """
-        Take backup of path if it is not created by Astrality.
+        Take backup of path if it exists and is not created by Astrality.
 
         :param module: Module requesting file to be backed up.
         :param path: Path to file to back up.
         :return: Optional path to backup file.
         """
-        if path in self:
+        if path in self or not path.exists():
             return None
 
         filepath_hash = hashlib.md5(
@@ -199,6 +200,7 @@ class CreatedFiles:
         self.creations.setdefault(module, {})[str(path)] = {  # type: ignore
             'backup': str(backup),
         }
+        utils.dump_yaml(data=self.creations, path=self.path)
         return backup
 
     def __contains__(self, path) -> bool:
@@ -226,6 +228,15 @@ class ModuleCreatedFiles:
         """
         self.module = module
         self.creation_store = creation_store
+
+    def backup(self, path: Path) -> Optional[Path]:
+        """
+        Backup path if not created by Astrality.
+
+        :param path: Path to file to be backed up.
+        :return: Optional path to backup.
+        """
+        return self.creation_store.backup(module=self.module, path=path)
 
     def insert_creation(
         self,

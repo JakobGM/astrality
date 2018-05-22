@@ -181,9 +181,6 @@ def test_symlinking(action_block_factory, create_temp_files):
     assert file4.is_symlink()
     assert file4.resolve() == file3
 
-    # Existing files should be backed up
-    assert Path(str(file2) + '.bak').read_text() == 'original'
-
 
 def test_copying(action_block_factory, create_temp_files):
     """Action blocks should copy properly."""

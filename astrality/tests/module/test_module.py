@@ -286,14 +286,12 @@ class TestModuleClass:
             compiled_result = file.read()
 
         assert compiled_template_content == compiled_result
-        assert caplog.record_tuples == [
-            (
-                'astrality.compiler',
-                logging.INFO,
-                f'[Compiling] Template: "{template_file}" '
-                f'-> Target: "{compiled_template}"',
-            ),
-        ]
+        assert (
+            'astrality.compiler',
+            logging.INFO,
+            f'[Compiling] Template: "{template_file}" '
+            f'-> Target: "{compiled_template}"',
+        ) in caplog.record_tuples
 
 
 def test_running_finished_tasks_command(

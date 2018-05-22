@@ -1,7 +1,5 @@
 """Tests for symlinking in ModuleManager."""
 
-from pathlib import Path
-
 from astrality.module import ModuleManager
 
 
@@ -30,6 +28,3 @@ def test_symlinking_in_on_startup_block(
     assert file2.resolve() == file1
     assert file4.is_symlink()
     assert file4.resolve() == file3
-
-    # Existing files should be backed up
-    assert Path(str(file2) + '.bak').read_text() == 'original'

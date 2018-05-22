@@ -273,6 +273,7 @@ class CompileAction(Action):
                     f'-> Target: "{target_file}"',
                 )
             else:
+                self.creation_store.backup(path=target_file)
                 compiler.compile_template(
                     template=content_file,
                     target=target_file,
@@ -395,11 +396,10 @@ class SymlinkAction(Action):
                 logger.info('SKIPPED: ' + log_msg)
                 continue
 
-            if symlink.is_file() and not symlink.is_symlink():
-                symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
-
             logger.info(log_msg)
             symlink.parent.mkdir(parents=True, exist_ok=True)
+
+            self.creation_store.backup(path=symlink)
             symlink.symlink_to(content)
             self.creation_store.insert_creation(
                 content=content,
@@ -468,6 +468,8 @@ class CopyAction(Action):
 
             logger.info(log_msg)
             copy.parent.mkdir(parents=True, exist_ok=True)
+
+            self.creation_store.backup(path=copy)
             shutil.copy(str(content), str(copy))
             self.creation_store.insert_creation(
                 content=content,
