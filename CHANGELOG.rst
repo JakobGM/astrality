@@ -45,6 +45,10 @@ Added
 - Modules can now place action in a ``setup`` block, only to be executed once.
 - You can now execute ``astrality --reset-setup module_name`` in order to
   clear executed module setup actions.
+- Files created by ``compile``, ``copy``, ``stow``, and ``symlink`` actions
+  are now persisted and cleaned up when executing
+  ``astrality --cleanup MODULE``. Files that are overwritten by Astrality
+  are backed up and restored on clean up.
 
 Changed
 -------
