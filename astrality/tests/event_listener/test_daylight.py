@@ -11,8 +11,8 @@ def daylight_config():
     """A daylight event listener configuration in Trondheim, Norway."""
     return {
         'type': 'daylight',
-        'latitude': 63.446827,
-        'longitude': 10.421906,
+        'latitude': 0,
+        'longitude': 0,
         'elevation': 0,
     }
 
@@ -33,13 +33,13 @@ def dawn(daylight):
 
 @pytest.fixture
 def before_dawn(dawn):
-    delta = timedelta(minutes=-30)
+    delta = timedelta(minutes=-2)
     return dawn + delta
 
 
 @pytest.fixture
 def after_dawn(dawn):
-    delta = timedelta(minutes=30)
+    delta = timedelta(minutes=2)
     return dawn + delta
 
 

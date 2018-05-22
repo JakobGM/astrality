@@ -11,8 +11,8 @@ def solar_config():
     """A solar event listener configuration in Trondheim, Norway."""
     return {
         'type': 'solar',
-        'latitude': 63.446827,
-        'longitude': 10.421906,
+        'latitude': 0,
+        'longitude': 0,
         'elevation': 0,
     }
 
@@ -33,13 +33,13 @@ def dawn(solar):
 
 @pytest.fixture
 def before_dawn(dawn):
-    delta = timedelta(minutes=-30)
+    delta = timedelta(minutes=-2)
     return dawn + delta
 
 
 @pytest.fixture
 def after_dawn(dawn):
-    delta = timedelta(minutes=30)
+    delta = timedelta(minutes=2)
     return dawn + delta
 
 
@@ -97,7 +97,7 @@ def test_location(solar):
     location = solar.construct_astral_location()
     assert str(location) \
         == 'CityNotImportant/RegionIsNotImportantEither, '\
-           'tz=UTC, lat=63.45, lon=10.42'
+           'tz=UTC, lat=0.00, lon=0.00'
 
 
 def test_time_left_before_new_event(solar, before_dusk, freezer):
