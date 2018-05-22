@@ -289,3 +289,43 @@ def test_backup_method(tmpdir, create_temp_files, patch_xdg_directory_standard):
     # But when we clean up the module, the backup should be put back in place
     created_files.cleanup('name')
     assert external_file.read_text() == 'original'
+
+
+def test_taking_backup_of_symlinks(create_temp_files):
+    """Symlinks should be properly backed up."""
+    original_symlink, original_target, new_target = create_temp_files(3)
+
+    # We have one existing symlink at the target location
+    original_symlink.unlink()
+    original_symlink.symlink_to(original_target)
+
+    # The symlink points to original content
+    original_target.write_text('original content')
+
+    # Sanity check
+    assert original_symlink.resolve() == original_target
+    assert original_symlink.read_text() == 'original content'
+
+    # We now backup the original symlink
+    created_files = CreatedFiles()
+    created_files.backup(module='name', path=original_symlink)
+
+    # And we will now point it to new content
+    new_target.write_text('new content')
+    original_symlink.symlink_to(new_target)
+
+    created_files.insert(
+        module='name',
+        creation_method=CreationMethod.SYMLINK,
+        contents=[new_target],
+        targets=[original_symlink],
+    )
+
+    # New sanity check
+    assert original_symlink.resolve() == new_target
+    assert original_symlink.read_text() == 'new content'
+
+    # We now clean up the module and should get the original symlink back
+    created_files.cleanup(module='name')
+    assert original_symlink.resolve() == original_target
+    assert original_symlink.read_text() == 'original content'

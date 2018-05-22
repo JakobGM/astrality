@@ -1,19 +1,23 @@
 """General utility functions which are used across the application."""
 
-from io import StringIO
 import logging
 import re
+import shutil
 import subprocess
+from functools import partial
+from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, List, TypeVar, Union
+
+from yaml import dump, load  # noqa
 
 from astrality import compiler
 from astrality.context import Context
 
+
 logger = logging.getLogger(__name__)
 
 # Try to import PyYAML library for faster YAML parsing
-from yaml import dump, load  # noqa
 try:
     from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore
     logger.info('Using LibYAML bindings for faster .yml parsing.')
@@ -214,4 +218,26 @@ def yaml_str(data: Any) -> str:
         data,
         Dumper=Dumper,
         default_flow_style=False,
+    )
+
+
+def move(
+    source: Union[str, Path],
+    destination: Union[str, Path],
+    follow_symlinks=True,
+) -> None:
+    """
+    Move source path content to destination path.
+
+    :param source: Path to content to be moved.
+    :param destination: New path for content.
+    :param follow_symlinks: If True, symlinks are resolved before moving.
+    """
+    shutil.move(
+        src=str(source),
+        dst=str(destination),
+        copy_function=partial(
+            shutil.copy2,
+            follow_symlinks=follow_symlinks,
+        ),
     )

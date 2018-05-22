@@ -5,7 +5,6 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
-import shutil
 from typing import Dict, Iterable, List, Optional
 
 from mypy_extensions import TypedDict
@@ -173,7 +172,11 @@ class CreatedFiles:
                 logger.info(log_msg + ' [No longer exists!]')
 
             if backup and Path(backup).exists():
-                shutil.copy2(info['backup'], creation)  # type: ignore
+                utils.move(  # type: ignore
+                    source=info['backup'],
+                    destination=creation,
+                    follow_symlinks=False,
+                )
 
         if not dry_run:
             self.creations.pop(module, None)
@@ -195,7 +198,11 @@ class CreatedFiles:
         ).hexdigest()[:7]
         backup_filename = path.name + '-' + filepath_hash
         backup = XDG().data(f'backups/{module}/{backup_filename}')
-        shutil.move(str(path), str(backup))
+        utils.move(
+            source=path,
+            destination=backup,
+            follow_symlinks=False,
+        )
 
         self.creations.setdefault(module, {})[str(path)] = {  # type: ignore
             'backup': str(backup),
