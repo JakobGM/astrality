@@ -219,3 +219,14 @@ def patch_xdg_directory_standard(tmpdir, monkeypatch, request):
     # Delete directory for next test
     if data_dir.exists():
         shutil.rmtree(str(data_dir))
+
+
+@pytest.fixture(autouse=True)
+def patch_astrality_config_home(monkeypatch):
+    """Patch $ASTRALITY_CONFIG_HOME."""
+    example_config = Path(__file__).parents[2] / 'config'
+    monkeypatch.setitem(
+        os.environ,
+        'ASTRALITY_CONFIG_HOME',
+        str(example_config),
+    )
