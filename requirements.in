@@ -13,6 +13,9 @@ pytest-env
 # For running mypy static type analysis as part of pytest with --mypy flag
 pytest-mypy
 
+# For integrating flake8 into the test suite
+pytest-flake8
+
 # For typing
 mypy
 

@@ -1,5 +1,9 @@
 """Application wide test configuration."""
+import logging
+
 import pytest
+
+logging.getLogger('flake8').setLevel(logging.WARN)
 
 
 def pytest_addoption(parser):

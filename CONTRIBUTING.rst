@@ -223,7 +223,10 @@ If you submit a bug report, we appreciate if you include the standard output of 
 Code style
 ~~~~~~~~~~
 
-We use the python source code checker `flake8 <http://flake8.pycqa.org/en/latest/>`_ to help us maintain a consistent style across the code base. It runs automatically as part of our `Travis-CI <https://travis-ci.org/JakobGM/astrality>`_ configuration.
+We use the python source code checker `flake8
+<http://flake8.pycqa.org/en/latest/>`_ to help us maintain a
+consistent style across the code base. It runs automatically as
+part of our ``pytest`` test-suite.
 
 You can lint your code locally by running ``flake8 .`` from the root of the repository.
 Integrating ``flake8`` into your workflow is recommended, there are plugins available for most popular `IDEs <https://foxmask.trigger-happy.eu/post/2016/02/17/pycharm-running-flake8/>`_ and `text-editors <https://github.com/nvie/vim-flake8>`_!

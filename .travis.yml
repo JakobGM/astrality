@@ -22,9 +22,6 @@ install:
   - pip3 install -r requirements.txt
   - pip3 install coveralls
 
-before_script:
-  - flake8 .
-
 script:
   - coverage run --rcfile=.coveragerc --source='.' -m py.test -vv --runslow
   - coverage report -m
