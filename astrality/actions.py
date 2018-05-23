@@ -552,7 +552,7 @@ class StowAction(Action):
         non_templates_action = self._options.get('non_templates', 'symlink')
         self.ignore_non_templates = non_templates_action.lower() == 'ignore'
 
-        if non_templates_action.lower() not in ('copy', 'symlink', 'ignore',):
+        if non_templates_action.lower() not in ('copy', 'symlink', 'ignore'):
             logger = logging.getLogger(__name__)
             logger.error(
                 f'Invalid stow non_templates parameter:'
@@ -920,7 +920,7 @@ class ActionBlock:
             if result:
                 # Run action is not null object, so we can return results
                 command, stdout = result
-                results += ((command, stdout,),)
+                results += ((command, stdout),)
 
         return results
 

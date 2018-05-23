@@ -55,7 +55,7 @@ class Context:
         self._dict = {}
         self._max_key: Real = float(-inf)
 
-        if isinstance(content, (dict, Context,)):
+        if isinstance(content, (dict, Context)):
             self.update(content)
         elif isinstance(content, Path):
             if content.is_file():

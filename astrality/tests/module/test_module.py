@@ -781,10 +781,10 @@ def test_trigger_event_module_action(test_config_directory):
         block='on_startup',
     ))
     assert results == (
-        ('echo startup', 'startup',),
-        ('echo on_event', 'on_event',),
-        ('echo exit', 'exit',),
-        ('echo modified.templateA', 'modified.templateA',),
+        ('echo startup', 'startup'),
+        ('echo on_event', 'on_event'),
+        ('echo exit', 'exit'),
+        ('echo modified.templateA', 'modified.templateA'),
     )
 
     # Check that all context section imports are available in startup block
@@ -844,7 +844,7 @@ def test_not_using_list_when_specifiying_trigger_action(conf_path):
         block='on_startup',
     )
     assert result == (
-        ('echo on_event', 'on_event',),
+        ('echo on_event', 'on_event'),
     )
 
 
@@ -934,4 +934,4 @@ def test_defining_on_startup_block_at_root_indentation(caplog):
         module_directory=Path('/'),
     )
     assert module.execute(action='run', block='on_startup') \
-        == (('echo overwritten', 'overwritten',),)
+        == (('echo overwritten', 'overwritten'),)

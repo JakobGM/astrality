@@ -48,13 +48,13 @@ def temp_test_files(test_config_directory):
     touch_target = module_dir / 'touched.tmp'
     watch_touch_target = module_dir / 'watch_touched.tmp'
 
-    for file in (compile_target, touch_target, watch_touch_target,):
+    for file in (compile_target, touch_target, watch_touch_target):
         if file.is_file():
             os.remove(file)
 
     yield compile_target, touch_target, watch_touch_target, watched_file
 
-    for file in (compile_target, touch_target, watch_touch_target,):
+    for file in (compile_target, touch_target, watch_touch_target):
         if file.is_file():
             os.remove(file)
 
@@ -81,7 +81,7 @@ def test_correct_relative_paths_used_in_external_module(
     ) = temp_test_files
 
     # Sanity check before testing
-    for file in (compile_target, touch_target, watch_touch_target,):
+    for file in (compile_target, touch_target, watch_touch_target):
         assert not file.is_file()
 
     # Finish task and see if context import, compilation, and run has been
@@ -112,7 +112,7 @@ def test_that_external_module_contexts_are_imported_correctly(
     application_config = {
         'modules': {
             'modules_directory': 'test_modules',
-            'enabled_modules': [{'name': 'module_with_context::*', }],
+            'enabled_modules': [{'name': 'module_with_context::*'}],
         },
     }
 

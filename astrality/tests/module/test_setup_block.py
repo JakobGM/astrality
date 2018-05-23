@@ -27,7 +27,7 @@ def test_that_module_block_is_persisted():
         SetupActionBlock,
     )
     assert module.execute(action='run', block='on_setup') == (
-        ('echo first time!', 'first time!',),
+        ('echo first time!', 'first time!'),
     )
 
     # After creating this module again, the run action should not be performed.

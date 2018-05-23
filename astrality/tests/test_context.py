@@ -112,9 +112,9 @@ class TestContextClass:
         config['font'] = 'Comic Sans'
         config['5'] = '8'
         assert list(config.items()) == [
-            ('4', 'test',),
-            ('font', 'Comic Sans',),
-            ('5', '8',),
+            ('4', 'test'),
+            ('font', 'Comic Sans'),
+            ('5', '8'),
         ]
 
     def test_keys(self):

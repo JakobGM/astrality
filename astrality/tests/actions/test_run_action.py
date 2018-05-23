@@ -49,7 +49,7 @@ def test_that_dry_run_is_respected(tmpdir, caplog):
     result = run_action.execute(dry_run=True)
 
     # Command to be run and empty string should be returned
-    assert result == ('touch touched.tmp', '',)
+    assert result == ('touch touched.tmp', '')
 
     # Command to be run should be logged
     assert 'SKIPPED: ' in caplog.record_tuples[0][2]

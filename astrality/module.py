@@ -250,7 +250,7 @@ class Module:
             assert name == 'on_modified'
             return self.action_blocks[name][path]  # type: ignore
         else:
-            assert name in ('on_setup', 'on_startup', 'on_event', 'on_exit',)
+            assert name in ('on_setup', 'on_startup', 'on_event', 'on_exit')
             return self.action_blocks[name]  # type: ignore
 
     def execute(
@@ -653,7 +653,7 @@ class ModuleManager:
         :module: Specific module to be executed. If not provided, then all
             managed modules will be executed.
         """
-        assert block in ('on_setup', 'on_startup', 'on_event', 'on_exit',)
+        assert block in ('on_setup', 'on_startup', 'on_event', 'on_exit')
 
         modules: Iterable[Module]
         if isinstance(module, Module):

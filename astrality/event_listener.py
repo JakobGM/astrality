@@ -172,7 +172,7 @@ class Daylight(Solar):
 
     type_ = 'daylight'
 
-    events = ('day', 'night',)
+    events = ('day', 'night')
     default_event_listener_config = {
         'type': 'daylight',
         'longitude': 0,
@@ -294,7 +294,7 @@ class Periodic(EventListener):
             (datetime.now() - self.initialization_time) % self.timedelta
 
 
-WorkDay = namedtuple('WorkDay', ('start', 'end',))
+WorkDay = namedtuple('WorkDay', ('start', 'end'))
 
 
 class TimeOfDay(EventListener):
@@ -305,7 +305,7 @@ class TimeOfDay(EventListener):
     events are referring to worktime.
     """
 
-    events = ('on', 'off',)
+    events = ('on', 'off')
     default_event_listener_config = {
         'type': 'time_of_day',
         'monday': '09:00-17:00',

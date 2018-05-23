@@ -179,7 +179,7 @@ def user_configuration(
     )
 
     # Insert default global settings that are not specified
-    for section_name in ('astrality', 'modules',):
+    for section_name in ('astrality', 'modules'):
         section_content = config.get(section_name, {})
         config[section_name] = ASTRALITY_DEFAULT_GLOBAL_SETTINGS[section_name].copy()  # type: ignore # noqa
         config[section_name].update(section_content)  # type: ignore
