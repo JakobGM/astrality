@@ -45,6 +45,10 @@ Added
 - Modules can now place action in a ``setup`` block, only to be executed once.
 - You can now execute ``astrality --reset-setup module_name`` in order to
   clear executed module setup actions.
+- Files created by ``compile``, ``copy``, ``stow``, and ``symlink`` actions
+  are now persisted and cleaned up when executing
+  ``astrality --cleanup MODULE``. Files that are overwritten by Astrality
+  are backed up and restored on clean up.
 
 Changed
 -------
@@ -152,6 +156,8 @@ Changed
   ``$XDG_DATA_HOME/astrality/compilations`` to be used as the compilation
   target. This behaves better than temporary files when programs expect
   files to still be present after Astrality restarts.
+- Astrality is now more conservative when killing duplicate Astrality processes
+  by using a *pidfile* instead of ``pgrep -f astrality``.
 
 
 Fixed
@@ -166,3 +172,5 @@ Fixed
   paths.
 
 - Module option ``requires_timeout`` is now respected.
+- Astrality no longer kills processes containing "astrality" in their command
+  line invocation.

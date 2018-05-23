@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from astrality.actions import TriggerAction
+from astrality.persistence import CreatedFiles
 
 
 def test_null_object_pattern():
@@ -12,6 +13,7 @@ def test_null_object_pattern():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     trigger = trigger_action.execute()
     assert trigger is None
@@ -28,6 +30,7 @@ def test_triggering_non_on_modified_block():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     trigger = trigger_action.execute()
     assert trigger.block == 'on_startup'
@@ -48,6 +51,7 @@ def test_triggering_on_modified_block():
         directory=Path('/a/b'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     trigger = trigger_action.execute()
     assert trigger.block == 'on_modified'

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from astrality.actions import ImportContextAction
 from astrality.context import Context
+from astrality.persistence import CreatedFiles
 
 
 def test_null_object_pattern():
@@ -13,6 +14,7 @@ def test_null_object_pattern():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store=Context(),
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     import_context_action.execute()
 
@@ -32,6 +34,7 @@ def test_importing_entire_file(context_directory):
         directory=context_directory,
         replacer=lambda x: x,
         context_store=context_store,
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     import_context_action.execute()
 
@@ -60,6 +63,7 @@ def test_importing_specific_section(context_directory):
         directory=context_directory,
         replacer=lambda x: x,
         context_store=context_store,
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     import_context_action.execute()
 
@@ -101,6 +105,7 @@ def test_replacer_function_being_used(context_directory):
         directory=context_directory,
         replacer=replacer,
         context_store=context_store,
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     import_context_action.execute()
 
@@ -137,6 +142,7 @@ def test_that_replacer_is_run_every_time(context_directory):
         directory=context_directory,
         replacer=replacer,
         context_store=context_store,
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     import_context_action.execute()
