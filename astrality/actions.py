@@ -21,7 +21,6 @@ import abc
 import hashlib
 import logging
 import os
-import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import (
@@ -40,11 +39,10 @@ from typing import (
 from mypy_extensions import TypedDict
 
 from astrality import compiler, utils
-from astrality.config import expand_path, GlobalModulesConfig
+from astrality import config
 from astrality.context import Context
-from astrality import executed_actions
+from astrality import persistence
 from astrality.xdg import XDG
-
 
 Replacer = Callable[[str], str]
 
@@ -59,6 +57,8 @@ class Action(abc.ABC):
         must be an absolute path.
     :param replacer: Placeholder substitutor of string user options.
     :param context_store: A reference to the global context store.
+    :param creation_store: ModuleCreatedFiles object which stores which files
+        that are created by the different module actions.
     """
 
     directory: Path
@@ -79,6 +79,7 @@ class Action(abc.ABC):
         directory: Path,
         replacer: Replacer,
         context_store: Context,
+        creation_store: 'persistence.ModuleCreatedFiles',
     ) -> None:
         """Contstruct action object."""
         # If no options are provided, use null object pattern
@@ -86,9 +87,10 @@ class Action(abc.ABC):
 
         assert directory.is_absolute()
         self.directory = directory
+        self.context_store = context_store
+        self.creation_store = creation_store
         self._options = options
         self._replace = replacer
-        self.context_store = context_store
 
     def replace(self, string: str) -> str:
         """
@@ -139,7 +141,7 @@ class Action(abc.ABC):
         :param of: Relative path.
         :return: Absolute path anchored to `self.directory`.
         """
-        return expand_path(
+        return config.expand_path(
             path=Path(of),
             config_directory=self.directory,
         )
@@ -270,12 +272,18 @@ class CompileAction(Action):
                     f'-> Target: "{target_file}"',
                 )
             else:
+                self.creation_store.backup(path=target_file)
                 compiler.compile_template(
                     template=content_file,
                     target=target_file,
                     context=self.context_store,
                     shell_command_working_directory=self.directory,
                     permissions=permissions,
+                )
+                self.creation_store.insert_creation(
+                    content=content_file,
+                    target=target_file,
+                    method=persistence.CreationMethod.COMPILE,
                 )
 
             self._performed_compilations[content_file].add(target_file)
@@ -380,19 +388,23 @@ class SymlinkAction(Action):
             self.symlinked_files[content].add(symlink)
             log_msg = f'[symlink] Content "{content}" -> Target: "{symlink}".'
 
+            if symlink.resolve() == content:
+                continue
+
             if dry_run:
                 logger.info('SKIPPED: ' + log_msg)
                 continue
 
-            if symlink.resolve() == content:
-                continue
-
-            if symlink.is_file() and not symlink.is_symlink():
-                symlink.rename(symlink.parent / (str(symlink.name) + '.bak'))
-
             logger.info(log_msg)
             symlink.parent.mkdir(parents=True, exist_ok=True)
+
+            self.creation_store.backup(path=symlink)
             symlink.symlink_to(content)
+            self.creation_store.insert_creation(
+                content=content,
+                target=symlink,
+                method=persistence.CreationMethod.SYMLINK,
+            )
 
         return links
 
@@ -455,7 +467,18 @@ class CopyAction(Action):
 
             logger.info(log_msg)
             copy.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(str(content), str(copy))
+
+            self.creation_store.backup(path=copy)
+            utils.copy(
+                source=content,
+                destination=copy,
+                follow_symlinks=False,
+            )
+            self.creation_store.insert_creation(
+                content=content,
+                target=copy,
+                method=persistence.CreationMethod.COPY,
+            )
 
         if permissions and not dry_run:
             for copy in copies.values():
@@ -522,6 +545,7 @@ class StowAction(Action):
             directory=self.directory,
             replacer=self.replace,
             context_store=self.context_store,
+            creation_store=self.creation_store,
         )
 
         # Determine what to do with non-templates
@@ -564,6 +588,7 @@ class StowAction(Action):
             directory=self.directory,
             replacer=self.replace,
             context_store=self.context_store,
+            creation_store=self.creation_store,
         )
 
     def execute(self, dry_run: bool = False) -> Dict[Path, Path]:
@@ -802,19 +827,25 @@ class ActionBlock:
         directory: Path,
         replacer: Replacer,
         context_store: compiler.Context,
-        module_name: str = '',
-        global_modules_config: Optional[GlobalModulesConfig] = None,
+        global_modules_config: 'config.GlobalModulesConfig',
+        module_name: str,
     ) -> None:
         """Construct ActionBlock object."""
         assert directory.is_absolute()
+        if not global_modules_config:
+            # TODO: This is only the case in testing, and should be explicitly
+            # provided in all tests at some point.
+            global_modules_config = config.GlobalModulesConfig(
+                config={},
+                config_directory=directory,
+            )
         self.action_block = action_block
         self.module_name = module_name
+        self.run_timeout = global_modules_config.run_timeout
 
-        if global_modules_config:
-            self.run_timeout = global_modules_config.run_timeout
-        else:
-            self.run_timeout = 0
-
+        creation_store = global_modules_config.created_files.wrapper_for(
+            module=self.module_name,
+        )
         for identifier, action_type in self.action_types.items():
             # Create and persist a list of all ImportContextAction objects
             setattr(
@@ -826,6 +857,7 @@ class ActionBlock:
                         directory=directory,
                         replacer=replacer,
                         context_store=context_store,
+                        creation_store=creation_store,
                     )
                     for action_options
                     in self.action_options(identifier=identifier)
@@ -950,7 +982,7 @@ class SetupActionBlock(ActionBlock):
         action_options = super().action_options(identifier)
 
         if not hasattr(self, 'executed_setup_actions'):
-            self.executed_setup_actions = executed_actions.ExecutedActions(
+            self.executed_setup_actions = persistence.ExecutedActions(
                 module_name=self.module_name,
             )
 

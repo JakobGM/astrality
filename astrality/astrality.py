@@ -5,13 +5,16 @@
 import logging
 import os
 import signal
-import subprocess
 import sys
 import time
-from typing import Set, List
+from typing import List
 
+import psutil
+
+from astrality import utils
 from astrality.config import user_configuration
 from astrality.module import ModuleManager
+from astrality.xdg import XDG
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +41,7 @@ def main(
     # Set the logging level to the configured setting
     logging.basicConfig(level=logging_level)
 
-    if not modules and not dry_run:
+    if not modules and not dry_run and not test:
         # Quit old astrality instances
         kill_old_astrality_processes()
 
@@ -145,39 +148,50 @@ def main(
         exit_handler()
 
 
-def other_astrality_pids() -> Set[int]:
-    """Return the process ids (PIDs) of any other Astrality instances."""
-    # Get all processes instanciated from this file
-    result = subprocess.Popen(
-        ['pgrep', '-f', 'astrality'],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
-    )
-    pids = set(int(pid.strip()) for pid in result.stdout)
-
-    # Return all the PIDs except for the PID of this process
-    this_process_pid = os.getpid()
-    return pids - set((this_process_pid,))
-
-
 def kill_old_astrality_processes() -> None:
-    """Kill all other instances of this script, to prevent duplicates."""
-    pids = other_astrality_pids()
-    failed_exits = 0
-    for pid in pids:
-        try:
-            logger.info(f'Killing duplicate Astrality process with pid {pid}.')
-            os.kill(pid, signal.SIGTERM)
-        except OSError:
-            logger.error(
-                f'Could not kill old instance of astrality with pid {pid}.',
-            )
-            logger.error('Continuing anyway...')
-            failed_exits += 1
+    """
+    Kill any previous Astrality process instance.
 
-    while len(other_astrality_pids()) > failed_exits:
-        # Wait for all the processes to exit properly
-        time.sleep(0.2)
+    This process kills the last process which invoked this function.
+    If the process is no longer running, it is owned by another user, or has
+    a new create_time, it will *not* be killed.
+    """
+    # The current process
+    new_process = psutil.Process()
+
+    # Fetch info of possible previous process instance
+    pidfile = XDG().data('astrality.pid')
+    old_process_info = utils.load_yaml(path=pidfile)
+    utils.dump_yaml(
+        data=new_process.as_dict(attrs=['pid', 'create_time', 'username']),
+        path=pidfile,
+    )
+
+    if not old_process_info or not psutil.pid_exists(old_process_info['pid']):
+        return
+
+    try:
+        old_process = psutil.Process(pid=old_process_info['pid'])
+    except BaseException:
+        return
+
+    if not old_process.as_dict(
+        attrs=['pid', 'create_time', 'username'],
+    ) == old_process_info:
+        return
+
+    try:
+        logger.info(
+            'Killing duplicate Astrality process with pid: '
+            f'{old_process.pid}.',
+        )
+        old_process.terminate()
+        old_process.wait()
+    except BaseException:
+        logger.error(
+            f'Could not kill old instance of astrality with pid: '
+            f'{old_process.pid}. Continuing anyway...',
+        )
 
 
 if __name__ == '__main__':

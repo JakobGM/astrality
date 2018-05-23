@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from astrality.actions import CompileAction
+from astrality.persistence import CreatedFiles
 
 
 def test_null_object_pattern():
@@ -13,6 +14,7 @@ def test_null_object_pattern():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     target = compile_action.execute()
     assert target == {}
@@ -28,6 +30,7 @@ def test_compilation_of_template_to_temporary_file(template_directory):
         directory=template_directory,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     compilations = compile_action.execute()
 
@@ -49,6 +52,7 @@ def test_that_dry_run_skips_compilation(template_directory, tmpdir, caplog):
         directory=template_directory,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     caplog.clear()
@@ -87,6 +91,7 @@ def test_compilation_to_specific_absolute_file_path(template_directory, tmpdir):
         directory=template_directory,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     return_target = list(compile_action.execute().values())[0]
 
@@ -110,6 +115,7 @@ def test_compilation_to_specific_relative_file_path(template_directory, tmpdir):
         directory=Path(tmpdir),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     return_target = list(compile_action.execute().values())[0]
 
@@ -133,6 +139,7 @@ def test_compilation_with_context(template_directory):
         directory=template_directory,
         replacer=lambda x: x,
         context_store=context_store,
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     context_store['fonts'] = {2: 'ComicSans'}
@@ -157,6 +164,7 @@ def test_setting_permissions_of_target_template(template_directory):
         directory=template_directory,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     target = list(compile_action.execute().values())[0]
@@ -190,6 +198,7 @@ def test_use_of_replacer(template_directory, tmpdir):
         directory=template_directory,
         replacer=replacer,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     target = list(compile_action.execute().values())[0]
@@ -211,6 +220,7 @@ def test_that_current_directory_is_set_correctly(template_directory, tmpdir):
         directory=directory,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     target = list(compile_action.execute().values())[0]
     assert target.read_text() == tmpdir
@@ -235,6 +245,7 @@ def test_retrieving_all_compiled_templates(template_directory, tmpdir):
             target=targets.pop(),
         ) if x == '{target}' else x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     assert compile_action.performed_compilations() == {}
 
@@ -262,6 +273,7 @@ def test_contains_special_method(template_directory, tmpdir):
         directory=template_directory,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     compile_action.execute()
     assert template_directory / 'empty.template' in compile_action
@@ -281,6 +293,7 @@ def test_contains_with_uncompiled_template(template_directory, tmpdir):
         directory=template_directory,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     assert template_directory / 'empty.template' not in compile_action
 
@@ -307,6 +320,7 @@ def test_compiling_entire_directory(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     results = compile_action.execute()
 
@@ -337,6 +351,7 @@ def test_filtering_compiled_templates(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     compile_action.execute()
 
@@ -364,6 +379,7 @@ def test_renaming_templates(test_config_directory, tmpdir):
         directory=test_config_directory,
         replacer=lambda x: x,
         context_store={'geography': {'capitol': 'Berlin'}},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     compile_action.execute()
 
@@ -387,14 +403,47 @@ def test_that_temporary_compile_targets_have_deterministic_paths(tmpdir):
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     compile_action2 = CompileAction(
         options=compile_dict.copy(),
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     target1 = compile_action1.execute()[template_source]
     target2 = compile_action2.execute()[template_source]
     assert target1 == target2
+
+
+def test_creation_of_backup(create_temp_files):
+    """Existing external files should be backed up."""
+    target, template = create_temp_files(2)
+
+    # This file is the original and should be backed up
+    target.write_text('original')
+
+    # This is the new content compiled to target
+    template.write_text('new')
+
+    compile_dict = {
+        'content': str(template.name),
+        'target': str(target),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=template.parent,
+        replacer=lambda x: x,
+        context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
+    )
+
+    # We replace the content by executing the action
+    compile_action.execute()
+    assert target.read_text() == 'new'
+
+    # And when cleaning up the module, the backup should be restored
+    CreatedFiles().cleanup(module='test')
+    assert target.read_text() == 'original'

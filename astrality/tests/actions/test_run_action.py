@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from astrality.actions import RunAction
+from astrality.persistence import CreatedFiles
 
 
 def test_null_object_pattern():
@@ -14,6 +15,7 @@ def test_null_object_pattern():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     run_action.execute()
 
@@ -26,6 +28,7 @@ def test_directory_of_executed_shell_command(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     run_action.execute()
     assert (temp_dir / 'touched.tmp').is_file()
@@ -39,6 +42,7 @@ def test_that_dry_run_is_respected(tmpdir, caplog):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     caplog.clear()
@@ -63,6 +67,7 @@ def test_use_of_replacer(tmpdir):
         directory=temp_dir,
         replacer=lambda x: 'echo test',
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     command, result = run_action.execute()
     assert command == 'echo test'
@@ -81,6 +86,7 @@ def test_run_timeout_specified_in_action_block(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     _, result = run_action.execute(default_timeout=10000)
     assert result == ''
@@ -90,6 +96,7 @@ def test_run_timeout_specified_in_action_block(tmpdir):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     _, result = run_action.execute(default_timeout=0)
     assert result == 'hi'
@@ -108,6 +115,7 @@ def test_run_timeout_specified_in_execute(tmpdir, caplog):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     caplog.clear()
@@ -121,6 +129,7 @@ def test_run_timeout_specified_in_execute(tmpdir, caplog):
         directory=temp_dir,
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     _, result = run_action.execute(default_timeout=0.2)
     assert result == 'hi'
@@ -133,6 +142,7 @@ def test_running_shell_command_with_non_zero_exit_code(caplog):
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     caplog.clear()
     run_action.execute()
@@ -147,6 +157,7 @@ def test_running_shell_command_with_environment_variable(caplog):
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
 
     caplog.clear()
@@ -172,6 +183,7 @@ def test_that_environment_variables_are_expanded():
         directory=Path('/'),
         replacer=lambda x: x,
         context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
     )
     command, _ = run_action.execute()
     assert command == 'echo test_value'
