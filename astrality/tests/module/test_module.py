@@ -564,6 +564,7 @@ def test_import_sections_on_startup(config_with_modules, freezer):
 
 
 class TestModuleManager:
+    @pytest.mark.slow
     def test_invocation_of_module_manager_with_config(self, conf):
         ModuleManager(conf)
 

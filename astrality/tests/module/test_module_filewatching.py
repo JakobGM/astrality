@@ -109,6 +109,7 @@ def test_direct_invocation_of_modifed_method_of_module_manager(modules_config):
     assert Retry()(lambda: touch_target.is_file())
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 def test_on_modified_event_in_module(modules_config):
     (

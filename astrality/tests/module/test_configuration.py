@@ -154,6 +154,7 @@ def delete_jakobgm(test_config_directory):
         shutil.rmtree(location)
 
 
+@pytest.mark.slow
 def test_using_three_different_module_sources(
     test_config_directory,
     delete_jakobgm,

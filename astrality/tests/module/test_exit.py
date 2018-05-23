@@ -16,6 +16,7 @@ def test_target(tmpdir):
         os.remove(test_target)
 
 
+@pytest.mark.slow
 def test_that_all_exit_actions_are_correctly_performed(
     test_config_directory,
     test_target,

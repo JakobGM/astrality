@@ -348,6 +348,7 @@ class TestGithubModuleSource:
             module_name='global_module',
         )
 
+    @pytest.mark.slow
     def test_that_username_and_repo_is_identified(self, tmpdir, delete_jakobgm):
         modules_directory = Path(tmpdir)
         github_module_source = GithubModuleSource(

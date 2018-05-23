@@ -59,6 +59,7 @@ def temp_test_files(test_config_directory):
             os.remove(file)
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(MACOS, reason='Flaky on MacOS')
 def test_correct_relative_paths_used_in_external_module(
     temp_test_files,
