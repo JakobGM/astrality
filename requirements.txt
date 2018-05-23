@@ -7,19 +7,20 @@
 alabaster==0.7.10         # via sphinx
 argh==0.26.2              # via sphinx-autobuild, watchdog
 astral==1.6.1
+atomicwrites==1.1.5       # via pytest
 attrs==18.1.0             # via pytest
 babel==2.5.3              # via sphinx
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
 click==6.7                # via pip-tools
-coloredlogs==9.3.1
+coloredlogs==10.0
 docutils==0.14            # via sphinx
 first==2.0.1              # via pip-tools
 flake8-commas==2.0.0
 flake8-quotes==1.0.0
 flake8==3.5.0
 freezegun==0.3.10         # via pytest-freezegun
-humanfriendly==4.12       # via coloredlogs
+humanfriendly==4.12.1     # via coloredlogs
 idna==2.6                 # via requests
 imagesize==1.0.0          # via sphinx
 jinja2==2.10
@@ -43,8 +44,8 @@ pyparsing==2.2.0          # via packaging
 pytest-env==0.6.2
 pytest-freezegun==0.2.0
 pytest-mypy==0.3.1
-pytest==3.5.1
-python-dateutil==2.7.2    # via freezegun
+pytest==3.6.0
+python-dateutil==2.7.3    # via freezegun
 pytz==2018.4              # via astral, babel
 pyyaml==3.12
 requests==2.18.4          # via astral, sphinx
@@ -59,7 +60,7 @@ tornado==5.0.2            # via livereload, sphinx-autobuild
 typed-ast==1.1.0          # via mypy
 urllib3==1.22             # via requests
 watchdog==0.8.3
-wheel==0.31.0
+wheel==0.31.1
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
