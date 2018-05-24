@@ -66,3 +66,6 @@ coloredlogs
 
 # For checking spawned subprocesses
 psutil
+
+# For solar event listener getting local timezone
+python-dateutil

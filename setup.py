@@ -13,7 +13,7 @@ def readme():
 
 setup(
     name='astrality',
-    version='1.0.0',
+    version='1.0.1',
     packages=find_packages(),
     install_requires=[
         'Jinja2',
@@ -21,6 +21,7 @@ setup(
         'coloredlogs',
         'mypy_extensions',
         'psutil',
+        'python-dateutil',
         'pyyaml',
         'requests',
         'watchdog',

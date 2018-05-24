@@ -46,7 +46,7 @@ pytest-flake8==1.0.1
 pytest-freezegun==0.2.0
 pytest-mypy==0.3.1
 pytest==3.6.0
-python-dateutil==2.7.3    # via freezegun
+python-dateutil==2.7.3
 pytz==2018.4              # via astral, babel
 pyyaml==3.12
 requests==2.18.4          # via astral, sphinx
