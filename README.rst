@@ -32,18 +32,18 @@ What does it do?
 ================
 
 Astrality is a flexible tool for managing configuration files, inspired by `GNU
-Stow <https://www.gnu.org/software/stow/>`_ and `Ansible
-<https://www.ansible.com/>`_.
+Stow`_ and Ansible_.
 
 Let's begin with a list of some of Astrality's key features:
 
-* Manage and deploy configuration files according to a central YAML config file.
+* Manage and deploy configuration files according to a central YAML config
+  file.
 * Group related configuration into *modules*.
-* Conditionally enable modules based on environment variables, OS, installed programs
-  and shell commands.
+* Conditionally enable modules based on environment variables, OS, installed
+  programs and shell commands.
 * Copy and/or symlink files.
 * Execute shell commands.
-* Compile `Jinja2 templates <http://jinja.pocoo.org/docs/2.10/templates/>`_
+* Compile `Jinja2 templates`_
   templates to target destinations.
 * Dynamically manipulate context values used during jinja2 compilation.
 * Automatically re-deploy dotfiles when source content is modified.
@@ -52,18 +52,18 @@ Let's begin with a list of some of Astrality's key features:
 * Fetch modules from GitHub.
 * Restore files created and/or overwritten by modules.
 
-Take a look at `the tutorial
-<http://astrality.readthedocs.io/en/latest/tutorial.html>`_ for managing a
-dotfile repository, or see the `full documentation
-<https://astrality.readthedocs.io>`_ for all available functionality.
-Feel free to drop by our `Gitter room <https://gitter.im/astrality/Lobby>`_ when
-getting started.
+Take a look at the `tutorial`_ for managing a dotfile repository, or see the
+`full documentation`_ for all available functionality.  Feel free to drop by
+our `Gitter room`_ when getting started.
 
 **Here is gif demonstrating how Astrality is used to**:
 
-#) Automatically change the desktop wallpaper based on the sun's position in the sky.
-#) Dynamically change the font size, and implicitly the bar height, of `polybar <https://github.com/jaagr/polybar>`_.
-#) Simultaneously change the color scheme of `alacritty <https://github.com/jwilm/alacritty>`_, `kitty <https://github.com/kovidgoyal/kitty>`_, and polybar at the same time.
+#) Automatically change the desktop wallpaper based on the sun's position in
+   the sky.
+#) Dynamically change the font size, and implicitly the bar height, of
+   `polybar`_.
+#) Simultaneously change the color scheme of `alacritty`_, `kitty`_, and
+   polybar at the same time.
 
 .. image:: https://user-images.githubusercontent.com/10655778/36535609-934488ec-17ca-11e8-860e-4af5e1464997.gif
 
@@ -72,24 +72,24 @@ Getting started
 
 Prerequisites
 -------------
-Astrality requires `python 3.6 <https://www.python.org/downloads/>`_ or
-greater. Check your version by running ``python --version``.
+Astrality requires `python 3.6`_ or greater. Check your version by running
+``python --version``.
 
 Installation
 ------------
 
-``astrality-git`` is published on the `AUR <https://aur.archlinux.org/>`_ for
-ArchLinux users. Otherwise, you can install Astrality using ``pip``:
+``astrality-git`` is published on the `AUR`_ for ArchLinux users. Otherwise,
+you can install Astrality using ``pip``:
 
-Create a new `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ for python
-3.6 (or use your system python 3.6 if you prefer). Install Astrality from `pypi
-<https://pypi.org/project/astrality/>`_ like so:
+Create a new virtualenv_ for python 3.6 (or use your system python 3.6 if you
+prefer). Install Astrality from PyPI_ like so:
 
 .. code-block:: console
 
     $ python3.6 -m pip install astrality
 
-You should now be able to start `astrality` from your command line, but first, let us create an example configuration:
+You should now be able to start `astrality` from your command line, but first,
+let us create an example configuration:
 
 .. code-block:: console
 
@@ -106,4 +106,21 @@ Now start `astrality`:
 Configuration and further documentation
 ---------------------------------------
 
-I recommend taking a look at the `full documentation <https://astrality.readthedocs.io/>`_ of Astrality hosted at `Read the Docs <https://readthedocs.org>`_.
+I recommend taking a look at the `full documentation`_ of Astrality hosted at
+`Read the Docs`_.
+
+
+.. _full documentation: https://astrality.readthedocs.io/
+.. _Read the Docs: https://readthedocs.org
+.. _virtualenv: https://virtualenv.pypa.io/en/stable/
+.. _PyPI: https://pypi.org/project/astrality/
+.. _Python 3.6: https://www.python.org/downloads/
+.. _alacritty: https://github.com/jwilm/alacritty
+.. _kitty: https://github.com/kovidgoyal/kitty
+.. _polybar: https://github.com/jaagr/polybar
+.. _Gitter room: https://gitter.im/astrality/Lobby
+.. _tutorial: http://astrality.readthedocs.io/en/latest/tutorial.html
+.. _AUR: https://aur.archlinux.org/
+.. _GNU Stow: https://www.gnu.org/software/stow/
+.. _Ansible: https://www.ansible.com/
+.. _Jinja2 templates: http://jinja.pocoo.org/docs/2.10/templates/

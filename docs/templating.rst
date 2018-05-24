@@ -24,7 +24,7 @@ replaces with values defined in so-called ``context`` sections defined in
 
 Here is an example which defines context values in "context.yml":
 
-.. code-block:: none
+.. code-block:: yaml
 
     # $ASTRALITY_CONFIG_HOME/context.yml
 

@@ -3,17 +3,20 @@ How to contribute
 =================
 
 First, thanks for considering contributing to Astrality, that means a lot!
-Here we describe how you can help out, either by improving the documentation, submitting issues, or creating pull requests.
+Here we describe how you can help out, either by improving the documentation,
+submitting issues, or creating pull requests.
 
-If you end up contributing, please consider adding yourself to the file ``CONTRIBUTORS.rst``.
+If you end up contributing, please consider adding yourself to the file
+``CONTRIBUTORS.rst``.
 
 .. _contributing_issues:
 
 Bug reports and feature requests
 ================================
 
-You can browse any existing bug reports and feature requests on Astrality's `issues page <https://github.com/JakobGM/astrality/issues>`_ on GitHub.
-New issues issues can be submitted `here <https://github.com/JakobGM/astrality/issues/new>`_.
+You can browse any existing bug reports and feature requests on Astrality's
+`GitHub issues page`_ on GitHub.
+New issues issues can be submitted the `GitHub create issues page`_.
 
 
 .. _contributing_documentation:
@@ -21,17 +24,21 @@ New issues issues can be submitted `here <https://github.com/JakobGM/astrality/i
 Improving the documentation
 ===========================
 
-If you find something you would like to improve in `the documentation <https://astrality.readthedocs.io/en/latest/index.html>`_, follow these steps:
+If you find something you would like to improve in the documentation_, follow
+these steps:
 
-* Navigate to the page that you would like to edit on https://astrality.readthedocs.io.
+* Navigate to the page that you would like to edit on
+  https://astrality.readthedocs.io.
 * Press the "Edit on GitHub" link in the upper right corner.
 * Press the "pencil" edit icon to the right of the "History" button.
 * Make the changes you intended.
 * Write a title and description for your change on the bottom of the page.
-* Select the radio button marked as: "Create a new branch for this commit and start a pull request".
+* Select the radio button marked as: "Create a new branch for this commit and
+  start a pull request".
 * Press "Propose file change".
 
-The documentation is written in the "RestructuredText" markup language. If this is unfamiliar to you, take a look at `this cheatsheet <https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst>`_ for more information.
+The documentation is written in the "RestructuredText" markup language. If this
+is unfamiliar to you, take a look at this `RST cheatsheet`_ for more information.
 
 
 .. _contributing_code:
@@ -45,7 +52,8 @@ Getting up and running
 Cloning the repository
 ~~~~~~~~~~~~~~~~~~~~~~
 
-First we need to clone the repository. Open your terminal and navigate to the directory you wish to place project directory and run:
+First we need to clone the repository. Open your terminal and navigate to the
+directory you wish to place project directory and run:
 
 .. code-block:: console
 
@@ -56,7 +64,11 @@ First we need to clone the repository. Open your terminal and navigate to the di
 Installing python3.6
 ~~~~~~~~~~~~~~~~~~~~
 
-Astrality runs on ``python3.6``, so you need to ensure that you have it installed. If you have no specific preferred way of installing software on your computer, you can download and install it from `here <https://www.python.org/downloads/>`_. Alternatively, if you use `brew <https://brew.sh/>`_ on MacOS, you can install it by running:
+Astrality runs on ``python3.6``, so you need to ensure that you have it
+installed. If you have no specific preferred way of installing software on your
+computer, you can download and install it from `here
+<https://www.python.org/downloads/>`__. Alternatively, if you use brew_ on
+MacOS, you can install it by running:
 
 .. code-block:: console
 
@@ -72,8 +84,9 @@ Or on ArchLinux:
 Installing dependencies into a virtual environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You should create a separate python3.6 "virtual environment" exclusively for Astrality.
-If this is new to you, take a look at the `official tutorial <https://docs.python.org/3/tutorial/venv.html>`_ for ``venv``.
+You should create a separate python3.6 "virtual environment" exclusively for
+Astrality.  If this is new to you, take a look at the `official virtualenv
+tutorial`_.
 
 A quick summation:
 
@@ -82,25 +95,32 @@ A quick summation:
     python3.6 -m venv astrality-env
     source astrality-env/bin/activate
 
-Your terminal prompt should now show the name of the activated virtual environment, for example ``(astrality-env) $ your_commands_here``.
+Your terminal prompt should now show the name of the activated virtual
+environment, for example ``(astrality-env) $ your_commands_here``.
 You can double check your environment by running ``echo $VIRTUAL_ENV``.
-Later you can deactivate it by running ``deactivate`` or restarting your terminal.
-The activated virtual environment is necessary in order to run the developer version of Astrality, including the test suite.
+Later you can deactivate it by running ``deactivate`` or restarting your
+terminal.
+The activated virtual environment is necessary in order to run the developer
+version of Astrality, including the test suite.
 
-Now you can install all the developer dependencies of Astrality into the virtual environment by running:
+Now you can install all the developer dependencies of Astrality into the
+virtual environment by running:
 
 .. code-block:: console
 
     pip3 install -r requirements.txt
 
-You should now make sure that the environment variable ``PYTHONPATH`` is set to the root directory of the repository. Check it by running:
+You should now make sure that the environment variable ``PYTHONPATH`` is set to
+the root directory of the repository. Check it by running:
 
 .. code-block:: console
 
     $ echo $PYTHONPATH
     /home/jakobgm/dev/astrality
 
-With ``/home/jakobgm/dev/astrality`` being whatever makes sense on your system. If the value is incorrect you should run the following from the repository root:
+With ``/home/jakobgm/dev/astrality`` being whatever makes sense on your system.
+If the value is incorrect you should run the following from the repository
+root:
 
 .. code-block:: console
 
@@ -110,7 +130,8 @@ With ``/home/jakobgm/dev/astrality`` being whatever makes sense on your system. 
 Running the developer version of Astrality
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You should now be able to run the developer version of Astrality by running the following command:
+You should now be able to run the developer version of Astrality by running the
+following command:
 
 .. code-block:: bash
 
@@ -122,22 +143,27 @@ You should now be able to run the developer version of Astrality by running the 
 Writing code
 ------------
 
-The python code in Astrality follows some conventions which we will describe here.
+The python code in Astrality follows some conventions which we will describe
+here.
 
 
 The structure of the code base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A brief outline Astrality's code base is provided in
-:ref:`the API documentation <API_structure_of_the_code_base>`, and is recommended
-reading for any new contributor.
+A brief outline Astrality's code base is provided in :ref:`the API
+documentation <API_structure_of_the_code_base>`, and is recommended reading for
+any new contributor.
 
 Tests
 ~~~~~
 
-Astrality strives for 100% test coverage, and all new lines of code should preferably be covered by tests. That being said, if testing is unfamiliar to you, submitting code without test coverage is better than no code at all.
+Astrality strives for 100% test coverage, and all new lines of code should
+preferably be covered by tests. That being said, if testing is unfamiliar to
+you, submitting code without test coverage is better than no code at all.
 
-Tests are written with the `pytest <https://docs.pytest.org/en/latest/>`_ test framework, and you can read a "getting started" tutorial `here <https://docs.pytest.org/en/latest/getting-started.html#getstarted>`_.
+Tests are written with the pytest_ test framework, and you can read a "getting
+started" tutorial `here
+<https://docs.pytest.org/en/latest/getting-started.html#getstarted>`__.
 
 You can run the test suite from the root of the repository by running:
 
@@ -146,37 +172,48 @@ You can run the test suite from the root of the repository by running:
     pytest
 
 .. warning::
-    For now, it is important that you run pytest from the root of the repository, else you will get a whole lot of ``ModuleNotFoundError`` exceptions.
+    For now, it is important that you run pytest from the root of the
+    repository, else you will get a whole lot of ``ModuleNotFoundError``
+    exceptions.
 
-Additionally, there are some tests which are hidden behind the ``--runslow`` flag, as some tests are slow due to writing files to disk and running certain shell commands. These slow tests can be run by writing:
+Additionally, there are some tests which are hidden behind the ``--runslow``
+flag, as some tests are slow due to writing files to disk and running certain
+shell commands. These slow tests can be run by writing:
 
 .. code-block:: console
 
     pytest --runslow
 
-When you submit a pull request, `travis-ci <http://travis-ci.org/>`_ will automatically check if all the tests pass with your submitted code.
-`Coveralls <http://coveralls.io/>`_ will also check if the test coverage decreases.
+When you submit a pull request, travis-ci_ will automatically check if all the
+tests pass with your submitted code.  Coveralls_ will also check if the test
+coverage decreases.
 
-If this feels intimidating, do not worry. We are happy to help guide you along if you encounter any issues with testing, so please submit pull requests even if the test suite fails for some reason.
+If this feels intimidating, do not worry. We are happy to help guide you along
+if you encounter any issues with testing, so please submit pull requests even
+if the test suite fails for some reason.
 
 
 Type annotations
 ~~~~~~~~~~~~~~~~
 
-Astrality's code base heavily utilizes the new static type annotations available in python3.6.
+Astrality's code base heavily utilizes the new static type annotations
+available in python3.6.
 
-The correctness of the type annotations are ensured by using `mypy <http://mypy-lang.org/>`_.
-You can check for type errors by running the following command from the repository root:
+The correctness of the type annotations are ensured by using mypy_.
+You can check for type errors by running the following command from the
+repository root:
 
 .. code-block:: console
 
     mypy .
 
-``mypy`` is a part of the test suite, enabled by the ``pytest-mypy`` `plugin <https://pypi.python.org/pypi/pytest-mypy>`_.
-Therefore, if the test suite passes, ``mypy`` must also be satisfied with your code!
+``mypy`` is a part of the test suite, enabled by the pytest-mypy_ plugin.
+Therefore, if the test suite passes, ``mypy`` must also be satisfied with your
+code!
 
-All non-testing code should be completely type annotated, as strictly as possible.
-If this is new to you, or if you want to learn more, I recommend reading `mypy documentation <http://mypy.readthedocs.io/en/latest/introduction.html>`_.
+All non-testing code should be completely type annotated, as strictly as
+possible.  If this is new to you, or if you want to learn more, I recommend
+reading `mypy documentation`_.
 
 The offer to help with testing also holds for type annotations of course!
 
@@ -184,9 +221,12 @@ The offer to help with testing also holds for type annotations of course!
 Continuous testing
 ~~~~~~~~~~~~~~~~~~
 
-Although this is mainly a matter of taste, running tests continuously while writing code is a great feedback mechanism.
+Although this is mainly a matter of taste, running tests continuously while
+writing code is a great feedback mechanism.
 
-`pytest-watch <https://github.com/joeyespo/pytest-watch>`_ should be already be installed on your system as part of Astrality's developer dependencies. You can use it to rerun the test suite every time you save any ``*.py`` file within the repository.
+pytest-watch_ should be already be installed on your system as part of
+Astrality's developer dependencies. You can use it to rerun the test suite
+every time you save any ``*.py`` file within the repository.
 
 You can run it in a separate terminal by running:
 
@@ -194,7 +234,9 @@ You can run it in a separate terminal by running:
 
     ptw
 
-It is often useful to run ``pytest-watch`` in verbose mode, stop on first test failure, and only run one specific test file at a time. You can do all this by running:
+It is often useful to run ``pytest-watch`` in verbose mode, stop on first test
+failure, and only run one specific test file at a time. You can do all this by
+running:
 
 .. code-block:: console
 
@@ -204,11 +246,19 @@ It is often useful to run ``pytest-watch`` in verbose mode, stop on first test f
 Debugging
 ~~~~~~~~~
 
-If you end up breaking any behaviour during development, it *should* often be reported by the test suite. Breaking tests will often lead you in the correct direction for fixing the problem.
+If you end up breaking any behaviour during development, it *should* often be
+reported by the test suite. Breaking tests will often lead you in the correct
+direction for fixing the problem.
 
-Some tests might be a bit too brittle, so if you change any underlying data structures it might break some badly written test(s). Sometimes the correct thing to do is to simply delete the failing test. Just ask if you are unsure.
+Some tests might be a bit too brittle, so if you change any underlying data
+structures it might break some badly written test(s). Sometimes the correct
+thing to do is to simply delete the failing test. Just ask if you are unsure.
 
-You can also look at the logging output of Astrality in order to pinpoint possible reasons for any weird behaviour. You can set the `logging level <https://docs.python.org/3/library/logging.html#logging-levels>`_ of astrality by setting the environment variable ``ASTRALITY_LOGGING_LEVEL`` to an appropriate value, for example:
+You can also look at the logging output of Astrality in order to pinpoint
+possible reasons for any weird behaviour. You can set the `logging level
+<https://docs.python.org/3/library/logging.html#logging-levels>`_ of astrality
+by setting the environment variable ``ASTRALITY_LOGGING_LEVEL`` to an
+appropriate value, for example:
 
 .. code-block:: console
 
@@ -218,26 +268,35 @@ You can also look at the logging output of Astrality in order to pinpoint possib
     # Run the CLI entrypoint
     ./bin/astrality
 
-If you submit a bug report, we appreciate if you include the standard output of Astrality run with ``ASTRALITY_LOGGING_LEVEL=DEBUG``.
+If you submit a bug report, we appreciate if you include the standard output of
+Astrality run with ``ASTRALITY_LOGGING_LEVEL=DEBUG``.
 
 Code style
 ~~~~~~~~~~
 
-We use the python source code checker `flake8
-<http://flake8.pycqa.org/en/latest/>`_ to help us maintain a
-consistent style across the code base. It runs automatically as
-part of our ``pytest`` test-suite.
+We use the python source code checker flake8_ to help us maintain a consistent
+style across the code base. It runs automatically as part of our ``pytest``
+test-suite.
 
-You can lint your code locally by running ``flake8 .`` from the root of the repository.
-Integrating ``flake8`` into your workflow is recommended, there are plugins available for most popular `IDEs <https://foxmask.trigger-happy.eu/post/2016/02/17/pycharm-running-flake8/>`_ and `text-editors <https://github.com/nvie/vim-flake8>`_!
+You can lint your code locally by running ``flake8 .`` from the root of the
+repository.
+Integrating ``flake8`` into your workflow is recommended, there are plugins
+available for most popular `IDEs
+<https://foxmask.trigger-happy.eu/post/2016/02/17/pycharm-running-flake8/>`__
+and `text-editors <https://github.com/nvie/vim-flake8>`__!
 
-You can instruct git to ensure flake8 compliance before every commit by running ``git config --bool flake8.strict true`` from your shell.
+You can instruct git to ensure flake8 compliance before every commit by running
+``git config --bool flake8.strict true`` from your shell.
 
-In addition to this, some additional styling conventions are applied to the project:
+In addition to this, some additional styling conventions are applied to the
+project:
 
-* String literals should use single quotes. With other words: ``'this is a string'`` instead of ``"this is a string"``.
-* Try to use keyword arguments when calling functions, unless it is extremely clear from context.
-* Function arguments split over several lines should use trailing commas. With other words, we prefer to write code like this:
+* String literals should use single quotes. With other words: ``'this is a
+  string'`` instead of ``"this is a string"``.
+* Try to use keyword arguments when calling functions, unless it is extremely
+  clear from context.
+* Function arguments split over several lines should use trailing commas. With
+  other words, we prefer to write code like this:
 
       .. code-block:: python
 
@@ -255,13 +314,15 @@ In addition to this, some additional styling conventions are applied to the proj
               target=target
           )
 
-These conventions are mainly enforced in order to stay consistent for choices where ``PEP 8`` do not tell us what to do.
+These conventions are mainly enforced in order to stay consistent for choices
+where ``PEP 8`` do not tell us what to do.
 
 
 Local documentation
 -------------------
 
-Astrality uses the `sphinx <http://www.sphinx-doc.org/en/master/>`_ ecosystem in conjunction with `readthedocs <http://readthedocs.org/>`_ for its documentation.
+Astrality uses the sphinx_ ecosystem in conjunction with readthedocs_ for its
+documentation.
 
 You can run a local instance of the documentation by running:
 
@@ -271,4 +332,23 @@ You can run a local instance of the documentation by running:
     sphinx-autobuild . _build
 
 The entire documentation should now be available on http://127.0.0.1:8000.
-When you edit the documentation files placed with ``docs``, your web browser should automatically refresh the website with the new content!
+When you edit the documentation files placed with ``docs``, your web browser
+should automatically refresh the website with the new content!
+
+
+.. _flake8: http://flake8.pycqa.org/en/latest/
+.. _sphinx: http://www.sphinx-doc.org/en/master/
+.. _readthedocs: http://readthedocs.org/
+.. _pytest-watch: https://github.com/joeyespo/pytest-watch
+.. _pytest-mypy: https://pypi.python.org/pypi/pytest-mypy
+.. _mypy documentation: http://mypy.readthedocs.io/en/latest/introduction.html
+.. _mypy: http://mypy-lang.org/
+.. _Coveralls: http://coveralls.io/
+.. _travis-ci: http://travis-ci.org/
+.. _pytest: https://docs.pytest.org/en/latest/
+.. _official virtualenv tutorial: https://docs.python.org/3/tutorial/venv.html
+.. _brew: https://brew.sh/
+.. _documentation: https://astrality.readthedocs.io/en/latest/index.html
+.. _GitHub issues page: https://github.com/JakobGM/astrality/issues
+.. _GitHub create issues page: https://github.com/JakobGM/astrality/issues/new
+.. _RST cheatsheet: https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst
