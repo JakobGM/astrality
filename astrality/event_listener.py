@@ -5,15 +5,16 @@ Event listeners keep track of certain events for modules.
 """
 
 import abc
-from collections import namedtuple
 import logging
 import time
+from collections import namedtuple
 from datetime import datetime, timedelta
 from math import inf
-from typing import Dict, ClassVar, Tuple, Union
+from typing import Dict, ClassVar, Tuple, Union, Optional
 
 import pytz
-from astral import Location
+from astral import AstralError, Location
+from dateutil.tz import tzlocal
 
 
 EventListenerConfig = Dict[str, Union[str, int, float, None]]
@@ -97,18 +98,55 @@ class Solar(EventListener):
         super().__init__(event_listener_config)
         self.location = self.construct_astral_location()
 
-    def _event(self) -> str:
-        now = self.now()
+    def hardcoded_sun(
+        self,
+        date: Optional[datetime] = None,
+    ) -> Dict[str, datetime]:
+        """
+        Return hardcoded sun when Astral cannot calculate all solar events.
 
-        if now < self.location.sun()['dawn']:
+        During summer, closer to the poles, the sun never dips properly below
+        the horizon. In this case astral throws an AstralError, and we have
+        to fall back to some hard coded defaults instead.
+
+        :param date: Date used for solar events. Defaults to datetime.now().
+        :return: Dict with event keys and datetime values.
+        """
+        if not date:
+            date = datetime.now(tzlocal())
+
+        d = date.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        return {
+            'dawn': d.replace(hour=5),
+            'sunrise': d.replace(hour=6),
+            'noon': d.replace(hour=12),
+            'sunset': d.replace(hour=22),
+            'dusk': d.replace(hour=23),
+        }
+
+    def _event(self) -> str:
+        """Return the current, local solar event."""
+        try:
+            sun = self.location.sun()
+            now = self.now()
+        except AstralError:
+            sun = self.hardcoded_sun()
+            now = datetime.now(tzlocal())
+
+        if now < sun['dawn']:
             event = 'night'
-        elif now < self.location.sun()['sunrise']:
+        elif now < sun['sunrise']:
             event = 'sunrise'
-        elif now < self.location.sun()['noon']:
+        elif now < sun['noon']:
             event = 'morning'
-        elif now < self.location.sun()['sunset']:
+        elif now < sun['sunset']:
             event = 'afternoon'
-        elif now < self.location.sun()['dusk']:
+        elif now < sun['dusk']:
             event = 'sunset'
         else:
             event = 'night'
@@ -117,12 +155,18 @@ class Solar(EventListener):
 
     def time_until_next_event(self) -> timedelta:
         """Return timedelta until next solar event."""
-        now = self.now()
+        try:
+            sun = self.location.sun()
+            now = self.now()
+        except AstralError:
+            sun = self.hardcoded_sun()
+            now = datetime.now(tzlocal())
+
         try:
             next_event = min(
                 utc_time
                 for utc_time
-                in self.location.sun().values()
+                in sun.values()
                 if now < utc_time
             )
         except ValueError as exception:
@@ -130,14 +174,19 @@ class Solar(EventListener):
                 # None of the solar events this current day are in the future,
                 # so we need to compare with solar events tomorrow instead.
                 tomorrow = now + timedelta(days=1, seconds=-1)
+                try:
+                    sun = self.location.sun(tomorrow)
+                except AstralError:
+                    sun = self.hardcoded_sun(tomorrow)
+
                 next_event = min(
                     utc_time
                     for utc_time
-                    in self.location.sun(tomorrow).values()
+                    in sun.values()
                     if now < utc_time
                 )
             else:
-                raise RuntimeError('Could not find the time of the next event')
+                raise
 
         return next_event - now
 

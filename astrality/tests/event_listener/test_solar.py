@@ -1,6 +1,7 @@
 """Tests for the solar event listener subclass."""
 from datetime import datetime, timedelta
 
+from dateutil.tz import tzlocal
 import pytest
 
 from astrality.event_listener import Solar
@@ -130,3 +131,43 @@ def test_config_event_listener_method():
     solar_event_listener_application_config = {'type': 'solar'}
     solar_event_listener = Solar(solar_event_listener_application_config)
     assert solar_event_listener.event_listener_config['latitude'] == 0
+
+
+@pytest.mark.parametrize(
+    'hour,sun',
+    [
+        (23, 'night'),
+        (1, 'night'),
+        (5, 'sunrise'),
+        (10, 'morning'),
+        (13, 'afternoon'),
+        (22, 'sunset'),
+    ],
+)
+def test_locations_where_some_events_never_occur(freezer, hour, sun):
+    """
+    Test that locations with missing solar events are handled gracefully.
+
+    During summer, closer to the poles, the sun never dips properly below
+    the horizon. In this case astral throws an AstralError, and we have
+    to fall back to some hard coded defaults instead.
+    """
+    summer = datetime(
+        year=2018,
+        month=5,
+        day=24,
+        hour=hour,
+        minute=0,
+        tzinfo=tzlocal(),
+    )
+    freezer.move_to(summer)
+
+    polar_location = {
+        'type': 'solar',
+        'latitude': 89,
+        'longitude': 89,
+        'elevation': 0,
+    }
+    polar_sun = Solar(polar_location)
+    assert polar_sun.event() == sun
+    assert 0 < polar_sun.time_until_next_event().total_seconds() < 24 * 60 * 60
