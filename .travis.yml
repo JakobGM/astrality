@@ -9,6 +9,7 @@ matrix:
     - os: linux
       language: python
       python: 3.6
+  allow_failures:
     - os: osx
       language: generic
 
