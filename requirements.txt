@@ -9,7 +9,7 @@ argh==0.26.2              # via sphinx-autobuild, watchdog
 astral==1.6.1
 atomicwrites==1.1.5       # via pytest
 attrs==18.1.0             # via pytest
-babel==2.5.3              # via sphinx
+babel==2.6.0              # via sphinx
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
 click==6.7                # via pip-tools
