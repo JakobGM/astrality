@@ -21,7 +21,7 @@ flake8-quotes==1.0.0
 flake8==3.5.0
 freezegun==0.3.10         # via pytest-freezegun
 humanfriendly==4.12.1     # via coloredlogs
-idna==2.6                 # via requests
+idna==2.7                 # via requests
 imagesize==1.0.0          # via sphinx
 jinja2==2.10
 livereload==2.5.2         # via sphinx-autobuild
