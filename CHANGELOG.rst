@@ -11,6 +11,11 @@ Versioning <http://semver.org/spec/v2.0.0.html>`_.
 [UNRELEASED]
 ============
 
+Changed
+-------
+
+- Astrality is now marked as "production/stable" on PyPI.
+
 Fixed
 -----
 
@@ -19,6 +24,21 @@ Fixed
 - Astrality now catches errors caused by starting the file system watcher.
   It logs the error and continues on without watching the error in such a case.
 
+[1.0.2] - 2018-05-25
+====================
+
+Fixed
+-----
+
+- Fixed lint errors in documentation which caused incorrect rendering on PyPI.
+
+[1.0.1] - 2018-05-24
+====================
+
+Fixed
+-----
+
+- Added missing dependency ``python-dateutil`` to ``setup.py``.
 
 [1.0.0] - 2018-05-24
 ====================
