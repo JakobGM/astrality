@@ -2,6 +2,7 @@
 from argparse import ArgumentParser
 import coloredlogs
 import sys
+import os
 from pathlib import Path
 
 # TODO: This should not be done, but I'm unsure what makes astrality
@@ -13,7 +14,6 @@ from astrality.astrality import main
 from astrality.config import resolve_config_directory, create_config_directory
 from astrality.persistence import ExecutedActions, CreatedFiles
 
-coloredlogs.install(fmt='%(asctime)s %(name)8s %(levelname)s\n%(message)s\n')
 config_dir = resolve_config_directory()
 
 parser = ArgumentParser(
@@ -69,6 +69,15 @@ parser.add_argument(
 )
 args = parser.parse_args()
 dry_run = args.dry_run
+
+# The CLI endpoint uses colored logs
+coloredlogs.install(
+    level=os.environ.get(
+        'ASTRALITY_LOGGING_LEVEL',
+        args.logging_level,
+    ),
+    fmt='%(asctime)s %(name)8s %(levelname)s\n%(message)s\n',
+)
 
 if args.reset_setup:
     for module_name in args.reset_setup:

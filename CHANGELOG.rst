@@ -8,6 +8,16 @@ The format is based on `Keep a Changelog
 <http://keepachangelog.com/en/1.0.0/>`_ and this project adheres to `Semantic
 Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
+[UNRELEASED]
+============
+
+Fixed
+-----
+
+- Fixed bug which caused ``$ASTRALITY_LOGGING_LEVEL`` and
+  ``astrality -l <logging_level>`` to be ignored.
+
+
 [1.0.0] - 2018-05-24
 ====================
 
