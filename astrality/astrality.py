@@ -39,7 +39,9 @@ def main(
         logging_level = os.environ['ASTRALITY_LOGGING_LEVEL']
 
     # Set the logging level to the configured setting
-    logging.basicConfig(level=logging.getLevelName(logging_level))
+    logging.basicConfig(
+        level=logging.getLevelName(logging_level),  # type: ignore
+    )
 
     if not modules and not dry_run and not test:
         # Quit old astrality instances

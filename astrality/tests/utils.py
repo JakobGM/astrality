@@ -65,6 +65,6 @@ class Retry:
                 pass
 
             time.sleep(self.delay)
-            self.delay += self.increase  # type: ignore
+            self.delay += self.increase
 
         return expression()

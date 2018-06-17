@@ -229,14 +229,14 @@ def expand_path(path: Path, config_directory: Path) -> Path:
     expanded to the home directory of $USER.
     """
     # Expand environment variables present in path
-    path = Path(os.path.expandvars(path))  # type: ignore
+    path = Path(os.path.expandvars(path))
 
     # Expand any tilde expressions for user home directory
     path = path.expanduser()
 
     # Use config directory as anchor for relative paths
     if not path.is_absolute():
-        path = Path(os.path.expandvars(config_directory)) / path  # type: ignore
+        path = Path(os.path.expandvars(config_directory)) / path
 
     # Return path where symlinks such as '..' are resolved
     return path.resolve()
