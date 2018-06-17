@@ -1,6 +1,7 @@
 """Module for directory modification watching."""
 
 from pathlib import Path
+import logging
 from sys import platform
 from typing import Callable
 
@@ -34,7 +35,16 @@ class DirectoryWatcher:
             self.watched_directory,
             recursive=True,
         )
-        self.observer.start()
+        try:
+            self.observer.start()
+        except BaseException as e:
+            logger = logging.getLogger(__name__)
+            logger.exception(
+                'Could not start filesystem watcher.\n'
+                f'Error message: "{e}".\n'
+                'Set logging level to DEBUG for full stack trace.',
+                exc_info=logger.getEffectiveLevel() <= logging.DEBUG,
+            )
 
     def stop(self) -> None:
         """Stop watching the directory."""

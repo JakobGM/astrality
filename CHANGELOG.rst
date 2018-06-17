@@ -16,6 +16,8 @@ Fixed
 
 - Fixed bug which caused ``$ASTRALITY_LOGGING_LEVEL`` and
   ``astrality -l <logging_level>`` to be ignored.
+- Astrality now catches errors caused by starting the file system watcher.
+  It logs the error and continues on without watching the error in such a case.
 
 
 [1.0.0] - 2018-05-24

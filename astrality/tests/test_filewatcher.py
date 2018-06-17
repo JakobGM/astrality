@@ -4,6 +4,7 @@ from sys import platform
 from pathlib import Path
 
 import pytest
+from watchdog.observers import Observer
 
 from astrality.filewatcher import DirectoryWatcher
 from astrality.tests.utils import Retry
@@ -115,3 +116,26 @@ def test_filesystem_watcher(watch_dir):
     # Both the touch event and the write event are considered of interest
     assert retry(lambda: event_saver.argument == test_file2)
     assert event_saver.called == 2
+
+
+def test_logging_of_os_errors(monkeypatch, tmpdir, caplog):
+    """Filesystem watcher can fail due to limits, and it should be logged."""
+    def raiser(self):
+        raise OSError('inotify watch limit reached')
+
+    monkeypatch.setattr(
+        Observer,
+        name='start',
+        value=raiser,
+    )
+
+    dir_watcher = DirectoryWatcher(
+        directory=tmpdir,
+        on_modified=lambda x: x,
+    )
+
+    caplog.clear()
+    dir_watcher.start()
+    assert 'inotify watch limit reached' in caplog.record_tuples[0][2]
+
+    dir_watcher.stop()
