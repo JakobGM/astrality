@@ -8,6 +8,18 @@ The format is based on `Keep a Changelog
 <http://keepachangelog.com/en/1.0.0/>`_ and this project adheres to `Semantic
 Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
+[UNRELEASED]
+============
+
+Changed
+-------
+
+- Astrality no longer reverts to using the example configuration when
+  ``ASTRALITY_CONFIG_HOME/astrality.yml`` does not exist.
+  Default values are are used instead, and a warning is logged.
+  Use ``--create-example-config`` to get create the example configuration
+  instead.
+
 [1.0.3] - 2018-06-17
 ====================
 

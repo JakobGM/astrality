@@ -126,20 +126,14 @@ def infer_config_location(
     places to put it. If the expected config file is not present, use an
     example configuration instead.
     """
-    if not config_directory:
-        config_directory = resolve_config_directory()
-
-    config_file = Path(config_directory, 'astrality.yml')
+    config_directory = config_directory or resolve_config_directory()
+    config_file = config_directory / 'astrality.yml'
 
     if not config_file.is_file():
         logger.warning(
-            'Configuration file not found in its expected path ' +
-            str(config_file) +
-            '.',
+            'Configuration file not found in its expected path "{config_file}.'
+            'Using default values for astrality.yml.',
         )
-        config_directory = Path(__file__).parent.absolute() / 'config'
-        config_file = config_directory / 'astrality.yml'
-        logger.warning(f'Using example configuration instead: "{config_file}"')
     else:
         logging.info(f'Using configuration file "{config_file}"')
 
@@ -173,10 +167,14 @@ def user_configuration(
         global_context = Context()
 
     # Global configuration options
-    config: AstralityYAMLConfigDict = utils.compile_yaml(  # type: ignore
-        path=config_file,
-        context=global_context,
-    )
+    config: AstralityYAMLConfigDict
+    if config_file.is_file():
+        config = utils.compile_yaml(  # type: ignore
+            path=config_file,
+            context=global_context,
+        )
+    else:
+        config = {}
 
     # Insert default global settings that are not specified
     for section_name in ('astrality', 'modules'):

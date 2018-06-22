@@ -6,11 +6,14 @@ from shutil import rmtree
 import pytest
 
 from astrality.config import (
+    ASTRALITY_DEFAULT_GLOBAL_SETTINGS,
     create_config_directory,
+    infer_config_location,
     resolve_config_directory,
+    user_configuration,
 )
 from astrality.context import Context
-from astrality.utils import compile_yaml
+from astrality.utils import compile_yaml, dump_yaml
 
 
 @pytest.fixture
@@ -124,3 +127,66 @@ class TestCreateConfigDirectory:
         assert 'astrality.yml' in dir_contents
         assert 'modules' in dir_contents
         rmtree(created_config_dir)
+
+
+class TestInferConfigLocation:
+    """Tests for config.infer_config_location()."""
+
+    def test_that_empty_config_location_still_return_paths(
+        self,
+        monkeypatch,
+        caplog,
+    ):
+        """
+        A lack of astrality.yml should not change the result.
+
+        When astrality.yml is not found in the configuration directory, a
+        warning should be logged, but the path should still be returned.
+        The remaining logic should use default values for astrality.yml instead.
+        """
+        config_path = Path('/tmp/astrality_config')
+        monkeypatch.setattr(
+            os,
+            'environ',
+            {'ASTRALITY_CONFIG_HOME': str(config_path)},
+        )
+        caplog.clear()
+        directory, config_file = infer_config_location()
+        assert directory == config_path
+        assert config_file == config_path / 'astrality.yml'
+        assert 'not found' in caplog.record_tuples[0][2]
+
+
+class TestUserConfiguration:
+    """Tests for config.user_configuration()."""
+
+    def test_missing_global_configuration_file(self, monkeypatch, tmpdir):
+        """Missing astrality.yml should result in default values."""
+        # Create directory used as astrality config directory
+        config_home = Path(tmpdir)
+        monkeypatch.setattr(
+            os,
+            'environ',
+            {'ASTRALITY_CONFIG_HOME': str(config_home)},
+        )
+
+        # Sanity check
+        assert len(list(config_home.iterdir())) == 0
+
+        # Create modules and context files, but *not* astrality.yml
+        modules = {'A': {'enabled': False}}
+        dump_yaml(path=config_home / 'modules.yml', data=modules)
+
+        context = {'section': {'key': 'value'}}
+        dump_yaml(path=config_home / 'context.yml', data=context)
+
+        (
+            global_config,
+            global_modules,
+            global_context,
+            inferred_path,
+        ) = user_configuration()
+        assert global_config == ASTRALITY_DEFAULT_GLOBAL_SETTINGS
+        assert global_modules == modules
+        assert global_context == context
+        assert inferred_path == config_home
