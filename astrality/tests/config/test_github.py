@@ -18,7 +18,7 @@ def test_clone_github_repo(tmpdir):
     )
     assert repo_dir.is_dir()
 
-    module_config = repo_dir / 'config.yml'
+    module_config = repo_dir / 'modules.yml'
     assert module_config.is_file()
 
     assert repo_dir.name == 'color-schemes.astrality'
