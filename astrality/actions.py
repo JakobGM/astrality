@@ -305,7 +305,7 @@ class CompileAction(Action):
 
         Compilation targets are stored in $XDG_DATA_HOME/astrality/compilations.
         For details regarding the implementation see:
-            https://www.peterbe.com/plog/best-hashing-function-in-python
+        https://www.peterbe.com/plog/best-hashing-function-in-python
 
         :param name: Path to template to be compiled.
         :return: Path to deterministicly determined compilation target.
