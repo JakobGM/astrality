@@ -940,7 +940,8 @@ For example enabling the module named ``module_name`` defined in ``modules.yml``
         enabled_modules:
             - name: github::username/repository::module_name
 
-Astrality will automatically fetch the module on startup and place it within ``$ASTRALITY_CONFIG_HOME/<modules_directory>/username/repository``.
+Astrality will automatically clone the module on first-time startup, placing it within
+``$XDG_DATA_HOME/astrality/repositories/github/username/repository``.
 If you want to automatically update the GitHub module, you can specify ``autoupdate: true``:
 
 .. code-block:: yaml

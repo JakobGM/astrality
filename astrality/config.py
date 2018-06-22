@@ -32,6 +32,7 @@ from astrality.github import clone_repo, clone_or_pull_repo
 from astrality.context import Context
 from astrality import utils
 from astrality.persistence import CreatedFiles
+from astrality.xdg import XDG
 
 if TYPE_CHECKING:
     from astrality.module import ModuleConfigDict  # noqa
@@ -455,9 +456,11 @@ class GithubModuleSource(ModuleSource):
         self.github_user, self.github_repo = github_path.split('/')
         self.prepend = f'github::{self.github_user}/{self.github_repo}::'
 
-        self.directory = modules_directory \
-            / self.github_user \
-            / self.github_repo
+        repositories = XDG().data(
+            resource='repositories/github',
+            directory=True,
+        )
+        self.directory = repositories / github_path
         self.modules_file = self.directory / 'modules.yml'
         self.context_file = self.directory / 'context.yml'
 
@@ -465,13 +468,13 @@ class GithubModuleSource(ModuleSource):
             clone_repo(
                 user=self.github_user,
                 repository=self.github_repo,
-                modules_directory=modules_directory,
+                modules_directory=repositories,
             )
         elif self.autoupdate:
             clone_or_pull_repo(
                 user=self.github_user,
                 repository=self.github_repo,
-                modules_directory=modules_directory,
+                modules_directory=repositories,
             )
 
     def __eq__(self, other) -> bool:

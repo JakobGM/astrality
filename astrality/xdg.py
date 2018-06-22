@@ -34,14 +34,20 @@ class XDG:
         application_data_home.mkdir(parents=True, exist_ok=True)
         return application_data_home
 
-    def data(self, resource: str) -> Path:
+    def data(self, resource: str, directory: bool = False) -> Path:
         """
         Return file resource of application.
 
         :param resource: Relative string path, i.e. $XDG_DATA_HOME/<resource>.
+        :param directory: If True, a directory is returned instead of a file.
         :return: Path to touched data resource.
         """
         resource_path = self.data_home / resource
         resource_path.parent.mkdir(parents=True, exist_ok=True)
-        resource_path.touch(exist_ok=True)
+
+        if directory:
+            resource_path.mkdir(exist_ok=True)
+        else:
+            resource_path.touch(exist_ok=True)
+
         return resource_path

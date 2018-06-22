@@ -19,6 +19,12 @@ def clone_repo(
 
     The resulting repository is placed in:
     <modules_directory>/<user>/<repository>.
+
+    :param user: GitHub username.
+    :param repository: Repository name.
+    :param modules_directory: Directory containing cloned repositories.
+    :param timeout: Time to wait for successful clone.
+    :return: Path to cloned repository.
     """
     github_user_directory = modules_directory / user
     github_user_directory.mkdir(parents=True, exist_ok=True)
@@ -55,7 +61,15 @@ def clone_or_pull_repo(
     modules_directory: Path,
     timeout: Union[int, float] = 50,
 ) -> Path:
-    """Fetch newest version of GitHub repository."""
+    """
+    Fetch newest version of GitHub repository.
+
+    :param user: GitHub username.
+    :param repository: Repository name.
+    :param modules_directory: Directory containing cloned repositories.
+    :param timeout: Time to wait for successful clone.
+    :return: Path to cloned repository.
+    """
     github_repo_directory = modules_directory / user / repository
 
     if not github_repo_directory.is_dir():
@@ -84,7 +98,7 @@ def clone_or_pull_repo(
     )
     if result is False:
         raise GithubModuleError(
-            f'Could not git pull module directory "{github_repo_directory}".\.'
+            f'Could not git pull module directory "{github_repo_directory}". '
             f'Return value from git pull operation: "{result}".',
         )
 

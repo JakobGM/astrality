@@ -44,3 +44,23 @@ def test_retrieving_data_resource(patch_xdg_directory_standard):
     resource.write_text('hello')
     refetched_resource = xdg.data('modules/test.tmp')
     assert refetched_resource.read_text() == 'hello'
+
+
+def test_retrieving_data_directory_resource(patch_xdg_directory_standard):
+    """The data method should also be able to retrieve directories."""
+    xdg = XDG()
+    resource = xdg.data(
+        resource='repositories/github',
+        directory=True,
+    )
+    assert resource == patch_xdg_directory_standard / 'repositories' / 'github'
+    assert resource.is_dir()
+
+    # Existing directory content should not be deleted
+    resource_file = resource / 'file'
+    resource_file.touch()
+    resource = xdg.data(
+        resource='repositories/github',
+        directory=True,
+    )
+    assert resource_file.exists()

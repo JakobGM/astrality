@@ -19,6 +19,9 @@ Changed
   Default values are are used instead, and a warning is logged.
   Use ``--create-example-config`` to get create the example configuration
   instead.
+- GitHub modules are now cloned to
+  ``$XDG_DATA_HOME/astrality/repositories/github`` instead of
+  ``$ASTRALITY_CONFIG_HOME/<modules_directory>``.
 
 [1.0.3] - 2018-06-17
 ====================

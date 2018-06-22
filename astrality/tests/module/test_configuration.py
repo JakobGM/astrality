@@ -1,6 +1,4 @@
 """Tests for configuraition dictionary management."""
-import shutil
-
 import pytest
 
 from astrality.module import GlobalModulesConfig, ModuleManager
@@ -143,22 +141,8 @@ def test_enabling_of_all_modules():
     assert 'south_america::argentina' in module_manager.modules
 
 
-@pytest.yield_fixture
-def delete_jakobgm(test_config_directory):
-    """Delete jakobgm module directory used in testing."""
-    location = test_config_directory / 'freezed_modules' / 'jakobgm'
-
-    yield
-
-    if location.is_dir():
-        shutil.rmtree(location)
-
-
 @pytest.mark.slow
-def test_using_three_different_module_sources(
-    test_config_directory,
-    delete_jakobgm,
-):
+def test_using_three_different_module_sources(test_config_directory):
     modules_directory = test_config_directory / 'freezed_modules'
 
     application_config = {

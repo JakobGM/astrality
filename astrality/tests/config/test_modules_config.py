@@ -1,6 +1,5 @@
 """Test module for global module configuration options."""
 import logging
-import shutil
 import time
 from pathlib import Path
 
@@ -28,20 +27,6 @@ def modules_application_config():
             {'name': 'trondheim'},
         ],
     }
-
-
-@pytest.yield_fixture(autouse=True)
-def delete_jakobgm(test_config_directory):
-    """Delete jakobgm module directory used in testing."""
-    location1 = test_config_directory / 'freezed_modules' / 'jakobgm'
-    location2 = test_config_directory / 'test_modules' / 'jakobgm'
-
-    yield
-
-    if location1.is_dir():
-        shutil.rmtree(location1)
-    if location2.is_dir():
-        shutil.rmtree(location2)
 
 
 def test_custom_modules_folder(conf_path):
@@ -349,7 +334,7 @@ class TestGithubModuleSource:
         )
 
     @pytest.mark.slow
-    def test_that_username_and_repo_is_identified(self, tmpdir, delete_jakobgm):
+    def test_that_username_and_repo_is_identified(self, tmpdir):
         modules_directory = Path(tmpdir)
         github_module_source = GithubModuleSource(
             enabling_statement={'name': 'github::jakobgm/astrality'},
@@ -359,11 +344,7 @@ class TestGithubModuleSource:
         assert github_module_source.github_repo == 'astrality'
 
     @pytest.mark.slow
-    def test_that_enabled_repos_are_found(
-        self,
-        test_config_directory,
-        delete_jakobgm,
-    ):
+    def test_that_enabled_repos_are_found(self, test_config_directory):
         github_module_source = GithubModuleSource(
             enabling_statement={
                 'name': 'github::jakobgm/test-module.astrality',
@@ -384,11 +365,7 @@ class TestGithubModuleSource:
         assert 'jakobgm' not in github_module_source
 
     @pytest.mark.slow
-    def test_specific_github_modules_enabled(
-        self,
-        test_config_directory,
-        delete_jakobgm,
-    ):
+    def test_specific_github_modules_enabled(self, test_config_directory):
         github_module_source = GithubModuleSource(
             enabling_statement={
                 'name': 'github::jakobgm/test-module.astrality::botswana',
@@ -406,7 +383,6 @@ class TestGithubModuleSource:
     def test_that_all_modules_enabled_syntaxes_behave_identically(
         self,
         test_config_directory,
-        delete_jakobgm,
     ):
         github_module_source1 = GithubModuleSource(
             enabling_statement={
@@ -465,21 +441,26 @@ class TestGithubModuleSource:
         }
 
     @pytest.mark.slow
-    def test_use_of_autoupdating_github_source(self, tmpdir):
-        modules_directory = Path(tmpdir)
-
+    def test_use_of_autoupdating_github_source(
+        self,
+        patch_xdg_directory_standard,
+    ):
+        """When autoupdate is True, the latest revision should be pulled."""
         github_module_source = GithubModuleSource(
             enabling_statement={
                 'name': 'github::jakobgm/test-module.astrality',
                 'autoupdate': True,
             },
-            modules_directory=modules_directory,
+            modules_directory=Path('/what/ever'),
         )
 
         # The repository is lazely cloned, so we need to get the config
         github_module_source.modules({})
 
-        repo_dir = modules_directory / 'jakobgm' / 'test-module.astrality'
+        repo_dir = (
+            patch_xdg_directory_standard /
+            'repositories/github/jakobgm/test-module.astrality'
+        )
         assert repo_dir.is_dir()
 
         # Move master to first commit in repository
@@ -501,7 +482,7 @@ class TestGithubModuleSource:
                 'name': 'github::jakobgm/test-module.astrality',
                 'autoupdate': True,
             },
-            modules_directory=modules_directory,
+            modules_directory=Path('/what/ever'),
         )
         github_module_source.modules({})
 
@@ -537,12 +518,7 @@ class TestEnabledModules:
         assert enabled_modules.all_global_modules_enabled is False
 
     @pytest.mark.slow
-    def test_enabled_detection(
-        self,
-        test_config_directory,
-        caplog,
-        delete_jakobgm,
-    ):
+    def test_enabled_detection(self, test_config_directory, caplog):
         enabling_statements = [
             {'name': 'global'},
             {'name': 'south_america::*'},
