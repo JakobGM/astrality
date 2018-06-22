@@ -1,0 +1,4 @@
+polybar:
+  compile:
+    content: "template.config"
+    target: "~/.config/polybar/config"

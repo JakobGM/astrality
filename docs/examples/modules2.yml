@@ -1,0 +1,7 @@
+polybar:
+  compile:
+    content: "template.config"
+    target: "~/.config/polybar/config"
+
+  run:
+    shell: "polybar --config=~/.config/polybar/config example"

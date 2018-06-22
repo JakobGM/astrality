@@ -1,0 +1,7 @@
+host:
+  interfaces:
+    wlan:
+      handle: "wlp3s1"
+
+    ethernet:
+      handle: "eno2"

@@ -1,0 +1,14 @@
+statusbar:
+  font:
+    size: 16
+
+    1: "FuraCode Nerd Font"
+    2: "FuraCode Mono Nerd Font"
+
+host:
+  interfaces:
+    wlan:
+      handle: "wlp3s0"
+
+    ethernet:
+      handle: "eno0"

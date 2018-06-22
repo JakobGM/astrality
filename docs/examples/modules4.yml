@@ -1,0 +1,7 @@
+polybar:
+  compile:
+    content: "template.config"
+
+  run:
+    - shell: "killall -q polybar"
+    - shell: "polybar --config={template.config} example"
