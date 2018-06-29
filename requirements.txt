@@ -47,7 +47,7 @@ pytest-freezegun==0.2.0
 pytest-mypy==0.3.2
 pytest==3.6.1
 python-dateutil==2.7.3
-pytz==2018.4              # via astral, babel
+pytz==2018.5              # via astral, babel
 pyyaml==3.12
 requests==2.19.1          # via astral, sphinx
 six==1.11.0               # via freezegun, livereload, more-itertools, packaging, pip-tools, pytest, python-dateutil, sphinx
