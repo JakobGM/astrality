@@ -388,7 +388,7 @@ class SymlinkAction(Action):
             self.symlinked_files[content].add(symlink)
             log_msg = f'[symlink] Content "{content}" -> Target: "{symlink}".'
 
-            if symlink.resolve() == content:
+            if symlink.resolve() == content.resolve():
                 continue
 
             if dry_run:
