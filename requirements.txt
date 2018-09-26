@@ -30,7 +30,7 @@ mccabe==0.6.1             # via flake8
 more-itertools==4.2.0     # via pytest
 mypy-extensions==0.3.0
 mypy==0.610
-packaging==17.1           # via sphinx
+packaging==18.0           # via sphinx
 pathtools==0.1.2          # via sphinx-autobuild, watchdog
 pip-tools==2.0.2
 pluggy==0.6.0             # via pytest
