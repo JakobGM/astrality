@@ -61,7 +61,7 @@ tornado==5.0.2            # via livereload, sphinx-autobuild
 typed-ast==1.1.0          # via mypy
 urllib3==1.23             # via requests
 watchdog==0.8.3
-wheel==0.31.1
+wheel==0.32.1
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
