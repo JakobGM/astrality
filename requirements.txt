@@ -19,7 +19,7 @@ first==2.0.1              # via pip-tools
 flake8-commas==2.0.0
 flake8-quotes==1.0.0
 flake8==3.5.0
-freezegun==0.3.10         # via pytest-freezegun
+freezegun==0.3.11         # via pytest-freezegun
 humanfriendly==4.12.1     # via coloredlogs
 idna==2.7                 # via requests
 imagesize==1.0.0          # via sphinx
