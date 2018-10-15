@@ -29,7 +29,7 @@ markupsafe==1.0           # via jinja2
 mccabe==0.6.1             # via flake8
 more-itertools==4.2.0     # via pytest
 mypy-extensions==0.3.0
-mypy==0.610
+mypy==0.641
 packaging==17.1           # via sphinx
 pathtools==0.1.2          # via sphinx-autobuild, watchdog
 pip-tools==2.0.2
