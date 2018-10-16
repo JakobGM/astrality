@@ -33,7 +33,7 @@ mypy==0.610
 packaging==17.1           # via sphinx
 pathtools==0.1.2          # via sphinx-autobuild, watchdog
 pip-tools==2.0.2
-pluggy==0.6.0             # via pytest
+pluggy==0.8.0             # via pytest
 port-for==0.3.1           # via sphinx-autobuild
 psutil==5.4.6
 py==1.5.3                 # via pytest
