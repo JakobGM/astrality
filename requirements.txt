@@ -25,7 +25,7 @@ idna==2.7                 # via requests
 imagesize==1.0.0          # via sphinx
 jinja2==2.10
 livereload==2.5.2         # via sphinx-autobuild
-markupsafe==1.0           # via jinja2
+markupsafe==1.1.0           # via jinja2
 mccabe==0.6.1             # via flake8
 more-itertools==4.2.0     # via pytest
 mypy-extensions==0.3.0
