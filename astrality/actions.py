@@ -465,8 +465,7 @@ class CopyAction(Action):
                 continue
 
             logger.info(log_msg)
-            copy.parent.mkdir(parents=True, exist_ok=True)
-
+            self.creation_store.mkdir(copy.parent)
             self.creation_store.backup(path=copy)
             utils.copy(
                 source=content,
