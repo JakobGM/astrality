@@ -226,3 +226,36 @@ def test_backup_of_symlink_target(create_temp_files):
     # And when cleaning up the module, the backup should be restored
     CreatedFiles().cleanup(module='test')
     assert target.read_text() == 'original'
+
+
+def test_cleanup_of_created_directory(create_temp_files, tmpdir):
+    """Created directories should be cleaned up."""
+    tmpdir = Path(tmpdir)
+    [content] = create_temp_files(1)
+
+    # The target requires a new directory to be created
+    directory = tmpdir / 'dir'
+    target = directory / 'target.tmp'
+
+    # Execute the symlink action
+    symlink_options = {
+        'content': str(content.name),
+        'target': str(target),
+    }
+    created_files = CreatedFiles().wrapper_for(module='test')
+    symlink_action = SymlinkAction(
+        options=symlink_options,
+        directory=content.parent,
+        replacer=lambda x: x,
+        context_store={},
+        creation_store=created_files,
+    )
+    symlink_action.execute()
+
+    # The directory should now exist and be persisted
+    assert directory.is_dir()
+    assert directory in created_files.creation_store
+
+    # But it should be deleted on cleanup
+    CreatedFiles().cleanup(module='test')
+    assert not directory.is_dir()
