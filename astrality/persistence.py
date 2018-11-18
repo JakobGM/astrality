@@ -5,7 +5,7 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from mypy_extensions import TypedDict
 
@@ -17,6 +17,7 @@ class CreationMethod(Enum):
     """Ways modules can create files."""
     COMPILE = 'compiled'
     COPY = 'copied'
+    MKDIR = 'mkdir'
     SYMLINK = 'symlinked'
 
 
@@ -122,7 +123,9 @@ class CreatedFiles:
                     creation['hash'] = hashlib.md5(
                         target.read_bytes(),
                     ).hexdigest()
-                except PermissionError:
+                except (PermissionError, IsADirectoryError):
+                    # Currently, we do not hash directories or content with
+                    # lacking permissions to read.
                     creation['hash'] = None
 
         if modified:
@@ -151,7 +154,28 @@ class CreatedFiles:
         """
         logger = logging.getLogger(__name__)
         module_creations = self.creations.get(module, {})
-        for creation, info in module_creations.items():
+
+        def mkdir_last(creation_item: Tuple[str, CreationInfo]) -> int:
+            """
+            Return 2 if creation item is of type 'mkdir', else return 1.
+
+            This function is used to sort module creation items such that
+            directory creations occur last in the sorted collection.
+
+            Why? Because we want to first remove all files and symlinks before
+            we try to delete created directories. If the directory is not empty
+            after removing all such files, it should be kept alone in order
+            to prevent data loss.
+            """
+            if creation_item[1]['method'] == 'mkdir':
+                return 2
+            return 1
+
+        # This dictionary will be populated with all directories which we can't
+        # delete. Those should still be tracked after cleaning up the module.
+        dangling_directories: Dict[str, CreationInfo] = {}
+
+        for creation, info in sorted(module_creations.items(), key=mkdir_last):
             creation_method = info['method']
             content = info['content']
             backup = info['backup']
@@ -165,7 +189,18 @@ class CreatedFiles:
                 continue
 
             creation_path = Path(creation)
-            if creation_path.exists():
+            if creation_path.is_dir():
+                try:
+                    logger.info(log_msg)
+                    creation_path.rmdir()
+                except OSError:
+                    logger.warning(
+                        f'Failed to remove created directory "{creation}", '
+                        'as it contains new non-module files since creation! '
+                        'Try to delete files manually and then cleanup again.',
+                    )
+                    dangling_directories[creation] = info
+            elif creation_path.exists():
                 logger.info(log_msg)
                 creation_path.unlink()
             else:
@@ -180,6 +215,8 @@ class CreatedFiles:
 
         if not dry_run:
             self.creations.pop(module, None)
+            if dangling_directories:
+                self.creations[module] = dangling_directories
             utils.dump_yaml(data=self.creations, path=self.path)
 
     def backup(self, module: str, path: Path) -> Optional[Path]:
