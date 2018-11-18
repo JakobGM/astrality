@@ -3,6 +3,8 @@
 from pathlib import Path
 import shutil
 
+import pytest
+
 from astrality.persistence import (
     CreatedFiles,
     CreationMethod,
@@ -421,3 +423,43 @@ def test_cleanup_of_recursive_directories(tmpdir):
 
     # Also the copied file
     assert not target.exists()
+
+
+@pytest.mark.parametrize('with_wrapper', (False, True))
+def test_mkdir_method_of_created_files(tmpdir, with_wrapper):
+    """CreatedFiles should be able to create and persist directories."""
+    tmpdir = Path(tmpdir)
+
+    # Directory "a" already exists as a directory
+    a = tmpdir / 'a'
+    a.mkdir(parents=True)
+
+    # But directory b and c are supposed to be created
+    b = a / 'b'
+    c = b / 'c'
+
+    # We now want to create directory c and all parents
+    created_files = CreatedFiles()
+
+    if with_wrapper:
+        created_files.wrapper_for(module='my_module').mkdir(path=c)
+    else:
+        created_files.mkdir(module='my_module', path=c)
+
+    # The directories have been created
+    assert b.is_dir()
+    assert c.is_dir()
+
+    # And persisted
+    assert len(created_files.by('my_module')) == 2
+    assert b in created_files
+    assert c in created_files
+
+    # But a should not be counted as a created directory
+    assert a not in created_files
+
+    # Cleanup should only clean b and c, but not a
+    created_files.cleanup(module='my_module')
+    assert not b.is_dir()
+    assert not c.is_dir()
+    assert a.is_dir()
