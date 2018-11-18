@@ -377,7 +377,7 @@ class ModuleSource(ABC):
         return bool(cls.name_syntax.match(module_name))
 
     @classmethod
-    def type(cls, of: str) -> 'ModuleSource':
+    def type(cls, of: str) -> 'Type[ModuleSource]':
         """Return the subclass which is responsible for the module name."""
         for source_type in cls.__subclasses__():
             if source_type.represented_by(module_name=of):
