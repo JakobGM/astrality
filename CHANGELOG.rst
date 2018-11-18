@@ -8,6 +8,15 @@ The format is based on `Keep a Changelog
 <http://keepachangelog.com/en/1.0.0/>`_ and this project adheres to `Semantic
 Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
+[UNRELEASED]
+============
+
+Fixed
+-----
+
+- Astrality now cleans up directories created by `symlink` and `copy` actions
+  when modules are cleaned up with the `--cleanup` flag.
+
 [1.1.0] - 2018-06-24
 ====================
 
