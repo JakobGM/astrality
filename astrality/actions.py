@@ -396,8 +396,7 @@ class SymlinkAction(Action):
                 continue
 
             logger.info(log_msg)
-            symlink.parent.mkdir(parents=True, exist_ok=True)
-
+            self.creation_store.mkdir(symlink.parent)
             self.creation_store.backup(path=symlink)
             symlink.symlink_to(content)
             self.creation_store.insert_creation(
