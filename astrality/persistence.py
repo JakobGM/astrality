@@ -86,7 +86,7 @@ class CreatedFiles:
         self,
         module: str,
         creation_method: CreationMethod,
-        contents: Iterable[Path],
+        contents: Iterable[Optional[Path]],
         targets: Iterable[Path],
     ) -> None:
         """
@@ -94,7 +94,8 @@ class CreatedFiles:
 
         :param module: Name of module which has created the files.
         :param creation_method: Type of action which has created the file.
-        :param contents: The source files used in creating the files.
+        :param contents: The source files used in creating the files. None if
+          a created directory.
         :param targets: The files that have be created.
         """
         # We do not want to insert empty sections, to reduce reduntant clutter
@@ -234,6 +235,33 @@ class CreatedFiles:
         utils.dump_yaml(data=self.creations, path=self.path)
         return backup
 
+    def mkdir(self, module: str, path: Path) -> None:
+        """
+        Create directory with parents and persist the creation.
+
+        A no-op if the directory already exists. All parent directories that
+        also needs to be created will also be persisted.
+
+        :param module: Module that requests the directory to be created.
+        :param path: Directory path to be made.
+        """
+        # First find out exactly which directories, including parents, will
+        # be created.
+        created_directories = []
+        for new_directory in (path, *path.parents):
+            if not new_directory.exists():
+                created_directories.append(new_directory)
+            else:
+                break
+
+        path.mkdir(parents=True, exist_ok=True)
+        self.insert(
+            module=module,
+            creation_method=CreationMethod.MKDIR,
+            contents=len(created_directories) * [None],
+            targets=created_directories,
+        )
+
     def __contains__(self, path) -> bool:
         """Return True if path has been created by Astrality."""
         return any(
@@ -268,6 +296,16 @@ class ModuleCreatedFiles:
         :return: Optional path to backup.
         """
         return self.creation_store.backup(module=self.module, path=path)
+
+    def mkdir(self, path: Path) -> None:
+        """
+        Create directory with parents and persist the creation.
+
+        A no-op if the directory already exists.
+
+        :param path: Directory path to be made.
+        """
+        self.creation_store.mkdir(module=self.module, path=path)
 
     def insert_creation(
         self,
