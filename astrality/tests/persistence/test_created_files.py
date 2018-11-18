@@ -329,3 +329,56 @@ def test_taking_backup_of_symlinks(create_temp_files):
     created_files.cleanup(module='name')
     assert original_symlink.resolve() == original_target
     assert original_symlink.read_text() == 'original content'
+
+
+def test_creation_and_cleanup_of_directory(create_temp_files):
+    """Created directories should be tracked."""
+    # my_module is going to copy one file
+    created_files = CreatedFiles().wrapper_for(module='my_module')
+
+    # Specifically content -> target
+    content, target = create_temp_files(2)
+
+    # The target directory does not exist yet, so it creates it first
+    created_files.insert_creation(
+        content=None,
+        target=target.parent,
+        method=CreationMethod.MKDIR,
+    )
+
+    # Then copies the file over
+    created_files.insert_creation(
+        content=content,
+        target=target,
+        method=CreationMethod.COPY,
+    )
+
+    # These two creations should now be tracked
+    global_created_files = CreatedFiles()
+    creations = global_created_files.by('my_module')
+    assert len(creations) == 2
+    assert target.parent in global_created_files
+    assert target in global_created_files
+
+    # And a small sanity check, the directory actually exists
+    assert target.parent.is_dir()
+
+    # Now we introduce a small complication; an file **not** created by
+    # astrality is placed within this created directory.
+    external_file = target.parent / 'external.tmp'
+    external_file.touch()
+
+    # If we now clean up the module, the copied file can be deleted, but not
+    # the created directory, as that would delete an external file!
+    global_created_files.cleanup(module='my_module')
+    assert not target.exists()
+    assert target.parent.is_dir()
+
+    # And the directory is still tracked, even after the cleanup
+    assert target.parent in CreatedFiles()
+
+    # Now we delet this external file,
+    # such that the directory can be cleaned up.
+    external_file.unlink()
+    global_created_files.cleanup(module='my_module')
+    assert not target.parent.is_dir()
