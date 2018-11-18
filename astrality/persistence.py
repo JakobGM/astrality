@@ -5,7 +5,7 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional
 
 from mypy_extensions import TypedDict
 
@@ -155,27 +155,14 @@ class CreatedFiles:
         logger = logging.getLogger(__name__)
         module_creations = self.creations.get(module, {})
 
-        def mkdir_last(creation_item: Tuple[str, CreationInfo]) -> int:
-            """
-            Return 2 if creation item is of type 'mkdir', else return 1.
-
-            This function is used to sort module creation items such that
-            directory creations occur last in the sorted collection.
-
-            Why? Because we want to first remove all files and symlinks before
-            we try to delete created directories. If the directory is not empty
-            after removing all such files, it should be kept alone in order
-            to prevent data loss.
-            """
-            if creation_item[1]['method'] == 'mkdir':
-                return 2
-            return 1
-
         # This dictionary will be populated with all directories which we can't
         # delete. Those should still be tracked after cleaning up the module.
         dangling_directories: Dict[str, CreationInfo] = {}
 
-        for creation, info in sorted(module_creations.items(), key=mkdir_last):
+        for creation, info in sorted(
+            module_creations.items(),
+            key=lambda item: -len(Path(item[0]).parts),  # depth-first order
+        ):
             creation_method = info['method']
             content = info['content']
             backup = info['backup']

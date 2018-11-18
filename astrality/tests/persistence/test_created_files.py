@@ -382,3 +382,42 @@ def test_creation_and_cleanup_of_directory(create_temp_files):
     external_file.unlink()
     global_created_files.cleanup(module='my_module')
     assert not target.parent.is_dir()
+
+
+def test_cleanup_of_recursive_directories(tmpdir):
+    """Recursively created directories should be cleaned up."""
+    tmpdir = Path(tmpdir)
+
+    # Three recursive directories are created
+    a = tmpdir / 'a'
+    b = a / 'b'
+    c = b / 'c'
+    c.mkdir(parents=True)
+
+    # And these creations are persisted
+    created_files = CreatedFiles().wrapper_for(module='my_module')
+    for directory in (c, a, b):
+        created_files.insert_creation(
+            content=None,
+            target=directory,
+            method=CreationMethod.MKDIR,
+        )
+
+    # And a file is copied over into the deepest of these directories
+    content = tmpdir / 'content.tmp'
+    target = c / 'target.tmp'
+    content.touch()
+    target.touch()
+    created_files.insert_creation(
+        content=content,
+        target=target,
+        method=CreationMethod.COPY,
+    )
+
+    # All these directories should be cleaned up
+    CreatedFiles().cleanup(module='my_module')
+    for directory in (a, b, c):
+        assert not directory.exists()
+
+    # Also the copied file
+    assert not target.exists()
