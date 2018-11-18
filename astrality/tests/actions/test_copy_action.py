@@ -217,3 +217,36 @@ def test_backup_of_copy_target(create_temp_files):
     # And when cleaning up the module, the backup should be restored
     CreatedFiles().cleanup(module='test')
     assert target.read_text() == 'original'
+
+
+def test_cleanup_of_created_directory(create_temp_files, tmpdir):
+    """Created directories should be cleaned up."""
+    tmpdir = Path(tmpdir)
+    [content] = create_temp_files(1)
+
+    # The target requires a new directory to be created
+    directory = tmpdir / 'dir'
+    target = directory / 'target.tmp'
+
+    # Execute copy action
+    copy_options = {
+        'content': str(content.name),
+        'target': str(target),
+    }
+    created_files = CreatedFiles().wrapper_for(module='test')
+    copy_action = CopyAction(
+        options=copy_options,
+        directory=content.parent,
+        replacer=lambda x: x,
+        context_store={},
+        creation_store=created_files,
+    )
+    copy_action.execute()
+
+    # The directory should now be created and persisted
+    assert directory.is_dir()
+    assert directory in created_files.creation_store
+
+    # And it should be deleted on cleanup
+    created_files.creation_store.cleanup(module='test')
+    assert not directory.is_dir()
