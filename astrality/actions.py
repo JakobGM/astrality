@@ -273,6 +273,7 @@ class CompileAction(Action):
                 )
             else:
                 self.creation_store.backup(path=target_file)
+                self.creation_store.mkdir(path=target_file.parent)
                 compiler.compile_template(
                     template=content_file,
                     target=target_file,
