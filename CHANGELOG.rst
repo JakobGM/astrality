@@ -14,8 +14,8 @@ Versioning <http://semver.org/spec/v2.0.0.html>`_.
 Fixed
 -----
 
-- Astrality now cleans up directories created by `symlink` and `copy` actions
-  when modules are cleaned up with the `--cleanup` flag.
+- Astrality now cleans up directories created by the `compile`, `stow`,
+  `symlink` and `copy` actions when modules are cleaned up with the `--cleanup` flag.
 
 [1.1.0] - 2018-06-24
 ====================

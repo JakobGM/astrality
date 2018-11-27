@@ -447,3 +447,42 @@ def test_creation_of_backup(create_temp_files):
     # And when cleaning up the module, the backup should be restored
     CreatedFiles().cleanup(module='test')
     assert target.read_text() == 'original'
+
+
+def test_cleanup_of_created_directories(create_temp_files, tmpdir):
+    """Directories created during compilation should be cleaned up."""
+    tmpdir = Path(tmpdir)
+    [template] = create_temp_files(1)
+
+    # The target requires two new directories to be created
+    directory = tmpdir / 'subdir' / 'dir'
+    target = directory / 'target.tmp'
+
+    compile_dict = {
+        'content': str(template.name),
+        'target': str(target),
+    }
+    compile_action = CompileAction(
+        options=compile_dict,
+        directory=template.parent,
+        replacer=lambda x: x,
+        context_store={},
+        creation_store=CreatedFiles().wrapper_for(module='test'),
+    )
+
+    # At first, the target and its two parent directories do not exist
+    assert not target.exists()
+    assert not directory.exists()
+    assert not directory.parent.exists()
+
+    # Then, these three paths are created
+    compile_action.execute()
+    assert target.exists()
+    assert directory.exists()
+    assert directory.parent.exists()
+
+    # And then must be cleaned up again
+    CreatedFiles().cleanup(module='test')
+    assert not target.exists()
+    assert not directory.exists()
+    assert not directory.parent.exists()
