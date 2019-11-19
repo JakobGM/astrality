@@ -47,7 +47,7 @@ pytest-mypy==0.3.2
 pytest==4.0.0
 python-dateutil==2.7.5
 pytz==2018.7              # via astral, babel
-pyyaml==3.13
+pyyaml==5.1
 requests==2.20.1          # via sphinx
 six==1.11.0               # via freezegun, livereload, more-itertools, packaging, pip-tools, pytest, python-dateutil, sphinx
 snowballstemmer==1.2.1    # via sphinx
