@@ -155,7 +155,7 @@ class Module:
 
         # Create special case setup action block, it removes any action already
         # performed.
-        action_blocks['on_setup'] = SetupActionBlock(  # type: ignore
+        action_blocks['on_setup'] = SetupActionBlock(
             action_block=module_config.get('on_setup', {}),
             **params,
         )
@@ -179,7 +179,7 @@ class Module:
                 config_directory=self.directory,
             )
             action_blocks['on_modified'][modified_path] = \
-                ActionBlock(  # type: ignore
+                ActionBlock(
                     action_block=action_block_dict,
                     **params,
             )

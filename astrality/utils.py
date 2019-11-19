@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import PyYAML library for faster YAML parsing
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper  # type: ignore
+    from yaml import CLoader as Loader, CDumper as Dumper
     logger.info('Using LibYAML bindings for faster .yml parsing.')
 except ImportError:  # pragma: no cover
     from yaml import Loader, Dumper

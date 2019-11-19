@@ -118,7 +118,7 @@ class CreatedFiles:
                 modified = True
                 creation['content'] = str(content)
                 creation['method'] = creation_method.value
-                creation.setdefault('backup', None)  # type: ignore
+                creation.setdefault('backup', None)
 
                 try:
                     creation['hash'] = hashlib.md5(
@@ -195,7 +195,7 @@ class CreatedFiles:
                 logger.info(log_msg + ' [No longer exists!]')
 
             if backup and Path(backup).exists():
-                utils.move(  # type: ignore
+                utils.move(
                     source=info['backup'],
                     destination=creation,
                     follow_symlinks=False,

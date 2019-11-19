@@ -319,7 +319,7 @@ class Periodic(EventListener):
         super().__init__(event_listener_config)
 
         # Period specified by the user
-        self.timedelta = timedelta(  # type: ignore
+        self.timedelta = timedelta(
             seconds=self.event_listener_config['seconds'],
             minutes=self.event_listener_config['minutes'],
             hours=self.event_listener_config['hours'],
