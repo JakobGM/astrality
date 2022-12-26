@@ -4,64 +4,163 @@
 #
 #    pip-compile
 #
-alabaster==0.7.12         # via sphinx
-argh==0.26.2              # via sphinx-autobuild, watchdog
+alabaster==0.7.12
+    # via sphinx
+argh==0.26.2
+    # via
+    #   sphinx-autobuild
+    #   watchdog
 astral==1.7.1
-atomicwrites==1.2.1       # via pytest
-attrs==18.2.0             # via pytest
-babel==2.6.0              # via sphinx
-certifi==2018.10.15       # via requests
-chardet==3.0.4            # via requests
-click==7.0                # via pip-tools
+    # via -r requirements.in
+atomicwrites==1.2.1
+    # via pytest
+attrs==18.2.0
+    # via pytest
+babel==2.6.0
+    # via sphinx
+certifi==2018.10.15
+    # via requests
+chardet==3.0.4
+    # via requests
+click==7.0
+    # via pip-tools
 coloredlogs==10.0
-docutils==0.14            # via sphinx
-flake8-commas==2.0.0
-flake8-quotes==1.0.0
+    # via -r requirements.in
+docutils==0.14
+    # via sphinx
 flake8==3.6.0
-freezegun==0.3.11         # via pytest-freezegun
-humanfriendly==4.17       # via coloredlogs
-idna==2.7                 # via requests
-imagesize==1.1.0          # via sphinx
+    # via
+    #   -r requirements.in
+    #   flake8-commas
+    #   flake8-quotes
+    #   pytest-flake8
+flake8-commas==2.0.0
+    # via -r requirements.in
+flake8-quotes==1.0.0
+    # via -r requirements.in
+freezegun==0.3.11
+    # via pytest-freezegun
+humanfriendly==4.17
+    # via coloredlogs
+idna==2.7
+    # via requests
+imagesize==1.1.0
+    # via sphinx
 jinja2==2.10
-livereload==2.5.2         # via sphinx-autobuild
-markupsafe==1.1.0         # via jinja2
-mccabe==0.6.1             # via flake8
-more-itertools==4.3.0     # via pytest
-mypy-extensions==0.4.1
+    # via
+    #   -r requirements.in
+    #   sphinx
+livereload==2.5.2
+    # via sphinx-autobuild
+markupsafe==1.1.0
+    # via jinja2
+mccabe==0.6.1
+    # via flake8
+more-itertools==4.3.0
+    # via pytest
 mypy==0.740
-packaging==18.0           # via sphinx
-pathtools==0.1.2          # via sphinx-autobuild, watchdog
+    # via
+    #   -r requirements.in
+    #   pytest-mypy
+mypy-extensions==0.4.1
+    # via
+    #   -r requirements.in
+    #   mypy
+packaging==18.0
+    # via sphinx
+pathtools==0.1.2
+    # via
+    #   sphinx-autobuild
+    #   watchdog
 pip-tools==3.1.0
-pluggy==0.8.0             # via pytest
-port_for==0.3.1           # via sphinx-autobuild
+    # via -r requirements.in
+pluggy==0.8.0
+    # via pytest
+port-for==0.3.1
+    # via sphinx-autobuild
 psutil==5.4.8
-py==1.7.0                 # via pytest
-pycodestyle==2.4.0        # via flake8
-pyflakes==2.0.0           # via flake8
-pygments==2.2.0           # via sphinx
-pyparsing==2.3.0          # via packaging
-pytest-env==0.6.2
-pytest-flake8==1.0.2
-pytest-freezegun==0.3.0
-pytest-mypy==0.3.2
+    # via -r requirements.in
+py==1.7.0
+    # via pytest
+pycodestyle==2.4.0
+    # via flake8
+pyflakes==2.0.0
+    # via flake8
+pygments==2.2.0
+    # via sphinx
+pyparsing==2.3.0
+    # via packaging
 pytest==4.0.0
+    # via
+    #   -r requirements.in
+    #   pytest-env
+    #   pytest-flake8
+    #   pytest-freezegun
+    #   pytest-mypy
+pytest-env==0.6.2
+    # via -r requirements.in
+pytest-flake8==1.0.2
+    # via -r requirements.in
+pytest-freezegun==0.3.0
+    # via -r requirements.in
+pytest-mypy==0.3.2
+    # via -r requirements.in
 python-dateutil==2.7.5
-pytz==2018.7              # via astral, babel
+    # via
+    #   -r requirements.in
+    #   freezegun
+pytz==2018.7
+    # via
+    #   astral
+    #   babel
 pyyaml==3.13
-requests==2.20.1          # via sphinx
-six==1.11.0               # via freezegun, livereload, more-itertools, packaging, pip-tools, pytest, python-dateutil, sphinx
-snowballstemmer==1.2.1    # via sphinx
-sphinx-autobuild==0.7.1
-sphinx-autodoc-typehints==1.5.0
-sphinx-rtd-theme==0.4.2
+    # via
+    #   -r requirements.in
+    #   sphinx-autobuild
+    #   watchdog
+requests==2.20.1
+    # via sphinx
+six==1.11.0
+    # via
+    #   freezegun
+    #   livereload
+    #   more-itertools
+    #   packaging
+    #   pip-tools
+    #   pytest
+    #   python-dateutil
+    #   sphinx
+snowballstemmer==1.2.1
+    # via sphinx
 sphinx==1.8.2
-sphinxcontrib-websupport==1.1.0  # via sphinx
-tornado==5.1.1            # via livereload, sphinx-autobuild
-typed-ast==1.4.0          # via mypy
-typing-extensions==3.7.4.1  # via mypy
-urllib3==1.24.1           # via requests
+    # via
+    #   -r requirements.in
+    #   sphinx-autodoc-typehints
+    #   sphinx-rtd-theme
+sphinx-autobuild==0.7.1
+    # via -r requirements.in
+sphinx-autodoc-typehints==1.5.0
+    # via -r requirements.in
+sphinx-rtd-theme==0.4.2
+    # via -r requirements.in
+sphinxcontrib-websupport==1.1.0
+    # via sphinx
+tornado==5.1.1
+    # via
+    #   livereload
+    #   sphinx-autobuild
+typed-ast==1.4.0
+    # via mypy
+typing-extensions==3.7.4.1
+    # via mypy
+urllib3==1.24.1
+    # via requests
 watchdog==0.9.0
-wheel==0.32.2
+    # via
+    #   -r requirements.in
+    #   sphinx-autobuild
+wheel==0.38.1
+    # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==41.6.0
+# setuptools
